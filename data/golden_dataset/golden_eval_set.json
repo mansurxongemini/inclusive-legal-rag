@@ -1,0 +1,242 @@
+[
+  {
+    "id": "eval_001",
+    "question": "Nogironligi bo'lgan shaxslarga davlat tomonidan bepul tibbiy yordam ko'rsatiladimi va dori vositalari kimlarga bepul beriladi?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_disability_2020_art_15"],
+    "is_out_of_scope": false,
+    "description": "Tibbiy yordam va dori-darmon imtiyozlari (15-modda)"
+  },
+  {
+    "id": "eval_002",
+    "question": "Ногиронлиги бўлган шахсларга тиббий ёрдам кўрсатиш тартиби қандай?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_disability_2020_art_15"],
+    "is_out_of_scope": false,
+    "description": "Cyrillic script query for medical assistance"
+  },
+  {
+    "id": "eval_003",
+    "question": "Оказывается ли бесплатная медицинская помощь лицам с инвалидностью и кому положены бесплатные лекарства?",
+    "language": "ru",
+    "expected_canonical_ids": ["law_disability_2020_art_15"],
+    "is_out_of_scope": false,
+    "description": "Russian query for medical assistance"
+  },
+  {
+    "id": "eval_004",
+    "question": "Are persons with disabilities entitled to free medical care and preferential medicines in Uzbekistan?",
+    "language": "en",
+    "expected_canonical_ids": ["law_disability_2020_art_15"],
+    "is_out_of_scope": false,
+    "description": "English query for medical assistance"
+  },
+  {
+    "id": "eval_005",
+    "question": "Tashkilotlarda nogironlar uchun ish o'rinlari kvotasi necha foiz qilib belgilangan?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_disability_2020_art_36"],
+    "is_out_of_scope": false,
+    "description": "Ish o'rinlari kvotasi 3 foiz (36-modda)"
+  },
+  {
+    "id": "eval_006",
+    "question": "Какова обязательная квота рабочих мест для лиц с инвалидностью в организациях?",
+    "language": "ru",
+    "expected_canonical_ids": ["law_disability_2020_art_36"],
+    "is_out_of_scope": false,
+    "description": "Russian query for employment quota"
+  },
+  {
+    "id": "eval_007",
+    "question": "What is the mandatory job quota for employing persons with disabilities in organizations?",
+    "language": "en",
+    "expected_canonical_ids": ["law_disability_2020_art_36"],
+    "is_out_of_scope": false,
+    "description": "English query for employment quota"
+  },
+  {
+    "id": "eval_008",
+    "question": "I va II guruh nogironlari uchun ish haftasi necha soat bo'ladi va oylik qisqaradimi?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_labor_code_art_425"],
+    "is_out_of_scope": false,
+    "description": "Mehnat kodeksi 425-modda: 36 soatlik qisqartirilgan ish haftasi"
+  },
+  {
+    "id": "eval_009",
+    "question": "Какова продолжительность рабочего времени для инвалидов 1 и 2 группы по Трудовому кодексу?",
+    "language": "ru",
+    "expected_canonical_ids": ["law_labor_code_art_425"],
+    "is_out_of_scope": false,
+    "description": "Russian query for reduced working hours under Labor Code"
+  },
+  {
+    "id": "eval_010",
+    "question": "What are the reduced working hours for employees with group I and II disabilities?",
+    "language": "en",
+    "expected_canonical_ids": ["law_labor_code_art_425"],
+    "is_out_of_scope": false,
+    "description": "English query for reduced working hours"
+  },
+  {
+    "id": "eval_011",
+    "question": "Jamoat transportida va avtoturargohlarda nogironligi bo'lgan shaxslarga qanday imtiyozlar bor?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_disability_2020_art_24"],
+    "is_out_of_scope": false,
+    "description": "Transport imtiyozlari va parkovka joylari (24-modda)"
+  },
+  {
+    "id": "eval_012",
+    "question": "Какие льготы предусмотрены для лиц с инвалидностью на общественном транспорте и парковках?",
+    "language": "ru",
+    "expected_canonical_ids": ["law_disability_2020_art_24"],
+    "is_out_of_scope": false,
+    "description": "Russian query for transport and parking privileges"
+  },
+  {
+    "id": "eval_013",
+    "question": "Oliy o'quv yurtlariga o'qishga kirishda nogironligi bo'lgan shaxslar uchun davlat granti kvotasi bormi?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_disability_2020_art_28"],
+    "is_out_of_scope": false,
+    "description": "Ta'lim kvotasi 2 foiz (28-modda)"
+  },
+  {
+    "id": "eval_014",
+    "question": "Предусмотрена ли квота государственного гранта при поступлении в вузы для лиц с инвалидностью?",
+    "language": "ru",
+    "expected_canonical_ids": ["law_disability_2020_art_28"],
+    "is_out_of_scope": false,
+    "description": "Russian query for university education quota"
+  },
+  {
+    "id": "eval_015",
+    "question": "Nogironlar aravachasi yoki protez vositalarini davlat beradimi va o'z hisobidan sotib olinsa kompensatsiya bormi?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_disability_2020_art_45"],
+    "is_out_of_scope": false,
+    "description": "Reabilitatsiya texnik vositalari va kompensatsiya (45-modda)"
+  },
+  {
+    "id": "eval_016",
+    "question": "Обеспечиваются ли лица с инвалидностью инвалидными колясками и протезами за счет государства?",
+    "language": "ru",
+    "expected_canonical_ids": ["law_disability_2020_art_45"],
+    "is_out_of_scope": false,
+    "description": "Russian query for rehabilitation devices and compensation"
+  },
+  {
+    "id": "eval_017",
+    "question": "Binolar va ijtimoiy infratuzilma obyektlarida pandus va qulayliklar bo'lishi shartmi?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_disability_2020_art_22"],
+    "is_out_of_scope": false,
+    "description": "Infratuzilmadan moneliksiz foydalanish va panduslar (22-modda)"
+  },
+  {
+    "id": "eval_018",
+    "question": "Nogironligi bo'lgan shaxslarning huquqlarini ta'minlashning asosiy prinsiplari nimalardan iborat?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_disability_2020_art_5"],
+    "is_out_of_scope": false,
+    "description": "Asosiy prinsiplar (5-modda)"
+  },
+  {
+    "id": "eval_019",
+    "question": "Qonunda nogironlik va nogironligi bo'lgan shaxs tushunchasiga qanday ta'rif berilgan?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_disability_2020_art_3"],
+    "is_out_of_scope": false,
+    "description": "Asosiy tushunchalar (3-modda)"
+  },
+  {
+    "id": "eval_020",
+    "question": "Eski TMEK ko'rigi bo'yicha 10-modda nima deydi?",
+    "language": "uz",
+    "expected_canonical_ids": ["law_disability_old_sample_art_10"],
+    "is_out_of_scope": false,
+    "description": "Amended/repealed article superseding resolution"
+  },
+  {
+    "id": "eval_021",
+    "question": "Kosmik raketalarni fazoga uchirish uchun litsenziya olish tartibi qanday?",
+    "language": "uz",
+    "expected_canonical_ids": [],
+    "is_out_of_scope": true,
+    "description": "Out-of-scope query: space rocketry license (Must refuse safely)"
+  },
+  {
+    "id": "eval_022",
+    "question": "Qanday qilib kriptovalyuta mayning fermasini ro'yxatdan o'tkazish mumkin?",
+    "language": "uz",
+    "expected_canonical_ids": [],
+    "is_out_of_scope": true,
+    "description": "Out-of-scope query: crypto mining (Must refuse safely)"
+  },
+  {
+    "id": "eval_023",
+    "question": "Каков штраф за превышение скорости на автомобиле на 40 км/ч в Узбекистане?",
+    "language": "ru",
+    "expected_canonical_ids": [],
+    "is_out_of_scope": true,
+    "description": "Out-of-scope Russian query: speeding traffic fine (Must refuse safely)"
+  },
+  {
+    "id": "eval_024",
+    "question": "What is the corporate profit tax rate for foreign commercial banks?",
+    "language": "en",
+    "expected_canonical_ids": [],
+    "is_out_of_scope": true,
+    "description": "Out-of-scope English query: corporate profit tax (Must refuse safely)"
+  },
+  {
+    "id": "eval_025",
+    "question": "Ой юзида ер uchastkalarini xususiylashtirish qonuni bormi?",
+    "language": "uz",
+    "expected_canonical_ids": [],
+    "is_out_of_scope": true,
+    "description": "Out-of-scope nonsensical query: lunar land privatization (Must refuse safely)"
+  },
+  {
+    "id": "eval_026",
+    "question": "BMTning Nogironlar huquqlari to'g'risidagi Konvensiyasining 7-moddasi bo'yicha nogiron bolalarning qanday huquqlari kafolatlangan?",
+    "language": "uz",
+    "expected_canonical_ids": ["un_crpd_2006_art_7", "un_crpd_2006_art_3", "un_crpd_2006_art_4"],
+    "is_out_of_scope": false,
+    "description": "UN CRPD Article 7 on children with disabilities and supporting principles"
+  },
+  {
+    "id": "eval_027",
+    "question": "БМТ Конвенцияси бўйича фойдаланиш имконияти (accessibility) қандай таъминланади?",
+    "language": "uz",
+    "expected_canonical_ids": ["un_crpd_2006_art_9", "law_disability_2020_art_22"],
+    "is_out_of_scope": false,
+    "description": "UN CRPD Article 9 accessibility and national law implementation"
+  },
+  {
+    "id": "eval_028",
+    "question": "What are the core obligations of States Parties regarding education under UN CRPD Article 24?",
+    "language": "en",
+    "expected_canonical_ids": ["un_crpd_2006_art_24", "law_disability_2020_art_28"],
+    "is_out_of_scope": false,
+    "description": "UN CRPD Article 24 inclusive education English query"
+  },
+  {
+    "id": "eval_029",
+    "question": "BMT Konvensiyasiga ko'ra mustaqil yashash tarzi va jamiyatga qo'shilish huquqi (19-modda) nimalarni o'z ichiga oladi?",
+    "language": "uz",
+    "expected_canonical_ids": ["un_crpd_2006_art_19"],
+    "is_out_of_scope": false,
+    "description": "UN CRPD Article 19 living independently"
+  },
+  {
+    "id": "eval_030",
+    "question": "Каковы гарантии равенства перед законом согласно статье 12 Конвенции ООН о правах инвалидов?",
+    "language": "ru",
+    "expected_canonical_ids": ["un_crpd_2006_art_12"],
+    "is_out_of_scope": false,
+    "description": "UN CRPD Article 12 equal recognition before the law Russian query"
+  }
+]

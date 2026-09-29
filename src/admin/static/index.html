@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>O'zbekiston Qonunchiligi Legal RAG — Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card:hover {
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center font-bold text-xl shadow-lg shadow-brand-500/20">
+          ⚖️
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight">Uzbekistan Legal RAG</h1>
+          <p class="text-xs text-slate-400">Universal Qonunchilik & Kodekslar Bazasining Admin Paneli</p>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Bar -->
+      <div class="flex items-center gap-3 text-xs">
+        <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-400">RAM (RSS):</span>
+          <span id="ramUsage" class="font-mono font-semibold text-emerald-400">-- MB</span>
+        </div>
+        <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 flex items-center gap-2">
+          <span class="text-slate-400">Hujjatlar:</span>
+          <span id="totalDocsBadge" class="font-mono font-semibold text-amber-400">0</span>
+        </div>
+        <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 flex items-center gap-2">
+          <span class="text-slate-400">Vektorlangan moddalar:</span>
+          <span id="totalArticles" class="font-mono font-semibold text-emerald-300">0</span>
+        </div>
+        <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 flex items-center gap-2">
+          <span class="text-slate-400">Ikki tilli (UZ+RU):</span>
+          <span id="totalRuArticles" class="font-mono font-semibold text-sky-400">0</span>
+        </div>
+        <button onclick="loadAllData()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition" title="Yangilash">
+          🔄
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="border-b border-slate-800 bg-slate-900/40">
+    <div class="max-w-7xl mx-auto px-6 flex gap-6 text-sm font-medium">
+      <button onclick="switchTab('articlesTab')" id="tabBtnArticles" class="py-3 border-b-2 border-brand-500 text-brand-400 flex items-center gap-2">
+        📑 Qonunchilik Katalogi (Ierarxik)
+      </button>
+      <button onclick="switchTab('queryTesterTab')" id="tabBtnQuery" class="py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
+        💬 Savol-Javob Testi
+      </button>
+      <button onclick="switchTab('uploadTab')" id="tabBtnUpload" class="py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
+        📤 Qonun / Havola yuklash
+      </button>
+      <button onclick="switchTab('feedbackTab')" id="tabBtnFeedback" class="py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
+        📝 Ko'rib chiqish & Fikrlar
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="max-w-7xl mx-auto px-6 py-6 flex-1 w-full">
+
+    <!-- TAB 1: Hierarchical Articles Catalog -->
+    <div id="articlesTab" class="space-y-6">
+
+      <!-- Breadcrumbs & Navigation Bar -->
+      <div id="catalogBreadcrumbs" class="flex items-center gap-2 text-xs text-slate-400 bg-slate-900/70 p-3 rounded-xl border border-slate-800">
+        <button onclick="showCatalogRoot()" class="text-brand-400 hover:underline flex items-center gap-1 font-semibold">
+          🏠 Barcha Hujjat Turlari
+        </button>
+        <span id="bcSep1" class="hidden">/</span>
+        <button onclick="restoreCategoryView()" id="bcCategoryBtn" class="hidden text-brand-400 hover:underline font-semibold"></button>
+        <span id="bcSep2" class="hidden">/</span>
+        <span id="bcDocumentTitle" class="hidden text-slate-200 font-medium truncate max-w-md"></span>
+      </div>
+
+      <!-- LEVEL 1: Types / Categories Overview -->
+      <div id="level1TypesView" class="space-y-6">
+        <div>
+          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+            🏛️ Qonunchilik Hujjatlari Turlari
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Barcha amaldagi qonunlar, kodekslar va xalqaro shartnomalar tartibli guruhlangan. Kerakli tur ustiga bosing:
+          </p>
+        </div>
+
+        <div id="typesCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- LEVEL 2: Documents List of Selected Category -->
+      <div id="level2DocumentsView" class="hidden space-y-5">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 id="categoryTitleHeader" class="text-lg font-bold text-slate-100 flex items-center gap-2"></h3>
+            <p id="categoryDescHeader" class="text-xs text-slate-400 mt-0.5"></p>
+          </div>
+          <button onclick="showCatalogRoot()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 flex items-center gap-1.5 border border-slate-700 transition">
+            ← Turlarga qaytish
+          </button>
+        </div>
+
+        <!-- Search Bar within Category -->
+        <div class="relative max-w-md">
+          <input
+            type="text"
+            id="docSearchInput"
+            placeholder="Hujjat nomi yoki raqami bo'yicha izlash..."
+            oninput="filterDocumentsList()"
+            class="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-brand-500 transition text-slate-200"
+          >
+          <span class="absolute left-3 top-2.5 text-slate-500">🔍</span>
+        </div>
+
+        <!-- Documents Grid -->
+        <div id="documentsListGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- LEVEL 3: Articles & Vectors of Selected Document -->
+      <div id="level3ArticlesView" class="hidden space-y-5">
+        <!-- Document Banner -->
+        <div class="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span id="docBadgeNumber" class="px-2 py-0.5 rounded text-[11px] font-mono bg-brand-900/60 text-brand-300 border border-brand-700"></span>
+                <span id="docBadgeStatus" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-900/60 text-emerald-300 border border-emerald-700">Amalda</span>
+                <span id="docBadgeCount" class="text-xs text-slate-400 font-mono"></span>
+              </div>
+              <h2 id="docDetailTitleUz" class="text-base font-bold text-slate-100"></h2>
+              <p id="docDetailTitleRu" class="text-xs text-slate-400 italic mt-0.5"></p>
+            </div>
+            <button onclick="restoreCategoryView()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 flex items-center gap-1.5 border border-slate-700 transition shrink-0">
+              ← Hujjatlar ro'yxatiga qaytish
+            </button>
+          </div>
+        </div>
+
+        <!-- Toolbar: Search, Jump, Page Size & Pagination -->
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
+            <div class="relative flex-1 min-w-[200px]">
+              <input
+                type="text"
+                id="articleSearchInput"
+                placeholder="Modda raqami yoki matn izlash..."
+                oninput="filterArticlesList()"
+                class="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs focus:outline-none focus:border-brand-500 transition text-slate-200"
+              >
+              <span class="absolute left-3 top-2.5 text-slate-500 text-xs">🔍</span>
+            </div>
+            <!-- Quick jump directly to article number -->
+            <div class="flex items-center gap-1.5 shrink-0">
+              <input
+                type="text"
+                id="quickJumpArticleInput"
+                placeholder="№: 181"
+                class="w-20 px-2.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs focus:outline-none focus:border-brand-500 text-slate-200 font-mono"
+                onkeydown="if(event.key==='Enter') jumpToArticleDirect()"
+              >
+              <button onclick="jumpToArticleDirect()" class="px-3 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-semibold transition" title="Moddaga sakrash">
+                O'tish ↵
+              </button>
+            </div>
+          </div>
+
+          <!-- Page size & Pagination buttons -->
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="text-slate-400">Jami: <strong id="currentDocArticlesCount" class="text-slate-100">0</strong> ta</span>
+            <select id="articlePageSizeSelect" onchange="changeArticlePageSize(this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-300 text-xs">
+              <option value="25">25 tadan</option>
+              <option value="50" selected>50 tadan</option>
+              <option value="100">100 tadan</option>
+              <option value="0">Barchasi</option>
+            </select>
+            <div class="flex items-center gap-1 font-mono">
+              <button onclick="prevArticlesPage()" id="btnPrevPage" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed">
+                ←
+              </button>
+              <span id="articlesPageIndicator" class="px-2 text-slate-300">1 / 1</span>
+              <button onclick="nextArticlesPage()" id="btnNextPage" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed">
+                →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Articles List Container -->
+        <div id="articlesCardsContainer" class="space-y-4">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: Query Tester -->
+    <div id="queryTesterTab" class="hidden space-y-6">
+      <div class="glass-card p-6 rounded-2xl border border-slate-800">
+        <h2 class="text-base font-semibold mb-3 flex items-center gap-2">
+          🤖 Gibrid Qidiruv va Anti-Hallucination Generatsiya Testi
+        </h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Fuqaro yoki sinov savoli:</label>
+            <textarea
+              id="testQuestion"
+              rows="3"
+              placeholder="Masalan: Mehnat kodeksiga ko'ra sinov muddati qancha bo'lishi mumkin? yoki Каков срок испытания?"
+              class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+            ></textarea>
+          </div>
+          <div class="flex flex-wrap gap-4 items-center justify-between">
+            <div class="flex gap-3 text-xs">
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="testLang" value="auto" checked>
+                <span>Avtomatik til</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="testLang" value="uz">
+                <span>O'zbekcha</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="testLang" value="ru">
+                <span>Русский</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="testLang" value="en">
+                <span>English</span>
+              </label>
+            </div>
+            <div class="flex gap-3 text-xs">
+              <select id="testMode" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200">
+                <option value="plain" selected>💼 Professional Yuridik Maslahat</option>
+                <option value="subsumption">⚖️ Chuqur Huquqiy Tahlil (Subsumsiya)</option>
+                <option value="legal_text">📜 Rasmiy qonun matni (Verbatim)</option>
+              </select>
+              <button
+                onclick="runQueryTest()"
+                id="btnSendQuery"
+                class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-medium flex items-center gap-2 shadow-lg shadow-brand-500/20 transition"
+              >
+                <span>Yuborish</span> 🚀
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Query Result Card -->
+      <div id="queryResultCard" class="hidden glass-card p-6 rounded-2xl border border-slate-800 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 flex-wrap gap-2">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-lg bg-indigo-950/80 border border-indigo-700/60 text-indigo-400 flex items-center justify-center text-sm">⚖️</span>
+            <div>
+              <h3 class="text-sm font-semibold text-slate-100">
+                AI Huquqiy Maslahati
+              </h3>
+              <div class="text-[11px] text-slate-400">Amaldagi O'zbekiston qonunchiligi asosidagi rasmiy xulosa</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <button
+              onclick="copyTelegramFormat()"
+              id="btnCopyBot"
+              class="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 font-medium text-[11px] flex items-center gap-1.5 transition cursor-pointer"
+              title="Telegram bot yoki messenjerlar uchun to'liq formatlangan matnni nusxalash"
+            >
+              <span>📋 Bot formatida nusxalash</span>
+            </button>
+            <span id="resLangMeta" class="text-slate-400 font-mono text-[11px]"></span>
+            <span id="resCacheBadge" class="hidden px-2 py-0.5 rounded bg-amber-900/60 text-amber-300 border border-amber-700 font-semibold text-[10px]">Keshdan</span>
+          </div>
+        </div>
+
+        <!-- Rendered Rich Markdown with Inline Citations -->
+        <div id="queryAnswerText" class="prose prose-invert max-w-none text-sm text-slate-200 leading-relaxed space-y-3"></div>
+
+        <!-- Verified Legal Sources Rail -->
+        <div class="border-t border-slate-800/80 pt-4 mt-6">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-slate-200 uppercase tracking-wider">Asoslangan qonuniy manbalar</span>
+              <span id="citationsCountBadge" class="px-2 py-0.5 rounded-full text-[10px] bg-indigo-900/40 text-indigo-300 border border-indigo-700/60 font-mono font-medium">0 ta norma</span>
+            </div>
+            <span class="text-[11px] text-slate-500">Qonun va kodekslarning amaldagi rasmiy tahrirlari</span>
+          </div>
+          <div id="queryCitationsList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Upload & Direct Ingestion -->
+    <div id="uploadTab" class="hidden space-y-6">
+      <!-- Universal Web & Legal Article Ingestion -->
+      <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div>
+            <h2 class="text-base font-semibold text-slate-100 flex items-center gap-2">
+              🌐 Istalgan Havoladan Maqola, Sharh yoki Qonun Yuklash (Web Ingest)
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Istalgan tahliliy sayt (<span class="text-brand-300 font-medium">Norma.uz, Advice.uz, Minjust.uz, Kun.uz, Gazeta.uz</span>) yoki <span class="text-brand-300 font-medium">Lex.uz</span> havolasini kiriting.
+              Tizim maqolani reklama va ortiqcha teglardan tozalab, aqlli tahliliy bo'laklarga ajratadi va qonunchilik normalari bilan bog'laydi:
+            </p>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand-950/80 text-brand-300 border border-brand-800 shrink-0">
+            Universal Parser 2.0
+          </span>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              id="lexUrlInput"
+              placeholder="Masalan: https://advice.uz/oz/document/2388 yoki https://www.norma.uz/... yoki https://lex.uz/docs/..."
+              class="flex-1 px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-brand-500 text-slate-200 transition"
+            >
+            <div class="flex gap-2">
+              <button
+                onclick="previewUrlContent()"
+                id="btnPreviewUrl"
+                class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold rounded-xl border border-slate-700 transition flex items-center gap-1.5"
+              >
+                <span>🔍 Ko'rib chiqish</span>
+              </button>
+              <button
+                onclick="ingestUrl()"
+                id="btnIngestUrl"
+                class="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-brand-500/20 transition flex items-center justify-center gap-2"
+              >
+                <span>⚡ Yuklash & Vektorlash</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Website Suggestion Chips -->
+          <div class="flex items-center gap-2 flex-wrap text-[11px] text-slate-400">
+            <span>Namuna portallar:</span>
+            <button onclick="setSampleUrl('https://advice.uz/oz/document/2388')" class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition">
+              Advice.uz (Huquqiy maslahat)
+            </button>
+            <button onclick="setSampleUrl('https://www.norma.uz/uz/qonunchilikda_yangi/yangi_tahrirdagi_soliq_kodeksi_kuchga_kirdi')" class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition">
+              Norma.uz (Sharh)
+            </button>
+            <button onclick="setSampleUrl('https://lex.uz/docs/8472526')" class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition">
+              Lex.uz (Farmon)
+            </button>
+          </div>
+        </div>
+
+        <div id="urlIngestStatus" class="text-xs font-medium"></div>
+
+        <!-- URL Preview Drawer / Panel -->
+        <div id="urlPreviewPanel" class="hidden p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3 mt-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="previewDomainBadge" class="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-950 text-sky-300 border border-sky-800"></span>
+                <span id="previewDateBadge" class="text-[11px] text-slate-400"></span>
+              </div>
+              <h4 id="previewTitle" class="text-sm font-bold text-slate-100 mt-1"></h4>
+            </div>
+            <button onclick="confirmPreviewIngest()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition">
+              ✓ Tasdiqlash va Bazaga Qo'shish
+            </button>
+          </div>
+
+          <!-- Detected Legal References -->
+          <div id="previewRefsContainer" class="hidden text-xs">
+            <span class="text-slate-400 font-semibold">📌 Maqolada keltirilgan qonun normalari:</span>
+            <div id="previewRefsList" class="flex flex-wrap gap-1.5 mt-1.5"></div>
+          </div>
+
+          <!-- Smart Chunks Preview -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-400">
+              <span class="font-semibold">📑 Aqlli qismlar (Smart Chunks): <span id="previewChunkCount" class="text-brand-400"></span></span>
+              <span>Birinchi 4 ta qism ko'rsatilmoqda</span>
+            </div>
+            <div id="previewChunksList" class="grid grid-cols-1 md:grid-cols-2 gap-2.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- File Upload Form -->
+      <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+        <h2 class="text-base font-semibold text-slate-100 flex items-center gap-2">
+          📁 Fayl orqali yuklash (.json, .txt, .md)
+        </h2>
+        <p class="text-xs text-slate-400">
+          Agar qonun matni alohida faylda bo'lsa, yuklashingiz mumkin:
+        </p>
+        <div class="flex flex-col sm:flex-row items-center gap-4">
+          <input
+            type="file"
+            id="lawFileInput"
+            accept=".json,.txt,.md"
+            class="w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"
+          >
+          <button
+            onclick="uploadFile()"
+            class="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition shrink-0 border border-slate-700"
+          >
+            Faylni yuklash
+          </button>
+        </div>
+        <div id="uploadStatus" class="text-xs text-slate-400"></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Feedback List -->
+    <div id="feedbackTab" class="hidden space-y-4">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-base font-bold text-slate-100">💬 Fuqarolar va Yuristlar Fikrlari</h2>
+      </div>
+      <div id="feedbackList" class="space-y-3"></div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: Edit & Re-vectorize Article -->
+  <div id="editArticleModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card bg-slate-900 border border-slate-700 w-full max-w-3xl rounded-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <div>
+          <span class="text-[10px] font-mono uppercase tracking-wider text-brand-400 bg-brand-950/80 px-2.5 py-0.5 rounded border border-brand-800" id="editModalCanonicalId"></span>
+          <h3 class="text-base font-bold text-slate-100 mt-1" id="editModalHeaderTitle">Moddani tahrirlash va qayta vektorlash</h3>
+        </div>
+        <button onclick="closeEditModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <!-- Modal Body (Form) -->
+      <div class="p-6 overflow-y-auto space-y-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Modda sarlavhasi (O'zbekcha):</label>
+            <input type="text" id="editTitleUz" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Название статьи (Русский):</label>
+            <input type="text" id="editTitleRu" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Modda matni (O'zbekcha - Lotin/Kirill):</label>
+          <textarea id="editTextUz" rows="6" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 font-sans leading-relaxed"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Официальный текст статьи (Русский):</label>
+          <textarea id="editTextRu" rows="6" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-brand-500 font-sans leading-relaxed"></textarea>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-800">
+          <div class="flex items-center gap-4">
+            <div>
+              <label class="block font-semibold text-slate-400 mb-1">Holati:</label>
+              <select id="editStatusSelect" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200">
+                <option value="active">Active (Amaldagi)</option>
+                <option value="amended">Amended (O'zgartirilgan)</option>
+                <option value="repealed">Repealed (Bekor qilingan)</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2 pt-4">
+              <input type="checkbox" id="editRevectorizeCheck" checked class="w-4 h-4 accent-brand-500 rounded cursor-pointer">
+              <label for="editRevectorizeCheck" class="text-slate-300 font-semibold cursor-pointer">
+                ⚡ OpenRouter BGE-M3 orqali qayta vektorlash
+              </label>
+            </div>
+          </div>
+          <div id="editSaveStatusMsg" class="font-medium"></div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-950 flex justify-end items-center gap-3">
+        <button onclick="closeEditModal()" class="px-4 py-2 text-xs bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-300">
+          Bekor qilish
+        </button>
+        <button id="btnSaveArticle" onclick="saveAndRevectorizeArticle()" class="px-5 py-2 text-xs bg-brand-600 hover:bg-brand-500 rounded-xl text-white font-bold shadow-lg shadow-brand-500/20 transition flex items-center gap-2">
+          <span>Saqlash & Qayta vektorlash</span> 💾
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let hierarchyData = null;
+    let currentCategoryId = null;
+    let currentDocument = null;
+    let currentDocArticles = [];
+    let editingArticleId = null;
+
+    async function loadAllData() {
+      try {
+        // Load Health
+        const hRes = await fetch('/health');
+        const hData = await hRes.json();
+        document.getElementById('ramUsage').textContent = hData.rss_memory_mb + ' MB';
+        document.getElementById('totalArticles').textContent = hData.articles_indexed.toLocaleString();
+
+        // Load Hierarchy
+        const hierRes = await fetch('/api/v1/admin/hierarchy');
+        hierarchyData = await hierRes.json();
+        document.getElementById('totalDocsBadge').textContent = hierarchyData.total_documents;
+        if (document.getElementById('totalRuArticles')) {
+          document.getElementById('totalRuArticles').textContent = (hierarchyData.total_ru_articles || 0).toLocaleString();
+        }
+
+        renderHierarchyOverview();
+
+        // Load Feedback
+        const fRes = await fetch('/api/v1/feedback');
+        const fData = await fRes.json();
+        renderFeedback(fData);
+      } catch (e) {
+        console.error("Data load error:", e);
+      }
+    }
+
+    // LEVEL 1: Render category cards
+    function renderHierarchyOverview() {
+      const container = document.getElementById('typesCardsGrid');
+      container.innerHTML = '';
+
+      if (!hierarchyData || !hierarchyData.types) return;
+
+      Object.values(hierarchyData.types).forEach(cat => {
+        const card = document.createElement('div');
+        card.className = 'glass-card p-6 rounded-2xl flex flex-col justify-between hover:border-brand-500/60 transition cursor-pointer group shadow-lg';
+        card.onclick = () => selectCategory(cat.id);
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-3xl p-3 bg-slate-800/80 rounded-2xl group-hover:scale-110 transition">${cat.icon}</span>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand-950/80 text-brand-300 border border-brand-800">
+                ${cat.documents.length} ta hujjat
+              </span>
+            </div>
+            <h3 class="text-base font-bold text-slate-100 group-hover:text-brand-300 transition">${cat.title}</h3>
+            <p class="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">${cat.description}</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between">
+            <span class="text-xs font-mono text-emerald-400 font-semibold">${cat.total_articles.toLocaleString()} ta modda</span>
+            <span class="text-xs text-brand-400 font-semibold group-hover:translate-x-1 transition">Ochish ➡️</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function showCatalogRoot() {
+      currentCategoryId = null;
+      currentDocument = null;
+      document.getElementById('level1TypesView').classList.remove('hidden');
+      document.getElementById('level2DocumentsView').classList.add('hidden');
+      document.getElementById('level3ArticlesView').classList.add('hidden');
+
+      document.getElementById('bcSep1').classList.add('hidden');
+      document.getElementById('bcCategoryBtn').classList.add('hidden');
+      document.getElementById('bcSep2').classList.add('hidden');
+      document.getElementById('bcDocumentTitle').classList.add('hidden');
+    }
+
+    // LEVEL 2: Select a category and list documents
+    function selectCategory(catId) {
+      currentCategoryId = catId;
+      const cat = hierarchyData.types[catId];
+      if (!cat) return;
+
+      document.getElementById('level1TypesView').classList.add('hidden');
+      document.getElementById('level2DocumentsView').classList.remove('hidden');
+      document.getElementById('level3ArticlesView').classList.add('hidden');
+
+      // Breadcrumb update
+      document.getElementById('bcSep1').classList.remove('hidden');
+      const catBtn = document.getElementById('bcCategoryBtn');
+      catBtn.textContent = `${cat.icon} ${cat.title}`;
+      catBtn.classList.remove('hidden');
+      document.getElementById('bcSep2').classList.add('hidden');
+      document.getElementById('bcDocumentTitle').classList.add('hidden');
+
+      // Headers
+      document.getElementById('categoryTitleHeader').innerHTML = `${cat.icon} ${cat.title} <span class="text-xs text-slate-400 font-normal">(${cat.documents.length} ta hujjat, ${cat.total_articles.toLocaleString()} ta modda)</span>`;
+      document.getElementById('categoryDescHeader').textContent = cat.description;
+
+      document.getElementById('docSearchInput').value = '';
+      renderDocumentsList(cat.documents);
+    }
+
+    function restoreCategoryView() {
+      if (currentCategoryId) {
+        selectCategory(currentCategoryId);
+      } else {
+        showCatalogRoot();
+      }
+    }
+
+    let currentArticlesPage = 1;
+    let articlesPageSize = 50;
+    let filteredDocArticles = [];
+
+    function renderDocumentsList(docs) {
+      const container = document.getElementById('documentsListGrid');
+      container.innerHTML = '';
+
+      if (!docs || docs.length === 0) {
+        container.innerHTML = '<p class="col-span-full text-slate-500 text-sm py-8 text-center">Hujjatlar topilmadi.</p>';
+        return;
+      }
+
+      docs.forEach(doc => {
+        const card = document.createElement('div');
+        card.className = 'glass-card p-5 rounded-2xl flex flex-col justify-between hover:border-brand-500/50 transition cursor-pointer group shadow-lg';
+        card.onclick = () => openDocumentArticles(doc);
+
+        const ruBadge = doc.ru_article_count > 0 ? `
+          <div class="mt-2.5">
+            <span class="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md ${doc.ru_article_count >= doc.article_count ? 'bg-sky-950/80 text-sky-300 border border-sky-800' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
+              🇷🇺 ${doc.ru_article_count}/${doc.article_count} ruscha matn
+            </span>
+          </div>
+        ` : '';
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <span class="font-mono text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">${doc.law_number || doc.law_id}</span>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-900/60 text-emerald-300 border-emerald-700">
+                ${doc.status || 'amalda'}
+              </span>
+            </div>
+            <h4 class="font-bold text-sm text-slate-100 group-hover:text-brand-300 transition line-clamp-2">${doc.title_uz}</h4>
+            <p class="text-[11px] text-slate-400 italic line-clamp-1 mt-1">${doc.title_ru || ''}</p>
+            ${ruBadge}
+          </div>
+          <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-3 mt-4">
+            <span class="font-mono text-emerald-400 font-semibold">📑 ${doc.article_count} ta modda</span>
+            <span class="text-brand-400 font-semibold group-hover:translate-x-1 transition text-xs">Moddalar ➡️</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterDocumentsList() {
+      if (!currentCategoryId || !hierarchyData) return;
+      const q = document.getElementById('docSearchInput').value.toLowerCase().trim();
+      const allDocs = hierarchyData.types[currentCategoryId].documents;
+
+      const filtered = allDocs.filter(d => 
+        (d.title_uz && d.title_uz.toLowerCase().includes(q)) ||
+        (d.title_ru && d.title_ru.toLowerCase().includes(q)) ||
+        (d.law_number && d.law_number.toLowerCase().includes(q)) ||
+        (d.law_id && d.law_id.toLowerCase().includes(q))
+      );
+      renderDocumentsList(filtered);
+    }
+
+    // LEVEL 3: View Articles of a single document
+    async function openDocumentArticles(doc) {
+      currentDocument = doc;
+      document.getElementById('level1TypesView').classList.add('hidden');
+      document.getElementById('level2DocumentsView').classList.add('hidden');
+      document.getElementById('level3ArticlesView').classList.remove('hidden');
+
+      // Breadcrumb update
+      document.getElementById('bcSep2').classList.remove('hidden');
+      const docTitleSpan = document.getElementById('bcDocumentTitle');
+      docTitleSpan.textContent = doc.title_uz;
+      docTitleSpan.classList.remove('hidden');
+
+      // Banner update
+      document.getElementById('docBadgeNumber').textContent = doc.law_number || doc.law_id;
+      document.getElementById('docBadgeCount').textContent = `${doc.article_count} ta modda`;
+      document.getElementById('docDetailTitleUz').textContent = doc.title_uz;
+      document.getElementById('docDetailTitleRu').textContent = doc.title_ru || '';
+
+      const container = document.getElementById('articlesCardsContainer');
+      container.innerHTML = '<div class="p-8 text-center text-slate-400 text-sm">⏳ Moddalar va vektorlar yuklanmoqda...</div>';
+
+      try {
+        const res = await fetch(`/api/v1/admin/documents/${doc.law_id}/articles`);
+        const data = await res.json();
+        currentDocArticles = data.articles || [];
+        filteredDocArticles = [...currentDocArticles];
+        currentArticlesPage = 1;
+        document.getElementById('currentDocArticlesCount').textContent = currentDocArticles.length;
+        
+        if (data.sub_articles_count > 0 && data.max_article_number) {
+          const baseCount = data.count - data.sub_articles_count;
+          document.getElementById('docBadgeCount').textContent = `1-${data.max_article_number}-moddalar (Jami ${data.count} ta: ${baseCount} asosiy + ${data.sub_articles_count} prim-modda)`;
+        } else {
+          document.getElementById('docBadgeCount').textContent = `${data.count} ta modda`;
+        }
+
+        renderPaginatedArticles();
+      } catch (e) {
+        container.innerHTML = `<div class="p-4 text-rose-400 text-xs">Xatolik: ${e}</div>`;
+      }
+    }
+
+    function renderPaginatedArticles() {
+      const container = document.getElementById('articlesCardsContainer');
+      container.innerHTML = '';
+
+      if (!filteredDocArticles || filteredDocArticles.length === 0) {
+        container.innerHTML = '<div class="p-8 text-center text-slate-500 text-sm">Moddalar topilmadi.</div>';
+        document.getElementById('articlesPageIndicator').textContent = '0 / 0';
+        document.getElementById('btnPrevPage').disabled = true;
+        document.getElementById('btnNextPage').disabled = true;
+        return;
+      }
+
+      const totalItems = filteredDocArticles.length;
+      let displayItems = filteredDocArticles;
+      let totalPages = 1;
+
+      if (articlesPageSize > 0) {
+        totalPages = Math.ceil(totalItems / articlesPageSize);
+        if (currentArticlesPage > totalPages) currentArticlesPage = totalPages;
+        if (currentArticlesPage < 1) currentArticlesPage = 1;
+
+        const startIdx = (currentArticlesPage - 1) * articlesPageSize;
+        const endIdx = startIdx + articlesPageSize;
+        displayItems = filteredDocArticles.slice(startIdx, endIdx);
+
+        document.getElementById('articlesPageIndicator').textContent = `${currentArticlesPage} / ${totalPages}`;
+        document.getElementById('btnPrevPage').disabled = currentArticlesPage <= 1;
+        document.getElementById('btnNextPage').disabled = currentArticlesPage >= totalPages;
+      } else {
+        document.getElementById('articlesPageIndicator').textContent = `Barchasi (${totalItems})`;
+        document.getElementById('btnPrevPage').disabled = true;
+        document.getElementById('btnNextPage').disabled = true;
+      }
+
+      displayItems.forEach(art => {
+        const card = document.createElement('div');
+        card.id = `art_card_${art.canonical_id}`;
+        card.className = 'glass-card p-5 rounded-2xl border border-slate-800 space-y-3';
+
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800/80 pb-3">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold text-sm text-slate-100">${art.article_number}: ${art.title_uz || ''}</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">${art.canonical_id}</span>
+              <button onclick="copyCitation('${art.canonical_id}', this)" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Iqtibos nusxalash">
+                📋 Nusxa
+              </button>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-900/60 text-emerald-300 border-emerald-700">Amalda</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800">⚡ 1024-dim BGE-M3 Vektor</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openEditModal('${art.canonical_id}')" class="px-3 py-1.5 text-xs bg-brand-900/40 hover:bg-brand-800 text-brand-300 border border-brand-700 rounded-lg transition flex items-center gap-1 font-semibold">
+                ✏️ Tahrirlash & Vektorlash
+              </button>
+              <button onclick="deleteArticleDirect('${art.canonical_id}')" class="p-1.5 text-xs bg-red-900/40 hover:bg-red-800 text-red-300 border border-red-700 rounded-lg transition" title="O'chirish">
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          <!-- Dual Language Text Box -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+            <div class="p-3 bg-slate-950/70 border border-slate-800/80 rounded-xl space-y-1">
+              <div class="font-semibold text-brand-400 flex items-center justify-between">
+                <span>🇺🇿 O'zbekcha matn</span>
+              </div>
+              <p class="text-slate-300 whitespace-pre-wrap leading-relaxed">${art.text_uz || '(O\'zbekcha matn kiritilmagan)'}</p>
+            </div>
+            <div class="p-3 bg-slate-950/70 border border-slate-800/80 rounded-xl space-y-1">
+              <div class="font-semibold text-indigo-400 flex items-center justify-between">
+                <span>🇷🇺 Rasmiy Ruscha matn (Lex.uz)</span>
+                <span class="text-[10px] text-slate-500 italic">${art.title_ru || ''}</span>
+              </div>
+              <p class="text-slate-300 whitespace-pre-wrap leading-relaxed">${art.text_ru || '(Официальный русский текст отсутствует)'}</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterArticlesList() {
+      const q = document.getElementById('articleSearchInput').value.toLowerCase().trim();
+      filteredDocArticles = currentDocArticles.filter(a => 
+        (a.article_number && a.article_number.toLowerCase().includes(q)) ||
+        (a.title_uz && a.title_uz.toLowerCase().includes(q)) ||
+        (a.title_ru && a.title_ru.toLowerCase().includes(q)) ||
+        (a.text_uz && a.text_uz.toLowerCase().includes(q)) ||
+        (a.text_ru && a.text_ru.toLowerCase().includes(q)) ||
+        (a.canonical_id && a.canonical_id.toLowerCase().includes(q))
+      );
+      currentArticlesPage = 1;
+      document.getElementById('currentDocArticlesCount').textContent = filteredDocArticles.length;
+      renderPaginatedArticles();
+    }
+
+    function changeArticlePageSize(val) {
+      articlesPageSize = parseInt(val, 10);
+      currentArticlesPage = 1;
+      renderPaginatedArticles();
+    }
+
+    function prevArticlesPage() {
+      if (currentArticlesPage > 1) {
+        currentArticlesPage--;
+        renderPaginatedArticles();
+        window.scrollTo({ top: 200, behavior: 'smooth' });
+      }
+    }
+
+    function nextArticlesPage() {
+      const totalPages = Math.ceil(filteredDocArticles.length / articlesPageSize);
+      if (currentArticlesPage < totalPages) {
+        currentArticlesPage++;
+        renderPaginatedArticles();
+        window.scrollTo({ top: 200, behavior: 'smooth' });
+      }
+    }
+
+    function jumpToArticleDirect() {
+      const input = document.getElementById('quickJumpArticleInput');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const numMatch = val.match(/\d+(?:[-_]\d+)?/);
+      if (!numMatch) return;
+      const targetNum = numMatch[0].replace('_', '-');
+
+      const idx = filteredDocArticles.findIndex(a => {
+        const aNum = a.article_number || '';
+        return aNum.includes(targetNum) || a.canonical_id.includes(targetNum);
+      });
+
+      if (idx !== -1) {
+        if (articlesPageSize > 0) {
+          currentArticlesPage = Math.floor(idx / articlesPageSize) + 1;
+          renderPaginatedArticles();
+        }
+        const targetArt = filteredDocArticles[idx];
+        setTimeout(() => {
+          const el = document.getElementById(`art_card_${targetArt.canonical_id}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('ring-2', 'ring-brand-500');
+            setTimeout(() => el.classList.remove('ring-2', 'ring-brand-500'), 3000);
+          }
+        }, 100);
+      } else {
+        alert(`Modda #${targetNum} topilmadi.`);
+      }
+    }
+
+    function copyCitation(cid, btn) {
+      navigator.clipboard.writeText(`[${cid}]`);
+      const original = btn.textContent;
+      btn.textContent = '✓ Nusxalandi!';
+      btn.classList.add('text-emerald-400');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('text-emerald-400');
+      }, 1500);
+    }
+
+    // EDIT MODAL: Open & Populate
+    function openEditModal(canonicalId) {
+      editingArticleId = canonicalId;
+      const art = currentDocArticles.find(a => a.canonical_id === canonicalId);
+      if (!art) return;
+
+      document.getElementById('editModalCanonicalId').textContent = art.canonical_id;
+      document.getElementById('editModalHeaderTitle').textContent = `${art.article_number} — Tahrirlash va Vektorlash`;
+      document.getElementById('editTitleUz').value = art.title_uz || '';
+      document.getElementById('editTitleRu').value = art.title_ru || '';
+      document.getElementById('editTextUz').value = art.text_uz || '';
+      document.getElementById('editTextRu').value = art.text_ru || '';
+      document.getElementById('editStatusSelect').value = art.status || 'active';
+      document.getElementById('editRevectorizeCheck').checked = true;
+      document.getElementById('editSaveStatusMsg').innerHTML = '';
+
+      document.getElementById('editArticleModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editArticleModal').classList.add('hidden');
+      editingArticleId = null;
+    }
+
+    async function saveAndRevectorizeArticle() {
+      if (!editingArticleId) return;
+
+      const titleUz = document.getElementById('editTitleUz').value.trim();
+      const titleRu = document.getElementById('editTitleRu').value.trim();
+      const textUz = document.getElementById('editTextUz').value.trim();
+      const textRu = document.getElementById('editTextRu').value.trim();
+      const status = document.getElementById('editStatusSelect').value;
+      const revectorize = document.getElementById('editRevectorizeCheck').checked;
+
+      const btn = document.getElementById('btnSaveArticle');
+      const statusEl = document.getElementById('editSaveStatusMsg');
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>Saqlanmoqda & Vektorlanmoqda...</span> ⏳';
+      statusEl.innerHTML = '';
+
+      try {
+        const res = await fetch(`/api/v1/admin/article/${editingArticleId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title_uz: titleUz,
+            title_ru: titleRu,
+            text_uz: textUz,
+            text_ru: textRu,
+            status: status,
+            revectorize: revectorize,
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          statusEl.innerHTML = `<span class="text-emerald-400">✓ ${data.message}</span>`;
+          // Update in local memory
+          const idx = currentDocArticles.findIndex(a => a.canonical_id === editingArticleId);
+          if (idx !== -1) {
+            currentDocArticles[idx].title_uz = titleUz;
+            currentDocArticles[idx].title_ru = titleRu;
+            currentDocArticles[idx].text_uz = textUz;
+            currentDocArticles[idx].text_ru = textRu;
+            currentDocArticles[idx].status = status;
+          }
+          renderArticlesList(currentDocArticles);
+          setTimeout(() => closeEditModal(), 1200);
+        } else {
+          statusEl.innerHTML = `<span class="text-rose-400">✗ Xatolik: ${data.detail}</span>`;
+        }
+      } catch (e) {
+        statusEl.innerHTML = `<span class="text-rose-400">✗ Xatolik: ${e}</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Saqlash & Qayta vektorlash</span> 💾';
+      }
+    }
+
+    async function deleteArticleDirect(canonicalId) {
+      if (confirm(`${canonicalId} moddani o'chirishni tasdiqlaysizmi?`)) {
+        try {
+          const res = await fetch(`/api/v1/admin/article/${canonicalId}`, { method: 'DELETE' });
+          if (res.ok) {
+            currentDocArticles = currentDocArticles.filter(a => a.canonical_id !== canonicalId);
+            document.getElementById('currentDocArticlesCount').textContent = currentDocArticles.length;
+            renderArticlesList(currentDocArticles);
+            loadAllData();
+          } else {
+            alert("O'chirishda xatolik yuz berdi.");
+          }
+        } catch (e) {
+          alert("Xatolik: " + e);
+        }
+      }
+    }
+
+    function switchTab(tabId) {
+      ['articlesTab', 'queryTesterTab', 'uploadTab', 'feedbackTab'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(tabId).classList.remove('hidden');
+
+      const tabs = [
+        { btn: 'tabBtnArticles', id: 'articlesTab' },
+        { btn: 'tabBtnQuery', id: 'queryTesterTab' },
+        { btn: 'tabBtnUpload', id: 'uploadTab' },
+        { btn: 'tabBtnFeedback', id: 'feedbackTab' },
+      ];
+      tabs.forEach(t => {
+        const el = document.getElementById(t.btn);
+        if (t.id === tabId) {
+          el.className = "py-3 border-b-2 border-brand-500 text-brand-400 flex items-center gap-2 font-bold";
+        } else {
+          el.className = "py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2";
+        }
+      });
+    }
+
+    async function runQueryTest() {
+      const q = document.getElementById('testQuestion').value.trim();
+      if (!q) return;
+
+      const lang = document.querySelector('input[name="testLang"]:checked').value;
+      const mode = document.getElementById('testMode').value;
+      const btn = document.getElementById('btnSendQuery');
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>Qidirilmoqda...</span> ⏳';
+
+      try {
+        const res = await fetch('/api/v1/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q, language: lang, mode: mode })
+        });
+        const data = await res.json();
+
+        const card = document.getElementById('queryResultCard');
+        card.classList.remove('hidden');
+
+        renderNotebookLMResult(data);
+      } catch (e) {
+        alert("So'rovda xatolik yuz berdi: " + e);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Yuborish</span> 🚀';
+      }
+    }
+
+    let currentQueryResult = null;
+
+    function copyTelegramFormat() {
+      if (!currentQueryResult) return;
+      const text = currentQueryResult.telegram_formatted || currentQueryResult.clean_answer || currentQueryResult.answer;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('btnCopyBot');
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="text-emerald-400 font-semibold">✓ Nusxalandi!</span>';
+        setTimeout(() => { btn.innerHTML = oldHtml; }, 2000);
+      }).catch(err => {
+        alert("Nusxalashda xatolik: " + err);
+      });
+    }
+
+    function renderNotebookLMResult(data) {
+      currentQueryResult = data;
+      document.getElementById('resLangMeta').textContent = `Til: ${data.detected_language} (${data.detected_script})`;
+      if (data.cached) {
+        document.getElementById('resCacheBadge').classList.remove('hidden');
+      } else {
+        document.getElementById('resCacheBadge').classList.add('hidden');
+      }
+
+      const citations = data.citations || [];
+      document.getElementById('citationsCountBadge').textContent = `${citations.length} ta norma`;
+
+      // Build citation map and index lookup
+      const citationMap = {};
+      const badgeMap = {};
+      citations.forEach((c, idx) => {
+        const num = c.index || (idx + 1);
+        citationMap[c.canonical_id] = c;
+        badgeMap[c.canonical_id] = num;
+        badgeMap[String(num)] = num;
+      });
+
+      let text = data.clean_answer || data.answer || '';
+
+      // Clean inline citation chip replacement: converts [canonical_id] or [1] to minimalist pills
+      text = text.replace(/\[([a-zA-Z0-9_\-]+)(?:,\s*([^\]]+))?\]/g, (match, tag) => {
+        let c = null;
+        let num = null;
+
+        if (citationMap[tag]) {
+          c = citationMap[tag];
+          num = badgeMap[tag];
+        } else if (/^\d+$/.test(tag)) {
+          const idxVal = parseInt(tag, 10);
+          c = citations[idxVal - 1];
+          num = idxVal;
+        }
+
+        if (num !== null) {
+          const lawLabel = c ? `${c.law_title || c.law_number} ${c.article_number}` : `Norma #${num}`;
+          const cid = c ? c.canonical_id : tag;
+          return `<button type="button" onclick="highlightCitationCard('${cid}', ${num})" class="inline-citation inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded text-[11px] font-mono font-semibold text-blue-400 bg-blue-500/10 hover:bg-blue-500/25 border border-blue-500/25 transition cursor-pointer select-none align-baseline whitespace-nowrap" title="${lawLabel}">[${num}]</button>`;
+        }
+        return match;
+      });
+
+      // Markdown formatting
+      text = text.replace(/^# (.*$)/gim, '<h2 class="text-base font-bold text-slate-100 mt-5 mb-2.5 pb-1 border-b border-slate-800">$1</h2>');
+      text = text.replace(/^## (.*$)/gim, '<h3 class="text-sm font-semibold text-slate-200 mt-4 mb-2 flex items-center gap-1.5">$1</h3>');
+      text = text.replace(/^### (.*$)/gim, '<h4 class="text-xs font-semibold text-slate-300 mt-3 mb-1.5">$1</h4>');
+      text = text.replace(/^\> (.*$)/gim, '<blockquote class="border-l-2 border-amber-500/80 pl-3 py-1.5 my-2.5 text-xs italic text-amber-200/90 bg-amber-950/20 rounded-r-lg">$1</blockquote>');
+      text = text.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+      text = text.replace(/\*([^*]+)\*/g, '<em class="italic text-slate-300">$1</em>');
+      text = text.replace(/^---$/gim, '<hr class="border-slate-800 my-4">');
+      text = text.replace(/^\- (.*$)/gim, '<li class="ml-4 list-disc text-slate-300 leading-relaxed my-1">$1</li>');
+
+      const lines = text.split('\n\n');
+      const renderedHtml = lines.map(block => {
+        const tr = block.trim();
+        if (tr.startsWith('<h') || tr.startsWith('<blockquote') || tr.startsWith('<hr') || tr.startsWith('<li')) {
+          return tr;
+        }
+        return `<p class="leading-relaxed mb-3 text-slate-200">${tr}</p>`;
+      }).join('');
+
+      document.getElementById('queryAnswerText').innerHTML = renderedHtml;
+
+      // Render Clean Verified Legal Sources Grid
+      const container = document.getElementById('queryCitationsList');
+      container.innerHTML = '';
+
+      if (citations.length === 0) {
+        container.innerHTML = '<span class="text-xs text-slate-500 col-span-full">Iqtiboslar mavjud emas (rad javobi berilgan).</span>';
+        return;
+      }
+
+      citations.forEach((c, idx) => {
+        const num = c.index || (idx + 1);
+        const cardEl = document.createElement('div');
+        cardEl.id = `citation_source_${c.canonical_id}`;
+        cardEl.dataset.index = num;
+        cardEl.className = 'p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition space-y-2 flex flex-col justify-between';
+
+        const tierColors = {
+          'Konstitutsiya': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+          'Kodeks': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+          'Qonun': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+          'Prezident Farmoni': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+          'Vazirlar Mahkamasi qarori': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+          'Vazirlik buyrug\'i': 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+          'Huquqiy sharh': 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+        };
+        const tierBadgeClass = tierColors[c.normative_tier] || 'bg-slate-800 text-slate-400 border-slate-700';
+
+        const quoteHtml = c.quote_snippet 
+          ? `<div class="text-[11px] text-amber-200/90 bg-amber-950/20 border-l-2 border-amber-500/80 p-2 rounded-r-lg italic leading-relaxed" title="Qonunchilikdan olingan aniq iqtibos">«${c.quote_snippet}»</div>`
+          : '';
+
+        const displayLawTitle = c.law_title || c.law_number || 'Qonunchilik hujjati';
+        const displayArtTitle = c.article_title ? ` — ${c.article_title}` : '';
+
+        cardEl.innerHTML = `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-1.5">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="w-5 h-5 rounded-md bg-slate-800 text-blue-400 border border-slate-700 font-mono text-[10px] flex items-center justify-center font-bold flex-shrink-0">${num}</span>
+                <span class="text-xs font-semibold text-slate-100 truncate">${c.article_number}${displayArtTitle}</span>
+              </div>
+              <span class="text-[9px] font-medium px-1.5 py-0.5 rounded border uppercase flex-shrink-0 ${tierBadgeClass}">${c.normative_tier || 'Qonun'}</span>
+            </div>
+            <div class="text-[11px] text-slate-400 line-clamp-1" title="${displayLawTitle}">${displayLawTitle}</div>
+            ${quoteHtml}
+          </div>
+          <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
+            <span class="text-slate-500 font-mono text-[10px]">${c.law_number}</span>
+            <a href="${c.source_url || '#'}" target="_blank" class="text-slate-400 hover:text-white font-medium flex items-center gap-1 transition">
+              <span>Lex.uz</span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>
+          </div>
+        `;
+        container.appendChild(cardEl);
+
+      });
+    }
+
+    function highlightCitationCard(canonicalId, index) {
+      let el = document.getElementById(`citation_source_${canonicalId}`);
+      if (!el && index) {
+        const cards = document.querySelectorAll('#queryCitationsList > div');
+        for (let c of cards) {
+          if (c.dataset.index == index) {
+            el = c;
+            break;
+          }
+        }
+      }
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-2', 'ring-blue-500', 'bg-blue-950/40');
+        setTimeout(() => {
+          el.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-950/40');
+        }, 2200);
+      }
+    }
+
+    function setSampleUrl(url) {
+      const input = document.getElementById('lexUrlInput');
+      input.value = url;
+      input.focus();
+    }
+
+    let currentPreviewData = null;
+
+    async function previewUrlContent() {
+      const urlInput = document.getElementById('lexUrlInput');
+      const url = urlInput.value.trim();
+      if (!url) {
+        alert("Iltimos, havolani kiriting.");
+        return;
+      }
+
+      const statusEl = document.getElementById('urlIngestStatus');
+      const btn = document.getElementById('btnPreviewUrl');
+      const panel = document.getElementById('urlPreviewPanel');
+      panel.classList.add('hidden');
+      statusEl.innerHTML = '<span class="text-amber-400">🔍 Saytdan ma\'lumot olinmoqda va tahlil qilinmoqda...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/v1/admin/preview-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          currentPreviewData = data;
+          statusEl.innerHTML = '';
+          panel.classList.remove('hidden');
+
+          document.getElementById('previewDomainBadge').textContent = `🌐 ${data.domain}`;
+          document.getElementById('previewDateBadge').textContent = `Sana: ${data.published_date}`;
+          document.getElementById('previewTitle').textContent = data.title;
+          document.getElementById('previewChunkCount').textContent = `${data.total_chunks} ta qism`;
+
+          // References
+          const refsCont = document.getElementById('previewRefsContainer');
+          const refsList = document.getElementById('previewRefsList');
+          refsList.innerHTML = '';
+          if (data.detected_references && data.detected_references.length > 0) {
+            refsCont.classList.remove('hidden');
+            data.detected_references.forEach(r => {
+              const span = document.createElement('span');
+              span.className = 'px-2 py-0.5 rounded text-[10px] font-mono bg-brand-950 text-brand-300 border border-brand-800';
+              span.textContent = r;
+              refsList.appendChild(span);
+            });
+          } else {
+            refsCont.classList.add('hidden');
+          }
+
+          // Chunks preview
+          const chunksList = document.getElementById('previewChunksList');
+          chunksList.innerHTML = '';
+          data.preview_chunks.forEach((ch, idx) => {
+            const card = document.createElement('div');
+            card.className = 'p-3 rounded-lg bg-slate-950/80 border border-slate-800 text-xs space-y-1.5';
+            card.innerHTML = `
+              <div class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+                <span class="text-brand-300 font-mono">Qism #${idx + 1}</span>
+                <span class="text-slate-400 truncate max-w-[200px]">${ch.heading}</span>
+              </div>
+              <p class="text-slate-400 text-[11px] leading-relaxed line-clamp-3">${ch.snippet}</p>
+            `;
+            chunksList.appendChild(card);
+          });
+        } else {
+          statusEl.innerHTML = `<span class="text-rose-400">✗ Xatolik: ${data.detail}</span>`;
+        }
+      } catch (e) {
+        statusEl.innerHTML = `<span class="text-rose-400">✗ Xatolik: ${e}</span>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function confirmPreviewIngest() {
+      if (!currentPreviewData) return;
+      await ingestUrl(currentPreviewData.url);
+    }
+
+    async function ingestUrl(overrideUrl = null) {
+      const urlInput = document.getElementById('lexUrlInput');
+      const url = overrideUrl || urlInput.value.trim();
+      if (!url) {
+        alert("Iltimos, havolani kiriting.");
+        return;
+      }
+
+      const statusEl = document.getElementById('urlIngestStatus');
+      const btn = document.getElementById('btnIngestUrl');
+      const panel = document.getElementById('urlPreviewPanel');
+      statusEl.innerHTML = '<span class="text-amber-400">⏳ Sahifa yuklanmoqda, aqlli bo\'laklarga ajratilmoqda va vektorlanmoqda...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/v1/admin/ingest-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url, category: "commentary" })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          statusEl.innerHTML = `<span class="text-emerald-400 font-medium">✓ ${data.message}</span>`;
+          panel.classList.add('hidden');
+          currentPreviewData = null;
+          urlInput.value = '';
+          loadAllData();
+        } else {
+          statusEl.innerHTML = `<span class="text-rose-400">✗ Xatolik: ${data.detail}</span>`;
+        }
+      } catch (e) {
+        statusEl.innerHTML = `<span class="text-rose-400">✗ Xatolik: ${e}</span>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function uploadFile() {
+      const fileInput = document.getElementById('lawFileInput');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert("Iltimos, avval faylni tanlang.");
+        return;
+      }
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const statusEl = document.getElementById('uploadStatus');
+      statusEl.textContent = "Yuklanmoqda va indekslanmoqda...";
+
+      try {
+        const res = await fetch('/api/v1/admin/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (res.ok) {
+          statusEl.innerHTML = `<span class="text-emerald-400">✓ ${data.message}</span>`;
+          fileInput.value = '';
+          loadAllData();
+        } else {
+          statusEl.innerHTML = `<span class="text-rose-400">✗ Xatolik: ${data.detail}</span>`;
+        }
+      } catch (e) {
+        statusEl.innerHTML = `<span class="text-rose-400">✗ Xatolik: ${e}</span>`;
+      }
+    }
+
+    function renderFeedback(feedbacks) {
+      const container = document.getElementById('feedbackList');
+      if (!feedbacks || feedbacks.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500">Hech qanday fikr bildirilmagan.</p>';
+        return;
+      }
+      container.innerHTML = '';
+      feedbacks.forEach(f => {
+        const d = document.createElement('div');
+        d.className = 'p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-1 text-xs';
+        d.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-300">Savol: "${f.query}"</span>
+            <span class="text-amber-400">★ ${f.rating}/5</span>
+          </div>
+          <p class="text-slate-400 italic">${f.feedback_text || '(Izohsiz)'}</p>
+          <div class="text-[10px] text-slate-600">${f.created_at || ''}</div>
+        `;
+        container.appendChild(d);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', loadAllData);
+  </script>
+</body>
+</html>

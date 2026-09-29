@@ -1,0 +1,110 @@
+[
+  {
+    "canonical_id": "law_labor_code_art_423",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "law_labor_code_2022",
+      "law_title": {
+        "uz": "O'zbekiston Respublikasining Mehnat kodeksi",
+        "ru": "Трудовой кодекс Республики Узбекистан",
+        "en": "Labor Code of the Republic of Uzbekistan"
+      },
+      "law_number": "O'RQ-798",
+      "chapter_number": "XXIV bob",
+      "article_number": "423-modda",
+      "article_title": {
+        "uz": "Nogironligi bo'lgan shaxslar mehnatini qo'llashdagi kafolatlar",
+        "ru": "Гарантии при применении труда лиц с инвалидностью",
+        "en": "Guarantees in the employment of persons with disabilities"
+      },
+      "source_url": "https://lex.uz/docs/6257288",
+      "effective_date": "2023-04-30",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:labor_423_hash",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "labor_code",
+      "disability_types": ["general"],
+      "beneficiary_type": ["individual", "employer"],
+      "cross_references": [
+        {"ref_type": "refers_to", "target_canonical_id": "law_labor_code_art_425"}
+      ],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "Tibbiy-ijtimoiy ekspertiza komissiyasining nogironligi bo'lgan xodimga to'liqsiz ish vaqti, yuklamani kamaytirish va boshqa mehnat sharoitlari to'g'risidagi tavsiyalari ish beruvchi uchun bajarilishi majburiydir.",
+          "ru": "Рекомендации медико-социальной экспертной комиссии об установлении неполного рабочего времени и других условий труда обязательны для работодателя.",
+          "en": "Recommendations of the medical-social expert commission regarding part-time work and other working conditions are mandatory for employers."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "Nogironligi bo'lgan shaxslar mehnatidan foydalanishda ularning huquqlari to'liq kafolatlanadi. Tibbiy-ijtimoiy ekspert komissiyasining nogironligi bo'lgan xodimga to'liqsiz ish vaqti rejimini belgilash, ish hajmini kamaytirish va boshqa mehnat sharoitlari to'g'risidagi tavsiyalari ish beruvchi tomonidan bajarilishi shart. Mehnat shartnomasida nogironlik belgisi bo'yicha kamsituvchi shartlarni belgilash taqiqlanadi.",
+      "ru": "При использовании труда лиц с инвалидностью гарантируются их законные права. Рекомендации медико-социальной экспертной комиссии об установлении неполного рабочего времени, снижении нагрузки и других условий труда обязательны для выполнения работодателем. Запрещается включение в трудовой договор условий, ухудшающих положение работника по признаку инвалидности.",
+      "en": "When employing persons with disabilities, their statutory rights are strictly guaranteed. Recommendations of the medical-social expert commission regarding reduced hours, lower workload, and workplace adjustments are mandatory for employers to implement. Discriminatory contract clauses are prohibited."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  },
+  {
+    "canonical_id": "law_labor_code_art_427",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "law_labor_code_2022",
+      "law_title": {
+        "uz": "O'zbekiston Respublikasining Mehnat kodeksi",
+        "ru": "Трудовой кодекс Республики Узбекистан",
+        "en": "Labor Code of the Republic of Uzbekistan"
+      },
+      "law_number": "O'RQ-798",
+      "chapter_number": "XXIV bob",
+      "article_number": "427-modda",
+      "article_title": {
+        "uz": "Nogironligi bo'lgan xodimlarga har yilgi asosiy uzaytirilgan ta'tillar berish",
+        "ru": "Ежегодные основные удлиненные отпуска работникам с инвалидностью",
+        "en": "Annual extended basic leave for employees with disabilities"
+      },
+      "source_url": "https://lex.uz/docs/6257288",
+      "effective_date": "2023-04-30",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:labor_427_hash",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "labor_code",
+      "disability_types": ["general", "physical", "visual", "hearing"],
+      "beneficiary_type": ["individual", "employer"],
+      "cross_references": [],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "I va II guruh nogironligi bo'lgan xodimlarga davomiyligi kamida o'ttiz kalendar kun bo'lgan har yilgi asosiy uzaytirilgan mehnat ta'tili beriladi.",
+          "ru": "Работникам с инвалидностью I и II групп предоставляется ежегодный основной удлиненный отпуск продолжительностью не менее тридцати календарных дней.",
+          "en": "Employees with group I and II disabilities are granted annual extended basic leave of not less than thirty calendar days."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "I va II guruh nogironligi bo'lgan xodimlarga davomiyligi kamida o'ttiz kalendar kundan iborat bo'lgan har yilgi asosiy uzaytirilgan mehnat ta'tili beriladi. Shuningdek, xodimning xohishiga ko'ra unga ish haqi saqlanmagan holda o'n to'rt kalendar kungacha bo'lgan qo'shimcha ta'til berilishi shart.",
+      "ru": "Работникам с инвалидностью I и II групп предоставляется ежегодный основной удлиненный отпуск продолжительностью не менее тридцати календарных дней. Также по желанию работника ему в обязательном порядке предоставляется отпуск без сохранения заработной платы продолжительностью до четырнадцати календарных дней.",
+      "en": "Employees with group I and II disabilities are granted annual extended basic paid leave of at least thirty calendar days. In addition, upon employee request, unpaid leave of up to fourteen calendar days per year must be provided."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  }
+]

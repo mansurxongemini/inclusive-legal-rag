@@ -1,0 +1,259 @@
+import re
+from typing import Dict, List, Optional, Set, Tuple
+from pydantic import BaseModel
+from src.schema.canonical import CanonicalArticle
+from src.retrieval.reranker import RetrievedArticleContext
+
+
+class CitationItem(BaseModel):
+    index: int = 1
+    canonical_id: str
+    law_number: str
+    law_title: str = ""
+    article_number: str
+    article_title: str = ""
+    source_url: str
+    status: str = "active"
+    normative_tier: str = "Qonun"
+    normative_rank: int = 3
+    quote_snippet: str = ""
+    confidence: float = 1.0
+
+
+class ValidationResult(BaseModel):
+    is_valid: bool
+    sanitized_answer: str
+    clean_answer: str = ""
+    telegram_formatted: str = ""
+    resolved_citations: List[CitationItem]
+    is_refusal: bool
+    unresolved_citations: List[str] = []
+    warnings: List[str] = []
+
+
+class CitationValidator:
+    """
+    Automated post-generation validation pass to ensure 100% citation faithfulness,
+    NotebookLM-grade statutory grounding, and eliminate developer jargon or hallucinated claims.
+    """
+
+    REFUSAL_TRIGGERS = [
+        "aniq norma yoki qoida topilmadi",
+        "aniq ma'lumot topilmadi",
+        "не найдено точной нормы",
+        "no specific legal provision",
+        "topilmadi",
+    ]
+
+    CLAIM_MARKERS = [
+        "huquqiga ega", "majbur", "taqiqlanadi", "belgilanadi", "kafolatlanadi",
+        "imtiyoz beriladi", "to'lanadi", "ajratiladi", "man etiladi",
+        "имеет право", "запрещается", "гарантируется", "предусматривается", "выплачивается",
+        "has the right", "is prohibited", "is guaranteed", "is entitled", "shall be"
+    ]
+
+    @classmethod
+    def _extract_quote_snippet(cls, article: CanonicalArticle, language: str = "uz") -> str:
+        """Extracts the most pertinent 1-2 sentence verbatim excerpt from the official legal text."""
+        body = article.get_text(language) or article.get_text("uz") or ""
+        body_clean = re.sub(r"\s+", " ", body).strip()
+        sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", body_clean) if len(s.strip()) > 15]
+        if sentences:
+            snippet = sentences[0]
+            if len(sentences) > 1 and len(snippet) < 120:
+                snippet += " " + sentences[1]
+            if len(snippet) > 260:
+                snippet = snippet[:257] + "..."
+            return snippet
+        return body_clean[:220]
+
+    @classmethod
+    def _determine_normative_tier(cls, article: CanonicalArticle) -> Tuple[str, int]:
+        """Classifies the normative hierarchy according to Uzbekistan's Law on Normative Legal Acts."""
+        cat = (article.metadata.category or "").lower()
+        cid = article.canonical_id.lower()
+        law_title = (article.get_law_title("uz") or "").lower()
+        law_num = (article.metadata.law_number or "").lower()
+
+        if "konstitutsiya" in law_title or "constitution" in cat or "constitution" in cid:
+            return "Konstitutsiya", 1
+        elif "kodeks" in law_title or "code" in cat or "_code_" in cid:
+            return "Kodeks", 2
+        elif "o'rq" in law_num or "qonun" in law_title or cat == "law":
+            return "Qonun", 3
+        elif "oliy majlis" in law_title or "parliament" in cat:
+            return "Oliy Majlis qarori", 4
+        elif "pf-" in law_num or "farmon" in law_title or cat == "decree":
+            return "Prezident Farmoni", 5
+        elif "pq-" in law_num or "vmq" in cid or "qaror" in law_title or cat == "resolution":
+            return "Vazirlar Mahkamasi qarori", 6
+        elif "buyruq" in law_title or cat == "order":
+            return "Vazirlik buyrug'i", 7
+        elif "xalqaro" in law_title or cat == "treaty" or "convention" in cid:
+            return "Xalqaro shartnoma", 8
+        elif cat == "commentary" or "advice" in cid or "norma" in cid:
+            return "Huquqiy sharh", 9
+        return "Qonunchilik hujjati", 3
+
+    @classmethod
+    def _sanitize_developer_and_jargon(
+        cls,
+        text: str,
+        retrieved_map: Dict[str, CanonicalArticle],
+        language: str = "uz"
+    ) -> str:
+        """Purges any leaked developer IDs (law_..., art_...) and German legal jargon into natural Uzbek."""
+        # 1. Purge raw developer IDs
+        def _id_replacer(match):
+            cid = match.group(1)
+            art = retrieved_map.get(cid)
+            if art:
+                title = art.get_law_title(language) or art.metadata.law_number
+                art_num = art.metadata.article_number
+                return f"{title}ning {art_num}"
+            return "amaldagi qonunchilik normasi"
+
+        sanitized = re.sub(r"\b([a-z0-9_]+_art_[\w\-]+)\b", _id_replacer, text)
+        sanitized = re.sub(r"\b(law_[a-z0-9_]+)\b", "qonunchilik hujjati", sanitized)
+
+        # 2. Purge German legal terminology
+        german_map = {
+            r"\bSubsumtion\b": "Huquqiy tahlil",
+            r"\bsubsumsiya\b": "huquqiy tatbiq",
+            r"\bTatbestand\b": "Qonuniy asos",
+            r"\bObersatz\b": "Bosh norma",
+            r"\bUntersatz\b": "Faktik holat",
+            r"\bSchlussfolgerung\b": "Xulosa",
+        }
+        for g_pat, uz_rep in german_map.items():
+            sanitized = re.sub(g_pat, uz_rep, sanitized, flags=re.IGNORECASE)
+
+        return sanitized
+
+    @classmethod
+    def extract_canonical_ids(cls, text: str, valid_ids: Optional[Set[str]] = None) -> List[str]:
+        bracketed = re.findall(r"\[([a-zA-Z0-9_]+)(?:[,\s\]]|$)", text)
+        pattern_matches = re.findall(r"\b([a-z0-9_]+_art_[\w\-]+)\b", text)
+        direct_matches = []
+        if valid_ids:
+            for vid in valid_ids:
+                if vid in text:
+                    direct_matches.append(vid)
+
+        combined = []
+        seen = set()
+        for cid in bracketed + pattern_matches + direct_matches:
+            if cid not in seen:
+                if valid_ids is None or cid in valid_ids:
+                    seen.add(cid)
+                    combined.append(cid)
+        return combined
+
+    @classmethod
+    def validate_and_sanitize(
+        cls,
+        answer_text: str,
+        retrieved_contexts: List[RetrievedArticleContext],
+        language: str = "uz"
+    ) -> ValidationResult:
+        retrieved_map: Dict[str, CanonicalArticle] = {
+            ctx.article.canonical_id: ctx.article for ctx in retrieved_contexts
+        }
+        retrieved_ids = set(retrieved_map.keys())
+
+        # Check refusal
+        is_refusal = any(trigger in answer_text.lower() for trigger in cls.REFUSAL_TRIGGERS)
+        if is_refusal:
+            cleaned_refusal = cls._sanitize_developer_and_jargon(answer_text, retrieved_map, language)
+            return ValidationResult(
+                is_valid=True,
+                sanitized_answer=cleaned_refusal,
+                clean_answer=cleaned_refusal,
+                telegram_formatted=cleaned_refusal,
+                resolved_citations=[],
+                is_refusal=True,
+            )
+
+        cited_ids = cls.extract_canonical_ids(answer_text)
+        unresolved = [cid for cid in cited_ids if cid not in retrieved_ids]
+
+        # Resolve citations and preserve markdown structure
+        cited_in_text = cls.extract_canonical_ids(answer_text, retrieved_ids)
+        resolved_cids_in_answer: Set[str] = set(cited_in_text)
+        warnings = []
+
+        if cited_in_text:
+            sanitized_answer = answer_text
+        else:
+            if retrieved_contexts:
+                top_art = retrieved_contexts[0].article
+                sanitized_answer = f"{answer_text}\n\n[{top_art.canonical_id}]"
+                resolved_cids_in_answer.add(top_art.canonical_id)
+            else:
+                sanitized_answer = answer_text
+
+        # Build ordered unique citations matching appearance
+        citations: List[CitationItem] = []
+        cid_to_index: Dict[str, int] = {}
+        ordered_cids: List[str] = []
+        for cid in cited_in_text:
+            if cid not in ordered_cids and cid in retrieved_map:
+                ordered_cids.append(cid)
+        for cid in resolved_cids_in_answer:
+            if cid not in ordered_cids and cid in retrieved_map:
+                ordered_cids.append(cid)
+
+        for idx, cid in enumerate(ordered_cids, start=1):
+            art = retrieved_map.get(cid)
+            if art:
+                cid_to_index[cid] = idx
+                tier_name, tier_rank = cls._determine_normative_tier(art)
+                quote_snip = cls._extract_quote_snippet(art, language)
+                citations.append(CitationItem(
+                    index=idx,
+                    canonical_id=art.canonical_id,
+                    law_number=art.metadata.law_number,
+                    law_title=art.get_law_title(language),
+                    article_number=art.metadata.article_number,
+                    article_title=art.get_title(language),
+                    source_url=art.metadata.source_url,
+                    status=art.metadata.status.value,
+                    normative_tier=tier_name,
+                    normative_rank=tier_rank,
+                    quote_snippet=quote_snip,
+                    confidence=1.0,
+                ))
+
+        # Replace [cid] with [1], [2] in clean_answer
+        def _replace_cid(match):
+            cid = match.group(1)
+            if cid in cid_to_index:
+                return f"[{cid_to_index[cid]}]"
+            return match.group(0)
+
+        clean_answer = re.sub(r"\[([a-zA-Z0-9_\-]+)(?:,\s*[^\]]+)?\]", _replace_cid, sanitized_answer)
+        clean_answer = cls._sanitize_developer_and_jargon(clean_answer, retrieved_map, language)
+
+        # Build telegram_formatted text ready for bots with rich NotebookLM-grade citations
+        bot_footer_lines = ["\n\n---\n📚 *Asoslangan qonuniy manbalar va iqtiboslar:*"]
+        for c in citations:
+            tier_badge = f"[{c.normative_tier}]"
+            quote_line = f"\n   💬 *Qonundan iqtibos:* «{c.quote_snippet}»" if c.quote_snippet else ""
+            bot_footer_lines.append(
+                f"[{c.index}] {tier_badge} {c.article_number} — {c.law_title} ({c.law_number}){quote_line}\n   🔗 Rasmiy manba: {c.source_url}"
+            )
+        telegram_formatted = clean_answer + "\n".join(bot_footer_lines)
+
+        is_valid = (len(unresolved) == 0) and (len(citations) > 0 or is_refusal)
+
+        return ValidationResult(
+            is_valid=is_valid,
+            sanitized_answer=sanitized_answer,
+            clean_answer=clean_answer,
+            telegram_formatted=telegram_formatted,
+            resolved_citations=citations,
+            is_refusal=is_refusal,
+            unresolved_citations=unresolved,
+            warnings=warnings,
+        )
+

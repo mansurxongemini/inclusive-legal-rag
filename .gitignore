@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+data/store/
+data/cache/
+data/backups/
+data/laws_catalog/
+*.log
+.env
+.DS_Store
