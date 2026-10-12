@@ -6,28 +6,65 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from src.schema.canonical import CanonicalArticle, ArticleStatus
+from src.api.auth.admin import require_admin
 from src.ingestion.lex_parser import parse_law_text_file
+from src.ingestion.url_safety import is_lex_uz_url
+from src.schema.canonical import CanonicalArticle, ArticleStatus
+from src.storage.sqlite_utils import connect as sqlite_connect
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Admin"])
 
+# Static HTML pages stay public; every /api/v1/admin/* route requires administrator access.
+_ADMIN = [Depends(require_admin)]
+
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+
+def _invalidate_answer_cache() -> None:
+    """Cached answers describe the corpus as it was; drop them whenever norms change."""
+    from src.api.app import get_cache
+    try:
+        get_cache().clear()
+    except Exception as e:
+        logger.warning(f"Could not clear query cache: {e}")
+
+
+_STATIC = Path(__file__).resolve().parent.parent.parent / "admin" / "static"
+
+
+def _read_static(name: str, missing: str) -> str:
+    f = _STATIC / name
+    return f.read_text(encoding="utf-8") if f.exists() else missing
+
+
+@router.get("/", response_class=HTMLResponse)
+@router.get("/ask", response_class=HTMLResponse)
+async def serve_public_page():
+    """Citizen-facing, accessible question page."""
+    return _read_static("ask.html", "<h1>ask.html not found.</h1>")
+
 
 @router.get("/admin", response_class=HTMLResponse)
 async def serve_admin_dashboard():
-    static_file = Path(__file__).resolve().parent.parent.parent / "admin" / "static" / "index.html"
+    return _read_static("index.html", "<h1>Admin dashboard index.html not found.</h1>")
+
+
+@router.get("/admin-v2", response_class=HTMLResponse)
+async def serve_admin_dashboard_v2():
+    static_file = Path(__file__).resolve().parent.parent.parent / "admin" / "static" / "index_v2.html"
     if static_file.exists():
         with open(static_file, "r", encoding="utf-8") as f:
             return f.read()
-    return "<h1>Admin dashboard index.html not found.</h1>"
+    return "<h1>Admin dashboard index_v2.html not found.</h1>"
 
 
-@router.get("/api/v1/admin/stats")
+@router.get("/api/v1/admin/stats", dependencies=_ADMIN)
 async def get_admin_stats():
     from src.api.app import get_store
     from src.api.routes.health import get_process_memory_mb
@@ -35,16 +72,16 @@ async def get_admin_stats():
 
     total = store.count()
 
-    conn = sqlite3.connect(store.fts_store.db_path)
-    c = conn.cursor()
-    c.execute("SELECT category, COUNT(*) FROM articles_metadata GROUP BY category")
-    categories = dict(c.fetchall())
+    with sqlite_connect(store.fts_store.db_path) as conn:
+        c = conn.cursor()
+        c.execute("SELECT category, COUNT(*) FROM articles_metadata GROUP BY category")
+        categories = dict(c.fetchall())
 
-    c.execute("SELECT status, COUNT(*) FROM articles_metadata GROUP BY status")
-    statuses = dict(c.fetchall())
+        c.execute("SELECT status, COUNT(*) FROM articles_metadata GROUP BY status")
+        statuses = dict(c.fetchall())
 
-    c.execute("SELECT COUNT(DISTINCT json_extract(json_data, '$.metadata.law_id')) FROM articles_metadata")
-    total_docs = c.fetchone()[0]
+        c.execute("SELECT COUNT(DISTINCT json_extract(json_data, '$.metadata.law_id')) FROM articles_metadata")
+        total_docs = c.fetchone()[0]
 
     return {
         "total_articles": total,
@@ -55,15 +92,15 @@ async def get_admin_stats():
     }
 
 
-@router.get("/api/v1/admin/hierarchy")
+@router.get("/api/v1/admin/hierarchy", dependencies=_ADMIN)
 async def get_admin_hierarchy():
     """Returns all legislation grouped hierarchically into Codes, Laws, Conventions, and Others."""
     from src.api.app import get_store
     store = get_store()
 
-    conn = sqlite3.connect(store.fts_store.db_path)
-    c = conn.cursor()
-    c.execute("""
+    with sqlite_connect(store.fts_store.db_path) as conn:
+        c = conn.cursor()
+        c.execute("""
         SELECT 
             json_extract(json_data, '$.metadata.law_id') as law_id,
             json_extract(json_data, '$.metadata.law_title.uz') as title_uz,
@@ -77,7 +114,7 @@ async def get_admin_hierarchy():
         GROUP BY law_id
         ORDER BY art_count DESC
     """)
-    rows = c.fetchall()
+        rows = c.fetchall()
 
     types = {
         "constitution": {
@@ -304,21 +341,21 @@ async def get_admin_hierarchy():
     }
 
 
-@router.get("/api/v1/admin/documents/{law_id}/articles")
+@router.get("/api/v1/admin/documents/{law_id}/articles", dependencies=_ADMIN)
 async def get_document_articles(law_id: str):
     """Returns all articles belonging to a specific law_id."""
     from src.api.app import get_store
     store = get_store()
 
-    conn = sqlite3.connect(store.fts_store.db_path)
-    c = conn.cursor()
-    c.execute("""
-        SELECT canonical_id, json_data, status, category, last_verified_date
-        FROM articles_metadata
-        WHERE json_extract(json_data, '$.metadata.law_id') = ?
-        ORDER BY canonical_id ASC
-    """, (law_id,))
-    rows = c.fetchall()
+    with sqlite_connect(store.fts_store.db_path) as conn:
+        c = conn.cursor()
+        c.execute("""
+            SELECT canonical_id, json_data, status, category, last_verified_date
+            FROM articles_metadata
+            WHERE json_extract(json_data, '$.metadata.law_id') = ?
+            ORDER BY canonical_id ASC
+        """, (law_id,))
+        rows = c.fetchall()
 
     results = []
     for cid, jdata, st, cat, lvd in rows:
@@ -373,24 +410,34 @@ async def get_document_articles(law_id: str):
 
 
 class ArticleUpdatePayload(BaseModel):
-    title_uz: str
-    title_ru: Optional[str] = None
-    text_uz: str
+    title_uz: str = Field(..., min_length=1, max_length=500)
+    title_ru: Optional[str] = Field(default=None, max_length=500)
+    text_uz: str = Field(..., min_length=1)
     text_ru: Optional[str] = None
     status: str = "active"
     revectorize: bool = True
 
 
-@router.put("/api/v1/admin/article/{canonical_id}")
+@router.put("/api/v1/admin/article/{canonical_id}", dependencies=_ADMIN)
 async def update_admin_article(canonical_id: str, payload: ArticleUpdatePayload):
     """Updates article title/content and re-indexes into SQLite FTS5 and LanceDB."""
     from src.api.app import get_store, get_client
     store = get_store()
     client = get_client()
 
-    article = store.get_article(canonical_id)
-    if not article:
+    existing = store.get_article(canonical_id)
+    if not existing:
         raise HTTPException(status_code=404, detail=f"Article {canonical_id} not found")
+
+    # An unknown status used to be ignored in the database but still written to the JSON backup below.
+    try:
+        new_status = ArticleStatus(payload.status)
+    except ValueError:
+        allowed = ", ".join(s.value for s in ArticleStatus)
+        raise HTTPException(status_code=422, detail=f"Noto'g'ri status: {payload.status!r}. Ruxsat etilgan: {allowed}")
+
+    # Edit a copy: the store returns its cached instance, and a failed save must not leak into it.
+    article = existing.model_copy(deep=True)
 
     # Update article data
     article.metadata.article_title["uz"] = payload.title_uz
@@ -401,10 +448,7 @@ async def update_admin_article(canonical_id: str, payload: ArticleUpdatePayload)
     if payload.text_ru:
         article.translations["ru"] = payload.text_ru
 
-    try:
-        article.metadata.status = ArticleStatus(payload.status)
-    except ValueError:
-        pass
+    article.metadata.status = new_status
 
     # Update hash and timestamp
     hasher = hashlib.sha256()
@@ -414,9 +458,14 @@ async def update_admin_article(canonical_id: str, payload: ArticleUpdatePayload)
 
     # Save to storage
     if payload.revectorize:
-        await store.index_article(article, client=client)
+        try:
+            await store.index_article(article, client=client)
+        except Exception as e:
+            logger.error(f"Re-vectorization failed for {canonical_id}: {e}", exc_info=True)
+            raise HTTPException(status_code=502, detail="Qayta vektorlash amalga oshmadi. Modda o'zgarmadi.")
     else:
         store.fts_store.upsert_article(article)
+    _invalidate_answer_cache()
 
     # If cached file exists, update JSON backup as well
     law_id = article.metadata.law_id
@@ -452,15 +501,20 @@ async def update_admin_article(canonical_id: str, payload: ArticleUpdatePayload)
 
 
 
-@router.post("/api/v1/admin/upload")
+@router.post("/api/v1/admin/upload", dependencies=_ADMIN)
 async def upload_law_file(file: UploadFile = File(...)):
     """Uploads and indexes law files (.json, .txt, or .md)."""
     from src.api.app import get_store, get_client
     store = get_store()
     client = get_client()
 
-    content = await file.read()
-    text_content = content.decode("utf-8")
+    content = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Fayl hajmi 10 MB dan oshmasligi kerak.")
+    try:
+        text_content = content.decode("utf-8-sig")  # tolerates a UTF-8 BOM
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="Fayl UTF-8 kodlashida bo'lishi kerak.")
     filename = file.filename or "unknown.txt"
 
     indexed_count = 0
@@ -485,6 +539,8 @@ async def upload_law_file(file: UploadFile = File(...)):
     else:
         raise HTTPException(status_code=400, detail="Only .json, .txt, and .md files supported.")
 
+    _invalidate_answer_cache()
+
     return {
         "status": "success",
         "filename": filename,
@@ -503,7 +559,7 @@ class PreviewUrlRequest(BaseModel):
     url: str
 
 
-@router.post("/api/v1/admin/preview-url")
+@router.post("/api/v1/admin/preview-url", dependencies=_ADMIN)
 async def preview_web_url(req: PreviewUrlRequest):
     """Previews content, metadata, smart chunks, and cited laws from ANY legal website or Lex.uz."""
     from src.ingestion.web_article_ingester import WebArticleIngester
@@ -542,12 +598,14 @@ async def preview_web_url(req: PreviewUrlRequest):
                 for ch in chunks[:4]
             ]
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"URL preview error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Havolani tahlil qilishda xatolik: {str(e)}")
+        raise HTTPException(status_code=502, detail="Havolani tahlil qilib bo'lmadi.")
 
 
-@router.get("/api/v1/admin/ingest-status")
+@router.get("/api/v1/admin/ingest-status", dependencies=_ADMIN)
 async def get_ingest_status():
     """Returns the current state and progress of the autonomous ingestion engine."""
     from src.ingestion.universal_engine import UniversalAutonomousEngine
@@ -563,7 +621,7 @@ async def get_ingest_status():
     }
 
 
-@router.post("/api/v1/admin/ingest-url")
+@router.post("/api/v1/admin/ingest-url", dependencies=_ADMIN)
 async def ingest_any_url(req: IngestUrlRequest):
     """Universal endpoint to ingest from ANY legal website (Norma.uz, Advice.uz, Minjust, etc.) or Lex.uz."""
     from src.api.app import get_store, get_client
@@ -576,37 +634,58 @@ async def ingest_any_url(req: IngestUrlRequest):
     store = get_store()
     client = get_client()
 
-    # Case A: Lex.uz document URL or Doc ID
-    if "lex.uz" in clean_url or clean_url.strip("-").isdigit():
+    # Case A: Lex.uz document URL (host checked strictly) or a bare Doc ID
+    if is_lex_uz_url(clean_url) or clean_url.lstrip("-").isdigit():
         from src.ingestion.universal_engine import UniversalAutonomousEngine, DocumentSpec
-        if not clean_url.startswith("http"):
-            clean_url = f"https://lex.uz/docs/{clean_url}"
-        doc_id = clean_url.rstrip("/").split("/")[-1].replace("-", "")
+
+        # The document ID is the number after /docs/ - not the first digits anywhere in the string
+        # (that picked up e.g. the "2" of "www2.lex.uz").
+        id_match = re.search(r"/docs/-?(\d+)", clean_url) or re.fullmatch(r"-?(\d+)", clean_url)
+        if not id_match:
+            raise HTTPException(status_code=400, detail="Lex.uz havolasidan hujjat raqami (ID) aniqlanmadi.")
+        doc_id = id_match.group(1)
+
+        # Decide the document type from what the user supplied; the canonical URL built below never contains it.
+        looks_like_regulation = any(k in clean_url.lower() for k in ("qaror", "nizom"))
+        clean_url = f"https://lex.uz/docs/{doc_id}"
 
         engine = UniversalAutonomousEngine(store=store, client=client)
         spec = DocumentSpec(
             slug=f"doc_{doc_id}",
-            category="regulations" if "qaror" in clean_url.lower() or "nizom" in clean_url.lower() else "laws",
+            category="regulations" if looks_like_regulation else "laws",
             doc_number=f"Hujjat #{doc_id}",
             title_uz=req.custom_title or f"Lex.uz Hujjat #{doc_id}",
             effective_date="2022-01-01",
             url_uz=clean_url,
-            parser_type="regulation_clause" if "qaror" in clean_url.lower() or "nizom" in clean_url.lower() else "statutory_article",
+            parser_type="regulation_clause" if looks_like_regulation else "statutory_article",
             max_point_number=500,
         )
         try:
             async with httpx.AsyncClient(timeout=45.0, follow_redirects=True) as hc:
                 count = await engine.ingest_spec(spec, hc, force_reindex=True)
+
+            if count == 0:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Hujjat (#{doc_id}) dan birorta ham modda yoki band ajratib olinmadi. Havola yoki hujjat raqamini tekshiring."
+                )
+
+            doc_title = spec.title_uz if spec.title_uz and not spec.title_uz.startswith("Lex.uz Hujjat #") else f"Hujjat #{doc_id}"
+            _invalidate_answer_cache()
             return {
                 "status": "success",
                 "source": "lex.uz",
                 "indexed_articles": count,
                 "url": clean_url,
                 "doc_id": doc_id,
-                "message": f"{count} ta modda/band Lex.uz dan avtomatik yuklandi va indekslandi."
+                "title": doc_title,
+                "message": f"«{doc_title}» hujjatidan {count} ta modda/band Lex.uz dan muvaffaqiyatli yuklandi va indekslandi."
             }
+        except HTTPException:
+            raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Lex.uz yuklashda xatolik: {str(e)}")
+            logger.error(f"Lex.uz ingest error for doc {doc_id}: {e}", exc_info=True)
+            raise HTTPException(status_code=502, detail="Lex.uz dan hujjatni yuklab bo'lmadi.")
 
     # Case B: Any external legal portal or news website (Norma.uz, Advice.uz, Minjust.uz, etc.)
     from src.ingestion.web_article_ingester import WebArticleIngester
@@ -618,6 +697,7 @@ async def ingest_any_url(req: IngestUrlRequest):
             custom_title=req.custom_title,
             custom_category=req.category or "commentary",
         )
+        _invalidate_answer_cache()
         return {
             "status": "success",
             "source": result["domain"],
@@ -627,12 +707,14 @@ async def ingest_any_url(req: IngestUrlRequest):
             "detected_references": result["detected_references"],
             "message": f"'{result['title']}' maqolasi ({result['domain']}) aqlli bo'laklarga ajratilib, {result['indexed_count']} ta tahliliy qism sifatida bazaga kiritildi!"
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"External URL ingest error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Maqolani yuklashda xatolik: {str(e)}")
+        raise HTTPException(status_code=502, detail="Maqolani yuklab bo'lmadi.")
 
 
-@router.delete("/api/v1/admin/article/{canonical_id}")
+@router.delete("/api/v1/admin/article/{canonical_id}", dependencies=_ADMIN)
 async def delete_admin_article(canonical_id: str):
     from src.api.app import get_store
     store = get_store()
@@ -640,4 +722,5 @@ async def delete_admin_article(canonical_id: str):
     if not existing:
         raise HTTPException(status_code=404, detail="Article not found")
     store.delete_article(canonical_id)
+    _invalidate_answer_cache()
     return {"status": "success", "message": f"{canonical_id} o'chirildi."}

@@ -9,9 +9,11 @@ from src.config import settings
 from src.storage.hybrid_store import HybridStore
 from src.api.cache import QueryCache
 from src.clients.openrouter import OpenRouterClient
-from src.api.routes import query, article, feedback, health, admin
+from src.api.routes import query, article, feedback, health, admin, inclusive_api
 
 logger = logging.getLogger(__name__)
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 # Global instances
 _store: Optional[HybridStore] = None
@@ -23,6 +25,8 @@ def get_store() -> HybridStore:
     global _store
     if _store is None:
         _store = HybridStore()
+        # Importers and admin routes index through this store; reuse the app's single HTTP client.
+        _store._default_client = get_client()
     return _store
 
 
@@ -44,11 +48,16 @@ def get_client() -> OpenRouterClient:
 async def lifespan(app: FastAPI):
     # Startup: ensure directories & seed pilot dataset if empty
     settings.ensure_directories()
+    if settings.is_mock_mode and not settings.MOCK_EXTERNAL_APIS:
+        logger.warning(
+            "OPENROUTER_API_KEY is not set: running in MOCK mode. Answers are deterministic placeholders, "
+            "not real legal analysis. Configure the key (or set MOCK_EXTERNAL_APIS=true to silence this)."
+        )
     store = get_store()
     client = get_client()
 
     if store.count() == 0:
-        pilot_file = Path("data/pilot_laws/law_disability_2020.json")
+        pilot_file = _PROJECT_ROOT / "data" / "pilot_laws" / "law_disability_2020.json"
         if pilot_file.exists():
             logger.info("Initializing knowledge base with pilot disability rights law...")
             await store.seed_from_file(str(pilot_file), client=client)
@@ -68,17 +77,24 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Enable CORS
+    # Enable CORS (no cookies are used, so credentialed cross-origin requests are not needed)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
-        allow_credentials=True,
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
+    # Mount static files for admin panel
+    from fastapi.staticfiles import StaticFiles
+    static_dir = Path(__file__).resolve().parent.parent / "admin" / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
     # Include routes
     app.include_router(health.router)
+    app.include_router(inclusive_api.router)
     app.include_router(query.router)
     app.include_router(article.router)
     app.include_router(feedback.router)

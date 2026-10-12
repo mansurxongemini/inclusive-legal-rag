@@ -49,63 +49,6 @@ def expand_cross_references(
                     if added_count >= max_extra:
                         break
 
-    # 2. Blanket Disposition Synergy (Connecting Blanket Norms to Regulations)
-    BLANKET_COMPANIONS = {
-        "mjtk_code_art_128": ["vmq_172_yhq_art_65", "vmq_172_yhq_art_16"],
-        "mjtk_code_art_128_3": ["vmq_172_yhq_art_76", "vmq_172_yhq_art_77"],
-        "mjtk_code_art_128_4": ["vmq_172_yhq_art_28", "vmq_172_yhq_art_31"],
-        "mjtk_code_art_128_5": ["vmq_172_yhq_art_84"],
-        "mjtk_code_art_128_6": ["vmq_172_yhq_art_89", "vmq_172_yhq_art_90"],
-    }
-
-    for c in candidates:
-        if added_count >= max_extra:
-            break
-        if c.canonical_id in BLANKET_COMPANIONS:
-            for b_cid in BLANKET_COMPANIONS[c.canonical_id]:
-                if added_count >= max_extra:
-                    break
-                if b_cid not in existing_ids:
-                    b_art = store.get_article(b_cid)
-                    if b_art:
-                        existing_ids.add(b_cid)
-                        expanded_results.append(ScoredArticle(
-                            canonical_id=b_cid,
-                            rrf_score=c.rrf_score * 0.85,
-                            source_tag=f"blanket_companion:{c.canonical_id}",
-                        ))
-                        added_count += 1
-
-    # 3. German Dogmatics-Inspired Procedural & Jurisdictional Synergy
-    # Automatically provide procedural deadlines and remedies (Fristen & Rechtsbehelfe)
-    PROCEDURAL_COMPANIONS = {
-        "mjtk_code": ["mjtk_code_art_332_1", "mjtk_code_art_315", "mjtk_code_art_316", "mjtk_code_art_318"],
-        "mehnat_code": ["mehnat_code_art_560", "mehnat_code_art_543"],
-        "jinoyat_code": ["jinoyat_code_art_66_1", "jinoyat_code_art_64"],
-        "fuqarolik_code": ["fuqarolik_code_1_art_150"],
-        "soliq_code": ["soliq_code_art_231"],
-    }
-
-    if added_count < max_extra:
-        matched_codes = {}
-        for c in candidates:
-            for code_key in PROCEDURAL_COMPANIONS:
-                if code_key in c.canonical_id:
-                    matched_codes[code_key] = max(matched_codes.get(code_key, 0.0), c.rrf_score)
-
-        for code_key, max_parent_score in matched_codes.items():
-            for companion_cid in PROCEDURAL_COMPANIONS[code_key]:
-                if added_count >= max_extra:
-                    break
-                if companion_cid not in existing_ids:
-                    comp_art = store.get_article(companion_cid)
-                    if comp_art:
-                        existing_ids.add(companion_cid)
-                        expanded_results.append(ScoredArticle(
-                            canonical_id=companion_cid,
-                            rrf_score=max_parent_score * 0.70,
-                            source_tag=f"procedural_companion:{code_key}",
-                        ))
-                        added_count += 1
-
+    # Cross-references are the only expansion source: hand-written article chains from other legal domains
+    # (mortgage, LLC governance, MJtK) used ids that are not part of this corpus.
     return expanded_results

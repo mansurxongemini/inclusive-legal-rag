@@ -37,13 +37,24 @@ class CitationValidator:
     NotebookLM-grade statutory grounding, and eliminate developer jargon or hallucinated claims.
     """
 
+    # Phrases that unambiguously announce "no norm found".
     REFUSAL_TRIGGERS = [
         "aniq norma yoki qoida topilmadi",
+        "aniq norma topilmadi",
         "aniq ma'lumot topilmadi",
         "не найдено точной нормы",
+        "не найдено прямой нормы",
         "no specific legal provision",
-        "topilmadi",
+        "no explicit legal provision",
     ]
+    # A bare "topilmadi" is only a refusal for a short answer that cites nothing: substantive answers often say
+    # that one detail (a deadline, a form) was "not found" while still citing the governing norms.
+    WEAK_REFUSAL_TRIGGERS = ["topilmadi"]
+    SUBSTANTIVE_ANSWER_MIN_CHARS = 400
+
+    # Canonical IDs always contain underscores (law_x_art_5, pf_115_unit_3_1). Plain bracketed words such as
+    # "[Eslatma]" or numeric markers "[1]" are not citations and must not count as unresolved references.
+    _ID_LIKE = re.compile(r"^[a-z0-9]+(?:_[a-z0-9\-]+)+$")
 
     CLAIM_MARKERS = [
         "huquqiga ega", "majbur", "taqiqlanadi", "belgilanadi", "kafolatlanadi",
@@ -150,6 +161,18 @@ class CitationValidator:
         return combined
 
     @classmethod
+    def _detect_refusal(cls, answer_text: str, retrieved_ids: Set[str]) -> bool:
+        lowered = answer_text.lower()
+        if any(trigger in lowered for trigger in cls.REFUSAL_TRIGGERS):
+            return True
+        if not any(trigger in lowered for trigger in cls.WEAK_REFUSAL_TRIGGERS):
+            return False
+
+        body = re.split(r"\n\s*---", answer_text, maxsplit=1)[0].strip()  # ignore the appended disclaimer
+        cites_retrieved = bool(cls.extract_canonical_ids(answer_text, retrieved_ids))
+        return not (cites_retrieved and len(body) >= cls.SUBSTANTIVE_ANSWER_MIN_CHARS)
+
+    @classmethod
     def validate_and_sanitize(
         cls,
         answer_text: str,
@@ -162,7 +185,7 @@ class CitationValidator:
         retrieved_ids = set(retrieved_map.keys())
 
         # Check refusal
-        is_refusal = any(trigger in answer_text.lower() for trigger in cls.REFUSAL_TRIGGERS)
+        is_refusal = cls._detect_refusal(answer_text, retrieved_ids)
         if is_refusal:
             cleaned_refusal = cls._sanitize_developer_and_jargon(answer_text, retrieved_map, language)
             return ValidationResult(
@@ -175,20 +198,28 @@ class CitationValidator:
             )
 
         cited_ids = cls.extract_canonical_ids(answer_text)
-        unresolved = [cid for cid in cited_ids if cid not in retrieved_ids]
+        unresolved = [
+            cid for cid in cited_ids
+            if cid not in retrieved_ids and cls._ID_LIKE.match(cid)
+        ]
 
         # Resolve citations and preserve markdown structure
         cited_in_text = cls.extract_canonical_ids(answer_text, retrieved_ids)
         resolved_cids_in_answer: Set[str] = set(cited_in_text)
         warnings = []
 
+        no_explicit_citation = False
         if cited_in_text:
             sanitized_answer = answer_text
         else:
             if retrieved_contexts:
+                # The model cited nothing: attach the top-ranked norm as a reference for the reader, but do not
+                # present it as verification - the answer is flagged as not passing validation.
                 top_art = retrieved_contexts[0].article
                 sanitized_answer = f"{answer_text}\n\n[{top_art.canonical_id}]"
                 resolved_cids_in_answer.add(top_art.canonical_id)
+                no_explicit_citation = True
+                warnings.append("no_explicit_citation: answer did not cite any retrieved norm")
             else:
                 sanitized_answer = answer_text
 
@@ -229,22 +260,34 @@ class CitationValidator:
             cid = match.group(1)
             if cid in cid_to_index:
                 return f"[{cid_to_index[cid]}]"
+            if cid in unresolved:
+                # Never show a citation to a norm that was not retrieved.
+                return ""
             return match.group(0)
 
         clean_answer = re.sub(r"\[([a-zA-Z0-9_\-]+)(?:,\s*[^\]]+)?\]", _replace_cid, sanitized_answer)
         clean_answer = cls._sanitize_developer_and_jargon(clean_answer, retrieved_map, language)
 
+        # Clean citation spacing: [1] [2] -> [1][2], and [1] . -> [1].
+        clean_answer = re.sub(r"\]\s+\[", "][", clean_answer)
+        clean_answer = re.sub(r"\]\s+([.,;:!?])", r"]\1", clean_answer)
+        sanitized_answer = re.sub(r"\]\s+([.,;:!?])", r"]\1", sanitized_answer)
+
+        # Enforce zero-emoji policy across all generated text
+        sanitized_answer = cls._strip_emojis(sanitized_answer)
+        clean_answer = cls._strip_emojis(clean_answer)
+
         # Build telegram_formatted text ready for bots with rich NotebookLM-grade citations
-        bot_footer_lines = ["\n\n---\n📚 *Asoslangan qonuniy manbalar va iqtiboslar:*"]
+        bot_footer_lines = ["\n\n---\n*Asoslangan qonuniy manbalar va iqtiboslar:*"]
         for c in citations:
             tier_badge = f"[{c.normative_tier}]"
-            quote_line = f"\n   💬 *Qonundan iqtibos:* «{c.quote_snippet}»" if c.quote_snippet else ""
+            quote_line = f"\n   *Qonundan iqtibos:* «{c.quote_snippet}»" if c.quote_snippet else ""
             bot_footer_lines.append(
-                f"[{c.index}] {tier_badge} {c.article_number} — {c.law_title} ({c.law_number}){quote_line}\n   🔗 Rasmiy manba: {c.source_url}"
+                f"[{c.index}] {tier_badge} {c.article_number} — {c.law_title} ({c.law_number}){quote_line}\n   Rasmiy manba: {c.source_url}"
             )
         telegram_formatted = clean_answer + "\n".join(bot_footer_lines)
 
-        is_valid = (len(unresolved) == 0) and (len(citations) > 0 or is_refusal)
+        is_valid = (len(unresolved) == 0) and (len(citations) > 0 or is_refusal) and not no_explicit_citation
 
         return ValidationResult(
             is_valid=is_valid,
@@ -256,4 +299,15 @@ class CitationValidator:
             unresolved_citations=unresolved,
             warnings=warnings,
         )
+
+    @staticmethod
+    def _strip_emojis(text: str) -> str:
+        """Strips any emoji/pictograph codepoints to preserve serious legal advisory tone."""
+        pattern = re.compile(
+            r"[\U00010000-\U0010ffff]|[\u2600-\u27bf]|[\u2300-\u23ff]|[\u2b50-\u2b55]|[\ufe0f]"
+        )
+        cleaned = pattern.sub("", text)
+        cleaned = re.sub(r"^(#{1,6})\s+", r"\1 ", cleaned, flags=re.MULTILINE)
+        cleaned = re.sub(r"^(\s*[-*])\s+", r"\1 ", cleaned, flags=re.MULTILINE)
+        return cleaned
 

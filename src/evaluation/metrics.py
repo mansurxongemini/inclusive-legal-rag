@@ -31,17 +31,10 @@ class EvalSummaryReport(BaseModel):
     regression_gate_passed: bool
 
 
-EQUIVALENCE_CLUSTERS = [
-    {"law_labor_code_art_425", "mehnat_code_art_427", "mehnat_code_art_425"},
-    {"law_disability_2020_art_15", "law_o_rq_641_art_35", "law_o_rq_641_art_36"},
-    {"law_disability_2020_art_22", "law_o_rq_641_art_23", "law_o_rq_641_art_22"},
-    {"law_disability_2020_art_24", "law_o_rq_641_art_25", "law_o_rq_641_art_24"},
-    {"law_disability_2020_art_28", "law_o_rq_641_art_40"},
-    {"law_disability_2020_art_36", "law_o_rq_641_art_43"},
-    {"law_disability_2020_art_45", "law_o_rq_641_art_37"},
-    {"law_disability_2020_art_5", "law_o_rq_641_art_4"},
-    {"law_disability_2020_art_3", "law_o_rq_641_art_3"},
-]
+# Ids that may legitimately substitute for each other (e.g. a consolidated and an original edition).
+# Keep this empty unless two ids are verifiably the same provision: clusters between different articles only
+# inflate the score. (The previous list mapped unrelated article numbers to each other.)
+EQUIVALENCE_CLUSTERS: list = []
 
 CANONICAL_EQUIVALENTS = {}
 for cluster in EQUIVALENCE_CLUSTERS:

@@ -29,6 +29,7 @@ from src.schema.canonical import (
 from src.nlp.transliteration import cyrillic_to_latin, detect_script, normalize_apostrophes
 from src.storage.hybrid_store import HybridStore
 from src.clients.openrouter import OpenRouterClient
+from src.ingestion.url_safety import assert_public_http_url, httpx_public_request_hook
 
 logger = logging.getLogger(__name__)
 
@@ -86,8 +87,14 @@ class WebArticleIngester:
 
     @classmethod
     async def fetch_page(cls, url: str, timeout: float = 20.0) -> Tuple[str, str]:
-        """Fetches raw HTML and resolves final URL."""
-        async with httpx.AsyncClient(headers=DESKTOP_HEADERS, follow_redirects=True, timeout=timeout) as client:
+        """Fetches raw HTML and resolves final URL (public hosts only, redirects included)."""
+        assert_public_http_url(url)
+        async with httpx.AsyncClient(
+            headers=DESKTOP_HEADERS,
+            follow_redirects=True,
+            timeout=timeout,
+            event_hooks={"request": [httpx_public_request_hook]},
+        ) as client:
             resp = await client.get(url)
             if resp.status_code != 200:
                 raise RuntimeError(f"Saytga ulanib bo'lmadi: HTTP {resp.status_code} ({url})")

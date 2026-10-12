@@ -3,13 +3,12 @@ import logging
 from typing import List, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from src.domain.disability_taxonomy import CATEGORY_IDS, DISABILITY_GROUPS
 
 from src.nlp.query_analyzer import QueryAnalyzer, SupportedLanguage
-from src.retrieval.hybrid_retriever import HybridRetriever
-from src.retrieval.expansion import expand_cross_references
-from src.retrieval.status_filter import apply_status_and_amendment_filter
-from src.retrieval.reranker import Reranker
+from src.retrieval.pipeline import retrieve_contexts
 from src.generation.generator import AnswerGenerator
 from src.generation.validator import CitationItem
 from src.api.middleware.security import sanitize_user_input
@@ -21,10 +20,27 @@ router = APIRouter(prefix="/api/v1", tags=["Query"])
 
 
 class QueryRequest(BaseModel):
-    question: str = Field(..., description="Legal question from citizen or reviewer")
+    question: str = Field(..., min_length=1, max_length=4000, description="Legal question from citizen or reviewer")
     language: Literal["auto", "uz", "ru", "en"] = Field(default="auto", description="Preferred response language")
-    mode: Literal["plain", "legal_text", "subsumption"] = Field(default="plain", description="plain language summary, verbatim legal text, or German-style legal subsumption analysis")
-    conversation_id: Optional[str] = Field(default=None, description="Optional conversation trace ID")
+    mode: Literal["plain", "legal_text", "easy_read", "subsumption"] = Field(default="plain", description="plain language summary, verbatim legal text, easy-read, or structured analysis")
+    conversation_id: Optional[str] = Field(default=None, max_length=128, description="Optional conversation trace ID")
+    disability_group: str = Field(default="all", description="Beneficiary group to prioritize (see /api/v1/inclusive/categories)")
+    category: str = Field(default="all", description="Legal domain filter (see /api/v1/inclusive/categories)")
+
+    @field_validator("disability_group")
+    @classmethod
+    def _check_group(cls, v: str) -> str:
+        allowed = {"all", "general", *(g.id for g in DISABILITY_GROUPS)}
+        if v not in allowed:
+            raise ValueError(f"disability_group must be one of {sorted(allowed)}")
+        return v
+
+    @field_validator("category")
+    @classmethod
+    def _check_category(cls, v: str) -> str:
+        if v != "all" and v not in CATEGORY_IDS:
+            raise ValueError(f"category must be 'all' or one of {CATEGORY_IDS}")
+        return v
 
 
 class QueryResponse(BaseModel):
@@ -40,6 +56,9 @@ class QueryResponse(BaseModel):
     status_warnings: List[dict] = []
     conversation_id: Optional[str] = None
     cached: bool = False
+    cache_type: Optional[str] = None
+    semantic_similarity: Optional[float] = None
+    retrieval_confidence: Optional[float] = None
 
 
 @router.post("/query", response_model=QueryResponse)
@@ -53,6 +72,8 @@ async def query_legal_rag(
 
     # 2. Sanitize input against prompt injection
     cleaned_query = sanitize_user_input(payload.question)
+    if not cleaned_query:
+        raise HTTPException(status_code=422, detail="Savol matni bo'sh bo'lishi mumkin emas.")
 
     from src.api.app import get_store, get_cache, get_client
     store = get_store()
@@ -64,49 +85,58 @@ async def query_legal_rag(
     analysis = QueryAnalyzer.analyze(cleaned_query, user_language=user_lang)
     target_language = analysis.detected_language
 
+    # An explicit beneficiary group refines the detected ones
+    if payload.disability_group not in ("all", "general"):
+        if "general" in analysis.extracted_disability_types:
+            analysis.extracted_disability_types.remove("general")
+        if payload.disability_group not in analysis.extracted_disability_types:
+            analysis.extracted_disability_types.append(payload.disability_group)
+    groups_key = sorted(analysis.extracted_disability_types)
+    has_filters = payload.disability_group != "all" or payload.category != "all"
+    cache_text = f"{cleaned_query} [{payload.disability_group}|{payload.category}]" if has_filters else cleaned_query
+
     # 4. Check Layer 1: Canonical Normalized Query Cache (0.1ms)
     if not stream:
-        cached_resp = cache.get(cleaned_query, target_language, payload.mode)
+        cached_resp = cache.get(cache_text, target_language, payload.mode)
         if cached_resp:
             cached_resp["cached"] = True
             return cached_resp
 
     # Compute dense query vector for semantic cache check and retrieval
     query_vector = None
+    embedding_available = True
     if not client.is_mock:
         try:
             q_vectors = await client.get_embeddings([analysis.normalized_query])
             if q_vectors:
                 query_vector = q_vectors[0]
-                # Check Layer 2: Semantic Vector Cache (similarity >= 96%)
+                # Check Layer 2: Semantic Vector Cache (similarity >= 93%)
                 if not stream:
-                    sem_cached = cache.get_semantic(query_vector, target_language, payload.mode, threshold=0.96)
+                    sem_cached = cache.get_semantic(
+                        query_vector, target_language, payload.mode, threshold=0.95,
+                        accept=lambda d: d.get("_groups") == groups_key and not has_filters and not d.get("_filtered"),
+                    )
                     if sem_cached:
                         sem_cached["cached"] = True
                         return sem_cached
         except Exception as e:
+            embedding_available = False
             logger.warning(f"Error computing query vector for semantic cache: {e}")
 
-    # 5. Hybrid retrieval (BM25 + Vector + RRF) with comprehensive candidate pool
-    retriever = HybridRetriever(store, client=client)
-    raw_candidates = await retriever.retrieve(analysis, top_k=60)
-
-
-    # 6. 1-hop cross-reference expansion
-    expanded_candidates = expand_cross_references(raw_candidates, store, max_extra=6)
-
-    # 7. Status & amendment filtering
-    filtered_candidates, status_warnings = apply_status_and_amendment_filter(expanded_candidates, store)
-
-    # 8. Rerank to top-8
-    reranker = Reranker(client=client)
-    final_contexts = await reranker.rerank(
-        query=analysis.normalized_query,
-        language=target_language,
-        candidates=filtered_candidates,
+    # 5-8. Hybrid retrieval, cross-reference expansion, status filter, rerank and relevance gate
+    retrieval = await retrieve_contexts(
+        analysis=analysis,
         store=store,
-        top_n=8,
+        client=client,
+        top_k=40,
+        max_extra=8,
+        rerank_top_n=8,
+        query_vector=query_vector,
+        use_vector=embedding_available,
+        category=payload.category,
     )
+    final_contexts = retrieval.contexts
+    status_warnings = retrieval.status_warnings
 
     # 9. Generator
     generator = AnswerGenerator(client=client)
@@ -119,17 +149,25 @@ async def query_legal_rag(
                 contexts=final_contexts,
                 language=target_language,
                 mode=payload.mode,
+                status_warnings=status_warnings,
             ),
             media_type="text/event-stream"
         )
 
     # Non-streaming generation + validation pass
-    gen_result = await generator.generate_answer(
-        query=cleaned_query,
-        contexts=final_contexts,
-        language=target_language,
-        mode=payload.mode,
-    )
+    try:
+        gen_result = await generator.generate_answer(
+            query=cleaned_query,
+            contexts=final_contexts,
+            language=target_language,
+            mode=payload.mode,
+        )
+    except RuntimeError as e:
+        logger.error(f"Answer generation unavailable: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Javob yaratish xizmati vaqtincha mavjud emas. Iltimos, birozdan so'ng qayta urinib ko'ring.",
+        )
 
     response_payload = QueryResponse(
         answer=gen_result.clean_answer or gen_result.answer,
@@ -144,16 +182,20 @@ async def query_legal_rag(
         status_warnings=status_warnings,
         conversation_id=payload.conversation_id,
         cached=False,
+        retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
     )
 
-    # Store in query cache with dense vector for future semantic matching
-    cache.set(
-        cleaned_query,
-        target_language,
-        payload.mode,
-        response_payload.model_dump(),
-        vector=query_vector
-    )
+    # Cache only verified, substantive answers: an answer that failed citation validation (or a refusal)
+    # must not be replayed for 24h as if it were authoritative.
+    if (
+        response_payload.validation_passed
+        and not response_payload.is_refusal
+        and len((response_payload.clean_answer or response_payload.answer).strip()) > 80
+    ):
+        cached_data = response_payload.model_dump()
+        cached_data["_groups"] = groups_key
+        cached_data["_filtered"] = has_filters
+        cache.set(cache_text, target_language, payload.mode, cached_data, vector=query_vector)
 
 
     return response_payload

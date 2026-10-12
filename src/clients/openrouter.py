@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 class OpenRouterClient:
     """Client for OpenRouter API with retry, fallback models, and offline deterministic mock support."""
 
+    EMBEDDING_BATCH = 48  # inputs per /embeddings request
+
     def __init__(self):
         self.api_key = settings.OPENROUTER_API_KEY
         self.base_url = settings.OPENROUTER_BASE_URL.rstrip("/")
@@ -27,7 +29,7 @@ class OpenRouterClient:
     async def get_client(self) -> httpx.AsyncClient:
         if self._http_client is None or self._http_client.is_closed:
             self._http_client = httpx.AsyncClient(
-                timeout=httpx.Timeout(30.0, connect=10.0),
+                timeout=httpx.Timeout(120.0, connect=15.0),
                 headers={
                     "Authorization": f"Bearer {self.api_key or ''}",
                     "HTTP-Referer": "https://legal-rag.uz",
@@ -39,6 +41,20 @@ class OpenRouterClient:
     async def close(self):
         if self._http_client and not self._http_client.is_closed:
             await self._http_client.aclose()
+
+    def provider_preferences(self) -> Optional[Dict]:
+        """Builds OpenRouter provider routing and quantization preferences from settings."""
+        order = [x.strip() for x in (settings.LLM_PROVIDER_ORDER or "").split(",") if x.strip()]
+        quantizations = [x.strip() for x in (settings.LLM_PROVIDER_QUANTIZATIONS or "").split(",") if x.strip()]
+        if not order and not quantizations:
+            return None
+        prefs: Dict = {}
+        if order:
+            prefs["order"] = order
+        prefs["allow_fallbacks"] = True
+        if quantizations:
+            prefs["quantizations"] = quantizations
+        return prefs
 
     def _deterministic_mock_embedding(self, text: str, dim: int = 1024) -> List[float]:
         """
@@ -74,6 +90,12 @@ class OpenRouterClient:
         if self.is_mock:
             return [self._deterministic_mock_embedding(t, settings.EMBEDDING_DIMENSION) for t in texts]
 
+        if len(texts) > self.EMBEDDING_BATCH:
+            vectors: List[List[float]] = []
+            for i in range(0, len(texts), self.EMBEDDING_BATCH):
+                vectors.extend(await self.get_embeddings(texts[i:i + self.EMBEDDING_BATCH], model=model))
+            return vectors
+
         target_model = model or self.embedding_model
         client = await self.get_client()
 
@@ -94,7 +116,11 @@ class OpenRouterClient:
                     # OpenRouter format: data: [{"embedding": [...], "index": 0}, ...]
                     return [item["embedding"] for item in sorted(data["data"], key=lambda x: x["index"])]
                 elif response.status_code == 429:
-                    retry_after = float(response.headers.get("Retry-After", delay * 2.0))
+                    try:
+                        retry_after = float(response.headers.get("Retry-After", delay * 2.0))
+                    except ValueError:  # Retry-After may be an HTTP date
+                        retry_after = delay * 2.0
+                    retry_after = min(max(retry_after, 0.0), 30.0)  # never stall a request for minutes
                     logger.warning(f"OpenRouter 429 Rate Limit. Sleeping {retry_after:.1f}s before retry {attempt+1}/{max_retries}...")
                     await asyncio.sleep(retry_after)
                     continue
@@ -166,31 +192,45 @@ class OpenRouterClient:
         model: Optional[str] = None,
         temperature: float = 0.0,
         max_tokens: int = 8192,
+        min_chars: int = 30,
+        reasoning: Optional[Dict] = None,
     ) -> str:
-        """Non-streaming generation with automatic fallback."""
+        """Non-streaming generation with automatic fallback. Replies not longer than min_chars count as stubs."""
         if self.is_mock:
             return self._mock_grounded_response(messages)
 
         models_to_try = [model or self.primary_model, self.fallback_model]
         client = await self.get_client()
+        prefs = self.provider_preferences()
 
         for cur_model in models_to_try:
             for attempt in range(2):
                 try:
+                    payload: Dict = {
+                        "model": cur_model,
+                        "messages": messages,
+                        "temperature": temperature,
+                        "max_tokens": max_tokens,
+                    }
+                    if prefs is not None:
+                        payload["provider"] = prefs
+                    if reasoning is not None:
+                        payload["reasoning"] = reasoning
                     response = await client.post(
                         f"{self.base_url}/chat/completions",
-                        json={
-                            "model": cur_model,
-                            "messages": messages,
-                            "temperature": temperature,
-                            "max_tokens": max_tokens,
-                        }
+                        json=payload,
                     )
                     if response.status_code == 200:
                         res_json = response.json()
-                        content = res_json["choices"][0]["message"].get("content")
-                        return content if content is not None else ""
-                    logger.warning(f"Chat completion model {cur_model} failed with HTTP {response.status_code}")
+                        choice = res_json.get("choices", [{}])[0]
+                        msg = choice.get("message", {})
+                        content = msg.get("content")
+                        if content and len(content.strip()) > min_chars:
+                            return content.strip()
+                        # If reasoning took all tokens or content is empty
+                        logger.warning(f"Model {cur_model} returned empty or stub content ({repr(content)[:50]}). Triggering fallback...")
+                    else:
+                        logger.warning(f"Chat completion model {cur_model} failed with HTTP {response.status_code}")
                 except Exception as e:
                     logger.warning(f"Chat completion model {cur_model} attempt {attempt+1} error: {e}")
                 await asyncio.sleep(1.0)
@@ -203,6 +243,7 @@ class OpenRouterClient:
         model: Optional[str] = None,
         temperature: float = 0.0,
         max_tokens: int = 4000,
+        reasoning: Optional[Dict] = None,
     ) -> AsyncGenerator[str, None]:
         """Streaming response with SSE chunk yielding."""
         if self.is_mock:
@@ -214,41 +255,61 @@ class OpenRouterClient:
             return
 
         client = await self.get_client()
-        target_model = model or self.primary_model
+        prefs = self.provider_preferences()
+        models_to_try = [model or self.primary_model]
+        if self.fallback_model and self.fallback_model not in models_to_try:
+            models_to_try.append(self.fallback_model)
 
-        try:
-            async with client.stream(
-                "POST",
-                f"{self.base_url}/chat/completions",
-                json={
+        last_error: Optional[str] = None
+        for target_model in models_to_try:
+            emitted = False
+            try:
+                payload: Dict = {
                     "model": target_model,
                     "messages": messages,
                     "temperature": temperature,
                     "max_tokens": max_tokens,
                     "stream": True,
                 }
-            ) as response:
-                if response.status_code != 200:
-                    yield f"Xatolik: LLM xizmati bilan bog'lanib bo'lmadi (HTTP {response.status_code})."
-                    return
-
-                async for line in response.aiter_lines():
-                    if not line:
+                if prefs is not None:
+                    payload["provider"] = prefs
+                if reasoning is not None:
+                    payload["reasoning"] = reasoning
+                async with client.stream(
+                    "POST",
+                    f"{self.base_url}/chat/completions",
+                    json=payload,
+                ) as response:
+                    if response.status_code != 200:
+                        last_error = f"HTTP {response.status_code}"
+                        logger.warning(f"Streaming model {target_model} failed with {last_error}")
                         continue
-                    if line.startswith("data: "):
-                        data_str = line[6:].strip()
-                        if data_str == "[DONE]":
-                            break
-                        try:
-                            chunk = json.loads(data_str)
-                            delta = chunk["choices"][0]["delta"].get("content", "")
-                            if delta:
-                                yield delta
-                        except Exception:
+
+                    async for line in response.aiter_lines():
+                        if not line:
                             continue
-        except Exception as e:
-            logger.error(f"Streaming error: {e}")
-            yield f"\nXatolik: Tarmoq uzilishi yuz berdi ({str(e)})."
+                        if line.startswith("data: "):
+                            data_str = line[6:].strip()
+                            if data_str == "[DONE]":
+                                break
+                            try:
+                                chunk = json.loads(data_str)
+                                delta = chunk["choices"][0]["delta"].get("content", "")
+                            except Exception:
+                                continue
+                            if delta:
+                                emitted = True
+                                yield delta
+                    return
+            except Exception as e:
+                last_error = type(e).__name__
+                logger.error(f"Streaming error with model {target_model}: {e}")
+                if emitted:
+                    # Tokens already reached the caller: switching models would splice two answers together.
+                    raise RuntimeError("LLM stream was interrupted.") from e
+
+        # Never emit error text as if it were the answer; the caller turns this into a structured error event.
+        raise RuntimeError(f"All configured LLM models failed to stream ({last_error}).")
 
     def _mock_grounded_response(self, messages: List[Dict[str, str]]) -> str:
         """Deterministic mock response strictly grounded in context messages for test suites."""
@@ -389,3 +450,96 @@ class OpenRouterClient:
                 f"O'zbekiston Respublikasi qonunchiligiga muvofiq, ushbu masala bir qator qoidalar bilan tartibga solinadi: {items_uz}. "
                 f"Xususan, {top_art} [{top_cid}] va unga yondosh normalar fuqarolarning huquqlari va kafolatlarini belgilaydi.{status_note_uz}"
             )
+
+    async def decide(
+        self,
+        state: str,
+        questions: Dict[str, dict],
+        model: Optional[str] = None,
+        timeout: Optional[float] = None,
+    ) -> Optional[Dict]:
+        """
+        Calls OpenRouter's /api/alpha/decisions endpoint using TypeSafe Jev.
+        Returns parsed JSON dict with 'answers' and 'usage', or None on failure.
+        Mock mode returns deterministic mock answers and empty usage.
+        """
+        if self.is_mock:
+            return {"answers": self._mock_decision(state, questions), "usage": {}}
+
+        if not self.api_key or "openrouter.ai" not in self.base_url:
+            return None
+
+        client = await self.get_client()
+        url = "https://openrouter.ai/api/alpha/decisions"
+        payload = {
+            "model": model or settings.JEV_MODEL,
+            "state": state,
+            "questions": questions,
+        }
+        req_timeout = timeout if timeout is not None else settings.JEV_TIMEOUT_S
+
+        try:
+            response = await client.post(url, json=payload, timeout=req_timeout)
+            if response.status_code == 200:
+                return response.json()
+            logger.warning(f"OpenRouter decisions API returned HTTP {response.status_code}: {response.text}")
+            return None
+        except Exception as e:
+            logger.warning(f"OpenRouter decisions call failed: {e}")
+            return None
+
+    async def get_decision(
+        self,
+        state: str,
+        questions: Dict[str, dict],
+        model: Optional[str] = None,
+    ) -> Dict:
+        """
+        Calls OpenRouter's /api/alpha/decisions endpoint using TypeSafe Jev.
+        Returns answers dict containing probabilities, choice, and score, or {} when decide returns None.
+        """
+        res = await self.decide(state=state, questions=questions, model=model)
+        if res is not None:
+            return res.get("answers", {})
+        return {}
+
+    def _mock_decision(self, state: str, questions: Dict[str, dict]) -> Dict:
+        """Deterministic fallback decision for test suites or offline environments."""
+        answers = {}
+        state_low = state.lower()
+
+        for q_name, q_spec in questions.items():
+            q_type = q_spec.get("type", "choice")
+            if q_type == "choice":
+                options = q_spec.get("criteria", {}) or q_spec.get("options", {})
+                best_choice = list(options.keys())[0] if options else "unknown"
+                probs = {k: 0.1 for k in options.keys()}
+                for opt in options.keys():
+                    if opt in state_low or any(w in state_low for w in opt.split("_")):
+                        best_choice = opt
+                        break
+                probs[best_choice] = 0.8
+                answers[q_name] = {
+                    "type": "choice",
+                    "choice": best_choice,
+                    "probabilities": probs,
+                    "confidence": 0.85
+                }
+            elif q_type == "score":
+                crit_list = q_spec.get("criteria", ["0", "1", "2"])
+                is_practical = any(w in state_low for w in ["imtiyoz", "huquq", "mumkin", "to'lanadi", "ozod"])
+                score_val = 1.9 if is_practical else 0.8
+                answers[q_name] = {
+                    "type": "score",
+                    "score": score_val,
+                    "legend": {str(i): c for i, c in enumerate(crit_list)},
+                    "probabilities": {"2": 0.85, "1": 0.10, "0": 0.05} if is_practical else {"0": 0.7, "1": 0.2, "2": 0.1},
+                    "confidence": 0.90
+                }
+            elif q_type == "noul":
+                is_rel = any(w in state_low for w in ["nogiron", "tmek", "imtiyoz", "sud", "qaror"])
+                answers[q_name] = {
+                    "type": "noul",
+                    "noul": 0.92 if is_rel else 0.25
+                }
+        return answers

@@ -34,8 +34,8 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
   - Out-of-scope or unanswerable queries trigger a structured, polite refusal rather than speculative generation.
   - Automated citation verification audits generated answers prior to delivery.
 - **🔍 Hybrid Retrieval Architecture (BM25 + Vector + RRF)**:
-  - **BM25 Lexical Search**: Powered by SQLite FTS5 with custom field weights (`title_weight=3.0`, `number_weight=5.0`, `content_weight=1.0`).
-  - **Dense Vector Search**: Powered by LanceDB with 1024-dimensional multilingual embeddings (`baai/bge-m3`).
+  - **BM25 Lexical Search**: Powered by SQLite FTS5 with custom field weights (`article_number=10.0`, `law_number=5.0`, `title=5.0`, `body=1.0`, see `bm25_search`).
+  - **Dense Vector Search**: Powered by LanceDB with 1024-dimensional multilingual embeddings (`baai/bge-m3`), chunked at paragraph boundaries for long provisions.
   - **Reciprocal Rank Fusion (RRF)**: Merges sparse and dense ranking scores via `score = 1/(60 + rank_bm25) + 1/(60 + rank_vec)`.
 - **🔤 Script & Language Invariance**:
   - Seamlessly handles user queries in **Uzbek Latin, Uzbek Cyrillic, and Russian**.
@@ -66,7 +66,7 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
       │         └── [RRF - Reciprocal Rank Fusion]: rank fusion score calculation
       │
       ├── [Context Expansion]: 1-hop cross-reference expansion (implements / refers_to)
-      ├── [Status Filter]: Automatic elimination of repealed (o'z kuchini yo'qotgan) statutory provisions
+      ├── [Status Filter]: Repealed/amended provisions are flagged and their active replacement (`superseded_by`) is pulled into the context
       ├── [Reranker]: Top-K candidate extraction
       │
       ├── [AnswerGenerator]: Strict statutory grounding prompt (Plain / Legal_text modes)
@@ -92,6 +92,41 @@ If you are an AI researcher, legal-tech developer, humanitarian organization, or
 * We provide direct, high-speed download mirrors and checksums for the pre-indexed LanceDB vectors.
 
 > *Note: The repository includes out-of-the-box pilot datasets (`data/pilot_laws/` containing the Law on the Rights of Persons with Disabilities LRU-641, the Labor Code, and the UN CRPD) allowing full local testing, development, and unit execution without downloading the 37 GB archive.*
+
+---
+
+## 📚 The Disability-Rights Corpus (verified from Lex.uz)
+
+The knowledge base is **built from official texts, never typed by hand**. `scripts/build_disability_corpus.py`
+reads the official Lex.uz classifier (OKOZ nodes *06.10 Nogironligi bo'lgan shaxslar...*, *06.06.03 Nogironlik
+pensiyasi*, *14.01.10 Tibbiy-ijtimoiy ekspertiza*, ... ), verifies every document from its own page (number, date,
+status), splits it into articles / clauses / annex clauses with their chapter hierarchy and indexes it with a
+deep link to the exact paragraph on lex.uz.
+
+| Stage | Command | Result |
+|---|---|---|
+| discover | `python scripts/build_disability_corpus.py discover` | candidate documents from the official classifier + curated seeds (`data/sources/seeds.json`) |
+| select | `... select` | `data/sources/disability_registry.json` - in-force documents with tier and relevance |
+| build | `... build` | `data/sources/built_articles.json` + `build_report.json` (QA) |
+| ingest | `... ingest --replace-all` | embeddings + FTS index in `data/store` |
+| report | `... report` | `data/sources/REGISTRY.md` - exactly what is in the base |
+
+Current build: **238 acts, 3 843 articles/clauses** (Uzbek; 1 686 with the official Russian text), 99% of the
+text is clean of portal markup, amendment history is kept per unit (`metadata.amendment_history`).
+Re-run the stages to refresh the base when Lex.uz publishes new acts. HTML pages are cached in `data/raw_lex/`
+and requests are throttled (1 request/second).
+
+**Quality gate.** `python scripts/evaluate_retrieval.py` runs the production retrieval pipeline on
+`data/golden_dataset/disability_eval_set.json` (questions written from the corpus, every expected article is
+checked to contain an evidence phrase). Current results with BGE-M3 + reranker: hit@3 96%, hit@5 98%,
+MRR 0.87, 0% false refusals, 92% correct refusals of out-of-scope questions.
+
+## ♿ Public page
+
+`/` (and `/ask`) is a citizen-facing page built for accessibility: semantic HTML, screen-reader live regions,
+keyboard-only use, adjustable text size, high-contrast mode, voice input / read-aloud (browser support
+permitting), an *easy-read* answer style with very short sentences, and a visible source list with the exact
+quoted provision. The administrator dashboard is at `/admin`.
 
 ---
 
@@ -130,7 +165,7 @@ pip install -r requirements.txt
 # 3. Set environment variables
 cp .env.example .env
 
-# 4. Run automated test suite (34 unit & integration tests)
+# 4. Run automated test suite (runs offline against a temporary store, never touches data/store)
 pytest -v
 
 # 5. Start development server
@@ -138,6 +173,17 @@ uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ---
+
+## 🔐 Administration Access
+
+Every route that changes the corpus, manages API keys or exports user feedback (`/api/v1/admin/*`,
+`/api/v1/inclusive/admin/*`, `PUT /api/v1/inclusive/norms/{id}`, `GET /api/v1/feedback`) is administrator-only:
+
+- A **direct local connection** (the dashboard opened on the server itself) needs no key.
+- Anything else must send `X-Admin-Key: <ADMIN_API_KEY>` (or `Authorization: Bearer ...`). Set `ADMIN_API_KEY` in `.env`;
+  with it empty, remote administration is disabled. Requests that carry proxy headers (`X-Forwarded-For`, ...) count as remote.
+- The dashboard asks for the key once per browser session when the server answers 401.
+- Third-party bots use regular API keys (`X-API-Key`) for `POST /api/v1/inclusive/query`; each key's `rate_limit_per_min` is enforced.
 
 ## 🔌 REST API Endpoints
 

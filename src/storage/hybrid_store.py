@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 from src.schema.canonical import CanonicalArticle
 from src.storage.vector_store import LanceVectorStore
 from src.storage.fts_store import SqliteFtsStore
+from src.storage.chunking import build_chunks
 from src.clients.openrouter import OpenRouterClient
 from src.config import settings
 
@@ -18,26 +19,32 @@ class HybridStore:
         self.storage_dir = Path(storage_dir or settings.STORAGE_DIR)
         self.vector_store = LanceVectorStore(str(self.storage_dir))
         self.fts_store = SqliteFtsStore(str(self.storage_dir / "legal_rag.db"))
+        self._default_client: Optional[OpenRouterClient] = None
+
+    def _resolve_client(self, client: Optional[OpenRouterClient]) -> OpenRouterClient:
+        """Returns the given client or one shared per-store fallback (not a new HTTP pool per call)."""
+        if client is not None:
+            return client
+        if self._default_client is None:
+            self._default_client = OpenRouterClient()
+        return self._default_client
 
     async def index_article(self, article: CanonicalArticle, client: Optional[OpenRouterClient] = None):
-        """Indexes an article across FTS and LanceDB vector stores."""
-        # 1. Save metadata and full-text search
-        self.fts_store.upsert_article(article)
+        """Indexes an article across FTS and LanceDB vector stores.
 
-        # 2. Compute vectors for each translation
-        if client is None:
-            client = OpenRouterClient()
+        Embeddings are computed before anything is written, so a failing embedding service cannot leave the
+        full-text index updated while the vectors still describe the previous text.
+        """
+        # 1. Compute vectors for every chunk of every language
+        client = self._resolve_client(client)
 
         vector_records = []
-        texts_to_embed = []
-        langs = []
-        for lang, text in article.translations.items():
-            if not text.strip():
-                continue
-            law_title = article.get_law_title(lang) or article.metadata.law_number
-            doc_text = f"{law_title} | {article.metadata.article_number} {article.get_title(lang)}. {text}"
-            texts_to_embed.append(doc_text)
-            langs.append(lang)
+        texts_to_embed: List[str] = []
+        langs: List[str] = []
+        for lang in article.translations:
+            for chunk in build_chunks(article, lang):
+                texts_to_embed.append(chunk)
+                langs.append(lang)
 
         if texts_to_embed:
             embeddings = await client.get_embeddings(texts_to_embed)
@@ -52,7 +59,8 @@ class HybridStore:
                     "embedding_model_version": article.metadata.embedding_model_version,
                 })
 
-        # 3. Save to LanceDB
+        # 2. Persist metadata + full-text search, then vectors
+        self.fts_store.upsert_article(article)
         if vector_records:
             self.vector_store.upsert_vectors(vector_records)
 
@@ -62,31 +70,27 @@ class HybridStore:
         client: Optional[OpenRouterClient] = None,
         batch_size: int = 15,
     ) -> int:
-        """High-throughput batch indexing for large codes and bulk legislation."""
+        """High-throughput batch indexing for large codes and bulk legislation.
+
+        Each chunk is embedded first and only then written (FTS + vectors), so a failing embedding service
+        never leaves the text index ahead of the vectors.
+        """
         if not articles:
             return 0
 
-        if client is None:
-            client = OpenRouterClient()
+        client = self._resolve_client(client)
 
-        # 1. Batch upsert FTS/SQLite metadata
-        for art in articles:
-            self.fts_store.upsert_article(art)
-
-        # 2. Batch embeddings (both UZ and RU when available)
         total_indexed = 0
         for i in range(0, len(articles), batch_size):
             chunk = articles[i : i + batch_size]
             texts_to_embed = []
             mapping = []
 
+            # Embed every chunk of the Uzbek and Russian text (other languages carry no extra signal)
             for art in chunk:
-                for lang in ["uz", "ru"]:
-                    text = art.translations.get(lang, "")
-                    if text and text.strip():
-                        law_title = art.get_law_title(lang) or art.metadata.law_number
-                        doc_text = f"{law_title} | {art.metadata.article_number} {art.get_title(lang)}. {text[:1400]}"
-                        texts_to_embed.append(doc_text)
+                for lang in ("uz", "ru"):
+                    for text in build_chunks(art, lang):
+                        texts_to_embed.append(text)
                         mapping.append((
                             art.canonical_id,
                             lang,
@@ -96,9 +100,9 @@ class HybridStore:
                             art.metadata.embedding_model_version,
                         ))
 
+            vector_records = []
             if texts_to_embed:
                 embeddings = await client.get_embeddings(texts_to_embed)
-                vector_records = []
                 for (cid, lang, status, cat, dt, emv), vec in zip(mapping, embeddings):
                     vector_records.append({
                         "canonical_id": cid,
@@ -109,8 +113,12 @@ class HybridStore:
                         "disability_types": dt,
                         "embedding_model_version": emv,
                     })
+
+            for art in chunk:
+                self.fts_store.upsert_article(art)
+            if vector_records:
                 self.vector_store.upsert_vectors(vector_records)
-                total_indexed += len(chunk)
+            total_indexed += len(chunk)
 
         return total_indexed
 
@@ -128,8 +136,36 @@ class HybridStore:
         self.fts_store.delete_article(canonical_id)
         self.vector_store.delete_by_canonical_id(canonical_id)
 
+    def clear_all_articles(self) -> int:
+        """Empties the legal corpus (text index and vectors) - used before a full rebuild."""
+        n = self.fts_store.clear_articles()
+        self.vector_store.reset()
+        return n
+
+    def delete_laws(self, law_ids: List[str]) -> int:
+        """Removes all articles (text + vectors) of the given laws, e.g. before re-importing them."""
+        removed = self.fts_store.delete_laws(list(law_ids))
+        self.vector_store.delete_many(removed)
+        return len(removed)
+
     def count(self) -> int:
         return self.fts_store.count()
+
+    def list_documents(
+        self,
+        search_query: Optional[str] = None,
+        doc_type: Optional[str] = None,
+        authority: Optional[str] = None,
+    ) -> List[Dict]:
+        return self.fts_store.list_documents(
+            search_query=search_query,
+            doc_type=doc_type,
+            authority=authority,
+        )
+
+    def get_articles_by_law(self, law_identifier: str) -> List[Dict]:
+        return self.fts_store.get_articles_by_law(law_identifier)
+
 
     async def seed_from_file(self, file_path: str, client: Optional[OpenRouterClient] = None):
         """Seeds articles from a JSON file."""

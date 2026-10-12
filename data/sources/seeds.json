@@ -1,0 +1,144 @@
+{
+  "_comment": "General acts that contain disability provisions. A seed is resolved either by exact title search ('title_equals') or by a 'lex_id' that was read from Lex.uz itself; in every case the document is verified from its own page (expect_number / expect_title_contains) before it is accepted. 'include: disability_articles' keeps only units that mention disability terms.",
+  "seeds": [
+    {
+      "law_id": "law_disability_2020",
+      "lex_id": "-5049511",
+      "expect_number": "O'RQ-641",
+      "tier": 1,
+      "include": "all",
+      "category": null
+    },
+    {
+      "law_id": "constitution_uz",
+      "lex_id": "-6445145",
+      "expect_title_contains": "Konstitutsiyasi",
+      "tier": 2,
+      "include": "all"
+    },
+    {
+      "law_id": "labor_code_2022",
+      "search_title": "Mehnat kodeksi",
+      "title_equals": "O'zbekiston Respublikasining Mehnat kodeksi",
+      "tier": 2,
+      "include": "disability_articles",
+      "number": "O'RQ-798"
+    },
+    {
+      "law_id": "tax_code_2020",
+      "search_title": "Soliq kodeksi",
+      "title_equals": "O'zbekiston Respublikasining Soliq kodeksi",
+      "tier": 2,
+      "include": "disability_articles",
+      "number": "O'RQ-599"
+    },
+    {
+      "law_id": "education_law_2020",
+      "lex_id": "-5013007",
+      "expect_number": "O'RQ-637",
+      "tier": 2,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "housing_code",
+      "search_title": "Uy-joy kodeksi",
+      "title_equals": "O'zbekiston Respublikasining Uy-joy kodeksi",
+      "tier": 2,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "civil_code_1",
+      "search_title": "Fuqarolik kodeksi",
+      "title_equals": "O'zbekiston Respublikasining Fuqarolik kodeksi",
+      "tier": 3,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "family_code",
+      "search_title": "Oila kodeksi",
+      "title_equals": "O'zbekiston Respublikasining Oila kodeksi",
+      "tier": 3,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "admin_liability_code",
+      "lex_id": "-97664",
+      "expect_title_contains": "javobgarlik toʻgʻrisidagi kodeks",
+      "tier": 3,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "criminal_code",
+      "search_title": "Jinoyat kodeksi",
+      "title_equals": "O'zbekiston Respublikasining Jinoyat kodeksi",
+      "tier": 3,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "election_code",
+      "search_title": "Saylov kodeksi",
+      "title_equals": "O'zbekiston Respublikasining Saylov kodeksi",
+      "tier": 3,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "urban_code_2021",
+      "search_title": "Shaharsozlik kodeksi",
+      "title_equals": "O'zbekiston Respublikasining Shaharsozlik kodeksi",
+      "tier": 2,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "pension_provision_law",
+      "search_title": "Fuqarolarning davlat pensiya ta'minoti to'g'risida",
+      "title_equals": "Fuqarolarning davlat pensiya ta'minoti to'g'risida",
+      "tier": 2,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "healthcare_law",
+      "search_title": "Fuqarolar sog'lig'ini saqlash to'g'risida",
+      "title_equals": "Fuqarolar sog'lig'ini saqlash to'g'risida",
+      "tier": 3,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "preschool_education_law",
+      "search_title": "Maktabgacha ta'lim va tarbiya to'g'risida",
+      "title_equals": "Maktabgacha ta'lim va tarbiya to'g'risida",
+      "tier": 3,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "child_rights_law",
+      "search_title": "Bola huquqlarining kafolatlari to'g'risida",
+      "title_equals": "Bola huquqlarining kafolatlari to'g'risida",
+      "tier": 3,
+      "include": "disability_articles"
+    },
+    {
+      "law_id": "psychiatric_care_law",
+      "lex_id": "-5422209",
+      "expect_number": "O'RQ-690",
+      "tier": 2,
+      "include": "all"
+    },
+    {
+      "law_id": "crpd_2006",
+      "lex_id": "-5501227",
+      "expect_title_contains": "Nogironlar huquqlari",
+      "tier": 1,
+      "include": "all",
+      "category": "international_treaty",
+      "number": "BMT Konvensiyasi (2006)"
+    },
+    {
+      "law_id": "crpd_ratification_2021",
+      "search_title": "Nogironlar huquqlari toʻgʻrisidagi konvensiyani ratifikatsiya",
+      "number_contains": "O'RQ-695",
+      "tier": 1,
+      "include": "all",
+      "category": "international_treaty"
+    }
+  ]
+}

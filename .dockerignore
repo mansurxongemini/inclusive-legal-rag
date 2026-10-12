@@ -1,0 +1,13 @@
+.git
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.codestudio/
+.agents/
+data/store/
+data/cache/
+data/backups/
+data/laws_catalog/
+*.log
