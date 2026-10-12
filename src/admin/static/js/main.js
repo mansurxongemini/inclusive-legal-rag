@@ -4,7 +4,12 @@
  * Permanent Light Theme. Sticky Sidebar at all breakpoints.
  */
 import { h, mount, clear } from './dom.js';
-import { icons } from './icons.js';
+import { icons, createSvg } from './icons.js';
+
+const bellIcon = (cls) => createSvg(
+  '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>',
+  cls
+);
 import { store } from './state.js';
 import { api } from './api.js';
 import { Badge } from '../components/Badge.js';
@@ -13,10 +18,16 @@ import { renderStatsPage } from './pages/stats.js';
 import { renderApiKeysPage } from './pages/apikeys.js';
 import { renderPlaygroundPage } from './pages/playground.js';
 import { renderVectorizerPage } from './pages/vectorizer.js';
+import { renderQAPage } from './pages/qa.js';
+import { renderNotificationsPage } from './pages/notifications.js';
+import { renderHuquqPlusPage } from './pages/huquqplus.js';
 
 // Section definition
 const NAV_ITEMS = [
   { id: 'documents', label: 'Hujjatlar', title: "Qonunlar va me'yoriy hujjatlar", icon: icons.book, render: renderDocumentsPage },
+  { id: 'huquqplus', label: 'Huquq+ maqolalar', title: 'huquqplus.uz maqolalari va sinxronlash', icon: icons.book, render: renderHuquqPlusPage },
+  { id: 'qa', label: 'Savol-javoblar', title: 'Tahririyat savol-javoblari', icon: icons.edit, render: renderQAPage },
+  { id: 'notifications', label: 'Bildirishnomalar', title: 'Huquqiy o‘zgarishlar bildirishnomalari', icon: bellIcon, render: renderNotificationsPage, badge: true },
   { id: 'stats', label: 'Statistika', title: "Tizim tahlili va ko'rsatkichlari", icon: icons.chart, render: renderStatsPage },
   { id: 'apikeys', label: 'API Kalitlar', title: 'API kalitlarini boshqarish', icon: icons.key, render: renderApiKeysPage },
   { id: 'playground', label: 'Sinov zali', title: 'Semantik qidiruv va sinov zali', icon: icons.chat, render: renderPlaygroundPage },
@@ -60,7 +71,23 @@ class AdminApp {
     this.setupRouting();
     this.navigate(this.currentTab, false);
     this.pollHealth();
+    this.pollNotifications();
     setInterval(() => this.pollHealth(), 30000);
+    setInterval(() => this.pollNotifications(), 60000);
+  }
+
+  async pollNotifications() {
+    try {
+      const data = await api.editorialNotificationsCount();
+      const open = Number(data.open || 0);
+      [this.notifBadgeEl, this.notifBadgeMobileEl].forEach((el) => {
+        if (!el) return;
+        el.textContent = String(open);
+        el.classList.toggle('hidden', open <= 0);
+      });
+    } catch {
+      // Bildirishnoma xizmati ishlamasa, badge yashirin qoladi.
+    }
   }
 
   setupRouting() {
@@ -170,6 +197,10 @@ class AdminApp {
         // Navigation Menu
         h('nav', { className: 'space-y-1', 'aria-label': 'Asosiy menyu' },
           ...NAV_ITEMS.map(item => {
+            const badgeEl = item.badge
+              ? h('span', { className: 'badge badge-warning tabular-nums hidden', 'aria-label': 'Ochiq bildirishnomalar soni' }, '0')
+              : null;
+            if (item.badge) this.notifBadgeEl = badgeEl;
             const link = h('button', {
               type: 'button',
               className: 'nav-link w-full text-left',
@@ -177,7 +208,8 @@ class AdminApp {
             },
               h('span', { className: 'flex items-center gap-2-5' },
                 item.icon('icon-sm text-muted'),
-                h('span', {}, item.label)
+                h('span', {}, item.label),
+                badgeEl
               )
             );
             this.navLinks.set(item.id, link);
@@ -232,13 +264,18 @@ class AdminApp {
       // Bottom row: Horizontal scrollable tabs
       h('nav', { className: 'flex items-center gap-1 px-2 py-1.5 overflow-x-auto no-scrollbar', 'aria-label': 'Mobil menyu' },
         ...NAV_ITEMS.map(item => {
+          const mBadge = item.badge
+            ? h('span', { className: 'badge badge-warning tabular-nums hidden' }, '0')
+            : null;
+          if (item.badge) this.notifBadgeMobileEl = mBadge;
           const mLink = h('button', {
             type: 'button',
             className: 'nav-link flex-shrink-0 text-xs px-2.5 py-1 gap-1.5',
             onclick: () => this.navigate(item.id)
           },
             item.icon('icon-xs text-muted'),
-            h('span', {}, item.label)
+            h('span', {}, item.label),
+            mBadge
           );
           this.mobileNavLinks.set(item.id, mLink);
           return mLink;

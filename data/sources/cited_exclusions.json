@@ -1,0 +1,6 @@
+{
+  "_comment": "Lex.uz acts cited by Huquq+ that `build_disability_corpus.py cited` must not add, with the reason. Ids are Latin-edition Lex.uz ids.",
+  "exclusions": {
+    "-7059431": "PF-108 (13.08.2024): pensiya va nafaqalar miqdorini oshirish; barcha miqdorlar PF-115 (2026) bilan yangilangan, eski miqdorlar qidiruvda amaldagi farmonni siqib chiqaradi"
+  }
+}

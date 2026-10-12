@@ -155,15 +155,18 @@ class CorpusBuilder:
         self.today = today or date.today().isoformat()
 
     # -- loading ----------------------------------------------------------------------------------------
-    def load(self, spec: SourceSpec, with_russian: bool = True) -> Tuple[Optional[LexDocument], Optional[LexDocument]]:
-        html = self.client.fetch_document(spec.lex_id)
+    def load(
+        self, spec: SourceSpec, with_russian: bool = True, force: bool = False
+    ) -> Tuple[Optional[LexDocument], Optional[LexDocument]]:
+        """force=True bypasses the HTML cache (refresh must see the live, possibly amended, text)."""
+        html = self.client.fetch_document(spec.lex_id, force=force)
         if html is None:
             logger.warning(f"{spec.lex_id}: not available on lex.uz")
             return None, None
         doc = self.parser.parse(html, spec.lex_id, language="uz")
         ru_doc: Optional[LexDocument] = None
         if with_russian and doc.language_links.get("ru"):
-            ru_html = self.client.fetch_url(doc.language_links["ru"])
+            ru_html = self.client.fetch_url(doc.language_links["ru"], force=force)
             if ru_html:
                 ru_doc = self.parser.parse(ru_html, doc.language_links["ru"], language="ru")
         return doc, ru_doc
@@ -180,7 +183,10 @@ class CorpusBuilder:
         law_title_ru = normalize_apostrophes(ru_doc.title) if ru_doc and ru_doc.title else ""
 
         ru_units: Dict[Tuple[str, str, str], LexUnit] = {}
+        ru_doc_id = None
         if ru_doc:
+            m_ru = re.search(r"/docs/(-?\d+)", str(ru_doc.doc_id))
+            ru_doc_id = m_ru.group(1) if m_ru else (str(ru_doc.doc_id) if str(ru_doc.doc_id).lstrip("-").isdigit() else None)
             for u in ru_doc.units:
                 ru_units.setdefault(_unit_key(u), u)
 
@@ -283,6 +289,9 @@ class CorpusBuilder:
                     document_type=doc.doc_type,
                     issuing_body=normalize_apostrophes(doc.body) or None,
                     source_element_id=unit.element_ids[0] if unit.element_ids else None,
+                    source_element_ids=list(unit.element_ids),
+                    ru_document_id=ru_doc_id,
+                    ru_element_ids=list(ru_unit.element_ids) if ru_unit else [],
                 ),
                 points=_points_from_text(unit.text),
                 translations=translations,

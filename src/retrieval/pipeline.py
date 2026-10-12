@@ -158,6 +158,17 @@ async def retrieve_contexts(
         use_model=use_reranker,
     )
 
+    # Editorial curated answers that the reranker found relevant become the primary answer; their linked Lex.uz
+    # norms are added even when retrieval missed them. Weak or unpublished curated hits are dropped.
+    if any(c.article.canonical_id.startswith("qa_") or c.article.canonical_id.startswith("hp_") for c in contexts):
+        try:
+            from src.editorial.retrieval import ensure_curated_contexts
+            from src.editorial.store import EditorialStore
+            contexts = ensure_curated_contexts(contexts, store, EditorialStore())
+        except Exception:
+            logger.warning("Curated-context ordering failed; serving lex norms only.", exc_info=True)
+            contexts = [c for c in contexts if not c.article.canonical_id.startswith("qa_") and not c.article.canonical_id.startswith("hp_")]
+
     decision: Optional[GateDecision] = None
     in_scope: Optional[float] = None
     if apply_gate:

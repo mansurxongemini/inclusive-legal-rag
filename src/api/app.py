@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -9,7 +10,8 @@ from src.config import settings
 from src.storage.hybrid_store import HybridStore
 from src.api.cache import QueryCache
 from src.clients.openrouter import OpenRouterClient
-from src.api.routes import query, article, feedback, health, admin, inclusive_api
+from src.api.routes import query, article, feedback, health, admin, inclusive_api, webhooks, huquqplus_admin
+from src.editorial.router import router as editorial_router
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +46,39 @@ def get_client() -> OpenRouterClient:
     return _client
 
 
+async def _run_huquqplus_scheduler():
+    from src.integrations.huquqplus_sync import full_sync, process_queue
+    logger.info("Huquq+ rejalashtiruvchisi ishga tushdi.")
+    last_full_sync = 0.0
+    full_interval_s = max(60, settings.HUQUQPLUS_SYNC_INTERVAL_MIN * 60)
+
+    while True:
+        try:
+            # 1. Navbatni tekshirish (har 20 soniyada)
+            try:
+                await process_queue(limit=50)
+            except Exception as e:
+                logger.error(f"Huquq+ process_queue xatosi: {e}")
+
+            # 2. To'liq sinxronlash (har HUQUQPLUS_SYNC_INTERVAL_MIN da)
+            loop = asyncio.get_running_loop()
+            now = loop.time()
+            if now - last_full_sync >= full_interval_s:
+                last_full_sync = now
+                try:
+                    await full_sync()
+                except Exception as e:
+                    logger.error(f"Huquq+ full_sync xatosi: {e}")
+
+            await asyncio.sleep(20)
+        except asyncio.CancelledError:
+            logger.info("Huquq+ rejalashtiruvchisi to'xtatildi.")
+            break
+        except Exception as e:
+            logger.error(f"Huquq+ rejalashtiruvchisi kutilmagan xatosi: {e}")
+            await asyncio.sleep(20)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: ensure directories & seed pilot dataset if empty
@@ -62,9 +97,20 @@ async def lifespan(app: FastAPI):
             logger.info("Initializing knowledge base with pilot disability rights law...")
             await store.seed_from_file(str(pilot_file), client=client)
 
+    sync_task: Optional[asyncio.Task] = None
+    if settings.HUQUQPLUS_SYNC_ENABLED and not settings.MOCK_EXTERNAL_APIS:
+        sync_task = asyncio.create_task(_run_huquqplus_scheduler())
+
     yield
 
     # Shutdown
+    if sync_task:
+        sync_task.cancel()
+        try:
+            await sync_task
+        except asyncio.CancelledError:
+            pass
+
     if _client:
         await _client.close()
 
@@ -99,6 +145,9 @@ def create_app() -> FastAPI:
     app.include_router(article.router)
     app.include_router(feedback.router)
     app.include_router(admin.router)
+    app.include_router(editorial_router)
+    app.include_router(webhooks.router)
+    app.include_router(huquqplus_admin.router)
 
     return app
 

@@ -131,5 +131,100 @@ export const api = {
     request('/api/v1/inclusive/admin/test-jev', {
       method: 'POST',
       body: JSON.stringify(payload)
+    }),
+
+  // 15. Tahririyat: savol-javoblar
+  editorialAnswers: ({ status, q, limit = 50, offset = 0 } = {}) => {
+    const params = new URLSearchParams();
+    if (status && status !== 'all') params.append('status', status);
+    if (q) params.append('q', q);
+    params.append('limit', String(limit));
+    params.append('offset', String(offset));
+    return request(`/api/v1/admin/editorial/answers?${params.toString()}`);
+  },
+  editorialAnswerCreate: (payload) =>
+    request('/api/v1/admin/editorial/answers', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  editorialAnswerGet: (id) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}`),
+  editorialAnswerUpdate: (id, payload) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    }),
+  editorialAnswerDelete: (id) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }),
+  editorialPublish: (id) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}/publish`, {
+      method: 'POST'
+    }),
+  editorialUnpublish: (id) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}/unpublish`, {
+      method: 'POST'
+    }),
+  editorialAddLink: (id, payload) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}/links`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  editorialRemoveLink: (id, canonicalId) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}/links/${encodeURIComponent(canonicalId)}`, {
+      method: 'DELETE'
+    }),
+
+  // 16. Tahririyat: modda tanlash
+  editorialNormsSearch: ({ q, law_id, limit = 20 } = {}) => {
+    const params = new URLSearchParams();
+    if (q) params.append('q', q);
+    if (law_id) params.append('law_id', law_id);
+    params.append('limit', String(limit));
+    return request(`/api/v1/admin/editorial/norms/search?${params.toString()}`);
+  },
+  editorialLaws: () =>
+    request('/api/v1/admin/editorial/laws'),
+
+  // 17. Tahririyat: bildirishnomalar
+  editorialNotifications: ({ status = 'open', limit = 50, offset = 0 } = {}) => {
+    const params = new URLSearchParams();
+    params.append('status', status);
+    params.append('limit', String(limit));
+    params.append('offset', String(offset));
+    return request(`/api/v1/admin/editorial/notifications?${params.toString()}`);
+  },
+  editorialNotificationsCount: () =>
+    request('/api/v1/admin/editorial/notifications/count'),
+  editorialResolve: (id, payload) =>
+    request(`/api/v1/admin/editorial/notifications/${encodeURIComponent(id)}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  editorialCheckLinks: () =>
+    request('/api/v1/admin/editorial/check-links', {
+      method: 'POST'
+    }),
+
+  // 18. Huquq+ sinxronlash va maqolalar
+  huquqplusStatus: () =>
+    request('/api/v1/admin/huquqplus/status'),
+  huquqplusPosts: ({ lang, status, q, limit = 50, offset = 0 } = {}) => {
+    const params = new URLSearchParams();
+    if (lang && lang !== 'all') params.append('lang', lang);
+    if (status && status !== 'all') params.append('status', status);
+    if (q) params.append('q', q);
+    params.append('limit', String(limit));
+    params.append('offset', String(offset));
+    return request(`/api/v1/admin/huquqplus/posts?${params.toString()}`);
+  },
+  huquqplusSync: () =>
+    request('/api/v1/admin/huquqplus/sync', {
+      method: 'POST'
+    }),
+  huquqplusResyncPost: (lang, wpId) =>
+    request(`/api/v1/admin/huquqplus/posts/${encodeURIComponent(lang)}/${encodeURIComponent(wpId)}/resync`, {
+      method: 'POST'
     })
 };
