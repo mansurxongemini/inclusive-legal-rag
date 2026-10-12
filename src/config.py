@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     ADMIN_API_KEY: Optional[str] = Field(default=None)
     CACHE_TTL_SECONDS: int = Field(default=86400)
     MOCK_EXTERNAL_APIS: bool = Field(default=False)
+    # Editorial module: a published curated answer with a fresh open notification is suspended from search.
+    EDITORIAL_SUSPEND_ON_CHANGE: bool = Field(default=True)
+    # huquqplus.uz WordPress plugin -> POST /api/v1/webhooks/huquqplus (HMAC); empty disables the endpoint.
+    HUQUQPLUS_WEBHOOK_SECRET: str = Field(default="")
+    HUQUQPLUS_SYNC_INTERVAL_MIN: int = Field(default=60)
+    HUQUQPLUS_SYNC_ENABLED: bool = Field(default=True)
 
     @property
     def is_mock_mode(self) -> bool:

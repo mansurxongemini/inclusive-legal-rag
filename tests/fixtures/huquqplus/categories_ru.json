@@ -1,0 +1,163 @@
+[
+ {
+  "id": 22,
+  "count": 2,
+  "name": "Вопросы и ответы",
+  "slug": "faq",
+  "parent": 0
+ },
+ {
+  "id": 19,
+  "count": 4,
+  "name": "Правовые статьи",
+  "slug": "materials",
+  "parent": 0
+ },
+ {
+  "id": 77,
+  "count": 5,
+  "name": "Судебно-правовые вопросы",
+  "slug": "sudebno-pravovye-voprosy",
+  "parent": 19
+ },
+ {
+  "id": 21,
+  "count": 23,
+  "name": "Социальная защита",
+  "slug": "sotsialnaya-zashchita",
+  "parent": 19
+ },
+ {
+  "id": 24,
+  "count": 21,
+  "name": "Образование",
+  "slug": "obrazovaniye",
+  "parent": 19
+ },
+ {
+  "id": 25,
+  "count": 16,
+  "name": "Трудоустройство",
+  "slug": "trudoustroystvo",
+  "parent": 19
+ },
+ {
+  "id": 26,
+  "count": 2,
+  "name": "Культура и спорт",
+  "slug": "kultura-i-sport",
+  "parent": 19
+ },
+ {
+  "id": 27,
+  "count": 7,
+  "name": "Медицинские услуги и реабилитация",
+  "slug": "meditsinskiye-uslugi-i-reabilitatsiya",
+  "parent": 19
+ },
+ {
+  "id": 28,
+  "count": 10,
+  "name": "Доступная среда и инфраструктура",
+  "slug": "dostupnaya-sreda-i-infrastruktura",
+  "parent": 19
+ },
+ {
+  "id": 29,
+  "count": 9,
+  "name": "Жилье",
+  "slug": "jilyo",
+  "parent": 19
+ },
+ {
+  "id": 30,
+  "count": 8,
+  "name": "Предпринимательство",
+  "slug": "predprinimatelstvo",
+  "parent": 19
+ },
+ {
+  "id": 34,
+  "count": 11,
+  "name": "Дети с инвалидностью и их опекуны",
+  "slug": "deti-s-invalidnostyu-i-ikh-opekuny",
+  "parent": 19
+ },
+ {
+  "id": 35,
+  "count": 6,
+  "name": "Молодежь с инвалидностью",
+  "slug": "molodezh-s-invalidnostyu",
+  "parent": 19
+ },
+ {
+  "id": 36,
+  "count": 5,
+  "name": "Женщины с инвалидностью",
+  "slug": "zhenshchiny-s-invalidnostyu",
+  "parent": 19
+ },
+ {
+  "id": 37,
+  "count": 12,
+  "name": "Транспорт",
+  "slug": "transport",
+  "parent": 19
+ },
+ {
+  "id": 38,
+  "count": 1,
+  "name": "Банковская сфера и страхование",
+  "slug": "bankovskaya-sfera-i-strakhovaniye",
+  "parent": 19
+ },
+ {
+  "id": 39,
+  "count": 1,
+  "name": "Общественные объединения инвалидов и ННО",
+  "slug": "obshchestvennyye-obyedineniya-invalidov",
+  "parent": 19
+ },
+ {
+  "id": 40,
+  "count": 4,
+  "name": "Конвенция ООН о правах инвалидов",
+  "slug": "konventsiya-oon-o-pravakh-invalidov",
+  "parent": 19
+ },
+ {
+  "id": 32,
+  "count": 3,
+  "name": "Наши юристы",
+  "slug": "lawyers",
+  "parent": 0
+ },
+ {
+  "id": 190,
+  "count": 0,
+  "name": "Абдуллаев Азиз Хамидуллаевич",
+  "slug": "abdullayev-aziz-xamidullayevich",
+  "parent": 32
+ },
+ {
+  "id": 196,
+  "count": 4,
+  "name": "Нарбаева Азиза Икромовна",
+  "slug": "narbayeva-aziza-ikromovna",
+  "parent": 32
+ },
+ {
+  "id": 192,
+  "count": 4,
+  "name": "Гаибназаров Шакарбой Ибрагимович",
+  "slug": "gaibnazarov-shakarboy-ibragimovich",
+  "parent": 0
+ },
+ {
+  "id": 9,
+  "count": 12,
+  "name": "Новости",
+  "slug": "news",
+  "parent": 0
+ }
+]

@@ -494,10 +494,12 @@ class LexDocumentParser:
             if not article_mode:
                 cm = _CLAUSE_RE.match(first_line)
                 if cm:
-                    n = int(cm.group(1).split("^")[0])
+                    parts = re.split(r"[\^-]", cm.group(1))
+                    n = int(parts[0])
+                    inserted = len(parts) > 1          # "2-1." / "2^1.": clause 2¹ inserted by a later amendment
                     is_new_context = last_clause_no == 0
-                    if is_new_context or n == last_clause_no + 1 or (n == 1 and annex_no is not None and cur is not None
-                                                                     and cur.annex_number != annex_no):
+                    if is_new_context or n == last_clause_no + 1 or (inserted and n == last_clause_no) or (
+                            n == 1 and annex_no is not None and cur is not None and cur.annex_number != annex_no):
                         flush()
                         last_clause_no = n
                         cur = LexUnit(

@@ -88,6 +88,18 @@ ABSOLUTE RULES (never break them):
     return prompt.strip()
 
 
+CURATED_INSTRUCTION = (
+    "TAHRIRIYAT JAVOBI ( curated ): agar kontekstda canonical_id 'qa_' bilan boshlanadigan "
+    "Huquq+ huquqshunoslari javobi yoki 'hp_' bilan boshlanadigan Huquq+ portali maqolasi bo'lsa — "
+    "u ASOSIY amaliy tushuntirish manbai hisoblanadi (qayerga murojaat qilish, qanday hujjatlar kerakligi, amaliy tartib). "
+    "Uning mazmunini buzmagan holda, foydalanuvchi savoliga moslab tushuntiring. "
+    "Biroq har bir huquqiy da'vo (huquq, majburiyat, muddat, summa, shart, organ vakolati) faqat source_type 'lex' bo'lgan "
+    "Lex.uz canonical_id lari bilan iqtibos qilinsin; 'qa_' yoki 'hp_' identifikatorlari amaliy tushuntirish manbai sifatida "
+    "keltirilishi mumkin, lekin rasmiy qonuniy asos Lex.uz moddalari bo'lib qoladi. "
+    "Agar maqola va qonun o'rtasida ziddiyat kuzatilsa, qonun ustun turadi va bu javobda aniq aytiladi. "
+    "Javob oxirida 'Huquqiy asos' bo'limida bog'langan Lex.uz moddalarini sanang."
+)
+
 MAX_CONTEXT_CHARS_PER_ARTICLE = 7000
 
 

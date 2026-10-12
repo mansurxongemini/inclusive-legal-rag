@@ -8,10 +8,23 @@ from src.clients.openrouter import OpenRouterClient
 from src.generation.prompts import (
     build_system_prompt,
     format_context_for_llm,
+    CURATED_INSTRUCTION,
     DISCLAIMERS,
     REFUSAL_MESSAGES,
     ResponseMode,
 )
+
+
+def _has_curated_context(contexts) -> bool:
+    for ctx in contexts or []:
+        art = getattr(ctx, "article", None)
+        if art is None:
+            continue
+        if getattr(getattr(art, "metadata", None), "source_type", "lex") in ("curated", "huquqplus"):
+            return True
+        if (getattr(art, "canonical_id", "") or "").startswith(("qa_", "hp_")):
+            return True
+    return False
 from src.generation.validator import CitationValidator, CitationItem, ValidationResult
 
 logger = logging.getLogger(__name__)
@@ -73,6 +86,8 @@ class AnswerGenerator:
             )
 
         system_prompt = build_system_prompt(language=language, mode=mode)
+        if _has_curated_context(contexts):
+            system_prompt = system_prompt + "\n\n" + CURATED_INSTRUCTION
         formatted_context = format_context_for_llm(contexts, language=language)
 
         user_content = f"User Question: {query}\n\nRetrieved Legal Context:\n{formatted_context}"
@@ -148,6 +163,8 @@ class AnswerGenerator:
             return
 
         system_prompt = build_system_prompt(language=language, mode=mode)
+        if _has_curated_context(contexts):
+            system_prompt = system_prompt + "\n\n" + CURATED_INSTRUCTION
         formatted_context = format_context_for_llm(contexts, language=language)
         user_content = f"User Question: {query}\n\nRetrieved Legal Context:\n{formatted_context}"
 

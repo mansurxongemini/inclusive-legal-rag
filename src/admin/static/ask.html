@@ -238,12 +238,20 @@
     var ol = $('sources'); ol.innerHTML = ''; $('src-h').hidden = !cites.length;
     cites.forEach(function (c) {
       var li = document.createElement('li');
+      var isCurated = c.source_type === 'curated' || (c.canonical_id || '').indexOf('qa_') === 0;
+      var isHp = c.source_type === 'huquqplus' || (c.canonical_id || '').indexOf('hp_') === 0;
       var head = '<strong>' + esc((c.article_number || '') + ' — ' + (c.law_title || c.law_number || '')) + '</strong>';
       if (c.law_number) head += ' <span class="badge">' + esc(c.law_number) + '</span>';
+      if (isCurated) head += ' <span class="badge">Huquq+ huquqshunoslari javobi</span>';
+      else if (isHp) head += ' <span class="badge">Huquq+ sharhi (qonun o‘rnida emas)</span>';
       if (c.status && c.status !== 'active') head += ' <span class="badge bad">' + (c.status === 'repealed' ? "kuchini yo'qotgan" : "o'zgartirilgan") + '</span>';
       var html = head;
       if (c.quote_snippet) html += '<div class="quote">' + esc(c.quote_snippet) + '</div>';
-      if (c.source_url) html += '<a href="' + esc(c.source_url) + '" target="_blank" rel="noopener noreferrer">Rasmiy manba (Lex.uz) <span class="sr-only">— yangi oynada ochiladi</span></a>';
+      // curated answers point into the admin panel: citizens get no link for them
+      if (c.source_url && /^https?:\/\//i.test(c.source_url) && !isCurated) {
+        var label = isHp ? 'Maqolani o‘qish (huquqplus.uz)' : 'Rasmiy manba (Lex.uz)';
+        html += '<a href="' + esc(c.source_url) + '" target="_blank" rel="noopener noreferrer">' + label + ' <span class="sr-only">— yangi oynada ochiladi</span></a>';
+      }
       li.innerHTML = html; ol.appendChild(li);
     });
   }

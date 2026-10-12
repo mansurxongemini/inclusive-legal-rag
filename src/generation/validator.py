@@ -14,6 +14,7 @@ class CitationItem(BaseModel):
     article_title: str = ""
     source_url: str
     status: str = "active"
+    source_type: str = "lex"
     normative_tier: str = "Qonun"
     normative_rank: int = 3
     quote_snippet: str = ""
@@ -104,6 +105,11 @@ class CitationValidator:
             return "Xalqaro shartnoma", 8
         elif cat == "commentary" or "advice" in cid or "norma" in cid:
             return "Huquqiy sharh", 9
+        source_type = (getattr(article.metadata, "source_type", "lex") or "lex").lower()
+        if source_type == "curated" or cid.startswith("qa_"):
+            return "Huquq+ javobi", 9
+        if source_type == "huquqplus" or cid.startswith("hp_"):
+            return "Huquq+ sharhi", 9
         return "Qonunchilik hujjati", 3
 
     @classmethod
@@ -249,6 +255,7 @@ class CitationValidator:
                     article_title=art.get_title(language),
                     source_url=art.metadata.source_url,
                     status=art.metadata.status.value,
+                    source_type=getattr(art.metadata, "source_type", "lex") or "lex",
                     normative_tier=tier_name,
                     normative_rank=tier_rank,
                     quote_snippet=quote_snip,
@@ -281,11 +288,24 @@ class CitationValidator:
         bot_footer_lines = ["\n\n---\n*Asoslangan qonuniy manbalar va iqtiboslar:*"]
         for c in citations:
             tier_badge = f"[{c.normative_tier}]"
-            quote_line = f"\n   *Qonundan iqtibos:* «{c.quote_snippet}»" if c.quote_snippet else ""
+            source_type = getattr(c, "source_type", "lex")
+            if source_type == "curated":
+                # editorial answer: no statutory quote, and its admin-panel URL is not for citizens
+                bot_footer_lines.append(f"[{c.index}] {tier_badge} {c.law_title}")
+                continue
+            quote_label = "Qonundan iqtibos" if source_type == "lex" else "Maqoladan"
+            quote_line = f"\n   *{quote_label}:* «{c.quote_snippet}»" if c.quote_snippet else ""
+            url_label = "Rasmiy manba" if source_type == "lex" else "Maqola"
             bot_footer_lines.append(
-                f"[{c.index}] {tier_badge} {c.article_number} — {c.law_title} ({c.law_number}){quote_line}\n   Rasmiy manba: {c.source_url}"
+                f"[{c.index}] {tier_badge} {c.article_number} — {c.law_title} ({c.law_number}){quote_line}\n   {url_label}: {c.source_url}"
             )
         telegram_formatted = clean_answer + "\n".join(bot_footer_lines)
+
+        has_lex_basis = any(getattr(c, "source_type", "lex") == "lex" for c in citations)
+        if citations and not has_lex_basis:
+            warnings.append("curated_without_lex_basis: answer cites only curated/huquqplus sources, no lex norm")
+        if any(getattr(c, "source_type", "lex") == "huquqplus" for c in citations):
+            warnings.append("huquqplus_is_commentary: huquqplus sources are commentary, not statutory basis")
 
         is_valid = (len(unresolved) == 0) and (len(citations) > 0 or is_refusal) and not no_explicit_citation
 

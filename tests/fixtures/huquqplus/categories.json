@@ -1,0 +1,744 @@
+[
+ {
+  "id": 20,
+  "count": 4,
+  "name": "Huquqiy maqolalar",
+  "slug": "materials",
+  "parent": 0
+ },
+ {
+  "id": 76,
+  "count": 6,
+  "name": "Sud-huquq",
+  "slug": "sud-huquq",
+  "parent": 20
+ },
+ {
+  "id": 45,
+  "count": 21,
+  "name": "Ta'lim",
+  "slug": "talim",
+  "parent": 20
+ },
+ {
+  "id": 31,
+  "count": 23,
+  "name": "Ijtimoiy himoya",
+  "slug": "social-protection",
+  "parent": 20
+ },
+ {
+  "id": 46,
+  "count": 17,
+  "name": "Mehnat",
+  "slug": "mehnat",
+  "parent": 20
+ },
+ {
+  "id": 49,
+  "count": 9,
+  "name": "Uy-joy",
+  "slug": "uy-joy",
+  "parent": 20
+ },
+ {
+  "id": 48,
+  "count": 9,
+  "name": "Tibbiy xizmatlar va reabilitasiya",
+  "slug": "tibbiy-xizmatlar-va-reabilitasiya",
+  "parent": 20
+ },
+ {
+  "id": 52,
+  "count": 13,
+  "name": "Transport",
+  "slug": "transport",
+  "parent": 20
+ },
+ {
+  "id": 57,
+  "count": 10,
+  "name": "Nogironligi bo'lgan shaxslar uchun sharoitlar va infratuzilma",
+  "slug": "nogironligi-bolgan-shaxslar-uchun-sharoitlar-va-infratuzilma",
+  "parent": 20
+ },
+ {
+  "id": 44,
+  "count": 12,
+  "name": "Nogironligi bo‘lgan bolalar va ularning vasiylari",
+  "slug": "nogironligi-bolgan-bolalar-va-ularning-vasiylari",
+  "parent": 20
+ },
+ {
+  "id": 50,
+  "count": 7,
+  "name": "Nogironligi bo‘lgan yoshlar",
+  "slug": "nogironligi-bolgan-yoshlar",
+  "parent": 20
+ },
+ {
+  "id": 51,
+  "count": 5,
+  "name": "Nogironligi bo‘lgan ayollar",
+  "slug": "nogironligi-bolgan-ayollar",
+  "parent": 20
+ },
+ {
+  "id": 43,
+  "count": 8,
+  "name": "Tadbirkorlik",
+  "slug": "tadbirkorlik",
+  "parent": 20
+ },
+ {
+  "id": 47,
+  "count": 2,
+  "name": "Madaniyat va sport",
+  "slug": "madaniyat-va-sport",
+  "parent": 20
+ },
+ {
+  "id": 53,
+  "count": 1,
+  "name": "Bank sohasi va sug'urta",
+  "slug": "bank-sohasi-va-sugurta",
+  "parent": 20
+ },
+ {
+  "id": 54,
+  "count": 1,
+  "name": "Nogironlar jamoat birlashmalari va NNTlar",
+  "slug": "nogironlar-jamoat-birlashmalari-va-nntlar",
+  "parent": 20
+ },
+ {
+  "id": 55,
+  "count": 4,
+  "name": "Nogironlar huquqlari to‘g'risidagi BMT Konvensiyasi",
+  "slug": "nogironlar-huquqlari-togrisidagi-bmt-konvensiyasi",
+  "parent": 20
+ },
+ {
+  "id": 23,
+  "count": 16,
+  "name": "Savol va javob",
+  "slug": "faq",
+  "parent": 0
+ },
+ {
+  "id": 236,
+  "count": 1,
+  "name": "Nogironligi bo‘lgan ayollar bo‘yicha savol-javob",
+  "slug": "nogironligi-bolgan-ayollar-boyicha-savol-javob",
+  "parent": 23
+ },
+ {
+  "id": 231,
+  "count": 5,
+  "name": "Ta’lim bo‘yicha savol-javoblar",
+  "slug": "talim-boyicha-savol-javoblar",
+  "parent": 23
+ },
+ {
+  "id": 232,
+  "count": 1,
+  "name": "Ijtimoiy himoya bo‘yicha savol-javoblar",
+  "slug": "ijtimoiy-himoya-boyicha-savol-javoblar",
+  "parent": 23
+ },
+ {
+  "id": 208,
+  "count": 6,
+  "name": "Mehnat bo‘yicha savol-javoblar",
+  "slug": "mehnat-boyicha-savol-javoblar",
+  "parent": 23
+ },
+ {
+  "id": 233,
+  "count": 2,
+  "name": "Uy-joy bo‘yicha savol-javoblar",
+  "slug": "uy-joy-boyicha-savol-javoblar",
+  "parent": 23
+ },
+ {
+  "id": 237,
+  "count": 0,
+  "name": "Tibbiy xizmat va reabilitatsiya bo‘yicha savol-javoblar",
+  "slug": "tibbiy-xizmat-va-reabilitatsiya-boyicha-savol-javoblar",
+  "parent": 23
+ },
+ {
+  "id": 239,
+  "count": 0,
+  "name": "Transport bo‘yicha savol-javoblar",
+  "slug": "transport-boyicha-savol-javoblar",
+  "parent": 23
+ },
+ {
+  "id": 240,
+  "count": 0,
+  "name": "Sud-huquq bo‘yicha savol-javoblar",
+  "slug": "sud-huquq-boyicha-savol-javoblar",
+  "parent": 23
+ },
+ {
+  "id": 238,
+  "count": 0,
+  "name": "Tadbirkorlik bo‘yicha savol-javoblar",
+  "slug": "tadbirkorlik-boyicha-savol-javoblar",
+  "parent": 23
+ },
+ {
+  "id": 234,
+  "count": 0,
+  "name": "Nogironligi bo‘lgan bolalar va ularning vasiylari bo‘yicha savol-javoblar",
+  "slug": "nogironligi-bolgan-bolalar-va-ularning-vasiylari-boyicha-savol-javoblar",
+  "parent": 23
+ },
+ {
+  "id": 235,
+  "count": 1,
+  "name": "Nogironligi bo‘lgan yoshlar bo‘yicha savol-javoblar",
+  "slug": "nogironligi-bolgan-yoshlar-boyicha-savol-javoblar",
+  "parent": 23
+ },
+ {
+  "id": 41,
+  "count": 2,
+  "name": "Huquqshunoslar",
+  "slug": "lawyers",
+  "parent": 0
+ },
+ {
+  "id": 67,
+  "count": 1,
+  "name": "Yusupov Dilmurod Dilshadovich",
+  "slug": "yusupov-dilmurod-dilshadovich",
+  "parent": 41
+ },
+ {
+  "id": 187,
+  "count": 0,
+  "name": "Akramov Kamron Shavkatovich",
+  "slug": "akramov-kamron-shavkatovich",
+  "parent": 41
+ },
+ {
+  "id": 247,
+  "count": 0,
+  "name": "Bebutova Zarnigor Faxriddinovna",
+  "slug": "bebutova-zarnigor-faxriddinovna",
+  "parent": 41
+ },
+ {
+  "id": 248,
+  "count": 0,
+  "name": "Maxmasoliyev Nuriddin Alisher o‘g‘li",
+  "slug": "maxmasoliyev-nuriddin-alisher-ogli",
+  "parent": 41
+ },
+ {
+  "id": 65,
+  "count": 12,
+  "name": "Abdullayev Aziz Xamidulloyevich",
+  "slug": "abdullayev-aziz-xamidulloyevich",
+  "parent": 41
+ },
+ {
+  "id": 256,
+  "count": 0,
+  "name": "Rustamov Mansurxon Rustam o'g'li",
+  "slug": "rustamov-mansurxon-rustam-ogli",
+  "parent": 41
+ },
+ {
+  "id": 267,
+  "count": 0,
+  "name": "Temurova Madinabonu Bahodir qizi",
+  "slug": "temurova-madinabonu-bahodir-qizi",
+  "parent": 41
+ },
+ {
+  "id": 266,
+  "count": 0,
+  "name": "Xidirov Sultonmurod Sherzodovich",
+  "slug": "xidirov-sultonmurod-sherzodovich",
+  "parent": 41
+ },
+ {
+  "id": 273,
+  "count": 0,
+  "name": "Turayeva Noila Gʻayrat qizi",
+  "slug": "turayeva-noila-g%ca%bbayrat-qizi",
+  "parent": 41
+ },
+ {
+  "id": 275,
+  "count": 0,
+  "name": "Shodmonaliyeva Ruxshona Ikromjon qizi",
+  "slug": "shodmonaliyeva-ruxshona-ikromjon-qizi",
+  "parent": 41
+ },
+ {
+  "id": 274,
+  "count": 0,
+  "name": "Qalandarova Zebiniso Hasanboyevna",
+  "slug": "qalandarova-zebiniso-hasanboyevna",
+  "parent": 41
+ },
+ {
+  "id": 265,
+  "count": 0,
+  "name": "Hamroyeva Parichehra Nizom qizi",
+  "slug": "hamroyeva-parichehra-nizom-qizi",
+  "parent": 41
+ },
+ {
+  "id": 271,
+  "count": 0,
+  "name": "Abdullayev Ahmadullo Akmaljon oʻg’li",
+  "slug": "abdullayev-ahmadullo-akmaljon-o%ca%bbgli",
+  "parent": 41
+ },
+ {
+  "id": 272,
+  "count": 0,
+  "name": "Axmadova Dilnoza Iskandar qizi",
+  "slug": "axmadova-dilnoza-iskandar-qizi",
+  "parent": 41
+ },
+ {
+  "id": 270,
+  "count": 0,
+  "name": "Faxriddinova Gulirano Vohid qizi",
+  "slug": "faxriddinova-gulirano-vohid-qizi",
+  "parent": 41
+ },
+ {
+  "id": 269,
+  "count": 0,
+  "name": "Ismatova Jasmina Nuriddin qizi",
+  "slug": "ismatova-jasmina-nuriddin-qizi",
+  "parent": 41
+ },
+ {
+  "id": 268,
+  "count": 0,
+  "name": "Sulaymonova Nafisa Axat qizi",
+  "slug": "sulaymonova-nafisa-axat-qizi",
+  "parent": 41
+ },
+ {
+  "id": 264,
+  "count": 0,
+  "name": "Xolmamatova Aziza Ozod qizi",
+  "slug": "xolmamatova-aziza-ozod-qizi",
+  "parent": 41
+ },
+ {
+  "id": 263,
+  "count": 0,
+  "name": "Po‘latova Shamshoda Zokirjonovna",
+  "slug": "polatova-shamshoda-zokirjonovna",
+  "parent": 41
+ },
+ {
+  "id": 262,
+  "count": 0,
+  "name": "Xakimxo‘jayeva Sevdo Kamol qizi",
+  "slug": "xakimxojayeva-sevdo-kamol-qizi",
+  "parent": 41
+ },
+ {
+  "id": 261,
+  "count": 0,
+  "name": "Mamanazarova Fariza Tolib qizi",
+  "slug": "mamanazarova-fariza-tolib-qizi",
+  "parent": 41
+ },
+ {
+  "id": 260,
+  "count": 0,
+  "name": "Saminjonova Nilufarxon Ixtiyorjon qizi",
+  "slug": "saminjonova-nilufarxon-ixtiyorjon-qizi",
+  "parent": 41
+ },
+ {
+  "id": 259,
+  "count": 0,
+  "name": "Iminov Ulug’bek Maxmudjonovich",
+  "slug": "iminov-ulugbek-maxmudjonovich",
+  "parent": 41
+ },
+ {
+  "id": 258,
+  "count": 0,
+  "name": "Umarjonova Mahliyo Abduqodir qizi",
+  "slug": "umarjonova-mahliyo-abduqodir-qizi",
+  "parent": 41
+ },
+ {
+  "id": 257,
+  "count": 0,
+  "name": "Isog‘aliyeva Ro‘za Bahromjon qizi",
+  "slug": "isogaliyeva-roza-bahromjon-qizi",
+  "parent": 41
+ },
+ {
+  "id": 255,
+  "count": 0,
+  "name": "Tolibjonova Yodgora Bekzodbek qizi",
+  "slug": "tolibjonova-yodgora-bekzodbek-qizi",
+  "parent": 41
+ },
+ {
+  "id": 254,
+  "count": 0,
+  "name": "Odilov Javohir Oybek oʻgʻli",
+  "slug": "odilov-javohir-oybek-o%ca%bbg%ca%bbli",
+  "parent": 41
+ },
+ {
+  "id": 253,
+  "count": 0,
+  "name": "Boltayeva Mehriniso Xasan qizi",
+  "slug": "boltayeva-mehriniso-xasan-qizi",
+  "parent": 41
+ },
+ {
+  "id": 252,
+  "count": 0,
+  "name": "Mirzaraximova Madina Muxtorjonovna",
+  "slug": "mirzaraximova-madina-muxtorjonovna",
+  "parent": 41
+ },
+ {
+  "id": 251,
+  "count": 0,
+  "name": "Isroilov Ismoil Umidbek o‘g‘li",
+  "slug": "isroilov-ismoil-umidbek-ogli",
+  "parent": 41
+ },
+ {
+  "id": 250,
+  "count": 0,
+  "name": "To‘rayeva Laziza O‘lmas qizi",
+  "slug": "torayeva-laziza-olmas-qizi",
+  "parent": 41
+ },
+ {
+  "id": 249,
+  "count": 0,
+  "name": "Xayitova Rushana Sirojiddin qizi",
+  "slug": "xayitova-rushana-sirojiddin-qizi",
+  "parent": 41
+ },
+ {
+  "id": 188,
+  "count": 4,
+  "name": "Narbayeva Aziza Ikromovna",
+  "slug": "narbayeva-aziza-ikromovna",
+  "parent": 41
+ },
+ {
+  "id": 212,
+  "count": 0,
+  "name": "Obidova Nodiraxon Oppoqxo‘ja qizi",
+  "slug": "obidova-nodiraxon-oppoqxoja-qizi",
+  "parent": 41
+ },
+ {
+  "id": 207,
+  "count": 0,
+  "name": "Muxtorova Marvarid Oybek qizi",
+  "slug": "muxtorova-marvarid-oybek-qizi",
+  "parent": 41
+ },
+ {
+  "id": 112,
+  "count": 1,
+  "name": "Tuyev Imomali Ma’mur o‘g‘li",
+  "slug": "imomali-tuyev",
+  "parent": 41
+ },
+ {
+  "id": 99,
+  "count": 1,
+  "name": "Ergashov Zafarbek Jalil o‘g‘li",
+  "slug": "ergashov-zafarbek-jalil-ogli",
+  "parent": 41
+ },
+ {
+  "id": 197,
+  "count": 0,
+  "name": "G‘aniyev Farxodjon Utkirjon o‘g‘li",
+  "slug": "ganiyev-farxodjon-utkirjon-ogli",
+  "parent": 41
+ },
+ {
+  "id": 243,
+  "count": 0,
+  "name": "Toxirjonov Sardorbek Oybek o‘g‘li",
+  "slug": "toxirjonov-sardorbek-oybek-ogli",
+  "parent": 41
+ },
+ {
+  "id": 242,
+  "count": 0,
+  "name": "Yoriyev Kamoliddin Oqiljon o’g’li",
+  "slug": "yoriyev-kamoliddin-oqiljon-ogli",
+  "parent": 41
+ },
+ {
+  "id": 226,
+  "count": 0,
+  "name": "Xaydarova Mohinabonu Xamidullayevna",
+  "slug": "xaydarova-mohinabonu-xamidullayevna",
+  "parent": 41
+ },
+ {
+  "id": 225,
+  "count": 0,
+  "name": "Husenova Ruxshona Yusuf qizi",
+  "slug": "husenova-ruxshona-yusuf-qizi",
+  "parent": 41
+ },
+ {
+  "id": 224,
+  "count": 0,
+  "name": "Xudayberganova Gulmira Xaydar qizi",
+  "slug": "xudayberganova-gulmira-xaydar-qizi",
+  "parent": 41
+ },
+ {
+  "id": 223,
+  "count": 0,
+  "name": "Ablakulova Dilfuza Komiljon qizi",
+  "slug": "ablakulova-dilfuza-komiljon-qizi",
+  "parent": 41
+ },
+ {
+  "id": 222,
+  "count": 0,
+  "name": "Ashurov Doniyor Malik o‘g‘li",
+  "slug": "ashurov-doniyor-malik-ogli",
+  "parent": 41
+ },
+ {
+  "id": 172,
+  "count": 0,
+  "name": "Muxtorov Mirsaid Muxsim o‘g‘li",
+  "slug": "muxtorov-mirsaid-muxsim-ogli",
+  "parent": 41
+ },
+ {
+  "id": 220,
+  "count": 0,
+  "name": "Idiyeva Madina Baxtiyor qizi",
+  "slug": "idiyeva-madina-baxtiyor-qizi",
+  "parent": 41
+ },
+ {
+  "id": 95,
+  "count": 0,
+  "name": "Najmiddinova Sarvara Nodirbekovna",
+  "slug": "najmiddinova-sarvara-nodirbekovna",
+  "parent": 41
+ },
+ {
+  "id": 214,
+  "count": 0,
+  "name": "Isayeva Gulibonu Suhrobovna",
+  "slug": "isayeva-gulibonu-suhrobovna",
+  "parent": 41
+ },
+ {
+  "id": 215,
+  "count": 0,
+  "name": "Yozilov Dilshodbek Bahriddin o’g’li",
+  "slug": "yozilov-dilshodbek-bahriddin-ogli",
+  "parent": 41
+ },
+ {
+  "id": 217,
+  "count": 0,
+  "name": "Fatxullayeva Diyora Ravshan qizi",
+  "slug": "fatxullayeva-diyora-ravshan-qizi",
+  "parent": 41
+ },
+ {
+  "id": 216,
+  "count": 0,
+  "name": "Nurmuhammadova Xushnoza To‘lqinjon qizi",
+  "slug": "nurmuhammadova-xushnoza-tolqinjon-qizi",
+  "parent": 41
+ },
+ {
+  "id": 184,
+  "count": 0,
+  "name": "Gafurova Muxlisaxon Ardasherovna",
+  "slug": "gafurova-muxlisaxon-ardasherovna",
+  "parent": 41
+ },
+ {
+  "id": 182,
+  "count": 0,
+  "name": "Muxammadiyev Jamoliddin Shuxrat o‘g‘li",
+  "slug": "muxammadiyev-jamoliddin-shuxrat-ogli",
+  "parent": 41
+ },
+ {
+  "id": 213,
+  "count": 0,
+  "name": "To‘lqinova Visola Ulug‘bek qizi",
+  "slug": "tolqinova-visola-ulugbek-qizi",
+  "parent": 41
+ },
+ {
+  "id": 169,
+  "count": 0,
+  "name": "Xusnitdinova Nafisa Fanzilovna",
+  "slug": "xusnitdinova-nafisa-fanzilovna",
+  "parent": 41
+ },
+ {
+  "id": 221,
+  "count": 0,
+  "name": "Abdixoliqova Ruxshona O’ktam qizi",
+  "slug": "abdixoliqova-ruxshona-oktam-qizi",
+  "parent": 41
+ },
+ {
+  "id": 230,
+  "count": 0,
+  "name": "Quylibayeva Laziza Temur qizi",
+  "slug": "quylibayeva-laziza-temur-qizi",
+  "parent": 41
+ },
+ {
+  "id": 229,
+  "count": 0,
+  "name": "Xayitboyeva Zarnigor Umidjon qizi",
+  "slug": "xayitboyeva-zarnigor-umidjon-qizi",
+  "parent": 41
+ },
+ {
+  "id": 228,
+  "count": 0,
+  "name": "Odilxonova E’zoza Furqat qizi",
+  "slug": "odilxonova-ezoza-furqat-qizi",
+  "parent": 41
+ },
+ {
+  "id": 227,
+  "count": 0,
+  "name": "Rajabova Muxlisa Alisher qizi",
+  "slug": "rajabova-muxlisa-alisher-qizi",
+  "parent": 41
+ },
+ {
+  "id": 219,
+  "count": 0,
+  "name": "Karimova Mahbuba Ilyos qizi",
+  "slug": "karimova-mahbuba-ilyos-qizi",
+  "parent": 41
+ },
+ {
+  "id": 218,
+  "count": 0,
+  "name": "Xamrakulova Diyoraxon Farxod qizi",
+  "slug": "xamrakulova-diyoraxon-farxod-qizi",
+  "parent": 41
+ },
+ {
+  "id": 170,
+  "count": 1,
+  "name": "Nafosatxon Qo‘chqorova",
+  "slug": "nafosatxon-qochqorova",
+  "parent": 0
+ },
+ {
+  "id": 63,
+  "count": 18,
+  "name": "Ismailov Bekjon Salixovich",
+  "slug": "ismailov-bekjon-salixovich",
+  "parent": 0
+ },
+ {
+  "id": 171,
+  "count": 0,
+  "name": "Ro‘zimboyeva Kumushoy Shodlik qizi",
+  "slug": "rozimboyeva-kumushoy-shodlik-qizi",
+  "parent": 0
+ },
+ {
+  "id": 97,
+  "count": 0,
+  "name": "Yoʻldosheva Madina Olloyorovna",
+  "slug": "yo%ca%bbldosheva-madina-olloyorovna",
+  "parent": 0
+ },
+ {
+  "id": 86,
+  "count": 2,
+  "name": "Atamuratova Nasiba Qurbanbay qizi",
+  "slug": "atamuratova-nasiba-qurbanbay-qizi",
+  "parent": 0
+ },
+ {
+  "id": 71,
+  "count": 5,
+  "name": "Mamatqulov Shoxrux Kudratjon o‘g'li",
+  "slug": "mamatqulov-shoxrux-kudratjon-ogli",
+  "parent": 0
+ },
+ {
+  "id": 66,
+  "count": 4,
+  "name": "Aliboyev Sanjar Xayrulla oʻgʻli",
+  "slug": "aliboyev-sanjar-xayrulla-ogli",
+  "parent": 0
+ },
+ {
+  "id": 59,
+  "count": 4,
+  "name": "G‘ayibnazarov Shakarboy Ibrohim o‘g‘li",
+  "slug": "gayibnazarov-shakarboy-ibrohim-ogli",
+  "parent": 0
+ },
+ {
+  "id": 70,
+  "count": 1,
+  "name": "Nurullayeva Oydin Saydulla qizi",
+  "slug": "nurullayeva-oydin-saydulla-qizi",
+  "parent": 0
+ },
+ {
+  "id": 64,
+  "count": 2,
+  "name": "Bekmirzayeva Umida Abdug’ani Qizi",
+  "slug": "bekmirzayeva-umida-abdugani-qizi",
+  "parent": 0
+ },
+ {
+  "id": 100,
+  "count": 0,
+  "name": "Baxtiyorov Muzrob Furqat o‘g‘li",
+  "slug": "baxtiyorov-muzrob-furqat-ogli",
+  "parent": 0
+ },
+ {
+  "id": 111,
+  "count": 0,
+  "name": "Xolmatov Yо‘lchi Abjalil о‘g‘li",
+  "slug": "xolmatov-y%d0%belchi-abjalil-%d0%begli",
+  "parent": 0
+ },
+ {
+  "id": 1,
+  "count": 18,
+  "name": "Yangiliklar",
+  "slug": "news",
+  "parent": 0
+ }
+]

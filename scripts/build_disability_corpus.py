@@ -25,7 +25,7 @@ import sys
 from collections import Counter
 from datetime import date
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -294,9 +294,131 @@ async def _ingest(args) -> None:
     log.info(f"indexed {done} articles into {args.store_dir}; store now holds {store.count()} articles")
     await client.close()
 
+    try:
+        from src.editorial.store import EditorialStore
+        from src.editorial.watch import check_legal_links
+        res = check_legal_links(store, EditorialStore(str(Path(args.store_dir) / "editorial.db")))
+        log.info(f"editorial watch after ingest: {res}")
+    except Exception as e:
+        log.warning(f"check_legal_links after ingest failed: {e}")
+
 
 def cmd_ingest(args) -> None:
     asyncio.run(_ingest(args))
+
+
+def _existing_state(store, law_id: str) -> Dict[str, Tuple[str, str]]:
+    """canonical_id -> (source_hash, status) for one law_id (reads the metadata columns, not full JSON)."""
+    with store.fts_store._get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT canonical_id, source_hash, status FROM articles_metadata
+            WHERE json_extract(json_data, '$.metadata.law_id') = ?
+        """, (law_id,))
+        return {r[0]: (r[1], r[2]) for r in cur.fetchall()}
+
+
+def cmd_refresh(args) -> None:
+    """Re-downloads registry documents and upserts only changed/new units (mockable network layer)."""
+    from src.clients.openrouter import OpenRouterClient
+    from src.storage.hybrid_store import HybridStore
+
+    reg = _load_json(SOURCES / "disability_registry.json", None)
+    if not reg:
+        sys.exit("run `select` first")
+    docs = reg["documents"]
+    wanted = None
+    if getattr(args, "law_ids", None):
+        wanted = {s.strip() for s in args.law_ids.split(",") if s.strip()}
+        docs = [d for d in docs if d.get("law_id") in wanted or d.get("lex_id") in wanted]
+    if getattr(args, "limit", None):
+        docs = docs[: args.limit]
+
+    store = HybridStore(args.store_dir)
+    client = OpenRouterClient()
+    if client.is_mock and not args.allow_mock:
+        sys.exit("OPENROUTER_API_KEY is not configured (mock mode). Pass --allow-mock to refresh with fake vectors.")
+
+    builder = CorpusBuilder(LexClient(cache_dir=str(RAW), min_delay=args.delay))
+    per_doc = []
+    to_index = []
+    removed_total = 0
+    for d in docs:
+        spec = SourceSpec.from_dict({**d, "number": d.get("number_override", ""), "title_hint": d.get("title", "")})
+        try:
+            # force: the HTML cache holds the text as it was at build time; refresh must see today's wording
+            doc, ru_doc = builder.load(spec, with_russian=True, force=True)
+        except Exception as e:                      # network/HTTP failure: keep the stored text untouched
+            per_doc.append({"lex_id": d.get("lex_id"), "law_id": d.get("law_id"), "error": f"fetch_failed: {e}"})
+            continue
+        if doc is None:
+            per_doc.append({"lex_id": d.get("lex_id"), "law_id": d.get("law_id"), "error": "not_available"})
+            continue
+        arts, rep = builder.to_articles(doc, spec, ru_doc)
+        law_id = arts[0].metadata.law_id if arts else (d.get("law_id") or "")
+        existing = _existing_state(store, law_id) if law_id else {}
+        if not arts:
+            # an empty parse (layout change, error page) must never wipe a law from the knowledge base
+            per_doc.append({"lex_id": d.get("lex_id"), "law_id": law_id, "error": "no_units_parsed"})
+            continue
+        new_ids = set()
+        changed = 0
+        for a in arts:
+            new_ids.add(a.canonical_id)
+            # status is compared too: a repealed act keeps its wording, so its hash does not change
+            if existing.get(a.canonical_id) != (a.metadata.source_hash, a.metadata.status.value):
+                to_index.append(a)
+                changed += 1
+        missing = [cid for cid in existing if cid not in new_ids]
+        if existing and len(missing) > max(5, len(existing) // 2) and not args.allow_mass_removal:
+            # renumbered edition or a parser problem - a human decides (re-run with --allow-mass-removal)
+            to_index = [a for a in to_index if a.metadata.law_id != law_id]
+            per_doc.append({"lex_id": d.get("lex_id"), "law_id": law_id, "error": "mass_removal_blocked",
+                            "units": len(arts), "would_remove": len(missing), "existing": len(existing)})
+            log.warning(f"{law_id}: {len(missing)}/{len(existing)} units would disappear - skipped, review manually")
+            continue
+        for cid in missing:
+            store.delete_article(cid)
+        removed_total += len(missing)
+        if doc.status == "repealed":
+            log.info(f"{law_id or d.get('lex_id')}: document repealed on Lex.uz — {len(arts)} units marked")
+        per_doc.append({
+            "lex_id": d.get("lex_id"), "law_id": law_id, "units": len(arts),
+            "changed_or_new": changed, "removed": len(missing),
+            "repealed": doc.status == "repealed",
+        })
+    builder.client.close()
+
+    indexed = 0
+    if to_index:
+        async def _run():
+            return await store.index_articles_batch(to_index, client=client, batch_size=args.batch_size)
+        indexed = asyncio.run(_run())
+    await_close = getattr(client, "close", None)
+    if callable(await_close):
+        try:
+            asyncio.run(client.close())
+        except Exception:
+            pass
+
+    report = {
+        "generated": date.today().isoformat(),
+        "checked_documents": len(docs),
+        "changed_or_new_units": len(to_index),
+        "indexed": indexed,
+        "removed_units": removed_total,
+        "documents": per_doc,
+    }
+    _save_json(SOURCES / "refresh_report.json", report)
+    log.info(f"refresh: {len(docs)} docs, {len(to_index)} changed/new indexed, {removed_total} removed -> {SOURCES / 'refresh_report.json'}")
+
+    try:
+        from src.editorial.store import EditorialStore
+        from src.editorial.watch import check_legal_links
+        res = check_legal_links(store, EditorialStore(str(Path(args.store_dir) / "editorial.db")))
+        log.info(f"editorial watch after refresh: {res}")
+    except Exception as e:
+        log.warning(f"check_legal_links after refresh failed: {e}")
 
 
 def cmd_reindex_fts(args) -> None:
@@ -356,7 +478,7 @@ def cmd_report(args) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name, fn in (("discover", cmd_discover), ("select", cmd_select), ("build", cmd_build), ("ingest", cmd_ingest), ("report", cmd_report), ("reindex-fts", cmd_reindex_fts)):
+    for name, fn in (("discover", cmd_discover), ("select", cmd_select), ("build", cmd_build), ("ingest", cmd_ingest), ("report", cmd_report), ("reindex-fts", cmd_reindex_fts), ("refresh", cmd_refresh)):
         p = sub.add_parser(name)
         p.add_argument("--delay", type=float, default=1.0, help="seconds between Lex.uz requests")
         p.add_argument("--seed-pages", type=int, default=15, help="max result pages scanned per curated seed")
@@ -372,6 +494,14 @@ def main() -> None:
     ing.add_argument("--replace-laws", action="store_true", help="delete existing articles of the same law_id first")
     ing.add_argument("--replace-all", action="store_true", help="empty the corpus first (full rebuild)")
     ing.add_argument("--metadata-only", action="store_true", help="update stored text/metadata + FTS without re-embedding")
+    ref = sub.choices["refresh"]
+    ref.add_argument("--store-dir", default=str(ROOT / "data" / "store"))
+    ref.add_argument("--batch-size", type=int, default=15)
+    ref.add_argument("--allow-mock", action="store_true")
+    ref.add_argument("--limit", type=int, default=None, help="refresh at most N registry documents")
+    ref.add_argument("--law-ids", default=None, help="comma-separated law_id/lex_id filter")
+    ref.add_argument("--allow-mass-removal", action="store_true",
+                     help="apply a refresh even when more than half of a document's units disappeared")
     args = ap.parse_args()
     args.func(args)
 

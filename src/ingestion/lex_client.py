@@ -128,14 +128,14 @@ class LexClient:
                 logger.warning(f"Lex.uz {variant}: HTTP {resp.status_code}")
         return None
 
-    def fetch_url(self, url: str) -> Optional[str]:
+    def fetch_url(self, url: str, force: bool = False) -> Optional[str]:
         """Fetches a Lex.uz document URL (e.g. a language alternative), cached by its document id."""
         m = re.search(r"/docs/(-?\d+)", url)
         if not m:
             return None
         doc_id = m.group(1)
         path = self.cache_dir / f"{doc_cache_name(doc_id)}.html"
-        if path.exists():
+        if path.exists() and not force:
             return path.read_text(encoding="utf-8", errors="replace")
         resp = self._request("GET", f"{LEX_BASE}/uz/docs/{doc_id}")
         if resp.status_code == 200 and "lx_elem" in resp.text:
