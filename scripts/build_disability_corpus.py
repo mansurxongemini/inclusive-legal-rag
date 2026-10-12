@@ -211,11 +211,180 @@ def cmd_select(args) -> None:
             if i % 25 == 0:
                 log.info(f"  {i}/{len(docs)} processed")
 
+    # documents added by `cited` (Huquq+ citations) are not in discovered.json - keep them across re-selects
+    previous = _load_json(SOURCES / "disability_registry.json", {"documents": []})["documents"]
+    have = {r["lex_id"] for r in registry}
+    registry.extend(r for r in previous if r.get("source") == "huquqplus_cited" and r["lex_id"] not in have)
+
     registry.sort(key=lambda r: (r["tier"], -(r["relevance_title"] * 10 + r["relevance_text"])))
     _save_json(SOURCES / "disability_registry.json", {"generated": date.today().isoformat(), "documents": registry})
     _save_json(SOURCES / "rejected.json", rejected)
     tiers = Counter(r["tier"] for r in registry)
     log.info(f"registry: {len(registry)} documents (tiers {dict(tiers)}), rejected {len(rejected)}")
+
+
+# --------------------------------------------------------------------------------------------------------------
+# Acts that only amend other acts: their text is a list of edits, the amended act carries the law.
+_AMENDING_TITLE = re.compile(r"(?:o'zgartish|o'zgartirish|qo'shimcha)\w*\s+(?:va\s+qo'shimcha\w*\s+)?kiritish", re.I)
+_QUOTED_TITLE = re.compile(r"[“\"«]([^”\"»]{12,})[”\"»]")
+
+
+def _lex_id_of(url: str) -> str:
+    m = re.search(r"/docs/(-?\d+)", url or "")
+    return m.group(1) if m else ""
+
+
+def _latin_edition(lex: LexClient, parser: LexDocumentParser, doc_id: str) -> str:
+    """Latin-Uzbek edition id of a cited Lex.uz id (cited ids may be the Cyrillic or the Russian edition)."""
+    raw = str(doc_id).strip()
+    if raw.startswith("-"):
+        return raw
+    if lex.fetch_url(f"https://lex.uz/uz/docs/-{raw}"):          # Cyrillic id N -> Latin edition -N
+        return f"-{raw}"
+    html = lex.fetch_url(f"https://lex.uz/uz/docs/{raw}")
+    if not html:
+        return ""
+    return _lex_id_of(parser.parse(html, raw).language_links.get("uz_latn", ""))
+
+
+def _title_words(text: str) -> set:
+    return {w for w in re.findall(r"[a-z']{4,}", _norm_title(text)) if w not in ("to'g'risida", "haqida")}
+
+
+def _amended_act(lex: LexClient, parser: LexDocumentParser, html: str, title: str) -> Tuple[str, str]:
+    """
+    (lex id, reason) of the single act an amending act changes. Candidates are the acts its text links to on
+    Lex.uz; the one whose title the amending act repeats wins. Acts amending "ayrim ..." (several acts) are skipped.
+    """
+    if re.search(r"\bayrim\b", _norm_title(title)):
+        return "", "amends_several_acts"
+    m = _QUOTED_TITLE.search(title or "")
+    named = _title_words(m.group(1) if m else title)
+    body = html.split('id="divCont"', 1)[-1]
+    linked = Counter(i for i in re.findall(r'/docs/(-?\d+)', body))
+    best, best_score = None, 0.0
+    for lex_id, _ in linked.most_common(12):
+        cand_html = lex.fetch_document(lex_id)
+        if not cand_html:
+            continue
+        cand = parser.parse(cand_html, lex_id)
+        words = _title_words(cand.title)
+        score = len(words & named) / max(1, len(words))
+        if score > best_score and not _AMENDING_TITLE.search(normalize_apostrophes(cand.title)):
+            best, best_score = cand, score
+    if best is None or best_score < 0.6:
+        return "", "base_act_not_found"
+    if best.status == "repealed":
+        return "", f"base_act_not_in_force({best.number} {best.repealed_date or 'yangi tahrir'})"
+    return best.doc_id, ""
+
+
+def cmd_cited(args) -> None:
+    """
+    Lex.uz acts cited by Huquq+ articles but missing from the corpus -> registry candidates.
+
+    Reads data/sources/huquqplus_cited_missing.json, folds Cyrillic/Russian ids onto the Latin edition, replaces an
+    amending act by the act it amends, skips data/sources/cited_exclusions.json and scores each act like `select`
+    does. Writes data/sources/huquqplus_cited_selection.json; with --apply also appends the accepted acts to the
+    registry (source "huquqplus_cited"), after which `build` and `refresh --law-ids=...` bring them into the store.
+    """
+    cited = _load_json(SOURCES / "huquqplus_cited_missing.json", None)
+    if not cited:
+        sys.exit("data/sources/huquqplus_cited_missing.json not found")
+    reg = _load_json(SOURCES / "disability_registry.json", {"documents": []})
+    in_registry = {d["lex_id"] for d in reg["documents"]}
+    excluded = _load_json(SOURCES / "cited_exclusions.json", {}).get("exclusions", {})
+    parser = LexDocumentParser()
+
+    candidates: Dict[str, dict] = {}
+    unresolved: List[dict] = []
+    with LexClient(cache_dir=str(RAW), min_delay=args.delay) as lex:
+        for c in cited["documents"]:
+            latin = _latin_edition(lex, parser, c["doc_id"])
+            if not latin:
+                unresolved.append({"doc_id": c["doc_id"], "reason": "no_latin_edition"})
+                continue
+            rec = candidates.setdefault(latin, {"lex_id": latin, "cited_ids": [], "posts": 0, "citations": 0})
+            rec["cited_ids"].append(c["doc_id"])
+            rec["posts"] += c.get("posts", 0)
+            rec["citations"] += c.get("citations", 0)
+
+        added: List[dict] = []
+        rejected: List[dict] = []
+        present: List[dict] = []
+        queue = list(candidates.values())
+        seen = set()
+        while queue:
+            c = queue.pop(0)
+            lex_id = c["lex_id"]
+            if lex_id in seen:
+                continue
+            seen.add(lex_id)
+            if lex_id in in_registry:
+                present.append(c)
+                continue
+            if lex_id in excluded:
+                rejected.append({**c, "reason": "excluded", "note": excluded[lex_id]})
+                continue
+            html = lex.fetch_document(lex_id)
+            if html is None:
+                rejected.append({**c, "reason": "not_available"})
+                continue
+            doc = parser.parse(html, lex_id)
+            title = normalize_apostrophes(doc.title)
+            base = {**c, "number": doc.number, "title": doc.title, "doc_type": doc.doc_type}
+            if doc.status == "repealed":
+                rejected.append({**base, "reason": "repealed", "repealed_date": doc.repealed_date or "yangi tahrir"})
+                continue
+            if _AMENDING_TITLE.search(title):
+                target, why = _amended_act(lex, parser, html, doc.title)
+                rejected.append({**base, "reason": "amending_act", "amends": target or why})
+                if target:
+                    queue.append({"lex_id": target, "cited_ids": c["cited_ids"], "posts": c["posts"],
+                                  "citations": c["citations"], "via_amending_act": lex_id})
+                continue
+            if not doc.units:
+                rejected.append({**base, "reason": "no_text(body is not published as HTML)"})
+                continue
+            rel_title = disability_relevance(doc.title)
+            rel_text = disability_relevance("\n".join(u.text for u in doc.units)[:60000])
+            dis_units = sum(1 for u in doc.units if disability_relevance(f"{u.title}\n{u.text}") > 0)
+            if doc.doc_type == "Kodeks":
+                tier, include = 3, "disability_articles"
+            elif rel_title >= 1:
+                tier, include = 1, "all"
+            elif rel_text >= args.min_rel_all and len(doc.units) <= args.max_units_all:
+                tier, include = 2, "all"              # a short act largely about disability benefits: keep it whole
+            else:
+                tier, include = 2, "disability_articles"
+            if include == "disability_articles" and not dis_units:
+                rejected.append({**base, "reason": f"not_about_disability(rel={rel_text})", "units": len(doc.units)})
+                continue
+            added.append({
+                "lex_id": lex_id, "law_id": "", "number": doc.number, "number_override": "",
+                "title": doc.title, "doc_type": doc.doc_type, "adopted": doc.adopted_date,
+                "effective": doc.effective_date, "tier": tier, "include": include, "category": None,
+                "nodes": [], "relevance_title": rel_title, "relevance_text": rel_text, "units": len(doc.units),
+                "verified_at": date.today().isoformat(), "source": "huquqplus_cited",
+                "cited_posts": c["posts"], "cited_citations": c["citations"], "cited_ids": c["cited_ids"],
+                **({"via_amending_act": c["via_amending_act"]} if c.get("via_amending_act") else {}),
+                "_kept_units": len(doc.units) if include == "all" else dis_units,
+            })
+
+    _save_json(SOURCES / "huquqplus_cited_selection.json", {
+        "generated": date.today().isoformat(), "added": added, "rejected": rejected,
+        "already_in_registry": present, "unresolved": unresolved,
+    })
+    log.info(f"cited: {len(candidates)} distinct acts -> add {len(added)} "
+             f"({sum(a['_kept_units'] for a in added)} units), rejected {len(rejected)}, "
+             f"already in registry {len(present)}, unresolved {len(unresolved)}")
+    for why, n in Counter(r["reason"].split("(")[0] for r in rejected).most_common():
+        log.info(f"  rejected {why}: {n}")
+    if args.apply and added:
+        reg["documents"].extend({k: v for k, v in a.items() if not k.startswith("_")} for a in added)
+        _save_json(SOURCES / "disability_registry.json", reg)
+        log.info(f"registry: +{len(added)} documents. Next: build, then refresh --law-ids "
+                 + ",".join(a["lex_id"] for a in added[:3]) + ",...")
 
 
 # --------------------------------------------------------------------------------------------------------------
@@ -478,12 +647,17 @@ def cmd_report(args) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name, fn in (("discover", cmd_discover), ("select", cmd_select), ("build", cmd_build), ("ingest", cmd_ingest), ("report", cmd_report), ("reindex-fts", cmd_reindex_fts), ("refresh", cmd_refresh)):
+    for name, fn in (("discover", cmd_discover), ("select", cmd_select), ("cited", cmd_cited), ("build", cmd_build), ("ingest", cmd_ingest), ("report", cmd_report), ("reindex-fts", cmd_reindex_fts), ("refresh", cmd_refresh)):
         p = sub.add_parser(name)
         p.add_argument("--delay", type=float, default=1.0, help="seconds between Lex.uz requests")
         p.add_argument("--seed-pages", type=int, default=15, help="max result pages scanned per curated seed")
         p.add_argument("--seeds-only", action="store_true", help="discover: re-resolve seeds, keep earlier OKOZ results")
         p.set_defaults(func=fn)
+    sub.choices["cited"].add_argument("--apply", action="store_true", help="append the accepted acts to the registry")
+    sub.choices["cited"].add_argument("--max-units-all", type=int, default=150,
+                                      help="largest act without 'nogironlik' in its title that is kept whole")
+    sub.choices["cited"].add_argument("--min-rel-all", type=int, default=6,
+                                      help="disability relevance of the text needed to keep such an act whole")
     sub.choices["build"].add_argument("--max-tier", type=int, default=3)
     sub.choices["build"].add_argument("--no-russian", action="store_true")
     sub.choices["reindex-fts"].add_argument("--store-dir", default=str(ROOT / "data" / "store"))
