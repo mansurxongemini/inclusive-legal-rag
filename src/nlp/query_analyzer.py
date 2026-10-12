@@ -2,6 +2,7 @@ import re
 from typing import List, Literal, Optional
 from pydantic import BaseModel
 from .transliteration import (
+    UZBEK_CYRILLIC_COMMON_WORDS,
     cyrillic_to_latin,
     detect_script,
     normalize_apostrophes,
@@ -58,14 +59,6 @@ class QueryAnalyzer:
         "administrative", "code", "procedure", "claim", "appeal"
     }
 
-    DISABILITY_KEYWORD_MAP = {
-        "visual": ["ko'rish", "ko'zi ojiz", "ko'z", "слеп", "зрен", "глаз", "blind", "visual"],
-        "hearing": ["eshitish", "kar", "eshitmaydigan", "глух", "слух", "deaf", "hearing"],
-        "physical": ["jismoniy", "harakat", "aravacha", "tayanch", "физическ", "коляск", "двигательн", "physical", "wheelchair", "mobility"],
-        "intellectual": ["aqliy", "psixik", "ruhiy", "умственн", "психическ", "mental", "intellectual"],
-        "children": ["bola", "bolalar", "bolalikdan", "дет", "ребенок", "с детства", "child", "children"],
-    }
-
     SUPERSCRIPT_MAP = {
         "¹": "-1", "²": "-2", "³": "-3", "⁴": "-4", "⁵": "-5",
         "⁶": "-6", "⁷": "-7", "⁸": "-8", "⁹": "-9", "⁰": "-0",
@@ -88,8 +81,14 @@ class QueryAnalyzer:
             return "uz"
         
         if script == "cyrillic":
-            # Can be Uzbek Cyrillic or Russian
-            if uz_matches > ru_matches:
+            # Can be Uzbek Cyrillic or Russian. UZBEK_KEYWORDS are Latin, so Cyrillic words must be
+            # transliterated before matching (otherwise every Cyrillic query without ў/ғ/қ/ҳ became "ru").
+            cyr_words = set(re.findall(r"[а-яёўғқҳ]+", text.lower()))
+            latin_words = set(re.findall(r"\w+", normalize_apostrophes(cyrillic_to_latin(" ".join(cyr_words)))))
+            uz_cyr_hits = len(cyr_words.intersection(UZBEK_CYRILLIC_COMMON_WORDS)) + len(
+                latin_words.intersection(cls.UZBEK_KEYWORDS)
+            )
+            if uz_cyr_hits > ru_matches:
                 return "uz"
             return "ru"
         
@@ -125,26 +124,22 @@ class QueryAnalyzer:
             return f"O'RQ-{match.group(1)}"
         return None
 
+    # (pattern, law_id) - law_ids are those assigned in data/sources/seeds.json / the corpus builder
     CODE_ACRONYM_PATTERNS = [
-        # Match multi-word / longer specific codes first
-        (r"\b(jpk|жпк|упк|jinoyat[- ]?protsessual|уголовно[- ]?процессуальн\w*)\b", "jpk_code"),
-        (r"\b(jik|жик|уик|jinoyat[- ]?ijroiya|уголовно[- ]?исполнительн\w*)\b", "jik_code"),
-        (r"\b(jk|жк|ук|jinoyat kodeks\w*|уголовн\w* кодекс\w*)\b", "jinoyat_code"),
-        (r"\b(mjtk|мжтк|коао|ma['`’‘ʻʼ]?muriy javobgarlik|административн\w* ответственност\w*)\b", "mjtk_code"),
-        (r"\b(msiytk|мсийтк|коас|ma['`’‘ʻʼ]?muriy sud ishlar\w*|административн\w* судопроизводств\w*)\b", "msiytk_code"),
-        (r"\b(mk|мк|тк|mehnat kodeks\w*|трудов\w* кодекс\w*)\b", "mehnat_code"),
-        (r"\b(sk|ск|нк|soliq kodeks\w*|налогов\w* кодекс\w*)\b", "soliq_code"),
-        (r"\b(fpk|фпк|гпк|fuqarolik protsessual|гражданско[- ]?процессуальн\w*)\b", "fpk_code"),
-        (r"\b(ipk|ипк|эпк|iqtisodiy protsessual|экономическ\w* процессуальн\w*)\b", "ipk_code"),
-        (r"\b(fk|фк|гк|fuqarolik kodeks\w*|гражданск\w* кодекс\w*)\b", "fuqarolik_code"),
-        (r"\b(oila kodeks\w*|семейн\w* кодекс\w*)\b", "oila_code"),
-        (r"\b(bojxona kodeks\w*|таможенн\w* кодекс\w*)\b", "bojxona_code"),
-        (r"\b(uy[- ]?joy kodeks\w*|жилищн\w* кодекс\w*)\b", "uy_joy_code"),
-        (r"\b(yer kodeks\w*|земельн\w* кодекс\w*)\b", "yer_code"),
-        (r"\b(shaharsozlik kodeks\w*|градостроительн\w* кодекс\w*)\b", "shaharsozlik_code"),
-        (r"\b(byudjet kodeks\w*|бюджетн\w* кодекс\w*)\b", "byudjet_code"),
-        (r"\b(saylov kodeks\w*|избирательн\w* кодекс\w*)\b", "saylov_code"),
-        (r"\b(havo kodeks\w*|воздушн\w* кодекс\w*)\b", "havo_code"),
+        (r"\b(o['`’‘ʻʼ]?rq[-\s]?641|nogironligi bo['`’‘ʻʼ]?lgan shaxslarning huquqlari to['`’‘ʻʼ]?g['`’‘ʻʼ]?risida|"
+         r"закон\w* о правах лиц с инвалидностью|law on the rights of persons with disabilities)\b", "law_disability_2020"),
+        (r"\b(konvensiya\w*|конвенци\w*|convention|crpd|bmt nogironlar)\b", "crpd_2006"),
+        (r"\b(konstitutsiya\w*|конституци\w*|constitution)\b", "constitution_uz"),
+        (r"\b(mehnat kodeks\w*|трудов\w* кодекс\w*|labou?r code|\bmk\b|\bтк\b)\b", "labor_code_2022"),
+        (r"\b(soliq kodeks\w*|налогов\w* кодекс\w*|tax code|\bsk\b|\bнк\b)\b", "tax_code_2020"),
+        (r"\b(uy[- ]?joy kodeks\w*|жилищн\w* кодекс\w*|housing code)\b", "housing_code"),
+        (r"\b(shaharsozlik kodeks\w*|градостроительн\w* кодекс\w*|urban planning code)\b", "urban_code_2021"),
+        (r"\b(fuqarolik kodeks\w*|гражданск\w* кодекс\w*|civil code|\bfk\b|\bгк\b)\b", "civil_code_1"),
+        (r"\b(oila kodeks\w*|семейн\w* кодекс\w*|family code)\b", "family_code"),
+        (r"\b(jinoyat kodeks\w*|уголовн\w* кодекс\w*|criminal code|\bjk\b|\bук\b)\b", "criminal_code"),
+        (r"\b(mjtk|ma['`’‘ʻʼ]?muriy javobgarlik\w*|коап|административн\w* ответственност\w*)\b", "admin_liability_code"),
+        (r"\b(saylov kodeks\w*|избирательн\w* кодекс\w*|election code)\b", "election_code"),
+        (r"\b(ta['`’‘ʻʼ]?lim to['`’‘ʻʼ]?g['`’‘ʻʼ]?risidagi qonun\w*|закон\w* об образовании|education law)\b", "education_law_2020"),
     ]
 
     @classmethod
@@ -155,16 +150,30 @@ class QueryAnalyzer:
                 return law_id
         return None
 
+    # Russian / English wording that the Latin-only taxonomy patterns do not cover
+    _EXTRA_TYPE_PATTERNS = {
+        "visual": [r"слеп", r"слабовидящ", r"зрени", r"\bblind\b", r"visual impairment", r"visually"],
+        "hearing": [r"глух", r"слабослышащ", r"слух", r"\bdeaf\b", r"hearing"],
+        "physical": [r"коляск", r"опорно-двигательн", r"двигательн", r"wheelchair", r"mobility", r"physical disab"],
+        "intellectual": [r"умственн", r"интеллектуальн", r"психическ", r"intellectual", r"mental"],
+        "childhood_disability": [r"ребен[ок]+\s+с\s+инвалидн", r"дет\w*\s+с\s+инвалидн", r"инвалид\w*\s+с\s+детства",
+                                 r"disabled child", r"children with disab", r"child with disab"],
+        "group_1": [r"\b1\s*групп", r"перв\w+\s+групп", r"\bi\s+групп", r"group\s*(?:1|i)\b", r"first group"],
+        "group_2": [r"\b2\s*групп", r"втор\w+\s+групп", r"\bii\s+групп", r"group\s*(?:2|ii)\b", r"second group"],
+        "group_3": [r"\b3\s*групп", r"трет\w+\s+групп", r"\biii\s+групп", r"group\s*(?:3|iii)\b", r"third group"],
+    }
+
     @classmethod
     def extract_disability_types(cls, text: str) -> List[str]:
+        """Beneficiary groups mentioned in the question, in the same vocabulary as the corpus metadata."""
+        from src.domain.disability_taxonomy import detect_disability_groups
+
+        found = [g for g in detect_disability_groups(text) if g != "general"]
         lower = text.lower()
-        matched = []
-        for dis_type, keywords in cls.DISABILITY_KEYWORD_MAP.items():
-            for kw in keywords:
-                if kw in lower:
-                    matched.append(dis_type)
-                    break
-        return matched if matched else ["general"]
+        for gid, patterns in cls._EXTRA_TYPE_PATTERNS.items():
+            if gid not in found and any(re.search(p, lower) for p in patterns):
+                found.append(gid)
+        return found if found else ["general"]
 
     @classmethod
     def analyze(cls, query: str, user_language: Optional[str] = None) -> QueryAnalysis:

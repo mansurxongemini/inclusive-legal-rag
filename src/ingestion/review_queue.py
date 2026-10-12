@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from pydantic import BaseModel
 from src.config import settings
+from src.storage.sqlite_utils import connect as _sqlite_connect
+
 
 
 class ReviewQueueItem(BaseModel):
@@ -26,7 +28,7 @@ class ReviewQueue:
         self._init_db()
 
     def _get_conn(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(str(self.db_path))
+        conn = _sqlite_connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
 

@@ -26,7 +26,7 @@ async def main():
         await store.seed_from_file(pilot_file, client=client)
 
     runner = EvalRunner(store, client=client)
-    dataset_file = "data/golden_dataset/golden_eval_set.json"
+    dataset_file = "data/golden_dataset/disability_eval_set.json"
     print(f"[*] Running evaluation on {dataset_file}...")
 
     report = await runner.evaluate_dataset(dataset_file)

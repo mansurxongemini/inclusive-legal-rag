@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import json
 import logging
@@ -5,10 +6,11 @@ import re
 import sqlite3
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 import numpy as np
 
 from src.config import settings
+from src.storage.sqlite_utils import connect as _sqlite_connect
 from src.nlp.transliteration import normalize_apostrophes, cyrillic_to_latin, detect_script
 
 logger = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ class QueryCache:
     """
     Dual-Layer Intelligent Caching Engine for Legal RAG:
     - Layer 1: Canonical Normalized Hash Cache (invariant to punctuation, scripts, spaces, casing)
-    - Layer 2: Vector Semantic Similarity Cache (cosine similarity >= 0.96 for rephrased queries)
+    - Layer 2: Vector Semantic Similarity Cache (cosine similarity >= 0.93 for rephrased queries)
     - Layer 3: Ultra-fast in-memory RAM cache for hot items
     """
 
@@ -27,10 +29,16 @@ class QueryCache:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.ttl = settings.CACHE_TTL_SECONDS
         self._ram_cache: Dict[str, Tuple[float, dict]] = {}
+        self._stats = {
+            "canonical_hits": 0,
+            "semantic_hits": 0,
+            "misses": 0,
+            "saved_tokens_est": 0
+        }
         self._init_db()
 
     def _get_conn(self) -> sqlite3.Connection:
-        return sqlite3.connect(str(self.db_path))
+        return _sqlite_connect(self.db_path)
 
     def _init_db(self):
         with self._get_conn() as conn:
@@ -64,7 +72,7 @@ class QueryCache:
 
     @classmethod
     def canonicalize_query(cls, query: str) -> str:
-        """
+        r"""
         Normalizes query text to be invariant to:
         - Punctuation (.,?!:;'"-–—()[]{}/\)
         - Apostrophes (', ‘, ’, `, ʻ, ʼ)
@@ -93,6 +101,9 @@ class QueryCache:
         if key in self._ram_cache:
             created_at, resp = self._ram_cache[key]
             if now - created_at < self.ttl:
+                self._stats["canonical_hits"] += 1
+                resp = copy.deepcopy(resp)
+                resp["cache_type"] = "exact_ram"
                 return resp
             else:
                 del self._ram_cache[key]
@@ -106,8 +117,11 @@ class QueryCache:
                 resp_json, created_at = row
                 if now - created_at < self.ttl:
                     data = json.loads(resp_json)
+                    data["cache_type"] = "exact_disk"
+                    self._stats["canonical_hits"] += 1
+                    self._stats["saved_tokens_est"] += len(data.get("answer", "").split()) * 2
                     if len(self._ram_cache) < 512:
-                        self._ram_cache[key] = (created_at, data)
+                        self._ram_cache[key] = (created_at, copy.deepcopy(data))
                     return data
                 else:
                     cursor.execute("DELETE FROM query_cache WHERE cache_key = ?", (key,))
@@ -119,11 +133,12 @@ class QueryCache:
         query_vector: List[float],
         language: str,
         mode: str,
-        threshold: float = 0.96
+        threshold: float = 0.93,
+        accept: Optional[Callable[[dict], bool]] = None,
     ) -> Optional[dict]:
         """
         Layer 2: Semantic Vector Similarity Cache Lookup.
-        Returns cached response if cosine similarity >= threshold (default 96%).
+        Returns cached response if cosine similarity >= threshold (default 93%).
         """
         if not query_vector:
             return None
@@ -158,10 +173,30 @@ class QueryCache:
                 sim = float(np.dot(q_vec, c_vec))
                 if sim >= threshold:
                     data = json.loads(resp_json)
+                    # a near-identical question may still concern another beneficiary group ("I guruh" vs
+                    # "II guruh"); the caller can veto such hits
+                    if accept is not None and not accept(data):
+                        continue
                     data["cache_type"] = "semantic"
                     data["semantic_similarity"] = round(sim, 3)
+                    self._stats["semantic_hits"] += 1
+                    self._stats["saved_tokens_est"] += len(data.get("answer", "").split()) * 2
                     return data
         return None
+
+    def get_stats(self) -> dict:
+        """Returns live cache efficiency and token savings metrics."""
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT count(*) FROM query_cache;")
+            count = cursor.fetchone()[0]
+        return {
+            "total_cached_queries": count,
+            "ram_cache_hot_items": len(self._ram_cache),
+            "canonical_exact_hits": self._stats["canonical_hits"],
+            "semantic_similarity_hits": self._stats["semantic_hits"],
+            "estimated_saved_tokens": self._stats["saved_tokens_est"],
+        }
 
     def set(
         self,
@@ -187,7 +222,7 @@ class QueryCache:
 
         # Update RAM cache
         if len(self._ram_cache) < 512:
-            self._ram_cache[key] = (now, data)
+            self._ram_cache[key] = (now, copy.deepcopy(data))
 
         with self._get_conn() as conn:
             conn.execute("""
@@ -199,7 +234,7 @@ class QueryCache:
             conn.commit()
 
     def clear(self):
-        """Clears all cached queries."""
+        """Flushes both the RAM cache and the persistent SQLite cache (call after any corpus change)."""
         self._ram_cache.clear()
         with self._get_conn() as conn:
             conn.execute("DELETE FROM query_cache;")

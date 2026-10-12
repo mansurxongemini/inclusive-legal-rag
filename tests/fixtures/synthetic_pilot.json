@@ -1,0 +1,744 @@
+[
+  {
+    "canonical_id": "synthetic_law_art_3",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "synthetic_law",
+      "law_title": {
+        "uz": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] O'zbekiston Respublikasining 'Nogironligi bo'lgan shaxslarning huquqlari to'g'risida'gi Qonuni",
+        "ru": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Закон Республики Узбекистан «О правах лиц с инвалидностью»",
+        "en": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Law of the Republic of Uzbekistan 'On the Rights of Persons with Disabilities'"
+      },
+      "law_number": "TEST-641",
+      "chapter_number": "1-bob",
+      "article_number": "3-modda",
+      "article_title": {
+        "uz": "Asosiy tushunchalar (nogironlik va nogironligi bo'lgan shaxs)",
+        "ru": "Основные понятия (инвалидность и лицо с инвалидностью)",
+        "en": "Basic concepts (disability and person with disability)"
+      },
+      "source_url": "https://example.invalid/synthetic-fixture",
+      "effective_date": "2021-01-16",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:art3_hash_disability_2020",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "disability_rights",
+      "disability_types": [
+        "general",
+        "physical",
+        "visual",
+        "hearing",
+        "intellectual"
+      ],
+      "beneficiary_type": [
+        "individual",
+        "government_agency"
+      ],
+      "cross_references": [
+        {
+          "ref_type": "refers_to",
+          "target_canonical_id": "synthetic_law_art_5"
+        }
+      ],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "Nogironlik — barqaror jismoniy, aqliy, sensor yoki ruhiy buzilishlar natijasida insonning jamiyat hayotida boshqalar bilan teng ravishda to'liq va samarali ishtirok etishiga to'sqinlik qiluvchi omillar mavjudligi bilan bog'liq holat.",
+          "ru": "Инвалидность — состояние, обусловленное наличием устойчивых физических, умственных, сенсорных или психических нарушений, которые мешают полному и эффективному участию человека в жизни общества наравне с другими.",
+          "en": "Disability is a condition resulting from persistent physical, mental, sensory, or psychic impairments that hinder full and effective participation in society on an equal basis with others."
+        }
+      },
+      {
+        "point_id": "2",
+        "text": {
+          "uz": "Nogironligi bo'lgan shaxs — barqaror jismoniy, aqliy, sensor (sezgi) yoki ruhiy nuqsonlari bo'lganligi sababli hayot faoliyati cheklanganligi munosabati bilan davlat tomonidan ijtimoiy yordamga hamda himoyaga muhtoj deb e'tirof etilgan shaxs.",
+          "ru": "Лицо с инвалидностью — лицо, признанное нуждающимся в социальной помощи и защите государства в связи с ограничением жизнедеятельности из-за стойких физических, умственных, сенсорных или психических нарушений.",
+          "en": "A person with a disability is a person recognized as in need of state social assistance and protection due to limitation of life activity caused by persistent impairments."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "Ushbu Qonunda quyidagi asosiy tushunchalar qo'llaniladi: nogironlik — barqaror jismoniy, aqliy, sensor yoki ruhiy buzilishlar natijasida insonning jamiyat hayotida boshqalar bilan teng ravishda to'liq va samarali ishtirok etishiga to'sqinlik qiluvchi omillar mavjudligi bilan bog'liq holat; nogironligi bo'lgan shaxs — barqaror jismoniy, aqliy, sensor (sezgi) yoki ruhiy nuqsonlari bo'lganligi sababli hayot faoliyati cheklanganligi munosabati bilan davlat tomonidan ijtimoiy yordamga hamda himoyaga muhtoj deb e'tirof etilgan shaxs.",
+      "ru": "В настоящем Законе применяются следующие основные понятия: инвалидность — состояние, обусловленное наличием устойчивых физических, умственных, сенсорных или психических нарушений, которые при взаимодействии с различными барьерами мешают полному и эффективному участию в жизни общества наравне с другими; лицо с инвалидностью — лицо, признанное в установленном порядке нуждающимся в социальной помощи и защите.",
+      "en": "The following basic concepts are used in this Law: disability — a condition resulting from persistent physical, mental, sensory or psychic impairments; person with disability — a person officially recognized as needing state assistance and protection due to limitations of life activity."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  },
+  {
+    "canonical_id": "synthetic_law_art_5",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "synthetic_law",
+      "law_title": {
+        "uz": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] O'zbekiston Respublikasining 'Nogironligi bo'lgan shaxslarning huquqlari to'g'risida'gi Qonuni",
+        "ru": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Закон Республики Узбекистан «О правах лиц с инвалидностью»",
+        "en": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Law of the Republic of Uzbekistan 'On the Rights of Persons with Disabilities'"
+      },
+      "law_number": "TEST-641",
+      "chapter_number": "1-bob",
+      "article_number": "5-modda",
+      "article_title": {
+        "uz": "Nogironligi bo'lgan shaxslarning huquqlarini ta'minlashning asosiy prinsiplari",
+        "ru": "Основные принципы обеспечения прав лиц с инвалидностью",
+        "en": "Basic principles of ensuring the rights of persons with disabilities"
+      },
+      "source_url": "https://example.invalid/synthetic-fixture",
+      "effective_date": "2021-01-16",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:art5_hash_disability_2020",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "disability_rights",
+      "disability_types": [
+        "general"
+      ],
+      "beneficiary_type": [
+        "individual",
+        "government_agency"
+      ],
+      "cross_references": [],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "Nogironligi bo'lgan shaxslarning qadr-qimmatini, ularning shaxsiy mustaqilligini, tanlash erkinligini hurmat qilish.",
+          "ru": "Уважение достоинства лиц с инвалидностью, их личной независимости и свободы выбора.",
+          "en": "Respect for inherent dignity, individual autonomy and freedom of choice of persons with disabilities."
+        }
+      },
+      {
+        "point_id": "2",
+        "text": {
+          "uz": "Nogironlik belgisi bo'yicha kamsitishga yo'l qo'yilmasligi.",
+          "ru": "Недопустимость дискриминации по признаку инвалидности.",
+          "en": "Non-discrimination on the basis of disability."
+        }
+      },
+      {
+        "point_id": "3",
+        "text": {
+          "uz": "Imkoniyatlar tengligi va jamiyat hayotiga to'liq jalb etilish.",
+          "ru": "Равенство возможностей и полное вовлечение в жизнь общества.",
+          "en": "Equality of opportunity and full inclusion in society."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "Nogironligi bo'lgan shaxslarning huquqlarini ta'minlashning asosiy prinsiplari quyidagilardan iborat: nogironligi bo'lgan shaxslarning qadr-qimmatini, ularning shaxsiy mustaqilligini, mustaqil qaror qabul qilishini va tanlash erkinligini hurmat qilish; nogironlik belgisi bo'yicha kamsitishga yo'l qo'ymaslik; insonning huquq va erkinliklarini amalga oshirishda imkoniyatlar tengligi; jamiyat hayotiga to'liq va samarali jalb etilish; obyektlar va xizmatlarning ochiqligi (foydalanish imkoniyati mavjudligi).",
+      "ru": "Основными принципами обеспечения прав лиц с инвалидностью являются: уважение достоинства, личной самостоятельности, включая свободу делать свой собственный выбор; недопущение дискриминации по признаку инвалидности; равенство возможностей; полное и эффективное вовлечение в общество; доступность объектов и услуг.",
+      "en": "The main principles of ensuring the rights of persons with disabilities are: respect for inherent dignity, individual autonomy, and freedom to make choices; non-discrimination on the basis of disability; equality of opportunity; full and effective inclusion in society; accessibility of facilities and services."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  },
+  {
+    "canonical_id": "synthetic_law_art_15",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "synthetic_law",
+      "law_title": {
+        "uz": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] O'zbekiston Respublikasining 'Nogironligi bo'lgan shaxslarning huquqlari to'g'risida'gi Qonuni",
+        "ru": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Закон Республики Узбекистан «О правах лиц с инвалидностью»",
+        "en": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Law of the Republic of Uzbekistan 'On the Rights of Persons with Disabilities'"
+      },
+      "law_number": "TEST-641",
+      "chapter_number": "3-bob",
+      "article_number": "15-modda",
+      "article_title": {
+        "uz": "Nogironligi bo'lgan shaxslarga tibbiy yordam ko'rsatish",
+        "ru": "Оказание медицинской помощи лицам с инвалидностью",
+        "en": "Provision of medical assistance to persons with disabilities"
+      },
+      "source_url": "https://example.invalid/synthetic-fixture",
+      "effective_date": "2021-01-16",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:art15_hash_disability_2020",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "social_protection",
+      "disability_types": [
+        "general",
+        "physical",
+        "visual",
+        "hearing"
+      ],
+      "beneficiary_type": [
+        "individual",
+        "government_agency"
+      ],
+      "cross_references": [
+        {
+          "ref_type": "implements",
+          "target_canonical_id": "synthetic_law_art_45"
+        }
+      ],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "Nogironligi bo'lgan shaxslarga davlat tomonidan kafolatlangan bepul tibbiy yordam ko'rsatiladi.",
+          "ru": "Лицам с инвалидностью гарантируется бесплатная медицинская помощь со стороны государства.",
+          "en": "Persons with disabilities are guaranteed free medical care by the state."
+        }
+      },
+      {
+        "point_id": "2",
+        "text": {
+          "uz": "Nogironligi bo'lgan shaxslar tibbiy ko'riklardan navbatsiz o'tish hamda shifoxonalarda imtiyozli sharoitlarda davolanish huquqiga ega.",
+          "ru": "Лица с инвалидностью имеют право на первоочередное прохождение медицинских осмотров и льготное лечение в стационарах.",
+          "en": "Persons with disabilities have the right to priority medical examinations and preferential hospital treatment."
+        }
+      },
+      {
+        "point_id": "3",
+        "text": {
+          "uz": "I va II guruh nogironligi bo'lgan shaxslar imtiyozli dori vositalari bilan bepul ta'minlanadi.",
+          "ru": "Лица с инвалидностью I и II групп обеспечиваются бесплатными лекарственными средствами по льготным рецептам.",
+          "en": "Persons with disabilities of groups I and II are provided with medicines free of charge according to preferential prescriptions."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "Nogironligi bo'lgan shaxslarga davlat tomonidan kafolatlangan bepul tibbiy yordam ko'rsatiladi. Nogironligi bo'lgan shaxslar ambulatoriya-poliklinika muassasalarida bepul tibbiy xizmat olish, shifoxonalarda imtiyozli sharoitlarda davolanish hamda reabilitatsiya tadbirlaridan foydalanish huquqiga egadirlar. I va II guruh nogironligi bo'lgan shaxslar, shuningdek nogironligi bo'lgan bolalar qonunchilikda belgilangan tartibda dori vositalari va tibbiy buyumlar bilan bepul ta'minlanadi.",
+      "ru": "Лицам с инвалидностью оказывается гарантированная государством бесплатная медицинская помощь. Они имеют право на получение бесплатной амбулаторной помощи, лечение на льготных условиях в больницах и реабилитацию. Лица с инвалидностью I и II групп, а также дети с инвалидностью бесплатно обеспечиваются лекарствами и изделиями медицинского назначения в установленном порядке.",
+      "en": "Persons with disabilities are guaranteed free medical care by the state. They have the right to free outpatient services, preferential inpatient hospital treatment, and rehabilitation. Persons with group I and II disabilities and children with disabilities are provided with medicines and medical supplies free of charge as prescribed by law."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  },
+  {
+    "canonical_id": "synthetic_law_art_22",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "synthetic_law",
+      "law_title": {
+        "uz": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] O'zbekiston Respublikasining 'Nogironligi bo'lgan shaxslarning huquqlari to'g'risida'gi Qonuni",
+        "ru": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Закон Республики Узбекистан «О правах лиц с инвалидностью»",
+        "en": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Law of the Republic of Uzbekistan 'On the Rights of Persons with Disabilities'"
+      },
+      "law_number": "TEST-641",
+      "chapter_number": "4-bob",
+      "article_number": "22-modda",
+      "article_title": {
+        "uz": "Ijtimoiy infratuzilma obyektlaridan moneliksiz foydalanish sharoitlarini yaratish",
+        "ru": "Создание условий для беспрепятственного доступа к объектам социальной инфраструктуры",
+        "en": "Creating conditions for unimpeded access to social infrastructure facilities"
+      },
+      "source_url": "https://example.invalid/synthetic-fixture",
+      "effective_date": "2021-01-16",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:art22_hash_disability_2020",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "disability_rights",
+      "disability_types": [
+        "physical",
+        "visual",
+        "hearing"
+      ],
+      "beneficiary_type": [
+        "individual",
+        "employer",
+        "government_agency"
+      ],
+      "cross_references": [
+        {
+          "ref_type": "refers_to",
+          "target_canonical_id": "synthetic_law_art_24"
+        }
+      ],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "Turar joylar, jamoat va ishlab chiqarish binolari, inshootlari nogironligi bo'lgan shaxslar kirishi va foydalanishi uchun moslashtirilgan bo'lishi shart (panduslar, ko'tarish moslamalari, maxsus keng eshiklar).",
+          "ru": "Жилые, общественные и производственные здания и сооружения должны быть приспособлены для доступа и использования лицами с инвалидностью (пандусы, подъемники, специальные двери).",
+          "en": "Residential, public and industrial buildings and facilities must be adapted for access and use by persons with disabilities (ramps, lifts, special doors)."
+        }
+      },
+      {
+        "point_id": "2",
+        "text": {
+          "uz": "Nogironligi bo'lgan shaxslarning ehtiyojlariga moslashtirilmagan obyektlarni loyihalashtirish, qurish va foydalanishga topshirish taqiqlanadi.",
+          "ru": "Запрещается проектирование, строительство и ввод в эксплуатацию объектов, не приспособленных к потребностям лиц с инвалидностью.",
+          "en": "Designing, constructing and commissioning facilities not adapted to the needs of persons with disabilities is prohibited."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "Turar joylar, jamoat va ishlab chiqarish binolari, inshootlari, transport vositalari, ko'cha-yo'l tarmoqlari nogironligi bo'lgan shaxslarning ulardan to'siqlarsiz foydalanishi uchun moslashtirilgan bo'lishi shart. Nogironligi bo'lgan shaxslarning ehtiyojlariga moslashtirilmagan aholi punktlarini rejalashtirish, loyihalashtirish, binolarni qurish, rekonstruksiya qilish va foydalanishga topshirish taqiqlanadi.",
+      "ru": "Жилые, общественные и производственные здания, сооружения, транспортные средства и дорожные сети должны быть приспособлены для беспрепятственного доступа к ним лиц с инвалидностью. Проектирование, строительство, реконструкция и сдача в эксплуатацию объектов, не приспособленных к потребностям лиц с инвалидностью, не допускается.",
+      "en": "Residential, public, and industrial buildings, facilities, vehicles, and road networks must be adapted for unimpeded access by persons with disabilities. Planning, designing, constructing, reconstructing, and commissioning facilities that do not meet the access requirements of persons with disabilities is prohibited."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  },
+  {
+    "canonical_id": "synthetic_law_art_24",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "synthetic_law",
+      "law_title": {
+        "uz": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] O'zbekiston Respublikasining 'Nogironligi bo'lgan shaxslarning huquqlari to'g'risida'gi Qonuni",
+        "ru": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Закон Республики Узбекистан «О правах лиц с инвалидностью»",
+        "en": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Law of the Republic of Uzbekistan 'On the Rights of Persons with Disabilities'"
+      },
+      "law_number": "TEST-641",
+      "chapter_number": "4-bob",
+      "article_number": "24-modda",
+      "article_title": {
+        "uz": "Transportdan foydalanish sharoitlari va imtiyozlar",
+        "ru": "Условия пользования транспортом и льготы",
+        "en": "Transport accessibility and privileges"
+      },
+      "source_url": "https://example.invalid/synthetic-fixture",
+      "effective_date": "2021-01-16",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:art24_hash_disability_2020",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "disability_rights",
+      "disability_types": [
+        "physical",
+        "visual",
+        "general"
+      ],
+      "beneficiary_type": [
+        "individual"
+      ],
+      "cross_references": [
+        {
+          "ref_type": "refers_to",
+          "target_canonical_id": "synthetic_law_art_22"
+        }
+      ],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "Shahar yo'lovchi transportining kamida 10 foizi nogironligi bo'lgan shaxslar aravachalari uchun maxsus moslamalar bilan jihozlangan bo'lishi kerak.",
+          "ru": "Не менее 10 процентов городского пассажирского транспорта должно быть оборудовано специальными приспособлениями для колясок лиц с инвалидностью.",
+          "en": "At least 10 percent of urban passenger transport must be equipped with special devices for wheelchairs of persons with disabilities."
+        }
+      },
+      {
+        "point_id": "2",
+        "text": {
+          "uz": "I va II guruh nogironligi bo'lgan shaxslar shahar jamoat transportidan (taksidan tashqari) bepul foydalanish huquqiga ega.",
+          "ru": "Лица с инвалидностью I и II групп имеют право на бесплатный проезд на городском пассажирском транспорте (кроме такси).",
+          "en": "Persons with group I and II disabilities have the right to free travel on urban public transport (except taxis)."
+        }
+      },
+      {
+        "point_id": "3",
+        "text": {
+          "uz": "Avtomobil to'xtash joylarida (parkovkalarda) kamida 10 foiz, lekin 1 tadan kam bo'lmagan joy nogironligi bo'lgan shaxslar avtotransport vositalari uchun bepul ajratiladi.",
+          "ru": "На каждой автостоянке не менее 10 процентов мест (но не менее одного места) выделяется бесплатно для автотранспорта лиц с инвалидностью.",
+          "en": "At least 10 percent of parking spaces (and no less than one space) must be reserved free of charge for vehicles of persons with disabilities."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "Jamoat transporti vositalari, vokzallar, aeroportlar va bekatlar nogironligi bo'lgan shaxslarning harakatlanishi uchun maxsus moslamalar bilan ta'minlanadi. I va II guruh nogironligi bo'lgan shaxslar, shuningdek ko'zi ojiz nogironlarga hamrohlik qiluvchi shaxslar shahar yo'lovchi transportidan (taksi bundan mustasno) bepul foydalanish huquqiga ega. Avtoturargohlarda nogironligi bo'lgan shaxslar uchun maxsus bepul to'xtash joylari ajratiladi.",
+      "ru": "Транспортные средства общего пользования, вокзалы, аэропорты и остановки оборудуются приспособлениями для лиц с инвалидностью. Лица с инвалидностью I и II групп, а также лицо, сопровождающее незрячего, имеют право бесплатного проезда на городском пассажирском транспорте (за исключением такси). На парковках выделяются бесплатные специальные места.",
+      "en": "Public transportation vehicles, stations, airports, and stops shall be equipped with access devices. Persons with group I and II disabilities, as well as persons accompanying blind individuals, are entitled to free travel on urban public transport (except taxis). Free dedicated parking spaces must be reserved at all parking lots."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  },
+  {
+    "canonical_id": "synthetic_law_art_28",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "synthetic_law",
+      "law_title": {
+        "uz": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] O'zbekiston Respublikasining 'Nogironligi bo'lgan shaxslarning huquqlari to'g'risida'gi Qonuni",
+        "ru": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Закон Республики Узбекистан «О правах лиц с инвалидностью»",
+        "en": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Law of the Republic of Uzbekistan 'On the Rights of Persons with Disabilities'"
+      },
+      "law_number": "TEST-641",
+      "chapter_number": "5-bob",
+      "article_number": "28-modda",
+      "article_title": {
+        "uz": "Nogironligi bo'lgan shaxslarning ta'lim olishi",
+        "ru": "Образование лиц с инвалидностью",
+        "en": "Education of persons with disabilities"
+      },
+      "source_url": "https://example.invalid/synthetic-fixture",
+      "effective_date": "2021-01-16",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:art28_hash_disability_2020",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "education",
+      "disability_types": [
+        "general",
+        "visual",
+        "hearing",
+        "physical"
+      ],
+      "beneficiary_type": [
+        "individual"
+      ],
+      "cross_references": [],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "Davlat nogironligi bo'lgan shaxslarning barcha ta'lim muassasalarida inklyuziv ta'lim olishi uchun zarur shart-sharoitlarni yaratadi.",
+          "ru": "Государство создает необходимые условия для инклюзивного образования лиц с инвалидностью во всех образовательных учреждениях.",
+          "en": "The state creates conditions for inclusive education of persons with disabilities in all educational institutions."
+        }
+      },
+      {
+        "point_id": "2",
+        "text": {
+          "uz": "Oliy ta'lim muassasalariga qabul qilishda nogironligi bo'lgan shaxslar uchun davlat granti asosida qo'shimcha ikki foizli qabul kvotasi ajratiladi.",
+          "ru": "При приеме в высшие образовательные учреждения для лиц с инвалидностью выделяется дополнительная двухпроцентная квота на основе государственного гранта.",
+          "en": "An additional two percent quota on the basis of state grants is allocated for admission of persons with disabilities to higher education institutions."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "Davlat nogironligi bo'lgan shaxslarning inklyuziv va maxsus ta'lim olishi uchun sharoitlar yaratadi. Oliy ta'lim muassasalariga kirishda I va II guruh nogironligi bo'lgan shaxslarga, shuningdek nogironligi bo'lgan bolalarga davlat granti asosida ajratiladigan qabul parametrlarining qo'shimcha ikki foizli kvotasi taqdim etiladi.",
+      "ru": "Государство обеспечивает условия для инклюзивного и специального образования лиц с инвалидностью. При поступлении в высшие образовательные учреждения для лиц с инвалидностью I и II групп, а также детей с инвалидностью выделяется дополнительная двухпроцентная квота от общих параметров приема на основе государственного гранта.",
+      "en": "The state provides conditions for inclusive and specialized education of persons with disabilities. When entering higher educational institutions, an additional two percent state-grant quota is allocated for persons with group I and II disabilities and children with disabilities."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  },
+  {
+    "canonical_id": "synthetic_law_art_36",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "synthetic_law",
+      "law_title": {
+        "uz": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] O'zbekiston Respublikasining 'Nogironligi bo'lgan shaxslarning huquqlari to'g'risida'gi Qonuni",
+        "ru": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Закон Республики Узбекистан «О правах лиц с инвалидностью»",
+        "en": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Law of the Republic of Uzbekistan 'On the Rights of Persons with Disabilities'"
+      },
+      "law_number": "TEST-641",
+      "chapter_number": "6-bob",
+      "article_number": "36-modda",
+      "article_title": {
+        "uz": "Nogironligi bo'lgan shaxslarning mehnat qilish huquqi va ish o'rinlari kvotasi",
+        "ru": "Право на труд лиц с инвалидностью и квота рабочих мест",
+        "en": "Right to work of persons with disabilities and job quota"
+      },
+      "source_url": "https://example.invalid/synthetic-fixture",
+      "effective_date": "2021-01-16",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:art36_hash_disability_2020",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "labor_code",
+      "disability_types": [
+        "general",
+        "physical",
+        "visual",
+        "hearing"
+      ],
+      "beneficiary_type": [
+        "individual",
+        "employer"
+      ],
+      "cross_references": [
+        {
+          "ref_type": "implements",
+          "target_canonical_id": "synthetic_labor_art_425"
+        }
+      ],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "Nogironlik sababli mehnat shartnomasini tuzishni rad etish yoki ishdan bo'shatish taqiqlanadi (tibbiy xulosaga ko'ra mehnat faoliyati sog'lig'iga mutlaqo zid bo'lgan hollar bundan mustasno).",
+          "ru": "Запрещается отказ в заключении трудового договора или увольнение по причине инвалидности (за исключением случаев, когда работа противопоказана медицинским заключением).",
+          "en": "Refusal to conclude an employment contract or dismissal on the ground of disability is prohibited (except when work is contraindicated by medical conclusion)."
+        }
+      },
+      {
+        "point_id": "2",
+        "text": {
+          "uz": "Xodimlar soni 20 kishidan ortiq bo'lgan tashkilotlarda xodimlar umumiy sonining kamida 3 foizi miqdorida nogironligi bo'lgan shaxslar uchun ish o'rinlari zaxiralanadi (kvota).",
+          "ru": "В организациях с численностью работников более 20 человек резервируется не менее 3 процентов рабочих мест для трудоустройства лиц с инвалидностью (квота).",
+          "en": "In organizations with more than 20 employees, at least 3 percent of jobs must be reserved for the employment of persons with disabilities (quota)."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "Nogironligi bo'lgan shaxslar boshqalar bilan teng ravishda erkin mehnat qilish, o'z qobiliyatlariga mos ish o'rnini tanlash huquqiga egadirlar. Xodimlar soni yigirma kishidan ortiq bo'lgan korxona, muassasa va tashkilotlarda xodimlar sonining kamida uch foizi miqdorida nogironligi bo'lgan shaxslarni ishga joylashtirish uchun ish o'rinlarining eng kam soni (kvotalar) belgilanadi. Nogironlik vajidan ishga qabul qilishni rad etish yoki lavozimini pasaytirish qat'iyan man etiladi.",
+      "ru": "Лица с инвалидностью имеют право на свободный труд наравне с другими. В организациях с численностью более 20 человек устанавливается норматив обязательного трудоустройства лиц с инвалидностью в размере не менее 3 процентов от общей численности. Отказ в приеме на работу или понижение в должности по мотиву инвалидности категорически запрещается.",
+      "en": "Persons with disabilities have the right to free labor and equal employment opportunities. In organizations employing more than twenty individuals, a mandatory employment quota of at least 3 percent is established for persons with disabilities. Refusal of employment or demotion based on disability is strictly prohibited."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  },
+  {
+    "canonical_id": "synthetic_labor_art_425",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "synthetic_labor_2022",
+      "law_title": {
+        "uz": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] O'zbekiston Respublikasining Mehnat kodeksi",
+        "ru": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Трудовой кодекс Республики Узбекистан",
+        "en": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Labor Code of the Republic of Uzbekistan"
+      },
+      "law_number": "TEST-641",
+      "chapter_number": "XXIV bob",
+      "article_number": "425-modda",
+      "article_title": {
+        "uz": "Nogironligi bo'lgan xodimlar uchun ish vaqtining qisqartirilgan davomiyligi",
+        "ru": "Сокращенная продолжительность рабочего времени для работников с инвалидностью",
+        "en": "Reduced working hours for employees with disabilities"
+      },
+      "source_url": "https://example.invalid/synthetic-fixture",
+      "effective_date": "2023-04-30",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:labor_425_hash",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "labor_code",
+      "disability_types": [
+        "general",
+        "physical",
+        "visual",
+        "hearing"
+      ],
+      "beneficiary_type": [
+        "individual",
+        "employer"
+      ],
+      "cross_references": [
+        {
+          "ref_type": "implements",
+          "target_canonical_id": "synthetic_law_art_36"
+        }
+      ],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "I va II guruh nogironligi bo'lgan xodimlar uchun ish vaqtining davomiyligi haftasiga o'ttiz olti soatdan oshmaydigan qisqartirilgan ish vaqti belgilanadi.",
+          "ru": "Для работников, являющихся лицами с инвалидностью I и II групп, устанавливается сокращенная продолжительность рабочего времени не более 36 часов в неделю.",
+          "en": "For employees with group I and II disabilities, reduced working hours not exceeding 36 hours per week are established."
+        }
+      },
+      {
+        "point_id": "2",
+        "text": {
+          "uz": "Qisqartirilgan ish vaqti uchun mehnatga haq to'lash to'liq (kundalik to'liq ish vaqti) miqdorda amalga oshiriladi, ya'ni maosh kamaytirilmaydi.",
+          "ru": "Оплата труда при сокращенной продолжительности рабочего времени производится в полном размере, то есть заработная плата не снижается.",
+          "en": "Remuneration for reduced working hours is paid in full (equivalent to standard hours), i.e. wages are not decreased."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "I va II guruh nogironligi bo'lgan xodimlar uchun ish vaqtining davomiyligi haftasiga o'ttiz olti soatdan oshmaydigan qisqartirilgan ish vaqti belgilanadi. Bunday xodimlar mehnatiga haq to'lash to'liq kunlik ish vaqti uchun belgilangan miqdorda amalga oshiriladi. Nogironligi bo'lgan xodimlarni ularning roziligisiz tungi ishlarga, ishdan tashqari ishlarga va dam olish kunlaridagi ishlarga jalb qilishga yo'l qo'yilmaydi.",
+      "ru": "Для работников с инвалидностью I и II групп устанавливается сокращенная продолжительность рабочего времени не более 36 часов в неделю с сохранением полной оплаты труда. Привлечение работников с инвалидностью к ночным работам, сверхурочным работам и работам в выходные дни допускается только с их согласия и при условии, что такие работы не запрещены им медицинскими рекомендациями.",
+      "en": "For employees with group I and II disabilities, reduced working time of no more than 36 hours per week is established with full pay. Involving employees with disabilities in night shifts, overtime, and weekend work is prohibited without their explicit consent and must not contradict medical recommendations."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  },
+  {
+    "canonical_id": "synthetic_law_art_45",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "synthetic_law",
+      "law_title": {
+        "uz": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] O'zbekiston Respublikasining 'Nogironligi bo'lgan shaxslarning huquqlari to'g'risida'gi Qonuni",
+        "ru": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Закон Республики Узбекистан «О правах лиц с инвалидностью»",
+        "en": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Law of the Republic of Uzbekistan 'On the Rights of Persons with Disabilities'"
+      },
+      "law_number": "TEST-641",
+      "chapter_number": "7-bob",
+      "article_number": "45-modda",
+      "article_title": {
+        "uz": "Reabilitatsiya qilishning texnik vositalari, aravachalar va protez-ortopediya buyumlari bilan ta'minlash",
+        "ru": "Обеспечение техническими средствами реабилитации, кресло-колясками и протезно-ортопедическими изделиями",
+        "en": "Provision of technical means of rehabilitation, wheelchairs and prosthetic-orthopedic devices"
+      },
+      "source_url": "https://example.invalid/synthetic-fixture",
+      "effective_date": "2021-01-16",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:art45_hash_disability_2020",
+      "status": "active",
+      "superseded_by": null,
+      "supersedes": null,
+      "amendment_history": [],
+      "category": "social_protection",
+      "disability_types": [
+        "physical",
+        "hearing",
+        "visual",
+        "general"
+      ],
+      "beneficiary_type": [
+        "individual"
+      ],
+      "cross_references": [
+        {
+          "ref_type": "refers_to",
+          "target_canonical_id": "synthetic_law_art_15"
+        }
+      ],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "Nogironligi bo'lgan shaxslar davlat hisobidan bepul yoki imtiyozli shartlarda aravachalar, eshitish apparatlari, hassa va protez-ortopediya vositalari bilan ta'minlanadi.",
+          "ru": "Лица с инвалидностью за счет государства бесплатно или на льготных условиях обеспечиваются кресло-колясками, слуховыми аппаратами, тростями и протезно-ортопедическими изделиями.",
+          "en": "Persons with disabilities are provided free of charge or on preferential terms at state expense with wheelchairs, hearing aids, canes, and prosthetic-orthopedic products."
+        }
+      },
+      {
+        "point_id": "2",
+        "text": {
+          "uz": "Agar nogironligi bo'lgan shaxs kafolatlangan reabilitatsiya vositasini o'z hisobidan sotib olsa, unga qonunchilikda belgilangan tartibda kompensatsiya to'lanadi.",
+          "ru": "Если лицо с инвалидностью самостоятельно приобрело гарантированное средство реабилитации, ему выплачивается денежная компенсация в установленном порядке.",
+          "en": "If a person with disability purchases a guaranteed rehabilitation device at their own expense, monetary compensation is paid in accordance with legislation."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "Nogironligi bo'lgan shaxslarni reabilitatsiya qilishning texnik vositalari hamda protez-ortopediya buyumlari bilan ta'minlash davlat mablag'lari hisobidan amalga oshiriladi. Nogironligi bo'lgan shaxs yoki uning qonuniy vakili o'z hisobidan reabilitatsiya texnik vositasini xarid qilgan taqdirda, davlat tomonidan belgilangan me'yorlar doirasida to'liq yoki qisman kompensatsiya puli to'lanadi.",
+      "ru": "Обеспечение лиц с инвалидностью техническими средствами реабилитации и протезно-ортопедическими изделиями осуществляется за счет государственных средств. В случае самостоятельного приобретения рекомендованного средства реабилитации выплачивается компенсация в установленном размере.",
+      "en": "Provision of persons with disabilities with technical means of rehabilitation and prosthetic-orthopedic devices is funded by state resources. If a person with disability purchases an approved technical rehabilitation device independently, reimbursement compensation is paid within statutory thresholds."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  },
+  {
+    "canonical_id": "synthetic_law_old_sample_art_10",
+    "schema_version": "1.1",
+    "metadata": {
+      "law_id": "law_disability_1991",
+      "law_title": {
+        "uz": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] O'zbekiston Respublikasining 'O'zbekiston Respublikasida nogironlarni ijtimoiy himoya qilish to'g'risida'gi Qonuni (Eski)",
+        "ru": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Закон Республики Узбекистан «О социальной защищенности инвалидов в Республике Узбекистан» (Устаревший)",
+        "en": "[SINTETIK TEST MA'LUMOTI - HUQUQIY MATN EMAS] Law of the Republic of Uzbekistan 'On Social Protection of Disabled Persons' (Former)"
+      },
+      "law_number": "TEST-641",
+      "chapter_number": "2-bob",
+      "article_number": "10-modda",
+      "article_title": {
+        "uz": "Nogironlarning tibbiy ko'rigi (Eski tahrir)",
+        "ru": "Медицинское освидетельствование инвалидов (Старая редакция)",
+        "en": "Medical examination of disabled persons (Former)"
+      },
+      "source_url": "https://example.invalid/synthetic-fixture",
+      "effective_date": "1991-11-18",
+      "last_verified_date": "2026-09-01",
+      "source_hash": "sha256:old_sample_art10",
+      "status": "repealed",
+      "superseded_by": "synthetic_law_art_15",
+      "supersedes": null,
+      "amendment_history": [
+        {
+          "amending_law_number": "O'RQ-641",
+          "date": "2020-10-15",
+          "summary_of_change": "Yangi O'RQ-641 qonuni qabul qilinishi munosabati bilan bekor qilingan va 15-modda bilan almashtirilgan."
+        }
+      ],
+      "category": "social_protection",
+      "disability_types": [
+        "general"
+      ],
+      "beneficiary_type": [
+        "individual"
+      ],
+      "cross_references": [
+        {
+          "ref_type": "supersedes",
+          "target_canonical_id": "synthetic_law_art_15"
+        }
+      ],
+      "embedding_model_version": "bge-m3-2025-11-18"
+    },
+    "points": [
+      {
+        "point_id": "1",
+        "text": {
+          "uz": "Tibbiy-mehnat ekspertiza komissiyalari (TMEK) tomonidan ko'rikdan o'tkazishning eski tartibi (ushbu modda o'z kuchini yo'qotgan).",
+          "ru": "Старый порядок освидетельствования врачебно-трудовыми экспертными комиссиями (ВТЭК) (статья утратила силу).",
+          "en": "Former procedure of medical examination by VTEK commissions (this article is repealed)."
+        }
+      }
+    ],
+    "translations": {
+      "uz": "Eski tahrir: Nogironlikni belgilash TMEK tomonidan amalga oshiriladi. (Mazkur modda O'RQ-641 Qonuniga muvofiq bekor qilingan va uning o'rniga yangi tartib o'rnatilgan).",
+      "ru": "Старая редакция: Определение инвалидности осуществляется ВТЭК. (Статья утратила силу в соответствии с Законом ЗРУ-641).",
+      "en": "Former version: Determination of disability was conducted by VTEK. (Repealed and superseded by Law O'RQ-641)."
+    },
+    "translation_provenance": {
+      "uz": "official",
+      "ru": "official",
+      "en": "machine_translated_reviewed"
+    }
+  }
+]

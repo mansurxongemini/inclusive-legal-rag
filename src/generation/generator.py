@@ -2,6 +2,7 @@ import json
 import logging
 from typing import AsyncGenerator, Dict, List, Optional
 from pydantic import BaseModel
+from src.config import settings
 from src.retrieval.reranker import RetrievedArticleContext
 from src.clients.openrouter import OpenRouterClient
 from src.generation.prompts import (
@@ -14,6 +15,22 @@ from src.generation.prompts import (
 from src.generation.validator import CitationValidator, CitationItem, ValidationResult
 
 logger = logging.getLogger(__name__)
+
+STREAM_ERROR_MESSAGES = {
+    "uz": "Javob yaratish xizmati vaqtincha mavjud emas. Iltimos, birozdan so'ng qayta urinib ko'ring.",
+    "ru": "Сервис генерации ответов временно недоступен. Пожалуйста, повторите попытку позже.",
+    "en": "The answer generation service is temporarily unavailable. Please try again shortly.",
+}
+
+
+def _reasoning_options() -> Optional[Dict]:
+    """OpenRouter `reasoning` field from settings: "" = model default, "none" = off, otherwise an effort level."""
+    effort = (settings.GENERATION_REASONING_EFFORT or "").strip().lower()
+    if not effort:
+        return None
+    if effort == "none":
+        return {"enabled": False}
+    return {"effort": effort}
 
 
 class GeneratedAnswer(BaseModel):
@@ -65,12 +82,29 @@ class AnswerGenerator:
             {"role": "user", "content": user_content},
         ]
 
+        reasoning = _reasoning_options()
+
         raw_llm_response = await self.client.chat_completion(
             messages=messages,
             temperature=0.0,
             max_tokens=8192,
+            reasoning=reasoning,
         )
         raw_llm_response = (raw_llm_response or "").strip()
+
+        if not raw_llm_response or len(raw_llm_response) < 50:
+            logger.warning("AnswerGenerator: primary LLM response was empty or too short. Attempting fallback model...")
+            try:
+                raw_llm_response = await self.client.chat_completion(
+                    messages=messages,
+                    model=self.client.fallback_model,
+                    temperature=0.0,
+                    max_tokens=8192,
+                    reasoning=reasoning,
+                )
+                raw_llm_response = (raw_llm_response or "").strip()
+            except Exception as e:
+                logger.error(f"Fallback generation also failed: {e}")
 
         # Attach disclaimer if not present
         disclaimer = DISCLAIMERS.get(language, DISCLAIMERS["uz"])
@@ -102,6 +136,7 @@ class AnswerGenerator:
         contexts: List[RetrievedArticleContext],
         language: str = "uz",
         mode: ResponseMode = "plain",
+        status_warnings: Optional[List[dict]] = None,
     ) -> AsyncGenerator[str, None]:
         """
         Streams generated text via SSE tokens, followed by a final JSON metadata event containing validated citations.
@@ -121,10 +156,26 @@ class AnswerGenerator:
             {"role": "user", "content": user_content},
         ]
 
+        reasoning = _reasoning_options()
+
         accumulated_chunks = []
-        async for chunk in self.client.chat_completion_stream(messages, temperature=0.0, max_tokens=4000):
-            accumulated_chunks.append(chunk)
-            yield f"data: {json.dumps({'type': 'token', 'text': chunk})}\n\n"
+        try:
+            async for chunk in self.client.chat_completion_stream(
+                messages,
+                temperature=0.0,
+                max_tokens=4000,
+                reasoning=reasoning,
+            ):
+                accumulated_chunks.append(chunk)
+                yield f"data: {json.dumps({'type': 'token', 'text': chunk})}\n\n"
+        except RuntimeError as e:
+            logger.error(f"AnswerGenerator stream failed: {e}")
+            error_payload = {
+                "type": "error",
+                "message": STREAM_ERROR_MESSAGES.get(language, STREAM_ERROR_MESSAGES["uz"]),
+            }
+            yield f"data: {json.dumps(error_payload)}\n\n"
+            return
 
         full_raw_text = "".join(accumulated_chunks)
         disclaimer = DISCLAIMERS.get(language, DISCLAIMERS["uz"])
@@ -139,12 +190,17 @@ class AnswerGenerator:
             language=language,
         )
 
-        # Emit final structured payload
+        # Emit final structured payload. The streamed tokens are the raw model output (they may still contain
+        # internal IDs), so the sanitized text is repeated here for clients that render the final answer.
         final_payload = {
             "type": "done",
             "citations": [c.model_dump() for c in val_result.resolved_citations],
             "is_refusal": val_result.is_refusal,
             "validation_passed": val_result.is_valid,
+            "clean_answer": val_result.clean_answer or val_result.sanitized_answer,
+            "telegram_formatted": val_result.telegram_formatted,
+            "warnings": val_result.warnings,
+            "status_warnings": status_warnings or [],
             "language": language,
             "mode": mode,
         }

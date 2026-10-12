@@ -32,7 +32,7 @@ class EvalRunner:
 
     async def evaluate_dataset(
         self,
-        dataset_path: str = "data/golden_dataset/golden_eval_set.json",
+        dataset_path: str = "data/golden_dataset/disability_eval_set.json",
         max_questions: Optional[int] = None,
     ) -> EvalSummaryReport:
         path = Path(dataset_path)
@@ -56,8 +56,8 @@ class EvalRunner:
         for item in items:
             q_id = item["id"]
             question = item["question"]
-            exp_ids = item.get("expected_canonical_ids", [])
-            is_out = item.get("is_out_of_scope", False)
+            exp_ids = item.get("expected_ids", item.get("expected_canonical_ids", []))
+            is_out = item.get("out_of_scope", item.get("is_out_of_scope", False))
 
             if is_out:
                 out_of_scope_count += 1

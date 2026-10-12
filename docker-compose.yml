@@ -12,16 +12,17 @@ services:
     environment:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
-      - EMBEDDING_MODEL=baai/bge-m3
-      - GENERATION_MODEL_PRIMARY=google/gemini-2.5-flash
-      - GENERATION_MODEL_FALLBACK=meta-llama/llama-3.3-70b-instruct
-      - RERANK_MODEL=google/gemini-2.5-flash
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-baai/bge-m3}
+      - GENERATION_MODEL_PRIMARY=${GENERATION_MODEL_PRIMARY:-google/gemini-2.5-flash}
+      - GENERATION_MODEL_FALLBACK=${GENERATION_MODEL_FALLBACK:-meta-llama/llama-3.3-70b-instruct}
+      - RERANK_MODEL=${RERANK_MODEL:-cohere/rerank-v3.5}
       - STORAGE_DIR=/app/data/store
       - CACHE_DB_PATH=/app/data/cache/query_cache.db
       - HOST=0.0.0.0
       - PORT=8000
       - WORKERS=1
-      - RATE_LIMIT_PER_MINUTE=60
+      - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-60}
+      - ADMIN_API_KEY=${ADMIN_API_KEY:-}
       - MOCK_EXTERNAL_APIS=${MOCK_EXTERNAL_APIS:-false}
     volumes:
       - ./data/store:/app/data/store

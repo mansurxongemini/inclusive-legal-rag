@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nogironligi bo'lgan shaxslar huquqlari — huquqiy yordamchi</title>
+  <meta name="description" content="Nogironligi bo'lgan shaxslarning huquqlari bo'yicha savolga rasmiy qonunchilik hujjatlari asosida javob.">
+  <style>
+    :root {
+      --bg: #ffffff; --fg: #14213d; --muted: #4a5568; --card: #f4f6fb; --line: #c7cfdd;
+      --brand: #0b4fa3; --brand-fg: #ffffff; --warn-bg: #fff4d6; --warn-fg: #5c3b00; --err: #9b1c1c; --ok: #14663a;
+      --fs: 1.125rem; --radius: 10px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-contrast="high"]) {
+        --bg: #0f1728; --fg: #eef2fb; --muted: #b6c1d6; --card: #18233b; --line: #3a4a6b;
+        --brand: #7db3ff; --brand-fg: #0b1220; --warn-bg: #3a2d08; --warn-fg: #ffe3a0; --err: #ff9d9d; --ok: #7fe0a8;
+      }
+    }
+    :root[data-contrast="high"] {
+      --bg: #000000; --fg: #ffffff; --muted: #ffffff; --card: #000000; --line: #ffffff;
+      --brand: #ffff00; --brand-fg: #000000; --warn-bg: #000000; --warn-fg: #ffff00; --err: #ff8080; --ok: #80ff80;
+    }
+    * { box-sizing: border-box; }
+    html { font-size: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--fg); font-size: var(--fs); line-height: 1.6;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+    }
+    a { color: var(--brand); text-underline-offset: 3px; }
+    :focus-visible { outline: 4px solid var(--brand); outline-offset: 3px; }
+    .skip { position: absolute; left: -999px; top: 0; background: var(--brand); color: var(--brand-fg); padding: .75rem 1rem; z-index: 10; }
+    .skip:focus { left: 0; }
+    .wrap { max-width: 56rem; margin: 0 auto; padding: 1rem 1rem 4rem; }
+    header { border-bottom: 2px solid var(--line); padding-bottom: .75rem; margin-bottom: 1rem; }
+    h1 { font-size: 1.6em; line-height: 1.25; margin: .25rem 0; }
+    h2 { font-size: 1.25em; margin: 1.5rem 0 .5rem; }
+    p.lead { color: var(--muted); margin: .25rem 0 0; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+    button, select, textarea {
+      font: inherit; color: var(--fg); background: var(--bg); border: 2px solid var(--line); border-radius: var(--radius);
+      min-height: 44px; padding: .5rem .85rem;
+    }
+    button { cursor: pointer; }
+    button.primary { background: var(--brand); color: var(--brand-fg); border-color: var(--brand); font-weight: 600; }
+    button[aria-pressed="true"] { border-color: var(--brand); box-shadow: inset 0 0 0 2px var(--brand); }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    form { background: var(--card); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem; }
+    label { display: block; font-weight: 600; margin-bottom: .35rem; }
+    textarea { width: 100%; min-height: 8rem; resize: vertical; }
+    .row { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+    .row > div { flex: 1 1 14rem; }
+    select { width: 100%; }
+    .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+    .examples { display: flex; flex-wrap: wrap; gap: .5rem; padding: 0; list-style: none; margin: .5rem 0 0; }
+    .examples button { text-align: left; }
+    .notice { background: var(--warn-bg); color: var(--warn-fg); border: 2px solid var(--line); border-radius: var(--radius); padding: .75rem 1rem; margin: 1rem 0; }
+    .error { color: var(--err); font-weight: 600; }
+    #answer-card { border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem; margin-top: 1.5rem; background: var(--card); }
+    #answer-body p { margin: .6rem 0; }
+    #answer-body ul { padding-left: 1.4rem; }
+    #answer-body h3, #answer-body h4 { margin: 1rem 0 .3rem; }
+    .cite { font-size: .85em; vertical-align: super; font-weight: 700; }
+    ol.sources { padding-left: 1.4rem; }
+    ol.sources li { margin-bottom: 1rem; }
+    .quote { border-left: 4px solid var(--line); margin: .4rem 0; padding: .2rem .8rem; color: var(--muted); }
+    .badge { display: inline-block; font-size: .8em; border: 2px solid var(--line); border-radius: 999px; padding: 0 .6rem; margin-left: .3rem; }
+    .badge.bad { border-color: var(--err); color: var(--err); }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    footer { margin-top: 3rem; border-top: 2px solid var(--line); padding-top: 1rem; color: var(--muted); font-size: .95em; }
+    @media (prefers-reduced-motion: no-preference) { .spin { animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#question">Asosiy qismga o'tish</a>
+  <div class="wrap">
+    <header>
+      <h1>Nogironligi bo'lgan shaxslar huquqlari bo'yicha huquqiy yordamchi</h1>
+      <p class="lead">Savolingizni yozing yoki ayting. Javob faqat rasmiy qonunchilik hujjatlariga (Lex.uz) tayanadi va har bir fikr manba bilan ko'rsatiladi.</p>
+      <div class="toolbar" role="group" aria-label="Ko'rinish sozlamalari">
+        <button type="button" id="font-down" aria-label="Matnni kichraytirish">A−</button>
+        <button type="button" id="font-up" aria-label="Matnni kattalashtirish">A+</button>
+        <button type="button" id="contrast" aria-pressed="false">Yuqori kontrast</button>
+      </div>
+    </header>
+
+    <main id="main">
+      <form id="ask-form" novalidate>
+        <label for="question">Savolingiz</label>
+        <textarea id="question" name="question" maxlength="4000" required aria-describedby="q-help"
+                  placeholder="Masalan: Men I guruh nogironligi bo'lgan shaxsman, qanday nafaqa va imtiyozlarga haqqim bor?"></textarea>
+        <p id="q-help" class="lead">Imkon qadar aniq yozing: nogironlik guruhi, yoshi, qaysi masala (pensiya, ish, ta'lim, transport...).</p>
+
+        <div class="row">
+          <div>
+            <label for="style">Javob uslubi</label>
+            <select id="style">
+              <option value="plain">Oddiy tilda</option>
+              <option value="easy_read">Juda sodda (qisqa gaplar)</option>
+              <option value="legal_text">Rasmiy matn (so'zma-so'z)</option>
+            </select>
+          </div>
+          <div>
+            <label for="lang">Til</label>
+            <select id="lang">
+              <option value="auto">Avtomatik</option>
+              <option value="uz">O'zbekcha</option>
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div>
+            <label for="group">Toifa (ixtiyoriy)</label>
+            <select id="group">
+              <option value="all">Ko'rsatmayman</option>
+              <option value="group_1">I guruh</option>
+              <option value="group_2">II guruh</option>
+              <option value="group_3">III guruh</option>
+              <option value="childhood_disability">Nogironligi bo'lgan bola</option>
+              <option value="visual">Ko'rish bo'yicha</option>
+              <option value="hearing">Eshitish bo'yicha</option>
+              <option value="physical">Tayanch-harakat a'zolari</option>
+              <option value="intellectual">Aqliy rivojlanish</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="primary" id="submit">Javob olish</button>
+          <button type="button" id="mic" aria-pressed="false">Ovoz bilan yozish</button>
+          <button type="reset" id="reset">Tozalash</button>
+        </div>
+      </form>
+
+      <h2 id="ex-h">Ko'p beriladigan savollar</h2>
+      <ul class="examples" aria-labelledby="ex-h" id="examples"></ul>
+
+      <div id="status" class="sr-only" role="status" aria-live="polite"></div>
+
+      <section id="answer-card" hidden aria-labelledby="answer-h" tabindex="-1">
+        <h2 id="answer-h" style="margin-top:0">Javob</h2>
+        <div id="answer-body" aria-live="polite" aria-busy="false"></div>
+        <div class="actions">
+          <button type="button" id="speak" aria-pressed="false">Ovoz chiqarib o'qish</button>
+          <button type="button" id="copy">Nusxalash</button>
+          <button type="button" id="good">Foydali bo'ldi</button>
+          <button type="button" id="bad">Foydali bo'lmadi</button>
+        </div>
+        <p id="check-note" class="notice" hidden></p>
+        <h3 id="src-h">Manbalar</h3>
+        <ol class="sources" id="sources" aria-labelledby="src-h"></ol>
+      </section>
+    </main>
+
+    <footer>
+      <p><strong>Muhim:</strong> bu xizmat axborot berish uchun mo'ljallangan va davlat organi qarori, sud hujjati yoki advokat maslahati o'rnini bosmaydi.
+      Shaxsiy vaziyatingiz bo'yicha qaror tibbiy-ijtimoiy ekspert komissiyasi, Ijtimoiy himoya milliy agentligi yoki sud tomonidan qabul qilinadi.
+      Javob noaniq bo'lsa, manbadagi rasmiy matnni tekshiring.</p>
+      <p>Savollar saqlanmaydi; baholash tugmasi bosilsa savol va javob sifatni yaxshilash uchun yuboriladi.</p>
+    </footer>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  /* ---- display preferences ------------------------------------------------------------------------ */
+  var size = parseFloat(store.get('fs', '1.125'));
+  function applySize() { document.documentElement.style.setProperty('--fs', size + 'rem'); store.set('fs', String(size)); }
+  $('font-up').onclick = function () { size = Math.min(2, size + 0.125); applySize(); };
+  $('font-down').onclick = function () { size = Math.max(0.9, size - 0.125); applySize(); };
+  applySize();
+  function applyContrast(on) {
+    if (on) document.documentElement.setAttribute('data-contrast', 'high'); else document.documentElement.removeAttribute('data-contrast');
+    $('contrast').setAttribute('aria-pressed', on ? 'true' : 'false'); store.set('hc', on ? '1' : '0');
+  }
+  $('contrast').onclick = function () { applyContrast($('contrast').getAttribute('aria-pressed') !== 'true'); };
+  applyContrast(store.get('hc', '0') === '1');
+
+  /* ---- examples ------------------------------------------------------------------------------------ */
+  var EXAMPLES = [
+    "Nogironlik qanday belgilanadi va qayta ko'rikdan qachon o'tish kerak?",
+    "Nogironligi bo'lgan shaxslar uchun ish o'rinlari kvotasi qanday belgilangan?",
+    "Nogironlik pensiyasi va nafaqasi qanday tayinlanadi?",
+    "Nogironligi bo'lgan bola inklyuziv maktabda o'qish huquqiga egami?",
+    "Protez va aravacha bilan bepul ta'minlash tartibi qanday?",
+    "TIEK qaroridan norozi bo'lsam, qayerga shikoyat qilaman?"
+  ];
+  EXAMPLES.forEach(function (t) {
+    var li = document.createElement('li'), b = document.createElement('button');
+    b.type = 'button'; b.textContent = t;
+    b.onclick = function () { $('question').value = t; $('question').focus(); };
+    li.appendChild(b); $('examples').appendChild(li);
+  });
+
+  /* ---- safe minimal markdown ----------------------------------------------------------------------- */
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function inline(s) {
+    s = esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    return s.replace(/\[(\d{1,2})\]/g, '<span class="cite" aria-label="manba $1">[$1]</span>');
+  }
+  function render(md) {
+    var out = [], list = false;
+    md.split('\n').forEach(function (line) {
+      var t = line.trim();
+      if (/^---+$/.test(t)) { if (list) { out.push('</ul>'); list = false; } return; }
+      var h = /^(#{1,4})\s+(.*)$/.exec(t);
+      var li = /^[-*•]\s+(.*)$/.exec(t) || /^\d+[.)]\s+(.*)$/.exec(t);
+      if (li) { if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + inline(li[1]) + '</li>'); return; }
+      if (list) { out.push('</ul>'); list = false; }
+      if (h) out.push('<h3>' + inline(h[2]) + '</h3>');
+      else if (t) out.push('<p>' + inline(t) + '</p>');
+    });
+    if (list) out.push('</ul>');
+    return out.join('');
+  }
+  function plain(md) { return md.replace(/[#*_`>]/g, '').replace(/\[\d+\]/g, '').replace(/\s+\n/g, '\n').trim(); }
+
+  /* ---- ask ----------------------------------------------------------------------------------------- */
+  var last = { q: '', a: '', ids: [] };
+  function setBusy(b) {
+    $('submit').disabled = b; $('answer-body').setAttribute('aria-busy', b ? 'true' : 'false');
+    $('submit').textContent = b ? 'Javob tayyorlanmoqda…' : 'Javob olish';
+  }
+  function announce(t) { $('status').textContent = t; }
+  function showError(msg) {
+    $('answer-card').hidden = false;
+    $('answer-body').innerHTML = '<p class="error" role="alert">' + esc(msg) + '</p>';
+    $('sources').innerHTML = ''; $('src-h').hidden = true; $('check-note').hidden = true;
+  }
+
+  function showSources(cites, statusWarnings) {
+    var ol = $('sources'); ol.innerHTML = ''; $('src-h').hidden = !cites.length;
+    cites.forEach(function (c) {
+      var li = document.createElement('li');
+      var head = '<strong>' + esc((c.article_number || '') + ' — ' + (c.law_title || c.law_number || '')) + '</strong>';
+      if (c.law_number) head += ' <span class="badge">' + esc(c.law_number) + '</span>';
+      if (c.status && c.status !== 'active') head += ' <span class="badge bad">' + (c.status === 'repealed' ? "kuchini yo'qotgan" : "o'zgartirilgan") + '</span>';
+      var html = head;
+      if (c.quote_snippet) html += '<div class="quote">' + esc(c.quote_snippet) + '</div>';
+      if (c.source_url) html += '<a href="' + esc(c.source_url) + '" target="_blank" rel="noopener noreferrer">Rasmiy manba (Lex.uz) <span class="sr-only">— yangi oynada ochiladi</span></a>';
+      li.innerHTML = html; ol.appendChild(li);
+    });
+  }
+
+  function finish(data) {
+    var md = data.clean_answer || data.answer || '';
+    $('answer-body').innerHTML = render(md);
+    showSources(data.citations || [], data.status_warnings || []);
+    var note = $('check-note');
+    if (data.is_refusal) {
+      note.hidden = false;
+      note.textContent = "Taqdim etilgan hujjatlarda aniq javob topilmadi. Savolni boshqacha yozib ko'ring yoki vakolatli organga murojaat qiling.";
+    } else if (data.validation_passed === false) {
+      note.hidden = false;
+      note.textContent = "Diqqat: javob avtomatik manba tekshiruvidan to'liq o'tmadi. Muhim qaror qabul qilishdan oldin quyidagi rasmiy manbalarni tekshiring.";
+    } else { note.hidden = true; }
+    last = { q: $('question').value, a: plain(md), ids: (data.citations || []).map(function (c) { return c.canonical_id; }) };
+    announce('Javob tayyor. ' + (data.citations || []).length + ' ta manba keltirilgan.');
+    $('answer-card').focus();
+  }
+
+  function readStream(resp, onDone) {
+    var reader = resp.body.getReader(), dec = new TextDecoder(), buf = '', acc = '';
+    function pump() {
+      return reader.read().then(function (r) {
+        if (r.done) return;
+        buf += dec.decode(r.value, { stream: true });
+        var parts = buf.split('\n\n'); buf = parts.pop();
+        parts.forEach(function (p) {
+          if (p.indexOf('data: ') !== 0) return;
+          var ev; try { ev = JSON.parse(p.slice(6)); } catch (e) { return; }
+          if (ev.type === 'token') {
+            acc += ev.text;
+            // internal ids are hidden until the verified answer arrives
+            $('answer-body').innerHTML = render(acc.replace(/\[[a-z0-9_\-]+(?:,[^\]]*)?\]/gi, ''));
+          } else if (ev.type === 'done') { onDone(ev); }
+          else if (ev.type === 'error') { showError(ev.message || 'Xizmat vaqtincha mavjud emas.'); }
+        });
+        return pump();
+      });
+    }
+    return pump();
+  }
+
+  $('ask-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var q = $('question').value.trim();
+    if (!q) { $('question').focus(); announce('Avval savolni yozing.'); return; }
+    var body = { question: q, language: $('lang').value, mode: $('style').value, disability_group: $('group').value };
+    $('answer-card').hidden = false; $('answer-body').innerHTML = '';
+    $('check-note').hidden = true; $('sources').innerHTML = '';
+    setBusy(true); announce('Javob tayyorlanmoqda.');
+    fetch('/api/v1/query?stream=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (resp) {
+        if (resp.status === 429) throw new Error("So'rovlar juda ko'p. Bir daqiqadan so'ng qayta urinib ko'ring.");
+        if (resp.status === 400) throw new Error("So'rov qabul qilinmadi. Savolni qayta yozing.");
+        if (!resp.ok) throw new Error('Xizmat vaqtincha mavjud emas. Birozdan so\'ng qayta urinib ko\'ring.');
+        return readStream(resp, finish);
+      })
+      .catch(function (err) { showError(err.message || 'Xatolik yuz berdi.'); })
+      .then(function () { setBusy(false); });
+  });
+  $('ask-form').addEventListener('reset', function () {
+    $('answer-card').hidden = true; window.speechSynthesis && window.speechSynthesis.cancel(); announce('Tozalandi.');
+  });
+
+  /* ---- voice --------------------------------------------------------------------------------------- */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { $('mic').hidden = true; }
+  else {
+    var rec = null;
+    $('mic').onclick = function () {
+      if (rec) { rec.stop(); return; }
+      rec = new SR(); rec.lang = { uz: 'uz-UZ', ru: 'ru-RU', en: 'en-US' }[$('lang').value] || 'uz-UZ';
+      rec.interimResults = false;
+      rec.onresult = function (ev) { $('question').value = (($('question').value + ' ') + ev.results[0][0].transcript).trim(); };
+      rec.onend = function () { rec = null; $('mic').setAttribute('aria-pressed', 'false'); $('mic').textContent = 'Ovoz bilan yozish'; };
+      rec.onerror = function () { announce('Ovoz aniqlanmadi.'); };
+      $('mic').setAttribute('aria-pressed', 'true'); $('mic').textContent = 'Eshitilmoqda… (to\'xtatish)';
+      rec.start();
+    };
+  }
+  if (!('speechSynthesis' in window)) { $('speak').hidden = true; }
+  $('speak').onclick = function () {
+    var s = window.speechSynthesis;
+    if (s.speaking) { s.cancel(); $('speak').setAttribute('aria-pressed', 'false'); return; }
+    var u = new SpeechSynthesisUtterance(last.a || $('answer-body').innerText);
+    var lang = $('lang').value; u.lang = { uz: 'uz-UZ', ru: 'ru-RU', en: 'en-US' }[lang] || 'ru-RU';
+    u.onend = function () { $('speak').setAttribute('aria-pressed', 'false'); };
+    $('speak').setAttribute('aria-pressed', 'true'); s.speak(u);
+  };
+
+  /* ---- copy + feedback ----------------------------------------------------------------------------- */
+  $('copy').onclick = function () {
+    var t = last.a || '';
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(
+      function () { announce('Nusxalandi.'); }, function () { announce('Nusxalab bo\'lmadi.'); });
+  };
+  function feedback(rating) {
+    if (!last.a) return;
+    fetch('/api/v1/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: last.q, answer: last.a.slice(0, 19000), canonical_ids: last.ids.slice(0, 50), rating: rating }) })
+      .then(function () { announce('Rahmat! Fikringiz qabul qilindi.'); }, function () { announce('Yuborib bo\'lmadi.'); });
+  }
+  $('good').onclick = function () { feedback(5); };
+  $('bad').onclick = function () { feedback(1); };
+})();
+</script>
+</body>
+</html>

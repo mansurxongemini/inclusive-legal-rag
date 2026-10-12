@@ -54,6 +54,11 @@ class ArticleMetadata(BaseModel):
     beneficiary_type: List[str] = Field(default_factory=lambda: ["individual"], description="Beneficiary roles")
     cross_references: List[CrossReference] = Field(default_factory=list, description="Cross references to other articles/laws")
     embedding_model_version: str = Field(default="bge-m3-2025-11-18", description="Embedding model version used")
+    # Provenance (optional: older records do not carry them)
+    promulgation_date: Optional[str] = Field(default=None, description="Adoption date of the act (YYYY-MM-DD)")
+    document_type: Optional[str] = Field(default=None, description="Qonun | Kodeks | Farmon | PQ | VMQ | Buyruq | ...")
+    issuing_body: Optional[str] = Field(default=None, description="Adopting authority as printed by Lex.uz")
+    source_element_id: Optional[str] = Field(default=None, description="Lex.uz element id for deep links (#id)")
 
 
 class ArticlePoint(BaseModel):

@@ -1,0 +1,750 @@
+[
+ {
+  "id": "d001",
+  "question": "TIEK hujjatlar qabul qilingandan keyin necha kun ichida ko'rikdan o'tkazadi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_31",
+   "vmq_62_2022_a9_p_18"
+  ],
+  "evidence": "20 kalendar kun",
+  "category": "medical_social_expertise",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d002",
+  "question": "Sog'lig'im sababli komissiyaga bora olmasam, tibbiy-ijtimoiy ekspertiza uyda o'tkazilishi mumkinmi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_31"
+  ],
+  "evidence": "uyida",
+  "category": "medical_social_expertise",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d003",
+  "question": "TIEK xulosasidan norozi bo'lsam, necha kun ichida qayerga shikoyat qilishim mumkin?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_62_2022_a9_p_60"
+  ],
+  "evidence": "30 kalendar kun",
+  "category": "medical_social_expertise",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d004",
+  "question": "Nogironlik birlamchi belgilangan deb qachon hisoblanadi?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_62_2022_a9_p_26"
+  ],
+  "evidence": "birlamchi berilgan deb hisoblanadi",
+  "category": "medical_social_expertise",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d005",
+  "question": "Nogironligi bo'lgan shaxsni reabilitatsiya qilishning yakka tartibdagi dasturi nima?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_33"
+  ],
+  "evidence": "yakka tartibdagi dasturi",
+  "category": "rehabilitation_prosthetics",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d006",
+  "question": "Nogironligi bo'lgan shaxslarga ijtimoiy yordamning qanday turlari ko'rsatiladi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_36"
+  ],
+  "evidence": "pul to'lovlari",
+  "category": "pensions_and_benefits",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d007",
+  "question": "Nogironlik belgisiga ko'ra kamsitish nima va u taqiqlanganmi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_6"
+  ],
+  "evidence": "kamsituvchi",
+  "category": "disability_rights",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d008",
+  "question": "Nogironligi bo'lgan shaxslar uy-joy olishda davlatdan qanday yordam oladi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_22"
+  ],
+  "evidence": "uy-joy",
+  "category": "housing_rights",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d009",
+  "question": "Binolarga to'siqsiz kirish uchun qanday shart-sharoitlar yaratilishi kerak?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_23",
+   "law_disability_2020_art_9"
+  ],
+  "evidence": "moneliksiz kirishi",
+  "category": "accessibility_infrastructure",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d010",
+  "question": "Jamoat transportida nogironligi bo'lgan yo'lovchilar uchun qanday qulayliklar bo'lishi kerak?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_24"
+  ],
+  "evidence": "ovozli tarzda e'lon",
+  "category": "transport_benefits",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d011",
+  "question": "Imo-ishora tili va axborotdan foydalanish huquqi qanday ta'minlanadi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_26"
+  ],
+  "evidence": "imo-ishora tilidan",
+  "category": "accessibility_infrastructure",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d012",
+  "question": "Nogironligi bo'lgan shaxs ish o'rinlari kvotasi bo'yicha ishga qanday joylashadi?",
+  "language": "uz",
+  "expected_ids": [
+   "labor_code_2022_art_423",
+   "law_disability_2020_art_43"
+  ],
+  "evidence": "yo'llanmasiga ko'ra",
+  "category": "labor_rights",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d013",
+  "question": "Nogironligi bo'lgan bolasi bor yolg'iz ota-onaga ishga joylashishda qanday qo'shimcha kafolatlar beriladi?",
+  "language": "uz",
+  "expected_ids": [
+   "labor_code_2022_art_96"
+  ],
+  "evidence": "nogironligi bo'lgan bolalari bor yolg'iz",
+  "category": "labor_rights",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d014",
+  "question": "2026-yil 1-iyuldan nogironlik pensiyasining eng kam miqdori qancha?",
+  "language": "uz",
+  "expected_ids": [
+   "pf_115_2026_a1_p_1"
+  ],
+  "evidence": "1 083 000",
+  "category": "pensions_and_benefits",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d015",
+  "question": "Konstitutsiya nogironligi bo'lgan shaxslarning huquqlarini qanday himoya qiladi?",
+  "language": "uz",
+  "expected_ids": [
+   "constitution_uz_art_57"
+  ],
+  "evidence": "huquqlari davlat himoyasidadir",
+  "category": "disability_rights",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d016",
+  "question": "Nogironligi bo'lgan bolalar uchun kunduzgi parvarish xizmati kimlar tomonidan tashkil etilishi mumkin?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_126_2025_p_3",
+   "vmq_126_2025_p_2"
+  ],
+  "evidence": "kunduzgi parvarish",
+  "category": "social_services",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d017",
+  "question": "Bolaning alohida ta'lim ehtiyojlariga muhtojligi kim tomonidan aniqlanadi?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_46_2024_p_3"
+  ],
+  "evidence": "PTPK",
+  "category": "inclusive_education",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d018",
+  "question": "Protez-ortopediya moslamalari bilan ta'minlashda vaucher tizimi joriy etilmagan hududlarda qanday tartib qo'llanadi?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_253_2024_p_5"
+  ],
+  "evidence": "sertifikat tizimi",
+  "category": "rehabilitation_prosthetics",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d019",
+  "question": "Ulug' Vatan urushi nogironlari uchun transportdan imtiyozli foydalanish qachondan joriy etiladi?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_440_2026_p_1"
+  ],
+  "evidence": "2026-yil 1-oktabrdan",
+  "category": "transport_benefits",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d020",
+  "question": "I va II guruh nogironlari xizmat turar joyidan boshqa turar joy berilgan holda ko'chiriladimi?",
+  "language": "uz",
+  "expected_ids": [
+   "housing_code_art_80"
+  ],
+  "evidence": "I va II guruh nogironlari",
+  "category": "housing_rights",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d021",
+  "question": "Odil sudlovdan foydalanish huquqi nogironligi bo'lgan shaxslar uchun qanday kafolatlanadi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_30_1"
+  ],
+  "evidence": "odil sudlov",
+  "category": "legal_protection",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d022",
+  "question": "Nogironligi bo'lgan shaxslarga bepul tibbiy yordam ko'rsatishning davlat kafolatlari nimalardan iborat?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_35"
+  ],
+  "evidence": "bepul tibbiy yordam",
+  "category": "healthcare",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d023",
+  "question": "Nogironligi bo'lgan shaxslarning inklyuziv ta'lim olish huquqi qanday kafolatlanadi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_38",
+   "law_disability_2020_art_39",
+   "law_disability_2020_art_40"
+  ],
+  "evidence": "inklyuziv",
+  "category": "inclusive_education",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d024",
+  "question": "Oliy ta'limga kirishda nogironligi bo'lgan abituriyentlar uchun qanday alohida qabul parametrlari bor?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_578_2025_a1_p_47"
+  ],
+  "evidence": "alohida qabul parametrlari",
+  "category": "inclusive_education",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d025",
+  "question": "Davlat organlariga murojaat qilish huquqi nogironligi bo'lgan shaxslar uchun qanday amalga oshiriladi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_28"
+  ],
+  "evidence": "murojaat qilish huquqiga ega",
+  "category": "legal_protection",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d026",
+  "question": "BMT Konvensiyasi bo'yicha nogironlarning ta'lim olish huquqi nimani anglatadi?",
+  "language": "uz",
+  "expected_ids": [
+   "crpd_2006_art_24"
+  ],
+  "evidence": "ta'lim olish huquqini e'tirof etadi",
+  "category": "international_treaty",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d027",
+  "question": "Konvensiyaga ko'ra nogironlarning mehnat qilish huquqi qanday e'tirof etiladi?",
+  "language": "uz",
+  "expected_ids": [
+   "crpd_2006_art_27"
+  ],
+  "evidence": "mehnat qilish huquqini e'tirof etadi",
+  "category": "international_treaty",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d028",
+  "question": "Ruhiy holati buzilgan nogironligi bo'lgan shaxslar uchun internat muassasalarini isloh qilish tartibi qanday?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_271_2026_p_1",
+   "vmq_271_2026_p_2",
+   "vmq_271_2026_preamble"
+  ],
+  "evidence": "internat",
+  "category": "social_services",
+  "out_of_scope": false,
+  "note": "",
+  "expected_law_ids": [
+   "vmq_271_2026"
+  ]
+ },
+ {
+  "id": "d029",
+  "question": "Штат қисқарганда ногиронлиги бўлган ходимларга қандай афзаллик берилади?",
+  "language": "uz",
+  "expected_ids": [
+   "labor_code_2022_art_167"
+  ],
+  "evidence": "nogiron",
+  "category": "labor_rights",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d030",
+  "question": "В какой срок комиссия МСЭК обязана провести освидетельствование после получения документов?",
+  "language": "ru",
+  "expected_ids": [
+   "law_disability_2020_art_31",
+   "vmq_62_2022_a9_p_18"
+  ],
+  "evidence": "20 kalendar kun",
+  "category": "medical_social_expertise",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d031",
+  "question": "Что гарантирует Конституция Узбекистана лицам с инвалидностью?",
+  "language": "ru",
+  "expected_ids": [
+   "constitution_uz_art_57"
+  ],
+  "evidence": "huquqlari davlat himoyasidadir",
+  "category": "disability_rights",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d032",
+  "question": "Каков минимальный размер пенсии по инвалидности с 1 июля 2026 года?",
+  "language": "ru",
+  "expected_ids": [
+   "pf_115_2026_a1_p_1"
+  ],
+  "evidence": "1 083 000",
+  "category": "pensions_and_benefits",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d033",
+  "question": "Как обжаловать заключение медико-социальной экспертной комиссии?",
+  "language": "ru",
+  "expected_ids": [
+   "vmq_62_2022_a9_p_60"
+  ],
+  "evidence": "30 kalendar kun",
+  "category": "medical_social_expertise",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d034",
+  "question": "Имеет ли лицо с инвалидностью право на трудоустройство в счёт квоты рабочих мест?",
+  "language": "ru",
+  "expected_ids": [
+   "labor_code_2022_art_423",
+   "law_disability_2020_art_43"
+  ],
+  "evidence": "yo'llanmasiga ko'ra",
+  "category": "labor_rights",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d035",
+  "question": "Ногиронлик пенсиясининг энг кам миқдори қанча?",
+  "language": "uz",
+  "expected_ids": [
+   "pf_115_2026_a1_p_1"
+  ],
+  "evidence": "1 083 000",
+  "category": "pensions_and_benefits",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d036",
+  "question": "ТИЭК хулосасидан норози бўлсам, қаерга шикоят қилишим мумкин?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_62_2022_a9_p_60"
+  ],
+  "evidence": "30 kalendar kun",
+  "category": "medical_social_expertise",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d037",
+  "question": "How long does the medical-social expert commission have to examine a person after receiving the documents?",
+  "language": "en",
+  "expected_ids": [
+   "law_disability_2020_art_31",
+   "vmq_62_2022_a9_p_18"
+  ],
+  "evidence": "20 kalendar kun",
+  "category": "medical_social_expertise",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "d038",
+  "question": "What does the Constitution say about the rights of persons with disabilities?",
+  "language": "en",
+  "expected_ids": [
+   "constitution_uz_art_57"
+  ],
+  "evidence": "huquqlari davlat himoyasidadir",
+  "category": "disability_rights",
+  "out_of_scope": false,
+  "note": ""
+ },
+ {
+  "id": "o001",
+  "question": "Mas'uliyati cheklangan jamiyat (MChJ) ochish uchun qanday hujjatlar kerak?",
+  "language": "uz",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "outside the corpus"
+ },
+ {
+  "id": "o002",
+  "question": "Kriptovalyuta bilan savdo qilishdan olingan daromad qanday soliqqa tortiladi?",
+  "language": "uz",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "outside the corpus"
+ },
+ {
+  "id": "o003",
+  "question": "Ertaga Toshkentda ob-havo qanday bo'ladi?",
+  "language": "uz",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "outside the corpus"
+ },
+ {
+  "id": "o004",
+  "question": "Как получить туристическую визу в Германию?",
+  "language": "ru",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "outside the corpus"
+ },
+ {
+  "id": "o005",
+  "question": "Футбол бўйича жаҳон чемпионати қачон бошланади?",
+  "language": "uz",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "outside the corpus"
+ },
+ {
+  "id": "o006",
+  "question": "What is the capital of France?",
+  "language": "en",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "outside the corpus"
+ },
+ {
+  "id": "o007",
+  "question": "Avtomobil sotib olishda QQS stavkasi qancha foizni tashkil etadi?",
+  "language": "uz",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "outside the corpus"
+ },
+ {
+  "id": "o008",
+  "question": "Qaysi dasturlash tilini o'rganish yaxshiroq: Python yoki Java?",
+  "language": "uz",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "outside the corpus"
+ },
+ {
+  "id": "o009",
+  "question": "Как испечь пирог с яблоками?",
+  "language": "ru",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "outside the corpus"
+ },
+ {
+  "id": "o010",
+  "question": "Toshkentda eng yaxshi restoranlar qaysilar?",
+  "language": "uz",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "outside the corpus"
+ },
+ {
+  "id": "h001",
+  "question": "TMEKga borish uchun qaysi hujjat kerak bo'ladi?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_62_2022_a9_p_13"
+  ],
+  "evidence": "pasport",
+  "category": "medical_social_expertise",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h002",
+  "question": "nogironlik muddati tugayapti, qayta ko'rik haqida qachon xabar berishadi",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_62_2022_a9_p_55"
+  ],
+  "evidence": "bir oy oldin",
+  "category": "medical_social_expertise",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h003",
+  "question": "o'zgalar parvarishiga muhtoj bolaning onasiga qancha nafaqa to'lanadi?",
+  "language": "uz",
+  "expected_ids": [
+   "pf_115_2026_a1_p_7"
+  ],
+  "evidence": "878 000",
+  "category": "pensions_and_benefits",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h004",
+  "question": "vaucher tizimi bo'lmagan hududda protez qanday olinadi",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_253_2024_p_5"
+  ],
+  "evidence": "sertifikat tizimi",
+  "category": "rehabilitation_prosthetics",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h005",
+  "question": "ногирон абитуриентлар ОТМга кираётганда имтиёзлар борми?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_578_2025_a1_p_47"
+  ],
+  "evidence": "alohida qabul parametrlari",
+  "category": "inclusive_education",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h006",
+  "question": "Ulug' Vatan urushi nogironi yilda necha marta bepul yo'l chiptasi oladi?",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_440_2026_a1_p_4"
+  ],
+  "evidence": "bir marotaba",
+  "category": "transport_benefits",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h007",
+  "question": "imkoniyati cheklangan fuqarolarni uy-joy uchun navbatga qo'yish kim tomonidan amalga oshiriladi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_22"
+  ],
+  "evidence": "mahalliy ijro etuvchi hokimiyati organlari tomonidan amalga oshiriladi",
+  "category": "housing_rights",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h008",
+  "question": "nogironligi bor odam TIEK qaroridan norozi bo'lsa sudga murojaat qila oladimi",
+  "language": "uz",
+  "expected_ids": [
+   "vmq_62_2022_a9_p_60"
+  ],
+  "evidence": "sudga murojaat qilishi mumkin",
+  "category": "legal_protection",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h009",
+  "question": "Davlat nogironlarga dori-darmon bilan ta'minlashni kafolatlaydimi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_36",
+   "law_disability_2020_art_35"
+  ],
+  "evidence": "dori vositalari bilan ta'minlash",
+  "category": "healthcare",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h010",
+  "question": "yetaklovchi it bilan jamoat binosiga kirish mumkinmi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_23"
+  ],
+  "evidence": "yetaklovchi itlardan foydalanuvchi",
+  "category": "accessibility_infrastructure",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h011",
+  "question": "Какие права на доступ к информации есть у лиц с нарушением зрения (Брайль)?",
+  "language": "ru",
+  "expected_ids": [
+   "law_disability_2020_art_26",
+   "law_disability_2020_art_3"
+  ],
+  "evidence": "Brayl",
+  "category": "accessibility_infrastructure",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "h012",
+  "question": "Kamsitishga yo'l qo'ymaslik: ishga qabul qilishda nogironligi sababli rad etish mumkinmi?",
+  "language": "uz",
+  "expected_ids": [
+   "law_disability_2020_art_42",
+   "law_disability_2020_art_6",
+   "labor_code_2022_art_4"
+  ],
+  "evidence": "kamsit",
+  "category": "labor_rights",
+  "out_of_scope": false,
+  "note": "hard: colloquial/paraphrase/abbreviation"
+ },
+ {
+  "id": "o011",
+  "question": "Shahar ichida avtomobil harakati uchun tezlik chegarasi qancha?",
+  "language": "uz",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "near-domain, not about disability"
+ },
+ {
+  "id": "o012",
+  "question": "Yakka tartibdagi tadbirkorni ro'yxatdan o'tkazish tartibi qanday?",
+  "language": "uz",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "known weak spot: provisions about individual entrepreneurs (social-service providers) score high; the generator must say the documents do not describe registration"
+ },
+ {
+  "id": "o014",
+  "question": "Ko'chmas mulkni notarial tasdiqlash uchun qancha to'lanadi?",
+  "language": "uz",
+  "expected_ids": [],
+  "evidence": "",
+  "category": null,
+  "out_of_scope": true,
+  "note": "near-domain, not about disability"
+ }
+]

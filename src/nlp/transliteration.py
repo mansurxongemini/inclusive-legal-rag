@@ -68,11 +68,15 @@ def cyrillic_to_latin(text: str) -> str:
     if not text:
         return ""
 
-    # Check for known special words
-    words = text.split()
+    # Check for known special words. Split on whitespace runs but keep them, so line breaks survive
+    # (numbered case questions are separated by newlines and are decomposed on them).
+    words = re.split(r"(\s+)", text)
     processed_words = []
-    
+
     for word in words:
+        if not word or word.isspace():
+            processed_words.append(word)
+            continue
         clean_word = word.strip(".,!?:;\"'()[]{}«»")
         lower_clean = clean_word.lower()
         if lower_clean in SPECIAL_WORDS:
@@ -84,8 +88,8 @@ def cyrillic_to_latin(text: str) -> str:
             # replace in word
             word = word.replace(clean_word, replacement)
         processed_words.append(word)
-    
-    text = " ".join(processed_words)
+
+    text = "".join(processed_words)
 
     result = []
     length = len(text)

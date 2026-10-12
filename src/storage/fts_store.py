@@ -1,13 +1,29 @@
 import json
 import logging
+import re
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 from src.config import settings
 from src.schema.canonical import CanonicalArticle
+from src.storage.sqlite_utils import connect as _sqlite_connect
+from src.nlp.transliteration import normalize_apostrophes
 
 logger = logging.getLogger(__name__)
+
+_INNER_APOSTROPHE = re.compile(r"(?<=\w)'(?=\w)")
+
+
+def fts_text(text: str) -> str:
+    """
+    Text as it is stored in / matched against the FTS5 index.
+
+    The unicode61 tokenizer splits "bo'lgan" at the apostrophe into "bo" + "lgan", while the query builder
+    glues the letters ("bolgan"), so every word with o' / g' / ' (a large share of Uzbek) could never match.
+    Both sides now use the apostrophe-free form: bo'lgan -> bolgan, to'siqsiz -> tosiqsiz, ta'lim -> talim.
+    """
+    return _INNER_APOSTROPHE.sub("", normalize_apostrophes(text or ""))
 
 
 class SqliteFtsStore:
@@ -19,7 +35,7 @@ class SqliteFtsStore:
         self._init_db()
 
     def _get_connection(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(str(self.db_path), timeout=60.0)
+        conn = _sqlite_connect(self.db_path, timeout=60.0)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA busy_timeout = 60000")
         return conn
@@ -114,10 +130,10 @@ class SqliteFtsStore:
                 """, (
                     article.canonical_id,
                     lang,
-                    article.metadata.article_number,
-                    article.metadata.law_number,
-                    title,
-                    article.to_fts_document(lang),
+                    fts_text(article.metadata.article_number),
+                    fts_text(article.metadata.law_number),
+                    fts_text(title),
+                    fts_text(article.to_fts_document(lang)),
                 ))
 
             conn.commit()
@@ -136,7 +152,7 @@ class SqliteFtsStore:
         """
         # Clean query for FTS5 (escape special chars)
         clean_terms = []
-        for word in query.replace('"', '').replace("'", "").split():
+        for word in fts_text(query).replace('"', '').replace("'", "").split():
             clean = "".join(c for c in word if c.isalnum() or c in "-_")
             if clean:
                 clean_terms.append(f'"{clean}"*')
@@ -285,6 +301,68 @@ class SqliteFtsStore:
                 del self._article_cache[canonical_id]
 
 
+    def rebuild_fts_index(self) -> int:
+        """Recreates every FTS row from the stored canonical JSON (after a tokenization change; no embeddings)."""
+        n = 0
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM articles_fts")
+            rows = cursor.execute("SELECT json_data FROM articles_metadata").fetchall()
+            for row in rows:
+                art = CanonicalArticle.model_validate_json(row["json_data"])
+                for lang, body in art.translations.items():
+                    if not body or not body.strip():
+                        continue
+                    cursor.execute(
+                        "INSERT INTO articles_fts (canonical_id, language, article_number, law_number, title, body) "
+                        "VALUES (?, ?, ?, ?, ?, ?)",
+                        (art.canonical_id, lang, fts_text(art.metadata.article_number), fts_text(art.metadata.law_number),
+                         fts_text(art.get_title(lang)), fts_text(art.to_fts_document(lang))),
+                    )
+                n += 1
+            conn.commit()
+        return n
+
+    def clear_articles(self) -> int:
+        """Removes every article (metadata + full-text index). Feedback and other tables are untouched."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM articles_metadata")
+            n = cursor.fetchone()[0]
+            cursor.execute("DELETE FROM articles_metadata")
+            cursor.execute("DELETE FROM articles_fts")
+            conn.commit()
+        if hasattr(self, "_article_cache"):
+            self._article_cache.clear()
+        return n
+
+    def delete_laws(self, law_ids: List[str]) -> List[str]:
+        """Deletes every article of the given laws; returns the removed canonical ids."""
+        if not law_ids:
+            return []
+        removed: List[str] = []
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            for i in range(0, len(law_ids), 200):
+                chunk = law_ids[i:i + 200]
+                ph = ",".join("?" for _ in chunk)
+                cursor.execute(
+                    f"SELECT canonical_id FROM articles_metadata WHERE json_extract(json_data, '$.metadata.law_id') IN ({ph})",
+                    chunk,
+                )
+                ids = [r[0] for r in cursor.fetchall()]
+                for j in range(0, len(ids), 500):
+                    sub = ids[j:j + 500]
+                    sph = ",".join("?" for _ in sub)
+                    cursor.execute(f"DELETE FROM articles_metadata WHERE canonical_id IN ({sph})", sub)
+                    cursor.execute(f"DELETE FROM articles_fts WHERE canonical_id IN ({sph})", sub)
+                removed.extend(ids)
+            conn.commit()
+        if hasattr(self, "_article_cache"):
+            for cid in removed:
+                self._article_cache.pop(cid, None)
+        return removed
+
     def record_feedback(self, query: str, answer: str, canonical_ids: List[str], rating: int, feedback_text: str):
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -310,3 +388,169 @@ class SqliteFtsStore:
             cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) FROM articles_metadata")
             return cursor.fetchone()[0]
+
+    def list_documents(
+        self,
+        search_query: Optional[str] = None,
+        doc_type: Optional[str] = None,
+        authority: Optional[str] = None,
+    ) -> List[Dict]:
+        """
+        Aggregates articles_metadata into distinct legal documents.
+        Returns document list with authority, doc_type, norm counts, and metadata.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT 
+                    COALESCE(json_extract(json_data, '$.metadata.law_number'), 'Nomaʼlum') as law_num,
+                    COALESCE(json_extract(json_data, '$.metadata.law_title.uz'), json_extract(json_data, '$.metadata.law_title.ru'), 'Nomaʼlum') as law_title,
+                    json_extract(json_data, '$.metadata.law_id') as law_id,
+                    json_extract(json_data, '$.metadata.category') as category,
+                    json_extract(json_data, '$.metadata.source_url') as source_url,
+                    COUNT(*) as norm_count
+                FROM articles_metadata
+                GROUP BY law_num
+                ORDER BY norm_count DESC
+            """)
+            rows = cursor.fetchall()
+            docs = []
+            q_clean = (search_query or "").strip().lower()
+
+            for r in rows:
+                law_num = r["law_num"]
+                law_title = r["law_title"]
+                law_id = r["law_id"] or law_num
+                category = r["category"] or "general"
+                source_url = r["source_url"] or "https://lex.uz"
+                norm_count = r["norm_count"]
+
+                detected_auth, detected_type = detect_authority_and_type(law_num, law_title)
+
+                if doc_type and doc_type != "all" and detected_type.lower() != doc_type.lower():
+                    continue
+
+                if authority and authority != "all" and authority.lower() not in detected_auth.lower():
+                    continue
+
+                if q_clean:
+                    haystack = f"{law_num} {law_title} {detected_auth} {detected_type} {category}".lower()
+                    if q_clean not in haystack:
+                        # Check whether any norm inside this law matches the query string
+                        cursor.execute("""
+                            SELECT 1 FROM articles_metadata
+                            WHERE (json_extract(json_data, '$.metadata.law_number') = ? OR json_extract(json_data, '$.metadata.law_id') = ?)
+                              AND (canonical_id LIKE ? OR json_data LIKE ?)
+                            LIMIT 1
+                        """, (law_num, law_id, f"%{q_clean}%", f"%{q_clean}%"))
+                        if not cursor.fetchone():
+                            continue
+
+                docs.append({
+                    "law_number": law_num,
+                    "law_title": law_title,
+                    "law_id": law_id,
+                    "category": category,
+                    "source_url": source_url,
+                    "norm_count": norm_count,
+                    "authority": detected_auth,
+                    "doc_type": detected_type,
+                })
+            return docs
+
+    def get_articles_by_law(self, law_identifier: str) -> List[Dict]:
+        """
+        Retrieves all statutory articles/norms belonging to a specific law.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT canonical_id, json_data, status, category, last_verified_date
+                FROM articles_metadata
+                WHERE json_extract(json_data, '$.metadata.law_number') = ?
+                   OR json_extract(json_data, '$.metadata.law_id') = ?
+                ORDER BY canonical_id ASC
+            """, (law_identifier, law_identifier))
+            rows = cursor.fetchall()
+            articles = []
+            for r in rows:
+                try:
+                    data = json.loads(r["json_data"])
+                    meta = data.get("metadata", {})
+                    translations = data.get("translations", {})
+                    title_obj = meta.get("article_title", {})
+                    title = title_obj.get("uz") or title_obj.get("ru") or meta.get("article_number", "")
+                    
+                    articles.append({
+                        "canonical_id": r["canonical_id"],
+                        "article_number": meta.get("article_number", ""),
+                        "title": title,
+                        "law_number": meta.get("law_number", ""),
+                        "law_title": (meta.get("law_title", {}) or {}).get("uz") or meta.get("law_number", ""),
+                        "category": meta.get("category", r["category"]),
+                        "disability_types": meta.get("disability_types", []),
+                        "source_url": meta.get("source_url", "https://lex.uz"),
+                        "status": r["status"],
+                        "text_uz": translations.get("uz", ""),
+                        "text_ru": translations.get("ru", ""),
+                        "preview": (translations.get("uz") or "")[:250] + ("..." if len(translations.get("uz", "")) > 250 else ""),
+                        "last_verified_date": r["last_verified_date"],
+                    })
+                except Exception as e:
+                    logger.warning(f"Error parsing article {r['canonical_id']}: {e}")
+                    continue
+            return articles
+
+
+def detect_authority_and_type(law_number: Optional[str], law_title: Optional[str]) -> tuple[str, str]:
+    num = (law_number or "").upper()
+    title = (law_title or "").lower()
+
+    # Authority detection
+    if "BMT" in num or "konvensiya" in title or "bmt" in title:
+        authority = "BMT (Xalqaro shartnoma)"
+        doc_type = "Boshqa"
+    elif "O‘RQ" in num or "O'RQ" in num or "ORQ" in num or "-XII" in num or "oliy majlis" in title:
+        authority = "Oliy Majlis"
+        doc_type = "Qonun"
+    elif "PF" in num or "farmon" in title:
+        authority = "O‘zbekiston Respublikasi Prezidenti"
+        doc_type = "Farmon"
+    elif "PQ" in num or "prezident qarori" in title or "prezidentining qarori" in title:
+        authority = "O‘zbekiston Respublikasi Prezidenti"
+        doc_type = "Qaror"
+    elif "VMQ" in num or "vazirlar mahkamasi" in title:
+        authority = "Vazirlar Mahkamasi"
+        doc_type = "Qaror"
+    elif "IHMA" in num or "ijtimoiy himoya" in title or "agentligi" in title:
+        authority = "Ijtimoiy himoya milliy agentligi"
+        doc_type = "Buyruq"
+    elif "SSV" in num or "sog‘liqni saqlash" in title or "sog'liqni saqlash" in title or "vazirligi" in title:
+        authority = "Sog‘liqni saqlash vazirligi"
+        doc_type = "Buyruq"
+    else:
+        if "kodeks" in title or "qonun" in title:
+            authority = "Oliy Majlis"
+            doc_type = "Qonun"
+        elif "qaror" in title:
+            authority = "Vazirlar Mahkamasi"
+            doc_type = "Qaror"
+        elif "buyruq" in title:
+            authority = "Vazirlik va idoralar"
+            doc_type = "Buyruq"
+        else:
+            authority = "Boshqa davlat organi"
+            doc_type = "Boshqa"
+
+    if doc_type == "Boshqa":
+        if "kodeks" in title or "qonun" in title:
+            doc_type = "Qonun"
+        elif "qaror" in title:
+            doc_type = "Qaror"
+        elif "farmon" in title:
+            doc_type = "Farmon"
+        elif "buyruq" in title:
+            doc_type = "Buyruq"
+
+    return authority, doc_type
+

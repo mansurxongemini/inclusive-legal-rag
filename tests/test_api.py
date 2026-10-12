@@ -31,11 +31,12 @@ async def test_get_article_endpoint():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         # Existing article
-        res = await ac.get("/api/v1/article/law_disability_2020_art_15")
+        res = await ac.get("/api/v1/article/law_disability_2020_art_35")
         assert res.status_code == 200
         data = res.json()
-        assert data["canonical_id"] == "law_disability_2020_art_15"
+        assert data["canonical_id"] == "law_disability_2020_art_35"
         assert "tibbiy yordam" in data["translations"]["uz"].lower()
+        assert data["metadata"]["source_url"].startswith("https://lex.uz/")
 
         # Non-existing article
         res_404 = await ac.get("/api/v1/article/non_existing_article_999")

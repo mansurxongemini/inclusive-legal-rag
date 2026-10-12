@@ -2,6 +2,7 @@ import logging
 from typing import Dict, List, Optional, Union
 from pydantic import BaseModel
 from src.storage.hybrid_store import HybridStore
+from src.storage.sqlite_utils import connect as sqlite_connect
 from src.clients.openrouter import OpenRouterClient
 from src.nlp.query_analyzer import QueryAnalysis, QueryAnalyzer
 
@@ -30,30 +31,35 @@ class HybridRetriever:
     def _lookup_direct_article(self, law_id: str, article_number: str) -> Optional[str]:
         """Resolves direct canonical ID for explicit law_id and article_number mention."""
         import re
-        import sqlite3
         num_match = re.search(r"(\d+(?:-\d+)?)", article_number)
         if not num_match:
             return None
         num_part = num_match.group(1)
         norm_num = num_part.replace("-", "_")
-        
+
         try:
-            with sqlite3.connect(self.store.fts_store.db_path) as conn:
+            with sqlite_connect(self.store.fts_store.db_path) as conn:
                 c = conn.cursor()
                 for cid in [f"{law_id}_art_{norm_num}", f"{law_id}_art_{num_part}"]:
                     c.execute("SELECT canonical_id FROM articles_metadata WHERE canonical_id = ?", (cid,))
                     row = c.fetchone()
                     if row:
                         return row[0]
-                
+
+                # LIKE '%5%' also matches 15, 25, 5-1 ...; accept only an exact article-number match so a
+                # wrong article is never promoted to a "direct match" (score +0.5, forced to the top).
                 c.execute("""
-                    SELECT canonical_id FROM articles_metadata 
-                    WHERE json_extract(json_data, '$.metadata.law_id') LIKE ? 
+                    SELECT canonical_id, json_extract(json_data, '$.metadata.article_number')
+                    FROM articles_metadata
+                    WHERE json_extract(json_data, '$.metadata.law_id') LIKE ?
                       AND json_extract(json_data, '$.metadata.article_number') LIKE ?
-                    LIMIT 1
+                    LIMIT 200
                 """, (f"{law_id}%", f"%{num_part}%"))
-                row = c.fetchone()
-                return row[0] if row else None
+                for cid, art_no in c.fetchall():
+                    m = re.search(r"(\d+(?:-\d+)?)", art_no or "")
+                    if m and m.group(1) == num_part:
+                        return cid
+                return None
         except Exception:
             return None
 
@@ -62,10 +68,13 @@ class HybridRetriever:
         query_or_analysis: Union[str, QueryAnalysis],
         top_k: int = 20,
         rrf_k: int = 60,
+        precomputed_query_vector: Optional[List[float]] = None,
+        use_vector: bool = True,
     ) -> List[ScoredArticle]:
         """
         Retrieves top_k articles using BM25 + Vector similarity fused with RRF.
         Accepts either a raw query string or a pre-computed QueryAnalysis.
+        Supports reusing precomputed_query_vector to prevent redundant embedding network roundtrips.
         """
         if isinstance(query_or_analysis, str):
             analysis = QueryAnalyzer.analyze(query_or_analysis)
@@ -75,9 +84,10 @@ class HybridRetriever:
         language = analysis.detected_language
         query_text = analysis.normalized_query
 
-        # Check direct article resolution
+        # Check direct article resolution (only for concise lookup queries, not complex multi-paragraph case studies)
         direct_cid = None
-        if analysis.target_law_id and analysis.target_article_number:
+        is_concise_lookup = len(query_text.split()) <= 25
+        if is_concise_lookup and analysis.target_law_id and analysis.target_article_number:
             direct_cid = self._lookup_direct_article(analysis.target_law_id, analysis.target_article_number)
 
         from src.nlp.query_decomposer import LegalQueryDecomposer
@@ -105,9 +115,21 @@ class HybridRetriever:
                     bm25_best_ranks[cid] = rank
                     bm25_best_scores[cid] = m["score"]
 
-        # 3. Vector search (BGE-M3 dense) across primary query and key sub-aspects
-        embed_texts = [sq.query_text for sq in subqueries[:2]]
-        query_vectors = await self.client.get_embeddings(embed_texts)
+        # 3. Vector search (BGE-M3 dense) across primary query and key sub-aspects.
+        # If the embedding service is unavailable the request degrades to BM25-only instead of failing.
+        query_vectors: List[List[float]] = []
+        if use_vector:
+            embed_texts = [sq.query_text for sq in subqueries[:2]]
+            if precomputed_query_vector is not None:
+                query_vectors = [precomputed_query_vector]
+            try:
+                if precomputed_query_vector is not None:
+                    if len(embed_texts) > 1:
+                        query_vectors += await self.client.get_embeddings(embed_texts[1:])
+                elif embed_texts:
+                    query_vectors = await self.client.get_embeddings(embed_texts)
+            except Exception as e:
+                logger.warning(f"Dense retrieval unavailable, falling back to BM25-only: {e}")
 
         vec_rrf_scores: Dict[str, float] = {}
         vec_best_ranks: Dict[str, int] = {}
@@ -115,11 +137,15 @@ class HybridRetriever:
 
         for v_idx, q_vec in enumerate(query_vectors):
             v_weight = 1.0 if v_idx == 0 else 0.80
-            matches = self.store.vector_store.search_vector(
-                query_vector=q_vec,
-                top_k=top_k,
-                language=language
-            )
+            try:
+                matches = self.store.vector_store.search_vector(
+                    query_vector=q_vec,
+                    top_k=top_k,
+                    language=language
+                )
+            except Exception as e:
+                logger.warning(f"Vector search failed, skipping dense results: {e}")
+                continue
             for rank, m in enumerate(matches, start=1):
                 cid = m["canonical_id"]
                 score_contrib = v_weight * (1.0 / (rrf_k + rank))
@@ -167,6 +193,20 @@ class HybridRetriever:
                         if dis_type in article.metadata.disability_types:
                             score += 0.02
                             break
+
+                # State organ and legal act hierarchy weighting (Constitution > Code > PF > Agency > VMQ > Ministry > Hokimiyat)
+                try:
+                    from src.retrieval.hierarchy import StateOrganHierarchy
+                    law_t = article.metadata.law_title.get(language, "") or article.metadata.law_title.get("uz", "")
+                    h_boost = StateOrganHierarchy.calculate_hierarchy_boost(
+                        law_title=law_t,
+                        law_number=article.metadata.law_number,
+                        category=article.metadata.category or "",
+                        promulgation_date=article.metadata.promulgation_date
+                    )
+                    score += (h_boost * 0.04)
+                except Exception:
+                    pass
 
 
 

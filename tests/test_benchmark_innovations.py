@@ -6,16 +6,23 @@ from src.storage.hybrid_store import HybridStore
 
 
 def test_legal_synonym_expander():
-    # Test colloquial term expansion
-    query = "Shtat qisqarganda kim birinchi navbatda ishda qoladi?"
-    expanded = LegalSynonymExpander.expand_terms(query)
-    assert len(expanded) > 0
-    assert any("afzallik huquqi" in term or "167-modda" in term for term in expanded)
+    import re
 
-    # Test medical and disability colloquial term expansion
-    query_med = "dekret puli va bolnichniy qanday to'lanadi?"
-    enriched = LegalSynonymExpander.build_enriched_search_query(query_med)
-    assert "homiladorlik" in enriched or "vaqtincha" in enriched
+    # colloquial wording -> statutory terminology
+    expanded = LegalSynonymExpander.expand_terms("TMEK ko'rigi va aravacha olish tartibi qanday?")
+    assert len(expanded) > 0
+    assert any("tibbiy-ijtimoiy ekspert" in t for t in expanded)
+    assert any("reabilitatsiya" in t.lower() or "aravacha" in t.lower() for t in expanded)
+
+    enriched = LegalSynonymExpander.build_enriched_search_query("nogiron bola uchun nafaqa qancha?")
+    assert "nogironligi bo'lgan" in enriched
+
+    # terminology only: article numbers change with every code edition and must never be injected
+    for key, values in __import__("src.nlp.legal_synonyms", fromlist=["x"]).LEGAL_SYNONYM_DICTIONARY.items():
+        assert not any(re.search(r"\d+-modda|статья \d+", v) for v in values), key
+
+    # short stems must not fire inside unrelated words ("karta" is not "kar" = deaf)
+    assert not any("eshitish" in t for t in LegalSynonymExpander.expand_terms("bank kartasi olish"))
 
 
 def test_query_decomposer_compound_question():
@@ -38,10 +45,10 @@ def test_batch_article_fetching():
     store = HybridStore()
     assert store.count() > 0
     # Batch fetch existing known articles
-    batch = store.get_articles_batch(["constitution_uz_art_1", "bojxona_code_art_1", "non_existent_cid"])
+    batch = store.get_articles_batch(["law_disability_2020_art_3", "non_existent_cid"])
     assert isinstance(batch, dict)
-    assert "constitution_uz_art_1" in batch
-    assert batch["constitution_uz_art_1"].metadata.article_number in ("1-modda", "1")
+    assert "law_disability_2020_art_3" in batch
+    assert batch["law_disability_2020_art_3"].metadata.article_number in ("3-modda", "3")
     assert "non_existent_cid" not in batch
 
 

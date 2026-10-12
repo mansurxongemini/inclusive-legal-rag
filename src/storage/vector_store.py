@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 import lancedb
@@ -7,6 +8,11 @@ import pyarrow as pa
 from src.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _sql_quote(value: str) -> str:
+    """Quotes a string literal for a LanceDB (DataFusion) filter expression."""
+    return "'" + str(value).replace("'", "''") + "'"
 
 
 class LanceVectorStore:
@@ -17,7 +23,9 @@ class LanceVectorStore:
     def __init__(self, storage_dir: Optional[str] = None):
         self.storage_dir = Path(storage_dir or settings.STORAGE_DIR) / "lancedb"
         self.storage_dir.mkdir(parents=True, exist_ok=True)
-        self.db = lancedb.connect(str(self.storage_dir))
+        # interval=0 makes every read check for the newest table version. Without it a long-lived handle never
+        # sees vectors written by another HybridStore instance (importers, ingestion scripts) until restart.
+        self.db = lancedb.connect(str(self.storage_dir), read_consistency_interval=timedelta(seconds=0))
         self.table = self._get_or_create_table()
 
     def _get_or_create_table(self):
@@ -44,14 +52,13 @@ class LanceVectorStore:
         if not records:
             return
 
-        # Delete existing entries with matching canonical_ids to avoid duplicates
+        # Delete existing entries with matching canonical_ids to avoid duplicates in a single batch
         canonical_ids = list({r["canonical_id"] for r in records})
         if canonical_ids:
             try:
-                # If table has records, delete old ones
                 if len(self.table) > 0:
-                    for cid in canonical_ids:
-                        self.table.delete(f"canonical_id = '{cid}'")
+                    cids_str = ", ".join(_sql_quote(cid) for cid in canonical_ids)
+                    self.table.delete(f"canonical_id IN ({cids_str})")
             except Exception as e:
                 logger.warning(f"Error during existing record deletion in LanceDB: {e}")
 
@@ -103,7 +110,22 @@ class LanceVectorStore:
 
     def delete_by_canonical_id(self, canonical_id: str):
         if len(self.table) > 0:
-            self.table.delete(f"canonical_id = '{canonical_id}'")
+            self.table.delete(f"canonical_id = {_sql_quote(canonical_id)}")
+
+    def reset(self) -> None:
+        """Drops and recreates the vector table (all embeddings)."""
+        try:
+            self.db.drop_table(self.TABLE_NAME)
+        except Exception:
+            pass
+        self.table = self._get_or_create_table()
+
+    def delete_many(self, canonical_ids: List[str]) -> None:
+        if not canonical_ids or len(self.table) == 0:
+            return
+        for i in range(0, len(canonical_ids), 200):
+            chunk = canonical_ids[i:i + 200]
+            self.table.delete(f"canonical_id IN ({', '.join(_sql_quote(c) for c in chunk)})")
 
     def count(self) -> int:
         return len(self.table)
