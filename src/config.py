@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # Must be a dedicated rerank model served by OpenRouter's /rerank endpoint (a chat model is rejected there).
     RERANK_MODEL: str = Field(default="cohere/rerank-v3.5")
     RERANK_PROVIDER: str = Field(default="jev")                     # "jev" (Cohere used as fallback) or "cohere"
+    RERANK_PICK_MIN: float = Field(default=0.05)                    # a unit Jev scored at least this is its pick and stays ahead of rule-added legal bases
     JEV_MODEL: str = Field(default="typesafe/jev-1.13")
     JEV_RERANK_UNITS: int = Field(default=30)                       # candidates sent to Jev
     JEV_RERANK_CHARS: int = Field(default=1500)                     # characters of each unit shown to Jev
@@ -48,6 +49,8 @@ class Settings(BaseSettings):
     GATE_MIN_VECTOR_SCORE: float = Field(default=0.82)
     GATE_MIN_LEXICAL_COVERAGE: float = Field(default=0.5)
     GATE_JEV_SCOPE_ENABLED: bool = Field(default=True)
+    # Uzbek questions are also searched through an LLM rewrite in standard Latin (fixes Cyrillic/misspelled chat input)
+    QUERY_NORMALIZE_UZ: bool = Field(default=True)
     GATE_JEV_MIN_IN_SCOPE: float = Field(default=0.3)               # refuse when P(in_scope) is below this ...
     GATE_JEV_ANSWERABLE_CEILING: float = Field(default=0.8)         # ... and P(answerable) is below this (calibrated: OOS max 0.62, in-scope >= 0.9)
     GATE_JEV_MIN_ANSWERABLE: float = Field(default=0.0)             # refuse any question whose P(answerable) is below this (0 = off)
@@ -64,6 +67,11 @@ class Settings(BaseSettings):
     HUQUQPLUS_WEBHOOK_SECRET: str = Field(default="")
     HUQUQPLUS_SYNC_INTERVAL_MIN: int = Field(default=60)
     HUQUQPLUS_SYNC_ENABLED: bool = Field(default=True)
+    # Assistant API (src/gateway): HMAC secret that turns client user ids into pseudonyms; empty = a random secret
+    # kept in STORAGE_DIR/.integration_hash_secret
+    INTEGRATION_HASH_SECRET: str = Field(default="")
+    # Assistant log retention period in days (answers, turns, feedback)
+    ASSISTANT_LOG_RETENTION_DAYS: int = Field(default=90)
 
     @property
     def is_mock_mode(self) -> bool:

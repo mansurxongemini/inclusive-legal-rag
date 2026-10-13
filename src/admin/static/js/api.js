@@ -226,5 +226,31 @@ export const api = {
   huquqplusResyncPost: (lang, wpId) =>
     request(`/api/v1/admin/huquqplus/posts/${encodeURIComponent(lang)}/${encodeURIComponent(wpId)}/resync`, {
       method: 'POST'
+    }),
+
+  // 19. Integratsiyalar (Assistant API mijozlari va kalitlari)
+  fetchIntegrationClients: () =>
+    request('/api/v1/admin/integrations/clients'),
+  createIntegrationClient: (payload) =>
+    request('/api/v1/admin/integrations/clients', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  getIntegrationClient: (clientId, days = 30) =>
+    request(`/api/v1/admin/integrations/clients/${encodeURIComponent(clientId)}?usage_days=${days}`),
+  updateIntegrationClient: (clientId, payload) =>
+    request(`/api/v1/admin/integrations/clients/${encodeURIComponent(clientId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    }),
+  issueIntegrationKey: (clientId, payload = {}) =>
+    request(`/api/v1/admin/integrations/clients/${encodeURIComponent(clientId)}/keys`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  revokeIntegrationKey: (keyId) =>
+    request(`/api/v1/admin/integrations/keys/${encodeURIComponent(keyId)}`, {
+      method: 'DELETE'
     })
 };
+

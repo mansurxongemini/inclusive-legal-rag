@@ -21,6 +21,7 @@ import { renderVectorizerPage } from './pages/vectorizer.js';
 import { renderQAPage } from './pages/qa.js';
 import { renderNotificationsPage } from './pages/notifications.js';
 import { renderHuquqPlusPage } from './pages/huquqplus.js';
+import { renderIntegrationsPage } from './pages/integrations.js';
 
 // Section definition
 const NAV_ITEMS = [
@@ -28,11 +29,13 @@ const NAV_ITEMS = [
   { id: 'huquqplus', label: 'Huquq+ maqolalar', title: 'huquqplus.uz maqolalari va sinxronlash', icon: icons.book, render: renderHuquqPlusPage },
   { id: 'qa', label: 'Savol-javoblar', title: 'Tahririyat savol-javoblari', icon: icons.edit, render: renderQAPage },
   { id: 'notifications', label: 'Bildirishnomalar', title: 'Huquqiy o‘zgarishlar bildirishnomalari', icon: bellIcon, render: renderNotificationsPage, badge: true },
+  { id: 'integrations', label: 'Integratsiyalar', title: 'Yordamchi API mijozlari va kalitlar', icon: icons.key, render: renderIntegrationsPage },
   { id: 'stats', label: 'Statistika', title: "Tizim tahlili va ko'rsatkichlari", icon: icons.chart, render: renderStatsPage },
   { id: 'apikeys', label: 'API Kalitlar', title: 'API kalitlarini boshqarish', icon: icons.key, render: renderApiKeysPage },
   { id: 'playground', label: 'Sinov zali', title: 'Semantik qidiruv va sinov zali', icon: icons.chat, render: renderPlaygroundPage },
   { id: 'vectorizer', label: 'Vektorlash', title: 'Matnlarni vektorlash va embedding', icon: icons.cpu, render: renderVectorizerPage }
 ];
+
 
 function renderPlaceholder(id, name) {
   return () => {

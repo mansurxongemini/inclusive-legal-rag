@@ -79,6 +79,22 @@ async def _run_huquqplus_scheduler():
             await asyncio.sleep(20)
 
 
+async def _run_assistant_maintenance_scheduler():
+    from src.gateway.conversations import get_conversation_store
+    logger.info("Assistant API jurnallari tozalash rejalashtiruvchisi ishga tushdi.")
+    while True:
+        try:
+            days = getattr(settings, "ASSISTANT_LOG_RETENTION_DAYS", 90)
+            get_conversation_store().purge_older_than(days)
+            await asyncio.sleep(86400)
+        except asyncio.CancelledError:
+            logger.info("Assistant API jurnallari tozalash rejalashtiruvchisi to'xtatildi.")
+            break
+        except Exception as e:
+            logger.error(f"Assistant API purge xatosi: {e}")
+            await asyncio.sleep(3600)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: ensure directories & seed pilot dataset if empty
@@ -101,6 +117,9 @@ async def lifespan(app: FastAPI):
     if settings.HUQUQPLUS_SYNC_ENABLED and not settings.MOCK_EXTERNAL_APIS:
         sync_task = asyncio.create_task(_run_huquqplus_scheduler())
 
+    # Daily assistant maintenance (answers/turns/feedback purge)
+    purge_task = asyncio.create_task(_run_assistant_maintenance_scheduler())
+
     yield
 
     # Shutdown
@@ -108,6 +127,13 @@ async def lifespan(app: FastAPI):
         sync_task.cancel()
         try:
             await sync_task
+        except asyncio.CancelledError:
+            pass
+
+    if purge_task:
+        purge_task.cancel()
+        try:
+            await purge_task
         except asyncio.CancelledError:
             pass
 
@@ -132,6 +158,56 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Custom exception handlers for /api/v1/assistant and /api/v1/openai prefixes
+    from fastapi.exceptions import RequestValidationError
+    from fastapi.responses import JSONResponse
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+    from starlette.requests import Request as StarletteRequest
+
+    @app.exception_handler(StarletteHTTPException)
+    async def custom_http_exception_handler(request: StarletteRequest, exc: StarletteHTTPException):
+        path = request.url.path
+        if path.startswith("/api/v1/assistant"):
+            if isinstance(exc.detail, dict) and "code" in exc.detail and "message" in exc.detail:
+                content = {"error": {"code": exc.detail["code"], "message": exc.detail["message"]}}
+            else:
+                code = "not_found" if exc.status_code == 404 else ("invalid_request" if exc.status_code == 422 else ("service_unavailable" if exc.status_code == 503 else "error"))
+                content = {"error": {"code": code, "message": str(exc.detail)}}
+            return JSONResponse(status_code=exc.status_code, content=content, headers=exc.headers)
+        elif path.startswith("/api/v1/openai"):
+            if isinstance(exc.detail, dict) and "error" in exc.detail:
+                content = exc.detail
+            elif isinstance(exc.detail, dict) and "code" in exc.detail and "message" in exc.detail:
+                content = {"error": {"message": exc.detail["message"], "type": "invalid_request_error", "code": exc.detail["code"]}}
+            else:
+                code = "not_found" if exc.status_code == 404 else "invalid_request_error"
+                content = {"error": {"message": str(exc.detail), "type": "invalid_request_error", "code": code}}
+            return JSONResponse(status_code=exc.status_code, content=content, headers=exc.headers)
+        from fastapi.exception_handlers import http_exception_handler as default_http_handler
+        return await default_http_handler(request, exc)
+
+    @app.exception_handler(RequestValidationError)
+    async def custom_validation_exception_handler(request: StarletteRequest, exc: RequestValidationError):
+        path = request.url.path
+        if path.startswith("/api/v1/assistant"):
+            msgs = []
+            for err in exc.errors():
+                loc = ".".join(str(x) for x in err.get("loc", []) if x not in ("body",))
+                msg = err.get("msg", "")
+                msgs.append(f"{loc}: {msg}" if loc else msg)
+            err_msg = "; ".join(msgs) if msgs else "So'rov maydonlarida xatolik bor."
+            return JSONResponse(status_code=422, content={"error": {"code": "invalid_request", "message": err_msg}})
+        elif path.startswith("/api/v1/openai"):
+            msgs = []
+            for err in exc.errors():
+                loc = ".".join(str(x) for x in err.get("loc", []) if x not in ("body",))
+                msg = err.get("msg", "")
+                msgs.append(f"{loc}: {msg}" if loc else msg)
+            err_msg = "; ".join(msgs) if msgs else "So'rov maydonlarida xatolik bor."
+            return JSONResponse(status_code=422, content={"error": {"message": err_msg, "type": "invalid_request_error", "code": "invalid_request"}})
+        from fastapi.exception_handlers import request_validation_exception_handler as default_val_handler
+        return await default_val_handler(request, exc)
+
     # Mount static files for admin panel
     from fastapi.staticfiles import StaticFiles
     static_dir = Path(__file__).resolve().parent.parent / "admin" / "static"
@@ -149,7 +225,17 @@ def create_app() -> FastAPI:
     app.include_router(webhooks.router)
     app.include_router(huquqplus_admin.router)
 
+    # Assistant & Gateway routers
+    from src.gateway.router import router as assistant_router
+    from src.gateway.openai_router import router as openai_router
+    from src.gateway.admin_router import router as gateway_admin_router
+
+    app.include_router(assistant_router)
+    app.include_router(openai_router)
+    app.include_router(gateway_admin_router)
+
     return app
 
 
 app = create_app()
+
