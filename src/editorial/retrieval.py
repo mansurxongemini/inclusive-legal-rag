@@ -148,5 +148,87 @@ def ensure_curated_contexts(
             ))
             have.add(target_cid)
 
-    # curated answers first, then their bases, then huquqplus articles, then their bases, then rest
-    return primary + basis + hp_primary + hp_basis + rest
+    # curated answers first, then their bases, then huquqplus articles, then high-scoring rerank picks,
+    # then huquqplus bases, then other rest contexts
+    picks: List[RetrievedArticleContext] = []
+    others: List[RetrievedArticleContext] = []
+    for c in rest:
+        if c.rerank_score is not None and c.rerank_score >= settings.RERANK_PICK_MIN:
+            picks.append(c)
+        else:
+            others.append(c)
+
+    return primary + basis + hp_primary + picks + hp_basis + others
+
+
+_STOP_STEMS = {"bo'la", "bo'ld", "qanda", "qanday", "nechi", "necha", "uchun", "yoki", "bilan", "mumki", "kerak",
+               "olsam", "olish", "bormi", "qilib", "hamda", "shaxs", "tarti"}
+
+
+def _stems(text: str) -> set:
+    """5-letter prefixes of the words: crude Uzbek stemming ("kartamga" ~ "kartasi", "vaucherga" ~ "vaucher")."""
+    import re
+    norm = (text or "").lower()
+    for ch in "ʻʼ‘’`´":
+        norm = norm.replace(ch, "'")
+    return {w[:5] for w in re.findall(r"[a-z'][a-z'-]{3,}", norm)} - _STOP_STEMS
+
+
+def add_linked_act_units(contexts: List[RetrievedArticleContext], store: HybridStore, editorial: EditorialStore,
+                         query: str, per_act: int = 2, max_acts: int = 3, min_overlap: int = 2
+                         ) -> List[RetrievedArticleContext]:
+    """
+    A Huquq+ article usually cites a whole act (a Lex.uz link without an article anchor), so it has no
+    cross_references and the answer would rest on the article alone. For each such whole-act link of a Huquq+
+    context, the act's units sharing the most query words are added after the leading block
+    (curated, huquq+, legal bases, and high-scoring rerank picks), before the first unscored or low-scoring
+    non-basis context, or at the end if no such context exists.
+    """
+    from src.editorial.doc_watch import is_doc_link, law_id_of, law_units
+
+    q = _stems(query)
+    if not q:
+        return contexts
+    have = {c.article.canonical_id for c in contexts}
+    linked_units: List[RetrievedArticleContext] = []
+    acts_done: set = set()
+    for ctx in contexts:
+        parsed = _parse_hp_canonical_id(ctx.article.canonical_id)
+        if not parsed:
+            continue
+        lang, wp_id = parsed
+        for link in editorial.list_links(owner_type="huquqplus", owner_id=f"{lang}:{wp_id}"):
+            if len(acts_done) >= max_acts or not is_doc_link(link["canonical_id"]):
+                continue
+            law_id = law_id_of(link["canonical_id"])
+            if law_id in acts_done:
+                continue
+            acts_done.add(law_id)
+            ids = [cid for cid in law_units(store, law_id) if cid not in have]
+            scored = []
+            for cid, art in store.get_articles_batch(ids).items():
+                if art.metadata.status != ArticleStatus.ACTIVE:
+                    continue
+                overlap = len(q & _stems(art.get_text("uz")))
+                if overlap >= min_overlap:
+                    scored.append((overlap, cid, art))
+            for overlap, cid, art in sorted(scored, key=lambda x: (-x[0], x[1]))[:per_act]:
+                linked_units.append(RetrievedArticleContext(article=art, final_score=ctx.final_score,
+                                                           source_tag="legal_basis", rerank_score=None))
+                have.add(cid)
+
+    if not linked_units:
+        return contexts
+
+    insert_idx: Optional[int] = None
+    for idx, ctx in enumerate(contexts):
+        cid = ctx.article.canonical_id
+        if not (cid.startswith("qa_") or cid.startswith("hp_")) \
+           and ctx.source_tag != "legal_basis" \
+           and (ctx.rerank_score is None or ctx.rerank_score < settings.RERANK_PICK_MIN):
+            insert_idx = idx
+            break
+
+    if insert_idx is not None:
+        return contexts[:insert_idx] + linked_units + contexts[insert_idx:]
+    return contexts + linked_units

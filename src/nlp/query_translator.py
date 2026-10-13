@@ -74,3 +74,46 @@ class QueryTranslator:
         except Exception as e:
             logger.warning(f"Query translation to Uzbek failed: {e}")
             return None
+
+    @classmethod
+    async def normalize_uzbek(cls, query: str, client: OpenRouterClient) -> Optional[str]:
+        """
+        Rewrites an Uzbek question as chat users type it (Cyrillic, colloquial, misspelled: "озик овкат ккийим
+        вавчир") into standard Uzbek Latin with the words the legislation uses ("oziq-ovqat, kiyim-kechak, vaucher"):
+        transliteration alone keeps the typos, so neither the lexical nor the dense search finds the act.
+        Returns None in mock mode, on error, or when the rewrite is not a plausible restatement.
+        """
+        if getattr(client, "is_mock", False) or not query or not query.strip():
+            return None
+        cache_key = ("uz-norm", query)
+        if cache_key in cls._cache:
+            cls._cache.move_to_end(cache_key)
+            return cls._cache[cache_key]
+
+        system_prompt = (
+            "Rewrite the user's question in correct standard Uzbek, LATIN script only: fix spelling and typos, "
+            "transliterate Cyrillic correctly (o', g', q, h, sh, ch), and use the terminology of Uzbek legislation on "
+            "Lex.uz (examples: \"oziq-ovqat\", \"kiyim-kechak\", \"vaucher\", \"bank plastik kartasi\", "
+            "\"Ijtimoiy himoya yagona reyestri\", \"nogironligi bo'lgan shaxs\", \"nafaqa\", \"pensiya\"). "
+            "Keep the meaning and every sub-question; do not add facts and do not answer. "
+            "Output ONLY the rewritten question, no quotes or explanations."
+        )
+        try:
+            raw = await client.chat_completion(
+                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": query}],
+                temperature=0.0,
+                max_tokens=300,
+                min_chars=2,
+                reasoning={"enabled": False},
+            )
+            rewritten = (raw or "").strip().strip('"\'`«»').strip()
+            if not rewritten or len(rewritten) > 2 * len(query) + 100 or any("Ѐ" <= ch <= "ӿ" for ch in rewritten):
+                return None
+            cls._cache[cache_key] = rewritten
+            cls._cache.move_to_end(cache_key)
+            if len(cls._cache) > MAX_CACHE_SIZE:
+                cls._cache.popitem(last=False)
+            return rewritten
+        except Exception as e:
+            logger.warning(f"Uzbek query normalization failed: {e}")
+            return None

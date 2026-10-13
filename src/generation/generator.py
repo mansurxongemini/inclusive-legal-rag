@@ -9,6 +9,7 @@ from src.generation.prompts import (
     build_system_prompt,
     format_context_for_llm,
     CURATED_INSTRUCTION,
+    ANSWER_LANGUAGE_REMINDER,
     DISCLAIMERS,
     REFUSAL_MESSAGES,
     ResponseMode,
@@ -90,7 +91,8 @@ class AnswerGenerator:
             system_prompt = system_prompt + "\n\n" + CURATED_INSTRUCTION
         formatted_context = format_context_for_llm(contexts, language=language)
 
-        user_content = f"User Question: {query}\n\nRetrieved Legal Context:\n{formatted_context}"
+        user_content = (f"User Question: {query}\n\nRetrieved Legal Context:\n{formatted_context}\n\n"
+                        f"{ANSWER_LANGUAGE_REMINDER.get(language, ANSWER_LANGUAGE_REMINDER['uz'])}")
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -166,7 +168,8 @@ class AnswerGenerator:
         if _has_curated_context(contexts):
             system_prompt = system_prompt + "\n\n" + CURATED_INSTRUCTION
         formatted_context = format_context_for_llm(contexts, language=language)
-        user_content = f"User Question: {query}\n\nRetrieved Legal Context:\n{formatted_context}"
+        user_content = (f"User Question: {query}\n\nRetrieved Legal Context:\n{formatted_context}\n\n"
+                        f"{ANSWER_LANGUAGE_REMINDER.get(language, ANSWER_LANGUAGE_REMINDER['uz'])}")
 
         messages = [
             {"role": "system", "content": system_prompt},

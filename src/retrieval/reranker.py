@@ -155,6 +155,7 @@ class Reranker:
 
         # Jev reranker path
         if settings.RERANK_PROVIDER == "jev" and not getattr(self.client, "is_mock", False):
+            # (Capping the units one act may send here was tried: it lowered MRR on both eval sets, so RRF order is kept.)
             subset = article_contexts[:settings.JEV_RERANK_UNITS]
             try:
                 result = await JevRanker(self.client).rank(query, subset)

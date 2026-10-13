@@ -7,6 +7,7 @@ One retrieval pipeline shared by every query endpoint:
 Returns the contexts to answer from (empty when the evidence is not good enough) plus diagnostics.
 """
 import asyncio
+import re
 import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
@@ -88,6 +89,20 @@ class RetrievalResult:
     signals: Dict[str, object] = field(default_factory=dict)
 
 
+def _word_overlap(a: str, b: str) -> float:
+    norm = lambda t: set(re.findall(r"[a-z0-9']+", re.sub(r"[ʻʼ‘’`]", "'", t.lower())))
+    wa, wb = norm(a), norm(b)
+    return len(wa & wb) / len(wa | wb) if wa | wb else 1.0
+
+
+def _use_uz_rewrite(rewrite: str, analysis: QueryAnalysis) -> bool:
+    """A Cyrillic question is transliterated with its typos kept, so its rewrite is always searched too. A Latin
+    question is searched again only when the rewrite changed most of its words (a misspelled question); a clean one
+    gains nothing and the extra candidates only blur the ranking."""
+    overlap = _word_overlap(rewrite, analysis.normalized_query)
+    return overlap < 0.9 if analysis.detected_script == "cyrillic" else overlap < 0.5
+
+
 async def retrieve_contexts(
     *,
     analysis: QueryAnalysis,
@@ -115,6 +130,9 @@ async def retrieve_contexts(
     translation = None
     if language in ("ru", "en"):
         translation = asyncio.create_task(QueryTranslator.to_uzbek(analysis.normalized_query, language, client))
+    elif language == "uz" and settings.QUERY_NORMALIZE_UZ:
+        # chat questions are often Cyrillic and misspelled; a standard-Latin rewrite is searched as well
+        translation = asyncio.create_task(QueryTranslator.normalize_uzbek(analysis.raw_query, client))
     try:
         candidates = await retriever.retrieve(
             analysis, top_k=top_k, precomputed_query_vector=query_vector, use_vector=use_vector,
@@ -128,6 +146,8 @@ async def retrieve_contexts(
     translated = await translation if translation else None
 
     uz_analysis = None
+    if translated and language == "uz" and not _use_uz_rewrite(translated, analysis):
+        translated = None
     if translated:
         uz_analysis = QueryAnalyzer.analyze(translated, user_language="uz")
         uz_candidates = await retriever.retrieve(uz_analysis, top_k=top_k, use_vector=use_vector)
@@ -162,9 +182,11 @@ async def retrieve_contexts(
     # norms are added even when retrieval missed them. Weak or unpublished curated hits are dropped.
     if any(c.article.canonical_id.startswith("qa_") or c.article.canonical_id.startswith("hp_") for c in contexts):
         try:
-            from src.editorial.retrieval import ensure_curated_contexts
+            from src.editorial.retrieval import add_linked_act_units, ensure_curated_contexts
             from src.editorial.store import EditorialStore
-            contexts = ensure_curated_contexts(contexts, store, EditorialStore())
+            editorial = EditorialStore()
+            contexts = ensure_curated_contexts(contexts, store, editorial)
+            contexts = add_linked_act_units(contexts, store, editorial, rerank_query)
         except Exception:
             logger.warning("Curated-context ordering failed; serving lex norms only.", exc_info=True)
             contexts = [c for c in contexts if not c.article.canonical_id.startswith("qa_") and not c.article.canonical_id.startswith("hp_")]

@@ -29,7 +29,7 @@ def test_system_prompt_builder():
     assert "SOURCES ONLY" in prompt_uz
     assert "NO INVENTION" in prompt_uz
     assert "CITE EVERY CLAIM" in prompt_uz
-    assert "SAY WHAT IS MISSING" in prompt_uz
+    assert "GAPS WITHOUT BLAME" in prompt_uz
     assert "ODDIY TIL REJIMI" in prompt_uz
 
     prompt_legal = build_system_prompt("ru", "legal_text")
@@ -105,10 +105,10 @@ async def test_answer_generator_end_to_end():
 
 def test_build_system_prompt_plain_word_limit():
     plain_prompt = build_system_prompt(language="uz", mode="plain")
-    assert "220 so'zdan oshmasin" in plain_prompt
+    assert "120 so'zdan oshmasin" in plain_prompt
 
     legal_prompt = build_system_prompt(language="uz", mode="legal_text")
-    assert "220 so'zdan oshmasin" not in legal_prompt
+    assert "120 so'zdan oshmasin" not in legal_prompt
 
 
 def test_openrouter_provider_preferences(monkeypatch):
@@ -175,3 +175,14 @@ def test_reasoning_options_from_settings(monkeypatch):
     assert _reasoning_options() == {"enabled": False}
     monkeypatch.setattr(settings, "GENERATION_REASONING_EFFORT", "low")
     assert _reasoning_options() == {"effort": "low"}
+
+
+def test_prompt_never_blames_user_for_missing_documents():
+    """The retrieved context is the service's database: the answer must not talk about 'documents you provided'."""
+    from src.generation.prompts import CURATED_INSTRUCTION, REFUSAL_MESSAGES
+    prompt = build_system_prompt("uz", "plain") + CURATED_INSTRUCTION
+    assert "siz keltirgan hujjatlar" in prompt          # named only as a forbidden phrase
+    assert "the user gave you no documents" in prompt
+    assert "Huquqiy asos' bo'limida" not in CURATED_INSTRUCTION  # the system appends the source list itself
+    for text in REFUSAL_MESSAGES.values():
+        assert "Taqdim etilgan" not in text and "предоставленных" not in text and "retrieved legislation" not in text
