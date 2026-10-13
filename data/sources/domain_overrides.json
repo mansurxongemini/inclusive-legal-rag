@@ -1,0 +1,19 @@
+{
+  "_comment": "Curator decisions over data/sources/domain_candidates.json (2026-10-13). skip: not added; partial: only disability units.",
+  "skip": {
+    "-8216684": "bir martalik bayram to'lovi (Qurbon hayiti), amaldagi huquq emas",
+    "-224346": "bir martalik bayram mukofoti (G'alaba kuni)",
+    "-620344": "o'qituvchilar turmush sharoiti, nogironlikka aloqasiz",
+    "-2978386": "pedagogik kengash namunaviy nizomi, fuqaro huquqi emas",
+    "-7618066": "pedagog kasbiy standarti, fuqaro huquqi emas",
+    "-4231026": "hududiy tadbirkorlik dasturi",
+    "-8180396": "xususiy tibbiyot sektorini qo'llab-quvvatlash (biznes)",
+    "-7851955": "transplantatsiya donorlarini tekshirish tartibi, tor tibbiy standart",
+    "-7232845": "ayollar onkologiyasi nazorati dasturi, nogironlik huquqlariga aloqasiz"
+  },
+  "partial": {
+    "-5953883": "yo'l harakati qoidalari: B siyosatida mavzudan tashqari, faqat nogironlikka oid bandlar",
+    "-54458": "notariat: mulk bitimlari mavzudan tashqari, faqat nogironlikka oid bandlar (ko'zi ojiz imzosi va h.k.)",
+    "-5461749": "mahalla faoliyati nizomi (272 band): faqat nogironlikka oid bandlar"
+  }
+}

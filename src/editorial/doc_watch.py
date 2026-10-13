@@ -78,3 +78,33 @@ def doc_change_summary(store, law_id: str, old_state_json: str) -> str:
     if removed:
         lines.append("Olib tashlangan bandlar: " + ", ".join(sorted(removed)[:40]))
     return "\n".join(lines)
+
+
+def rebaseline_widened(store, editorial, law_ids) -> int:
+    """
+    When the corpus starts keeping more units of an act (a wider selection, not a change on Lex.uz), every whole-act
+    link of that act sees "added" units and would raise a false "document_amended". For such links whose snapshotted
+    units are all still present and unchanged, the current state becomes the new snapshot and the open notification
+    is resolved. A link with a changed or vanished unit is left for the editor. Returns the number of links re-based.
+    """
+    law_ids = set(law_ids)
+    rebased = 0
+    for link in editorial.list_all_links():
+        cid = link["canonical_id"]
+        if not is_doc_link(cid) or law_id_of(cid) not in law_ids:
+            continue
+        try:
+            old = json.loads(link.get("snapshot_text") or "{}")
+        except ValueError:
+            continue
+        units = law_units(store, law_id_of(cid))
+        if not old or any(u not in units or old[u] != f"{units[u][0]}|{units[u][1]}" for u in old):
+            continue
+        snap = doc_snapshot(store, law_id_of(cid))
+        if snap is None or snap[1] == (link.get("snapshot_hash") or ""):
+            continue
+        editorial.refresh_link_snapshot(link["id"], snapshot_text=snap[0], snapshot_hash=snap[1], snapshot_status=snap[2])
+        editorial.resolve_open_for_owner_link(owner_type=link["owner_type"], owner_id=link["owner_id"], canonical_id=cid,
+                                              resolution="corpus_widened", resolved_by="system")
+        rebased += 1
+    return rebased

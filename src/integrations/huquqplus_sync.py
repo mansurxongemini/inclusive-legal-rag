@@ -20,7 +20,7 @@ from src.domain.disability_taxonomy import classify_category
 from src.editorial import service as svc
 from src.editorial.doc_watch import doc_link_id, doc_snapshot, is_doc_link, law_id_of, law_label
 from src.editorial.store import EditorialStore
-from src.ingestion.huquqplus_client import HuquqPlusClient, HuquqPlusPost, LexRef, diff_index
+from src.ingestion.huquqplus_client import HuquqPlusClient, HuquqPlusPost, LexRef, diff_index, lex_element_id
 from src.integrations.huquqplus_webhook import WebhookQueue
 from src.schema.canonical import (
     ArticleMetadata,
@@ -247,7 +247,7 @@ def resolve_lex_ref(store: HybridStore, ref: LexRef) -> Optional[str]:
     idx = get_lex_index(store)
     if not ref.element_id:
         return None
-    clean = str(ref.element_id).lstrip("#").strip()
+    clean = lex_element_id(str(ref.element_id))      # also links stored before fragments were normalised
     # An anchor that belongs to no unit (act title, chapter/appendix heading, or an article left out of a general
     # code) stays a document-level reference. Guessing "the next unit" is unsafe: amendments give new elements
     # higher ids than their neighbours, and partially included codes skip articles - a wrong link is worse than none.

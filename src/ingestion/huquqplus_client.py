@@ -152,6 +152,12 @@ def clean_html(html_str: str) -> Tuple[str, List[Tuple[str, str]]]:
     return final_text, links
 
 
+def lex_element_id(fragment: Optional[str]) -> Optional[str]:
+    """Element id from a Lex.uz URL fragment: editors' links carry encoded junk ("#-5054422%20")."""
+    m = re.match(r"\s*#?(-?\d+)", urllib.parse.unquote(fragment or ""))
+    return m.group(1) if m else None
+
+
 def parse_lex_ref(url: str, anchor_text: str = "") -> Optional[LexRef]:
     """
     Faqat lex.uz / www.lex.uz havolalarini parse qiladi.
@@ -174,7 +180,7 @@ def parse_lex_ref(url: str, anchor_text: str = "") -> Optional[LexRef]:
 
     lang = match.group(1)
     doc_id = match.group(2)
-    element_id = parsed.fragment if parsed.fragment else None
+    element_id = lex_element_id(parsed.fragment)
 
     return LexRef(
         url=url.strip(),

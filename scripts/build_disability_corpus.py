@@ -60,6 +60,25 @@ DISABILITY_OKOZ_NODES: Dict[int, str] = {
 }
 CORE_NODES = {6533, 6492, 8792, 6530, 6457, 7396, 6510, 6519}
 
+# An act about social assistance states its procedure (how often, how much, card or voucher, where to apply) in
+# general units that never say "nogironlik": keeping only the disability units loses exactly what people ask about.
+# Such acts, and acts the Huquq+ editors cite, are kept whole unless they are codes or very long.
+MAX_WHOLE_UNITS = 300
+_SOCIAL_TITLE = re.compile(
+    r"ijtimoiy (himoya|yordam|xizmat|qo'llab|ta'minot|karta|reyestr)|nafaqa|pensiya|parvarish|vaucher|daftar"
+    r"|saxovat|kambag'al|muhtoj|imtiyoz|reabilitatsiya|protez|dori vosita|sanatoriy|moddiy yordam|kompensatsiya"
+    r"|subsidiya")
+
+
+def _keep_whole(title: str, units: int, doc_type: str, *, tier: int, cited_posts: int = 0) -> bool:
+    if doc_type == "Kodeks" or "kodeks" in title.lower() or units > MAX_WHOLE_UNITS:
+        return False
+    social = bool(_SOCIAL_TITLE.search(normalize_apostrophes(title).lower()))
+    if cited_posts:
+        # an editor citation alone may concern one clause of a long general act (railway rules, police law)
+        return social or (cited_posts >= 2 and units <= 150)
+    return int(tier) == 1 and social
+
 
 def _norm_title(t: str) -> str:
     t = normalize_apostrophes(t or "").lower()
@@ -189,6 +208,9 @@ def cmd_select(args) -> None:
             else:
                 rejected.append({"doc_id": d["doc_id"], "title": doc.title, "reason": f"not_about_disability(rel={rel_text})"})
                 continue
+            if not seed and include == "disability_articles" and _keep_whole(
+                    doc.title, len(doc.units), doc.doc_type, tier=tier):
+                include = "all"
 
             registry.append({
                 "lex_id": d["doc_id"],
@@ -214,7 +236,7 @@ def cmd_select(args) -> None:
     # documents added by `cited` (Huquq+ citations) are not in discovered.json - keep them across re-selects
     previous = _load_json(SOURCES / "disability_registry.json", {"documents": []})["documents"]
     have = {r["lex_id"] for r in registry}
-    registry.extend(r for r in previous if r.get("source") == "huquqplus_cited" and r["lex_id"] not in have)
+    registry.extend(r for r in previous if r.get("source") in ("huquqplus_cited", "domain_review") and r["lex_id"] not in have)
 
     registry.sort(key=lambda r: (r["tier"], -(r["relevance_title"] * 10 + r["relevance_text"])))
     _save_json(SOURCES / "disability_registry.json", {"generated": date.today().isoformat(), "documents": registry})
@@ -355,6 +377,8 @@ def cmd_cited(args) -> None:
                 tier, include = 1, "all"
             elif rel_text >= args.min_rel_all and len(doc.units) <= args.max_units_all:
                 tier, include = 2, "all"              # a short act largely about disability benefits: keep it whole
+            elif _keep_whole(doc.title, len(doc.units), doc.doc_type, tier=2, cited_posts=c["posts"]):
+                tier, include = 2, "all"              # cited by the Huquq+ editors: its procedure is what readers ask
             else:
                 tier, include = 2, "disability_articles"
             if include == "disability_articles" and not dis_units:
@@ -385,6 +409,74 @@ def cmd_cited(args) -> None:
         _save_json(SOURCES / "disability_registry.json", reg)
         log.info(f"registry: +{len(added)} documents. Next: build, then refresh --law-ids "
                  + ",".join(a["lex_id"] for a in added[:3]) + ",...")
+
+
+def cmd_widen(args) -> None:
+    """
+    Applies the keep-whole rule (_keep_whole) to documents already in the registry: an act that is cut to its
+    disability units but is cited by Huquq+ or is a tier-1 social-assistance act becomes include "all". Seeded acts
+    keep their curated setting. With --apply writes the registry; then `build` and `refresh --law-ids=...`.
+    """
+    reg = _load_json(SOURCES / "disability_registry.json", None)
+    if not reg:
+        sys.exit("run `select` first")
+    changed = []
+    for d in reg["documents"]:
+        if d.get("include") != "disability_articles" or d.get("law_id"):
+            continue
+        if _keep_whole(d.get("title", ""), int(d.get("units") or 0), d.get("doc_type", ""),
+                       tier=d.get("tier", 3), cited_posts=int(d.get("cited_posts") or 0)):
+            changed.append(d)
+    for d in changed:
+        log.info(f"  all <- {d.get('number') or d['lex_id']:14s} units={d.get('units'):>4} "
+                 f"{'cited' if d.get('source') == 'huquqplus_cited' else 'tier' + str(d.get('tier'))}  {d['title'][:80]}")
+    log.info(f"widen: {len(changed)} documents, up to {sum(int(d.get('units') or 0) for d in changed)} units")
+    if args.apply and changed:
+        for d in changed:
+            d["include"] = "all"
+            d["widened_at"] = date.today().isoformat()
+        _save_json(SOURCES / "disability_registry.json", reg)
+        log.info("registry updated. Next: build, then refresh --law-ids=" + ",".join(d["lex_id"] for d in changed))
+
+
+def cmd_domain(args) -> None:
+    """
+    Life-domain acts (appeals, administrative procedure, legal aid, consumer rights, social protection of related
+    groups...) that never say "nogironlik" but decide everyday cases. Reads data/sources/domain_candidates.json
+    (each act read and verified from Lex.uz) and data/sources/domain_overrides.json (curator decisions:
+    "skip" / "partial", each with a reason); with --apply appends the accepted acts to the registry
+    (source "domain_review"), then `build` and `refresh --law-ids=...`.
+    """
+    cands = _load_json(SOURCES / "domain_candidates.json", None)
+    if not cands:
+        sys.exit("data/sources/domain_candidates.json not found")
+    over = _load_json(SOURCES / "domain_overrides.json", {"skip": {}, "partial": {}})
+    reg = _load_json(SOURCES / "disability_registry.json", {"documents": []})
+    have = {d["lex_id"] for d in reg["documents"]}
+    added = []
+    for c in cands["candidates"]:
+        lex_id = c["lex_id"]
+        if c.get("decision") != "include" or lex_id in have or lex_id in over.get("skip", {}):
+            continue
+        if c.get("status") != "active" or not c.get("units"):
+            continue
+        include = "disability_articles" if lex_id in over.get("partial", {}) else "all"
+        added.append({
+            "lex_id": lex_id, "law_id": "", "number": c.get("number", ""), "number_override": "",
+            "title": c["title"], "doc_type": c.get("doc_type", ""), "adopted": c.get("adopted"), "effective": None,
+            "tier": 2, "include": include, "category": None, "nodes": [], "relevance_title": 0, "relevance_text": 0,
+            "units": int(c["units"]), "verified_at": date.today().isoformat(), "source": "domain_review",
+            "domain": c.get("domain", ""), "domain_reason": c.get("reason", ""),
+        })
+        have.add(lex_id)
+    for a in added:
+        log.info(f"  + {a['number'] or a['lex_id']:12s} {a['include']:20s} units={a['units']:>4} {a['title'][:80]}")
+    log.info(f"domain: {len(added)} acts, up to {sum(a['units'] for a in added)} units "
+             f"(skipped by curator: {len(over.get('skip', {}))}, partial: {len(over.get('partial', {}))})")
+    if args.apply and added:
+        reg["documents"].extend(added)
+        _save_json(SOURCES / "disability_registry.json", reg)
+        log.info("registry updated. Next: build, then refresh --law-ids=" + ",".join(a["lex_id"] for a in added))
 
 
 # --------------------------------------------------------------------------------------------------------------
@@ -582,9 +674,20 @@ def cmd_refresh(args) -> None:
     log.info(f"refresh: {len(docs)} docs, {len(to_index)} changed/new indexed, {removed_total} removed -> {SOURCES / 'refresh_report.json'}")
 
     try:
+        from src.editorial.doc_watch import rebaseline_widened
         from src.editorial.store import EditorialStore
         from src.editorial.watch import check_legal_links
-        res = check_legal_links(store, EditorialStore(str(Path(args.store_dir) / "editorial.db")))
+        editorial = EditorialStore(str(Path(args.store_dir) / "editorial.db"))
+        # acts widened by `widen` gained units only because the selection changed: re-base their links once
+        widened = {d["lex_id"] for d in docs if d.get("widened_at") and not d.get("widened_rebased_at")}
+        widened_laws = {p["law_id"] for p in per_doc if p.get("lex_id") in widened and p.get("law_id") and not p.get("error")}
+        if widened_laws:
+            log.info(f"re-based {rebaseline_widened(store, editorial, widened_laws)} whole-act links of widened acts")
+            for d in docs:
+                if d["lex_id"] in widened:
+                    d["widened_rebased_at"] = date.today().isoformat()
+            _save_json(SOURCES / "disability_registry.json", reg)
+        res = check_legal_links(store, editorial)
         log.info(f"editorial watch after refresh: {res}")
     except Exception as e:
         log.warning(f"check_legal_links after refresh failed: {e}")
@@ -647,7 +750,7 @@ def cmd_report(args) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name, fn in (("discover", cmd_discover), ("select", cmd_select), ("cited", cmd_cited), ("build", cmd_build), ("ingest", cmd_ingest), ("report", cmd_report), ("reindex-fts", cmd_reindex_fts), ("refresh", cmd_refresh)):
+    for name, fn in (("discover", cmd_discover), ("select", cmd_select), ("cited", cmd_cited), ("widen", cmd_widen), ("domain", cmd_domain), ("build", cmd_build), ("ingest", cmd_ingest), ("report", cmd_report), ("reindex-fts", cmd_reindex_fts), ("refresh", cmd_refresh)):
         p = sub.add_parser(name)
         p.add_argument("--delay", type=float, default=1.0, help="seconds between Lex.uz requests")
         p.add_argument("--seed-pages", type=int, default=15, help="max result pages scanned per curated seed")
@@ -658,6 +761,8 @@ def main() -> None:
                                       help="largest act without 'nogironlik' in its title that is kept whole")
     sub.choices["cited"].add_argument("--min-rel-all", type=int, default=6,
                                       help="disability relevance of the text needed to keep such an act whole")
+    sub.choices["widen"].add_argument("--apply", action="store_true", help="write include=all into the registry")
+    sub.choices["domain"].add_argument("--apply", action="store_true", help="append the accepted acts to the registry")
     sub.choices["build"].add_argument("--max-tier", type=int, default=3)
     sub.choices["build"].add_argument("--no-russian", action="store_true")
     sub.choices["reindex-fts"].add_argument("--store-dir", default=str(ROOT / "data" / "store"))

@@ -1,1641 +1,295 @@
 {
- "note": "Lex.uz documents cited by huquqplus.uz articles but missing from the RAG corpus (title/status read from Lex.uz). Ids may be the Russian or Cyrillic edition.",
- "documents": [
-  {
-   "doc_id": "6236060",
-   "citations": 9,
-   "posts": 8,
-   "number": "VMQ-592",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Davlat pensiyalarini tayinlash va toʻlash tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7650099",
-   "citations": 9,
-   "posts": 5,
-   "number": "462",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po sovershenstvovaniyu sistemы okazaniya sotsialnoy pomoshi za schet sredstv fondov «Jenskaya tetrad», «Molodejnaya tetrad» i «Saxovat va kumak»",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3336169",
-   "citations": 8,
-   "posts": 5,
-   "number": "O'RQ-445",
-   "status": "active",
-   "doc_type": "Qonun",
-   "title": "“Jismoniy va yuridik shaxslarning murojaatlari toʻgʻrisida”gi Oʻzbekiston Respublikasi Qonuniga oʻzgartish va qoʻshimchalar kiritish haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7645251",
-   "citations": 7,
-   "posts": 4,
-   "number": "VMQ-462",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "“Ayollar daftari”, “Yoshlar daftari” va “Saxovat va koʻmak” jamgʻarmalari mablagʻlari hisobidan ijtimoiy yordam koʻrsatish tizimini takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5679836",
-   "citations": 7,
-   "posts": 6,
-   "number": "VMQ-638",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Alohida taʼlim ehtiyojlari boʻlgan bolalarga taʼlim berishga oid normativ-huquqiy hujjatlarni tasdiqlash toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4138215",
-   "citations": 6,
-   "posts": 2,
-   "number": "REG-3113",
-   "status": "active",
-   "doc_type": "Buyruq",
-   "title": "Notariuslar tomonidan notarial harakatlarni amalga oshirish tartibi toʻgʻrisida yoʻriqnomani tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3336171",
-   "citations": 6,
-   "posts": 4,
-   "number": "O'RQ-445",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O vnesenii izmeneniy i dopolneniy v Zakon Respubliki Uzbekistan «Ob obrasheniyax fizicheskix i yuridicheskix lits»",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5679838",
-   "citations": 6,
-   "posts": 5,
-   "number": "638",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii normativno-pravovыx aktov, kasayushixsya obucheniya detey s osobыmi obrazovatelnыmi potrebnostyami",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6236070",
-   "citations": 6,
-   "posts": 5,
-   "number": "592",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii Polojeniya o poryadke naznacheniya i vыplatы gosudarstvennыx pensiy",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6480342",
-   "citations": 5,
-   "posts": 4,
-   "number": "PF-82",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Aholiga sifatli ijtimoiy xizmat va yordam koʻrsatish hamda uning samarali nazorat tizimini yoʻlga qoʻyish boʻyicha kompleks chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "2270351",
-   "citations": 5,
-   "posts": 3,
-   "number": "REG-2522",
-   "status": "active",
-   "doc_type": "Qaror",
-   "title": "Ambulatoriyada davolanishda imtiyozli taʼminlash uchun moʻljallangan dori vositalarining roʻyxatini tasdiqlash toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6480351",
-   "citations": 5,
-   "posts": 4,
-   "number": "PF-82",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O komplekse mer po okazaniyu kachestvennыx sotsialnыx uslug i pomoshi naseleniyu, a takje nalajivaniyu sistemы ix effektivnogo kontrolya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7162393",
-   "citations": 4,
-   "posts": 3,
-   "number": "O'RQ-977",
-   "status": "active",
-   "doc_type": "Qonun",
-   "title": "Ijtimoiy xizmatlar va yordam koʻrsatish tizimi takomillashtirilishi munosabati bilan Oʻzbekiston Respublikasining ayrim qonun hujjatlariga oʻzgartirish va qoʻshimchalar kiritish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3804290",
-   "citations": 4,
-   "posts": 2,
-   "number": "REG-3030",
-   "status": "active",
-   "doc_type": "Qaror",
-   "title": "Bank xizmatlari isteʼmolchilari bilan oʻzaro munosabatlarni amalga oshirishda tijorat banklarining faoliyatiga qoʻyiladigan minimal talablar toʻgʻrisidagi nizomni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6379336",
-   "citations": 4,
-   "posts": 2,
-   "number": "REG-3420",
-   "status": "active",
-   "doc_type": "Qaror",
-   "title": "Bank hisobvaraqlarini ochish, yuritish va yopish tartibi toʻgʻrisidagi yoʻriqnomani tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "1865473",
-   "citations": 4,
-   "posts": 2,
-   "number": "VMQ-252",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Davlat pensiyalarini tayinlash va toʻlash tartibini yanada takomillashtirishga yoʻnaltirilgan normativ-huquqiy hujjatlarni tasdiqlash toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3517337",
-   "citations": 4,
-   "posts": 4,
-   "number": "",
-   "status": "active",
-   "doc_type": "Kodeks",
-   "title": "Oʻzbekiston Respublikasining Fuqarolik protsessual kodeksi",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5735396",
-   "citations": 4,
-   "posts": 3,
-   "number": "VMQ-693",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Aholiga sanatoriylarda davolanish uchun yoʻllanmalar berish sohasiga axborot-texnologiyalarini joriy etish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5865327",
-   "citations": 4,
-   "posts": 3,
-   "number": "73",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii Administrativnogo reglamenta okazaniya gosudarstvennыx uslug po opredeleniyu urovnya znaniya inostrannogo yazыka",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7162396",
-   "citations": 4,
-   "posts": 3,
-   "number": "O'RQ-977",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O vnesenii izmeneniy i dopolneniy v nekotorыe zakonodatelnыe aktы Respubliki Uzbekistan v svyazi s sovershenstvovaniyem sistemы predostavleniya sotsialnыx uslug i pomoshi",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3517334",
-   "citations": 4,
-   "posts": 3,
-   "number": "",
-   "status": "active",
-   "doc_type": "Kodeks",
-   "title": "Grajdanskiy protsessualnыy kodeks Respubliki Uzbekistan",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4866624",
-   "citations": 3,
-   "posts": 1,
-   "number": "VMQ-402",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Oliy taʼlim muassasalariga qoʻshimcha davlat granti asosidagi qabul koʻrsatkichlari doirasida ehtiyojmand oilalardagi xotin-qizlarga tanlovda ishtirok etish uchun tavsiyanoma berish va ularni oʻqishga qabul qilishni tashkil etish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6906830",
-   "citations": 3,
-   "posts": 2,
-   "number": "PF-70",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "2024-yilda ipoteka kreditlarini ajratish mexanizmlarini takomillashtirish va aholining uy-joy sharoitlarini yaxshilashga oid qoʻshimcha chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5863626",
-   "citations": 3,
-   "posts": 2,
-   "number": "VMQ-73",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Chet tilini bilish darajasini aniqlash boʻyicha davlat xizmatlari koʻrsatishning maʼmuriy reglamentini tasdiqlash toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4680944",
-   "citations": 3,
-   "posts": 3,
-   "number": "O'RQ-600",
-   "status": "active",
-   "doc_type": "Qonun",
-   "title": "Davlat boji toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "648034",
-   "citations": 3,
-   "posts": 2,
-   "error": "not_available"
-  },
-  {
-   "doc_id": "4867861",
-   "citations": 3,
-   "posts": 1,
-   "number": "402",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii Polojeniya o poryadke vыdachi jenshinam rekomendatsiy k uchastiyu v konkurse i organizatsii ix priyema v vыsshiye obrazovatelnыe uchrejdeniya v predelax pokazateley priyema na osnove dopolnitelnыx gosudarstvennыx grantov",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6906825",
-   "citations": 3,
-   "posts": 2,
-   "number": "PF-70",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dopolnitelnыx merax po sovershenstvovaniyu mexanizmov vыdeleniya ipotechnыx kreditov i uluchsheniyu jilishnыx usloviy naseleniya v 2024 godu",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4370312",
-   "citations": 3,
-   "posts": 3,
-   "number": "468",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii Administrativnogo reglamenta okazaniya gosudarstvennыx uslug po priyemu dokumentov dlya postupleniya na uchebu v vыsshiye obrazovatelnыe uchrejdeniya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6916641",
-   "citations": 3,
-   "posts": 1,
-   "number": "PQ-175",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dopolnitelnыx merax po sovershenstvovaniyu okazaniya sotsialnыx uslug litsam, postradavshim ot pritesneniya i nasiliya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5739832",
-   "citations": 3,
-   "posts": 2,
-   "number": "693",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O vnedrenii informatsionnыx texnologiy v oblasti vыdachi naseleniyu putevok dlya lecheniya v sanatorii",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6472568",
-   "citations": 3,
-   "posts": 1,
-   "number": "PQ-162",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po rasshireniyu oxvata i povыsheniyu kachestva tsifrovыx uslug, a takje tsifrovoy transformatsii sfer, otrasley i regionov",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7730821",
-   "citations": 2,
-   "posts": 2,
-   "number": "VMQ-587",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Nogironlikni belgilash tizimi raqamlashtirilishi munosabati bilan Oʻzbekiston Respublikasi Hukumatining ayrim qarorlariga oʻzgartirish va qoʻshimchalar kiritish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7283088",
-   "citations": 2,
-   "posts": 1,
-   "number": "PF-229",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Tadbirkorlar uchun teng sharoitlar va adolatli raqobat muhitini taʼminlash boʻyicha navbatdagi chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6116203",
-   "citations": 2,
-   "posts": 1,
-   "number": "PQ-323",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Oliy va professional taʼlim tashkilotlarida xotin-qizlarning taʼlim olishlarini qoʻllab-quvvatlashga doir chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7170688",
-   "citations": 2,
-   "posts": 1,
-   "number": "VMQ-691",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "“Mahalla yettiligi” tavsiyasi asosida kambagʻallikdan chiqarish dasturiga kiritilgan va uy-joy sharoitini yaxshilashga muhtoj boʻlgan shaxslarga ipoteka kreditini ajratish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4993790",
-   "citations": 2,
-   "posts": 1,
-   "number": "VMQ-550",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Oʻzbekiston Respublikasi Yoshlar ishlari agentligi toʻgʻrisidagi nizomni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7759309",
-   "citations": 2,
-   "posts": 1,
-   "number": "VMQ-632",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Yoshlarning oʻquv markazlarida xorijiy tillarni oʻqish xarajatlari uchun subsidiya ajratish hamda oʻquv markazlarini ragʻbatlantirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4368106",
-   "citations": 2,
-   "posts": 2,
-   "number": "VMQ-468",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Oliy taʼlim muassasalariga oʻqishga kirish uchun hujjatlarni qabul qilish boʻyicha davlat xizmatlarini koʻrsatishning maʼmuriy reglamentini tasdiqlash toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7327821",
-   "citations": 2,
-   "posts": 1,
-   "number": "PQ-12",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "2025-yilda aholi bandligini taʼminlash va kambagʻallikni qisqartirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6916638",
-   "citations": 2,
-   "posts": 1,
-   "number": "PQ-175",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Tazyiq va zoʻravonlikdan jabrlangan shaxslarga ijtimoiy xizmatlar koʻrsatishni takomillashtirish boʻyicha qoʻshimcha chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6311402",
-   "citations": 2,
-   "posts": 2,
-   "number": "185",
-   "status": "active",
-   "doc_type": "Buyruq",
-   "title": "SHNQ 2.07.02-22 “Qurilish obyektlarini nogironligi boʻlgan shaxslar hamda keksalar ehtiyojini inobatga olgan holda loyihalashtirish” shaharsozlik normalari va qoidalarini tasdiqlash toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "1899953",
-   "citations": 2,
-   "posts": 2,
-   "number": "REG-2175-1",
-   "status": "active",
-   "doc_type": "Buyruq",
-   "title": "Uy-joy-kommunal xizmatlar haqini toʻlash boʻyicha kompensatsiya pul toʻlovlarining mexanizmi toʻgʻrisidagi nizomga oʻzgartirish kiritish haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5044711",
-   "citations": 2,
-   "posts": 2,
-   "number": "PQ-4860",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Alohida taʼlim ehtiyojlari boʻlgan bolalarga taʼlim-tarbiya berish tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6937332",
-   "citations": 2,
-   "posts": 2,
-   "number": "PF-81",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Oliy taʼlim tashkilotlariga oʻqishga qabul qilish va davlat buyurtmasini joylashtirish tizimini takomillashtirish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7487706",
-   "citations": 2,
-   "posts": 1,
-   "number": "VMQ-252",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Oʻzbekiston Respublikasi fuqarolarini xorijda tashkillashtirilgan tartibda ishga joylashtirish tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "2194596",
-   "citations": 2,
-   "posts": 2,
-   "number": "REG-2472",
-   "status": "active",
-   "doc_type": "Qaror",
-   "title": "Haydovchi va haydovchilikka nomzodlarni transport vositalarini boshqarishga yaroqliligini tekshirish uchun tibbiy koʻrikdan oʻtkazish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "1076015",
-   "citations": 2,
-   "posts": 1,
-   "number": "VMQ-223",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Avtomobil benzini sotib olish boʻyicha ilgari berilgan imtiyozlar oʻrniga shaxslarning ayrim toifalariga oylik pul kompensatsiyalari toʻlovlari joriy etish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "2211626",
-   "citations": 2,
-   "posts": 1,
-   "number": "VMQ-204",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Shaxslarning ayrim toifalarini imtiyozli asosda dori vositalari bilan taʼminlash tartibini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7283092",
-   "citations": 2,
-   "posts": 1,
-   "number": "PF-229",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob ocherednыx merax po obespecheniyu ravnыx usloviy dlya predprinimateley i spravedlivoy konkurentnoy sredы",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5399496",
-   "citations": 2,
-   "posts": 2,
-   "number": "250",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dopolnitelnыx merax po sotsialnoy podderjke semey, jenshin i molodeji, nujdayushixsya v materialnoy pomoshi i podderjke",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6116212",
-   "citations": 2,
-   "posts": 1,
-   "number": "PQ-323",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po podderjke obucheniya jenshin v vыsshix i professionalnыx obrazovatelnыx uchrejdeniyax",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7171310",
-   "citations": 2,
-   "posts": 1,
-   "number": "691",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii polojeniya o poryadke predostavleniya ipotechnogo kredita litsam, vklyuchennыm v programmu likvidatsii bednosti i nujdayushimsya v uluchshenii jilishnыx usloviy, na osnovanii rekomendatsii «Maxalla yettiligi»",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7764593",
-   "citations": 2,
-   "posts": 1,
-   "number": "632",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po predostavleniyu subsidiy molodeji na vozmesheniye rasxodov po izucheniyu inostrannыx yazыkov v uchebnыx tsentrax, a takje po stimulirovaniyu uchebnыx tsentrov",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7516929",
-   "citations": 2,
-   "posts": 1,
-   "number": "PQ-171",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po rasshireniyu spektra sotsialnыx uslug litsam, nujdayushimsya v postoronnem uxode",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4680955",
-   "citations": 2,
-   "posts": 2,
-   "number": "O'RQ-600",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O gosudarstvennoy poshline",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5044745",
-   "citations": 2,
-   "posts": 2,
-   "number": "PQ-4860",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu sovershenstvovaniyu sistemы obrazovaniya i vospitaniya detey s osobыmi obrazovatelnыmi potrebnostyami",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6937335",
-   "citations": 2,
-   "posts": 2,
-   "number": "PF-81",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O sovershenstvovanii sistemы priyema na uchebu v vыsshiye obrazovatelnыe organizatsii i razmesheniya gosudarstvennogo zakaza",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7491047",
-   "citations": 2,
-   "posts": 1,
-   "number": "252",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu sovershenstvovaniyu sistemы organizovannogo trudoustroystva grajdan Respubliki Uzbekistan za rubejom",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "1076021",
-   "citations": 2,
-   "posts": 1,
-   "number": "223",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O vvedenii vыplat yejemesyachnыx denejnыx kompensatsiy otdelnыm kategoriyam lits vzamen raneye predostavlennыx lgot po priobreteniyu avtobenzina",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7059452",
-   "citations": 2,
-   "posts": 2,
-   "number": "PF-108",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O povыshenii razmerov zarabotnoy platы, pensiy i posobiy",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3920035",
-   "citations": 2,
-   "posts": 1,
-   "number": "PF-5545",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob organizatsii deyatelnosti Fonda «El-yurt umidi» po podgotovke spetsialistov za rubejom i dialogu s sootechestvennikami pri Kabinete Ministrov Respubliki Uzbekistan",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4725554",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-59",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Oliy taʼlim muassasalari talabalariga toʻlanadigan stipendiyalar miqdorlarini belgilash hamda stipendiyalar tayinlash va toʻlash tartibini takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6568679",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-376",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Oliy taʼlim muassasalari talabalarini turar joy bilan taʼminlash tizimini takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5426278",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-5114",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Paralimpiya harakatini rivojlantirishga doir qoʻshimcha chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7409817",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-132",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Transport xizmatlaridan foydalanish imkoniyatlarini kengaytirish orqali koʻrish va harakatlanish bilan bogʻliq kasalliklarga chalingan alohida taʼlim ehtiyojlari boʻlgan bolalar uchun taʼlim olish sharoitlarini yaxshilash toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7374261",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-17",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Aholini ijtimoiy himoya qilish tizimini moliyalashtirish tartib-taomillarini takomillashtirish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7516927",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-171",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Oʻzgalar parvarishiga muhtoj shaxslarga ijtimoiy xizmatlar koʻrsatish koʻlamini kengaytirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4358964",
-   "citations": 1,
-   "posts": 1,
-   "number": "REG-3163",
-   "status": "active",
-   "doc_type": "Buyruq",
-   "title": "Oʻzbekiston Respublikasi Bandlikka koʻmaklashish davlat jamgʻarmasi mablagʻlari hisobidan subsidiya va grantlar ajratish tartibi toʻgʻrisida nizomni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "2463973",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-263",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Xodimlar mehnatini muhofaza qilish chora-tadbirlarini yanada takomillashtirish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7386982",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-64",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Aholini tadbirkorlikka jalb qilish va bandligini taʼminlash uchun moliyaviy yordamlar ajratish tizimini takomillashtirishga oid qoʻshimcha chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5354947",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-183",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Kambagʻal va ishsiz fuqarolarni kasb-hunarga oʻqitish tizimini takomillashtirish hamda mehnat organlari faoliyati samaradorligini oshirish boʻyicha qoʻshimcha chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4494709",
-   "citations": 1,
-   "posts": 1,
-   "number": "O'RQ-561",
-   "status": "active",
-   "doc_type": "Qonun",
-   "title": "Xotin-qizlarni tazyiq va zoʻravonlikdan himoya qilish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5688101",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-654",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Aholini ijtimoiy himoya qilish tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6624639",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-319",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Aholiga ijtimoiy xizmatlar va yordamlar koʻrsatish tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "2307826",
-   "citations": 1,
-   "posts": 1,
-   "number": "O'RQ-364",
-   "status": "active",
-   "doc_type": "Qonun",
-   "title": "Vasiylik va homiylik toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3854805",
-   "citations": 1,
-   "posts": 1,
-   "number": "REG-3048",
-   "status": "active",
-   "doc_type": "Qaror",
-   "title": "Nogironligi boʻlgan shaxslar avtotransport vositalarining toʻxtab turish joylariga qoʻyiladigan talablar toʻgʻrisidagi nizomni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4390513",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-4366",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Ommaviy axborot vositalari mustaqilligini taʼminlash hamda davlat organlari va tashkilotlari axborot xizmatlari faoliyatini rivojlantirish boʻyicha qoʻshimcha chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6684613",
-   "citations": 1,
-   "posts": 1,
-   "number": "26",
-   "status": "active",
-   "doc_type": "Qonun",
-   "title": "Sudlar tomonidan mehnat shartnomasini bekor qilishni tartibga soluvchi qonunchilikni qoʻllash amaliyoti toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4312785",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-5712",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Oʻzbekiston Respublikasi Xalq taʼlimi tizimini 2030-yilgacha rivojlantirish konsepsiyasini tasdiqlash toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6181114",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-213",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Qoraqalpogʻiston Respublikasida tadbirkorlik, innovatsion texnologiyalar va infratuzilmalarni jadal surʼatlarda rivojlantirish orqali aholi farovonligini oshirishning qoʻshimcha chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5524039",
-   "citations": 1,
-   "posts": 1,
-   "number": "0239-07/3",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Oʻzbekiston Respublikasida yuqumli kasalliklar immunoprofilaktikasi",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3765833",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-408",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Avtomototransport vositalari va shahar elektr transporti vositalari haydovchilarini tayyorlash hamda qayta tayyorlash boʻyicha nodavlat taʼlim xizmatlarini koʻrsatish faoliyatini litsenziyalash tartibini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5055690",
-   "citations": 1,
-   "posts": 1,
-   "number": "O'RQ-642",
-   "status": "active",
-   "doc_type": "Qonun",
-   "title": "Aholi bandligi toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3448292",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-965",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Ijtimoiy muhofazaga muhtoj, ish topishda qiynalayotgan va mehnat bozorida teng shartlarda raqobatlasha olmaydigan shaxslarni ishga joylashtirish uchun ish oʻrinlarining eng kam sonini belgilash va zaxiraga qoʻyish tartibini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5530487",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-6269",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Davlat xizmatlari koʻrsatish infratuzilmasini takomillashtirish va aholining davlat xizmatlaridan foydalanish imkoniyatlarini kengaytirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5971599",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-113",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Davlat xizmatlari koʻrsatishni soddalashtirish, byurokratik toʻsiqlarni qisqartirish hamda davlat xizmatlari koʻrsatish milliy tizimini rivojlantirishning qoʻshimcha chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5429899",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-319",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Vazirlar Mahkamasining “Bolalarni davlat maktabgacha taʼlim muassasalariga qabul qilish boʻyicha davlat xizmatlari koʻrsatishning maʼmuriy reglamentini tasdiqlash toʻgʻrisida” 2018-yil 28-martdagi 244-son qaroriga oʻzgartirishlar kiritish haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5676240",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-637",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "“Temir daftar” va “Ayollar daftari”ga kiritilgan oilalarning farzandlari hamda “Yoshlar daftari”ga kiritilgan yangi turmush qurgan yoshlarning yakka tartibdagi xonadonida qoʻshimcha uy-joy qurish uchun garovsiz kredit ajratish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5398681",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-250",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Moddiy yordam va koʻmakka muhtoj oilalarni, xotin-qizlar va yoshlarni ijtimoiy qoʻllab-quvvatlash boʻyicha qoʻshimcha chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6051791",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-312",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Yoshlar muammolarini oʻrganish va hal etish tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6476175",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-79",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Maktabgacha va maktab taʼlimi vazirligi hamda uning tizimidagi tashkilotlar faoliyatini samarali tashkil etish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6433775",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-51",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "2023-yilda bozor tamoyillariga asoslangan ipoteka kreditlari orqali aholini uy-joy bilan taʼminlash dasturini amalga oshirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4774086",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-182",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Uy-joy sotib olish uchun fuqarolarga subsidiya toʻlash tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5534899",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-5199",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Sogʻliqni saqlash sohasida ixtisoslashtirilgan tibbiy yordam koʻrsatish tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6450094",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-140",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Sogʻliqni saqlash tizimini raqamlashtirishga doir qoʻshimcha chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3920037",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-5545",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Oʻzbekiston Respublikasi Vazirlar Mahkamasi huzuridagi Mutaxassislarni xorijda tayyorlash va vatandoshlar bilan muloqot qilish boʻyicha “El-yurt umidi” jamgʻarmasi faoliyatini tashkil etish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6472548",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-162",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Raqamli xizmatlar qamrovi va sifatini oshirish hamda soha, tarmoq va hududlarni raqamli transformatsiya qilish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5286354",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-6168",
-   "status": "active",
-   "doc_type": "Farmon",
-   "title": "Davlat xizmatchilari va mutaxassislarni xorijda tayyorlash hamda ularning salohiyatini yanada oshirish tizimini tubdan takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "1380972",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-175",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Tibbiy-mehnat ekspertiza xizmati boshqarish tuzilmasini va faoliyatini tashkil etishni takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3130072",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-128",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Toshkent metropolitenida pensionerlarni bepul tashish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "39646",
-   "citations": 1,
-   "posts": 1,
-   "number": "278-I",
-   "status": "active",
-   "doc_type": "Qonun",
-   "title": "Shahar yoʻlovchilar transportidan bepul foydalanishni tartibga solish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6407934",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-94",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Toshkent metropolitenidan foydalanishda pensiya oluvchilarga qoʻshimcha qulayliklar yaratish toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "246740",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-482",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Oʻzbekiston Respublikasida avtomobil transportida yoʻlovchilar va bagaj tashish qoidalarini hamda avtobuslarda yoʻlovchilar tashish xavfsizligini taʼminlashga doir talablarni tasdiqlash haqida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "8362485",
-   "citations": 1,
-   "posts": 1,
-   "number": "VMQ-411",
-   "status": "active",
-   "doc_type": "VMQ",
-   "title": "Milliy sertifikat berish tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5793272",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-62",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Iqtisodiy taraqqiyot va kambagʻallikni qisqartirish vazirligi huzuridagi Mahallabay ishlash va tadbirkorlikni rivojlantirish agentligi faoliyatini tashkil etish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5045889",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-4862",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Aholini tadbirkorlikka jalb qilish tizimini takomillashtirish va tadbirkorlikni rivojlantirishga doir qoʻshimcha chora-tadbirlar toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7433397",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-103",
-   "status": "active",
-   "doc_type": "PQ",
-   "title": "Oila va xotin-qizlarni qoʻllab-quvvatlash tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4728545",
-   "citations": 1,
-   "posts": 1,
-   "number": "59",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po sovershenstvovaniyu poryadka opredeleniya razmera stipendiy, vыplachivayemыx studentam vыsshix obrazovatelnыx uchrejdeniy, ix naznacheniya i vыplatы",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6572093",
-   "citations": 1,
-   "posts": 1,
-   "number": "376",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po sovershenstvovaniyu sistemы obespecheniya jilyem studentov vыsshix uchebnыx zavedeniy",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5426281",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-5114",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dopolnitelnыx merax po razvitiyu paralimpiyskogo dvijeniya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7413340",
-   "citations": 1,
-   "posts": 1,
-   "number": "132",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob uluchshenii usloviy obucheniya detey s osobыmi obrazovatelnыmi potrebnostyami, v tom chisle s zabolevaniyami organov zreniya i oporno-dvigatelnogo apparata, putem rasshireniya vozmojnostey polzovaniya transportnыmi uslugami",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5793280",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-62",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po organizatsii deyatelnosti Agentstva po rabote maxallabay i razvitiyu predprinimatelstva pri Ministerstve ekonomicheskogo razvitiya i sokrasheniya bednosti",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5045895",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-4862",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dopolnitelnыx merax po sovershenstvovaniyu sistemы vovlecheniya naseleniya v predprinimatelstvo i razvitiyu predprinimatelstva",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7433422",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-103",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu sovershenstvovaniyu sistemы podderjki semi i jenshin",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7374368",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-17",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O sovershenstvovanii protsedur finansirovaniya sistemы sotsialnoy zashitы naseleniya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "1865475",
-   "citations": 1,
-   "posts": 1,
-   "number": "252",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii normativno-pravovыx aktov, napravlennыx na dalneysheye sovershenstvovaniye poryadka naznacheniya i vыplatы gosudarstvennыx pensiy",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4998416",
-   "citations": 1,
-   "posts": 1,
-   "number": "550",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii polojeniya ob Agentstve po delam molodeji Respubliki Uzbekistan",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4358973",
-   "citations": 1,
-   "posts": 1,
-   "number": "3163",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii Polojeniya o poryadke predostavleniya subsidiy i grantov za schet sredstv Gosudarstvennogo fonda sodeystviya zanyatosti naseleniya Respubliki Uzbekistan",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "2463975",
-   "citations": 1,
-   "posts": 1,
-   "number": "263",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dalneyshem sovershenstvovanii mer po oxrane truda rabotnikov",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7387013",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-64",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dopolnitelnыx merax po sovershenstvovaniyu sistemы vыdeleniya finansovoy pomoshi dlya privlecheniya k predprinimatelstvu i obespecheniya zanyatosti naseleniya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5357810",
-   "citations": 1,
-   "posts": 1,
-   "number": "183",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dopolnitelnыx merax po sovershenstvovaniyu sistemы professionalnogo obucheniya bednыx i bezrabotnыx grajdan i povыsheniyu effektivnosti deyatelnosti organov po trudu",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7328113",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-12",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po obespecheniyu zanyatosti naseleniya i sokrasheniyu bednosti v 2025 godu",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4494712",
-   "citations": 1,
-   "posts": 1,
-   "number": "O'RQ-561",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O zashite jenshin ot pritesneniya i nasiliya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5572521",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-6277",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po okazaniyu materialnoy pomoshi maloobespechennыm semyam i dalneyshemu rasshireniyu masshtaba borbы s bednostyu",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5688115",
-   "citations": 1,
-   "posts": 1,
-   "number": "654",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu sovershenstvovaniyu sistemы sotsialnoy zashitы naseleniya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6624641",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-319",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax dalneyshego sovershenstvovaniya sistemы okazaniya sotsialnыx uslug i pomoshi naseleniyu",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "7347905",
-   "citations": 1,
-   "posts": 1,
-   "number": "01/2-1",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii gradostroitelnыx norm i pravil GNP 2.07.02-24 «Proyektirovaniye stroitelnыx ob'yektov s uchetom potrebnostey lits s invalidnosti i pojilыx lyudey»",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "2307828",
-   "citations": 1,
-   "posts": 1,
-   "number": "O'RQ-364",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob opeke i popechitelstve",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3213407",
-   "citations": 1,
-   "posts": 1,
-   "number": "304",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu sovershenstvovaniyu sistemы poslevuzovskogo obrazovaniya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "1899957",
-   "citations": 1,
-   "posts": 1,
-   "number": "2175-1",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O vnesenii izmeneniya v Polojeniye o mexanizme kompensatsionnыx denejnыx vыplat po oplate jilishno-kommunalnыx uslug",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3857489",
-   "citations": 1,
-   "posts": 1,
-   "number": "3048",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii Polojeniya o pred'yavlyayemыx trebovaniyax k mestam stoyanok avtotransportnыx sredstv lits s invalidnostyu",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4390515",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-4366",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dalneyshix merax po obespecheniyu nezavisimosti sredstv massovoy informatsii i razvitiyu deyatelnosti press-slujb gosudarstvennыx organov i organizatsiy",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "111457",
-   "citations": 1,
-   "posts": 1,
-   "number": "",
-   "status": "active",
-   "doc_type": "Kodeks",
-   "title": "Ugolovnыy kodeks Respubliki Uzbekistan",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "111463",
-   "citations": 1,
-   "posts": 1,
-   "number": "",
-   "status": "active",
-   "doc_type": "Kodeks",
-   "title": "Ugolovno-protsessualnыy kodeks Respubliki Uzbekistan",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "163627",
-   "citations": 1,
-   "posts": 1,
-   "number": "",
-   "status": "active",
-   "doc_type": "Kodeks",
-   "title": "Ugolovno-ispolnitelnыy kodeks Respubliki Uzbekistan",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3027845",
-   "citations": 1,
-   "posts": 1,
-   "number": "O'RQ-407",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob organax vnutrennix del",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6684617",
-   "citations": 1,
-   "posts": 1,
-   "number": "26",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O praktike primeneniya sudami zakonodatelstva, reguliruyushego prekrasheniye trudovogo dogovora",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4312783",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-5712",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii Kontseptsii razvitiya sistemы narodnogo obrazovaniya Respubliki Uzbekistan do 2030 goda",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6181169",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-213",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dopolnitelnыx merax po povыsheniyu blagosostoyaniya naseleniya Respubliki Karakalpakstan putem uskorennogo razvitiya predprinimatelstva, innovatsionnыx texnologiy i infrastruktur",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5524044",
-   "citations": 1,
-   "posts": 1,
-   "number": "0239-07/3",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Immunoprofilaktiki infektsionnыx zabolevaniy v Respublike Uzbekistan",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "2001189",
-   "citations": 1,
-   "posts": 1,
-   "number": "109",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii pravil perevozok passajirov, bagaja i gruzobagaja jeleznodorojnыm transportom Respubliki Uzbekistan",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3765840",
-   "citations": 1,
-   "posts": 1,
-   "number": "408",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu sovershenstvovaniyu poryadka litsenzirovaniya deyatelnosti po okazaniyu negosudarstvennыx obrazovatelnыx uslug po podgotovke i perepodgotovke voditeley avtomototransportnыx sredstv i sredstv gorodskogo elektricheskogo transporta",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5055696",
-   "citations": 1,
-   "posts": 1,
-   "number": "O'RQ-642",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O zanyatosti naseleniya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3448330",
-   "citations": 1,
-   "posts": 1,
-   "number": "965",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu sovershenstvovaniyu poryadka ustanovleniya i rezervirovaniya minimalnogo kolichestva rabochix mest dlya trudoustroystva lits, nujdayushixsya v sotsialnoy zashite i ispыtыvayushix zatrudneniya v poiske rabotы i nesposobnыx na ravnыx usloviyax konkurirovat na rыnke truda",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5530491",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-6269",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po sovershenstvovaniyu infrastrukturы okazaniya gosudarstvennыx uslug i rasshireniyu dostupa naseleniya k gosudarstvennыm uslugam",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5971609",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-113",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dopolnitelnыx merax po uprosheniyu predostavleniya gosudarstvennыx uslug, sokrasheniyu byurokraticheskix baryerov i razvitiyu natsionalnoy sistemы okazaniya gosudarstvennыx uslug",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5431027",
-   "citations": 1,
-   "posts": 1,
-   "number": "319",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O vnesenii izmeneniy v Postanovleniye Kabineta Ministrov ot 28 marta 2018 goda № 244 «Ob utverjdenii Administrativnogo reglamenta predostavleniya gosudarstvennыx uslug po priyemu detey v gosudarstvennыe doshkolnыe obrazovatelnыe uchrejdeniya»",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5676245",
-   "citations": 1,
-   "posts": 1,
-   "number": "637",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii Polojeniya o poryadke predostavleniya bezzalogovыx kreditov na stroitelstvo dopolnitelnogo jilya na svoyem uchastke detyam iz semey, vklyuchennыx v «Jeleznuyu tetrad» i «Jenskuyu tetrad», a takje molodыm semyam, vklyuchennыm v «Molodejnuyu tetrad»",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6052325",
-   "citations": 1,
-   "posts": 1,
-   "number": "312",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu sovershenstvovaniyu sistemы izucheniya i resheniya problem molodeji",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6476177",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-79",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po effektivnoy organizatsii deyatelnosti Ministerstva doshkolnogo i shkolnogo obrazovaniya i organizatsiy v yego sisteme",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6433780",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-51",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po realizatsii Programmы obespecheniya naseleniya jilyem posredstvom ipotechnыx kreditov na osnove rыnochnыx printsipov na 2023 god",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "4774121",
-   "citations": 1,
-   "posts": 1,
-   "number": "182",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii Polojeniya o poryadke vыplatы subsidii grajdanam na priobreteniye jilya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5534908",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-5199",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu sovershenstvovaniyu sistemы okazaniya spetsializirovannoy meditsinskoy pomoshi v sfere zdravooxraneniya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "6450186",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-140",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O dopolnitelnыx merax po tsifrovizatsii sistemы zdravooxraneniya",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "2211624",
-   "citations": 1,
-   "posts": 1,
-   "number": "204",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu sovershenstvovaniyu poryadka obespecheniya lekarstvennыmi sredstvami otdelnыx kategoriy lits na lgotnoy osnove",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "2270349",
-   "citations": 1,
-   "posts": 1,
-   "number": "2522",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii Perechnya lekarstvennыx sredstv, prednaznachennыx dlya lgotnogo obespecheniya pri ambulatornom lechenii",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5408697",
-   "citations": 1,
-   "posts": 1,
-   "number": "PQ-5102",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po dalneyshemu uprosheniyu protsessa naznacheniya gosudarstvennыx pensiy i sovershenstvovaniyu sistemы dostavki pensiy i posobiy grajdanam",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "5286356",
-   "citations": 1,
-   "posts": 1,
-   "number": "PF-6168",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po kardinalnomu sovershenstvovaniyu sistemы podgotovki za rubejom i dalneyshego povыsheniya potentsiala gosudarstvennыx slujashix i spetsialistov",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "478841",
-   "citations": 1,
-   "posts": 1,
-   "number": "328",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Voprosы sotsialnoy zashishennosti invalidov v Respublike Uzbekistan",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "1380970",
-   "citations": 1,
-   "posts": 1,
-   "number": "175",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O merax po sovershenstvovaniyu strukturы upravleniya i organizatsii slujbы vrachebno-trudovoy ekspertizы",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "3130070",
-   "citations": 1,
-   "posts": 1,
-   "number": "128",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "O perevozke pensionerov v Tashkentskom metropolitene na besplatnoy osnove",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "39857",
-   "citations": 1,
-   "posts": 1,
-   "number": "278-I",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob uporyadochenii besplatnogo polzovaniya gorodskim passajirskim transportom",
-   "rejected_reason": null
-  },
-  {
-   "doc_id": "246743",
-   "citations": 1,
-   "posts": 1,
-   "number": "482",
-   "status": "active",
-   "doc_type": "Boshqa",
-   "title": "Ob utverjdenii pravil perevozki passajirov i bagaja avtomobilnыm transportom i trebovaniy po obespecheniyu bezopasnosti passajirskix perevozok avtobusami i marshrutnыmi taksi v Respublike Uzbekistan",
-   "rejected_reason": null
-  }
- ]
+  "note": "Lex.uz documents cited by active Huquq+ posts and absent from the corpus (from hp_posts.unresolved_refs, 2026-10-13).",
+  "documents": [
+    {
+      "doc_id": "-4138215",
+      "citations": 6,
+      "posts": 2
+    },
+    {
+      "doc_id": "-2270351",
+      "citations": 5,
+      "posts": 3
+    },
+    {
+      "doc_id": "-7162393",
+      "citations": 4,
+      "posts": 3
+    },
+    {
+      "doc_id": "-1865473",
+      "citations": 4,
+      "posts": 2
+    },
+    {
+      "doc_id": "7162396",
+      "citations": 4,
+      "posts": 3
+    },
+    {
+      "doc_id": "-6906830",
+      "citations": 3,
+      "posts": 2
+    },
+    {
+      "doc_id": "-648034",
+      "citations": 3,
+      "posts": 2
+    },
+    {
+      "doc_id": "6906825",
+      "citations": 3,
+      "posts": 2
+    },
+    {
+      "doc_id": "-7730821",
+      "citations": 2,
+      "posts": 2
+    },
+    {
+      "doc_id": "-7283088",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "-6116203",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "-7170688",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "-7759309",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "-6311402",
+      "citations": 2,
+      "posts": 2
+    },
+    {
+      "doc_id": "-1899953",
+      "citations": 2,
+      "posts": 2
+    },
+    {
+      "doc_id": "-7487706",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "7283092",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "5399496",
+      "citations": 2,
+      "posts": 2
+    },
+    {
+      "doc_id": "6116212",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "7171310",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "7764593",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "7491047",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "7059452",
+      "citations": 2,
+      "posts": 2
+    },
+    {
+      "doc_id": "3920035",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "-4358964",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5688101",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5524039",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5429899",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5676240",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5398681",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-6433775",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-6450094",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-3920037",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5286354",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-1380972",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-3130072",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-6407934",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5793272",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5045889",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-7433397",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5793280",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5045895",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "7433422",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "1865475",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "4358973",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5688115",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "3213407",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "1899957",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5524044",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5431027",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5676245",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "6433780",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "6450186",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "2270349",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5286356",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "478841",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "1380970",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "3130070",
+      "citations": 1,
+      "posts": 1
+    }
+  ]
 }
