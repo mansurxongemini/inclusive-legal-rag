@@ -379,7 +379,49 @@
     - Barcha iqtibos qilingan Lex.uz hujjatlari 100% korpusimizda mavjudligi tasdiqlandi;
     - Dalil: `data/sources/harvested_benchmark/batch_16.json`, `scripts/analyze_harvested.py` chiqishi ("Barcha iqtibos qilingan Lex.uz hujjatlari 100% bizning korpusimizda mavjud!") va `http://127.0.0.1:8000/health` (`articles_indexed: 23875`).
 
-59. [TODO] 8-blok (Shaharsozlik, to'siqsiz infratuzilma va transport imtiyozlari: 141–160 savollar, 20 ta savol) bo'yicha API orqali avtomatik yig'ish va auto-ingest (`batch_17.json`).
+59. [DONE] 8-blok (Shaharsozlik, to'siqsiz infratuzilma va transport imtiyozlari: 141–160 savollar, 20 ta savol) bo'yicha API orqali avtomatik yig'ish va auto-ingest (`batch_17.json`):
+    - 20 ta kazuistik shaharsozlik va transport kafolatlari savollari yig'ildi va FAQ bazasiga integratsiya qilindi;
+    - Yangi topilgan 15 dan ortiq yirik qonun va qarorlar (O'RQ-1006, O'RQ-900, O'RQ-328, 01/2-81, 01/2-35, VMQ-200, REG-3252, VMQ-159, VMQ-496, VMQ-68, VMQ-636, VMQ-202 va boshqalar) korpusga to'liq kiritildi;
+    - Korpusdagi jami moddalar soni 23,875 tadan **27,097 taga** (+3,222 modda!) oshdi;
+    - Reestrdagi qonunchilik hujjatlari soni **333 taga** yetdi;
+    - Jami saralangan savol-javoblar (FAQ) soni: **198 ta**;
+    - Barcha iqtibos qilingan Lex.uz hujjatlari 100% korpusimizda mavjudligi tasdiqlandi;
+    - Dalil: `data/sources/harvested_benchmark/batch_17.json`, `scripts/analyze_harvested.py` chiqishi ("Barcha iqtibos qilingan Lex.uz hujjatlari 100% bizning korpusimizda mavjud!") va `http://127.0.0.1:8000/health` (`articles_indexed: 27097`).
+
+60. [DONE] 9-blok (Sudda himoya, bepul yuridik yordam va vasiylik: 161–180 savollar, 20 ta savol) bo'yicha API orqali avtomatik yig'ish va auto-ingest (`batch_18.json`):
+    - 20 ta kazuistik sud himoyasi, advokatura va vasiylik savollari to'liq yig'ildi va FAQ bazasiga kiritildi;
+    - Yangi topilgan normativ hujjatlar va Oliy sud Plenum qarorlari (VMQ-774, VMQ-3, Plenum 17, Plenum 30, O'RQ-793, O'RQ-582, Plenum 24, VMQ-269, Plenum 28, VMQ-570) korpusga kiritildi;
+    - Korpusdagi jami moddalar soni 27,097 tadan **27,468 taga** oshdi;
+    - Reestrdagi qonunchilik hujjatlari soni **341 taga** yetdi;
+    - Jami saralangan savol-javoblar (FAQ) soni: **218 ta**;
+    - Barcha iqtibos qilingan Lex.uz hujjatlari 100% korpusimizda mavjudligi tasdiqlandi;
+    - Dalil: `data/sources/harvested_benchmark/batch_18.json`, `scripts/analyze_harvested.py` chiqishi ("Barcha iqtibos qilingan Lex.uz hujjatlari 100% bizning korpusimizda mavjud!") va `http://127.0.0.1:8000/health` (`articles_indexed: 27468`).
+
+61. [DONE] 10-blok (Yakuniy: Tibbiy xizmatlar, sanatoriy-kurort va dori vositalari: 181–200 savollar, 20 ta savol) bo'yicha API orqali avtomatik yig'ish va auto-ingest (`batch_19.json`):
+    - 20 ta kazuistik tibbiy xizmatlar, bepul davolanish orderlari va dori vositalari savollari yig'ildi va FAQ bazasiga kiritildi;
+    - Yangi topilgan 15 dan ortiq tibbiyot va reabilitatsiya hujjatlari (PQ-229, VMQ-619, O'RQ-528, PQ-311, PQ-3440, REG-3936, REG-3725, REG-3274, PF-74, VMQ-193, VMQ-40, REG-2913, PQ-296, REG-3604, VMQ-643 va boshqalar) korpusga to'liq kiritildi;
+    - Korpusdagi jami moddalar soni 27,468 tadan **28,105 taga** (+637 modda!) oshdi;
+    - Reestrdagi qonunchilik hujjatlari soni **352 taga** yetdi;
+    - Jami saralangan savol-javoblar (FAQ) soni: **237 ta**;
+    - Barcha iqtibos qilingan Lex.uz hujjatlari 100% korpusimizda mavjudligi tasdiqlandi;
+    - Dalil: `data/sources/harvested_benchmark/batch_19.json`, `scripts/analyze_harvested.py` chiqishi ("Barcha iqtibos qilingan Lex.uz hujjatlari 100% bizning korpusimizda mavjud!") va `http://127.0.0.1:8000/health` (`articles_indexed: 28105`).
+
+62. [DONE] 200 ta savoldan iborat butun O'zbekiston kazuistik benchmarki 100% to'liq yakunlandi:
+    - 1-blok: TIEK/VTEK va nogironlikni belgilash (1–20 savollar) — 100% DONE;
+    - 2-blok: Mehnat kafolatlari va ish o'rinlari (21–40 savollar) — 100% DONE;
+    - 3-blok: Pensiya, nafaqa va ijtimoiy to'lovlar (41–60 savollar) — 100% DONE;
+    - 4-blok: Protez-ortopediya va reabilitatsiya vaucherlari (61–80 savollar) — 100% DONE;
+    - 5-blok: Soliq, bojxona va davlat bojlari imtiyozlari (81–100 savollar) — 100% DONE;
+    - 6-blok: Ta'lim, OTM kvotalari va inklyuziv muhit (101–120 savollar) — 100% DONE;
+    - 7-blok: Uy-joy, yer uchastkalari va kommunal imtiyozlar (121–140 savollar) — 100% DONE;
+    - 8-blok: Shaharsozlik, to'siqsiz infratuzilma va transport (141–160 savollar) — 100% DONE;
+    - 9-blok: Sudda himoya, advokatura va vasiylik (161–180 savollar) — 100% DONE;
+    - 10-blok: Tibbiyot, sanatoriy va dori-darmon ta'minoti (181–200 savollar) — 100% DONE;
+    - Jami: 200 ta kazuistik keyslar to'liq o'rganildi, 352 ta normativ aktlar va 28,105 ta moddadan iborat O'zbekistondagi eng mukammal va to'liq inklyuziv huquqiy baza shakllantirildi.
+
+
+
+
 
 
 

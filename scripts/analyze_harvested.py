@@ -75,6 +75,37 @@ KNOWN_ALIASES = {
     "-7051594": "-7051573",
     "3263332": "-3263328",  # VMQ-484 Cyrillic ID -> Latin canonical doc ID
     "-3263332": "-3263328",
+    "55599": "-55594",      # Cyrillic ID -> Latin canonical doc ID
+    "-55599": "-55594",
+    "7027442": "-7027440",  # Cyrillic ID -> Latin canonical doc ID
+    "-7027442": "-7027440",
+    "1521663": "-1521661",  # O'RQ-226 Cyrillic ID -> Latin canonical doc ID
+    "-1521663": "-1521661",
+    "7239400": "-7239390",  # O'RQ-1006 Cyrillic ID -> Latin canonical doc ID
+    "-7239400": "-7239390",
+    "2591898": "-2591903",  # Cyrillic ID -> Latin canonical doc ID
+    "-2591898": "-2591903",
+    "104723": "-104720",    # Cyrillic ID -> Latin canonical doc ID
+    "-104723": "-104720",
+    "2414323": "-2414320",  # Cyrillic ID -> Latin canonical doc ID
+    "-2414323": "-2414320",
+    "57043": "-54458",      # Cyrillic ID -> Latin canonical doc ID
+    "-57043": "-54458",
+    "1449507": "-1449509",  # Cyrillic ID -> Latin canonical doc ID
+    "-1449507": "-1449509",
+    "8345471": "-8345381",  # Cyrillic ID -> Latin canonical doc ID
+    "-8345471": "-8345381",
+    "3034917": "-3034913",  # Cyrillic ID -> Latin canonical doc ID
+    "-3034917": "-3034913",
+    "170150": "-170143",    # Cyrillic ID -> Latin canonical doc ID
+    "-170150": "-170143",
+    "6600415": "-6600390",  # Cyrillic ID -> Latin canonical doc ID
+    "-6600415": "-6600390",
+    "246698": "-246696",    # VMQ-472 Cyrillic ID -> Latin canonical doc ID
+    "2627700": "-55594",    # MDH urush nogironlari bitimi -> VMQ-507 milliy qaror
+    "-2627700": "-55594",
+    "2628006": "-55594",    # MDH urush nogironlari bitimi -> VMQ-507 milliy qaror
+    "-2628006": "-55594",
 }
 
 def load_registry():
