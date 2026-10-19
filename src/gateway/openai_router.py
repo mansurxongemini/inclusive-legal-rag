@@ -18,6 +18,7 @@ from src.gateway.auth import (
     enforce_user_limit,
     require_scope,
 )
+from src.api.middleware.security import sanitize_user_input
 from src.gateway.clients import get_client_store, user_ref
 from src.gateway.conversations import get_conversation_store
 from src.gateway.formatting import format_citations
@@ -87,6 +88,15 @@ def _openai_error(status: int, message: str, code: str, error_type: str = "inval
     )
 
 
+def _safe_text(text: str) -> str:
+    """Prompt-injection check in the OpenAI error shape; applied to the question and to every history message."""
+    try:
+        return sanitize_user_input(text)
+    except HTTPException as e:
+        message = e.detail if isinstance(e.detail, str) else "Xavfsizlik qoidalariga zid so'rov aniqlandi."
+        raise _openai_error(400, message, "unsafe_input")
+
+
 @router.get("/models")
 async def list_models(ctx: ClientContext = Depends(require_scope("ask"))):
     """Lists available models in OpenAI format."""
@@ -137,8 +147,12 @@ async def chat_completions(
     if len(question) > MAX_QUESTION_CHARS:
         raise _openai_error(400, f"Savol {MAX_QUESTION_CHARS} belgidan oshmasligi kerak.", "question_too_long")
 
-    # Earlier messages are history (last few, truncated)
-    history = [{"role": m.role, "content": m.text()[:MAX_HISTORY_CHARS]} for m in filtered[:last_user_idx]][-8:]
+    # Earlier messages are history (last few, truncated). The injection check covers them too and runs before
+    # quota use and before any LLM call (condensation reads the history).
+    question = _safe_text(question)
+    if not question:
+        raise _openai_error(400, "Savol matni bo'sh bo'lishi mumkin emas.", "empty_question")
+    history = [{"role": m.role, "content": _safe_text(m.text()[:MAX_HISTORY_CHARS])} for m in filtered[:last_user_idx]][-8:]
 
     # User ref & limits
     ref = user_ref(ctx.client.client_id, payload.user)

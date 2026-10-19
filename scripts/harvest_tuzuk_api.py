@@ -14,12 +14,6 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-DEFAULT_TOKEN = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-    "eyJzdWIiOiJtYW5zdXJ4b25zZWNyZXRAZ21haWwuY29tIiwidGVuYW50X2lkZW50aWZpZXIiOiJlVkhQQ2FaS2Z3Rk9Lc3hJTHF4NlhwQXh4L2pSZmJoTTR3WS8rRlFtUEdNc2Flb2l5RG5NMjBkQ2lvYjdTVTltaVNBZUxJazU1TW9qZklxSDVaSWsxM3JwRGZSNFh1bU4zSzY3TXkzZ2NXdFhTZDBzYzJDbHAwOU1kZU9lQXNFaCIsInJvbGVzIjpbIlJPTEVfQURNSU4iXSwidG9rZW5fdHlwZSI6ImFjY2Vzc190b2tlbiIsImRldmljZV90eXBlIjoiV0VCIiwiZGV2aWNlX2lkIjoiYzYyNTIyMWYtNjhhNC00ZmNjLTkwMGYtOTYyYzkxMWU4NjU4IiwiZXhwIjoxNzkyNDM1NzQxfQ."
-    "3EKNCfXqUn04SndaMIg6x5Hh-1zg32nE2DoT2Nq7VSI"
-)
-
 BASE_URL = "https://api.tuzuk.ai/api/v1"
 QUERY_BANK_PATH = Path("data/sources/tuzuk_query_bank.json")
 HARVEST_DIR = Path("data/sources/harvested_tuzuk")
@@ -175,10 +169,12 @@ def main():
     parser.add_argument("--batch-num", type=int, default=1, help="Batch number for saving")
     parser.add_argument("--total-batches", type=int, default=1, help="Total batches to process sequentially")
     parser.add_argument("--auto-ingest", action="store_true", help="Auto ingest missing acts after batch")
-    parser.add_argument("--token", type=str, default=DEFAULT_TOKEN, help="Bearer token")
+    parser.add_argument("--token", type=str, default="", help="Bearer token (prefer the TUZUK_BEARER_TOKEN environment variable)")
     args = parser.parse_args()
     
-    token = os.environ.get("TUZUK_BEARER_TOKEN", args.token)
+    token = os.environ.get("TUZUK_BEARER_TOKEN") or args.token
+    if not token:
+        sys.exit("Tuzuk AI token is required: set TUZUK_BEARER_TOKEN (never commit it) or pass --token.")
     input_path = Path(args.input_file)
     out_dir = Path(args.out_dir)
     
