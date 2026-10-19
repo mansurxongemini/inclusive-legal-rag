@@ -196,29 +196,56 @@ Processes a citizen legal inquiry and generates a grounded response with canonic
 ```bash
 curl -X POST http://localhost:8000/api/v1/query \
   -H "Content-Type: application/json" \
-  -d '{
-    "query": "1-guruh nogironligi bo'lgan shaxs uchun ish vaqti qisqartiriladimi?",
-    "style": "plain",
-    "language": "uz"
-  }'
+  -d @- <<'JSON'
+{
+  "question": "1-guruh nogironligi bo'lgan shaxs uchun ish vaqti qisqartiriladimi?",
+  "language": "uz",
+  "mode": "plain"
+}
+JSON
 ```
 
-**Response Format**:
+| Field | Required | Values |
+| :--- | :--- | :--- |
+| `question` | yes | 1-4000 characters |
+| `language` | no | `auto` (default), `uz`, `ru`, `en` |
+| `mode` | no | `plain` (default), `legal_text`, `easy_read`, `subsumption` |
+| `disability_group` | no | `all` (default) or an id from `GET /api/v1/inclusive/categories` |
+| `category` | no | `all` (default) or an id from `GET /api/v1/inclusive/categories` |
+| `conversation_id` | no | optional trace id echoed back in the response |
+
+Add `?stream=true` for a Server-Sent Events stream of tokens. The partner endpoint `POST /api/v1/inclusive/query`
+(`X-API-Key`) takes the same body (without `subsumption` and `conversation_id`) and runs the same pipeline.
+
+**Response Format** (abridged):
 ```json
 {
-  "answer": "O'zbekiston Respublikasi Mehnat kodeksining 427-moddasiga muvofiq, I va II guruh nogironligi bo'lgan xodimlar uchun ish vaqtining haftasiga 36 soatdan oshmaydigan qisqartirilgan davomiyligi belgilanadi...",
+  "answer": "Qisqartirilgan ish vaqti haftasiga 36 soatdan oshmaydi [1]...",
+  "clean_answer": "...",
+  "telegram_formatted": "...",
   "citations": [
     {
+      "index": 1,
       "canonical_id": "uz_mk_art_427",
       "law_title": "O'zbekiston Respublikasi Mehnat kodeksi",
       "article_number": "427-modda",
-      "source_url": "https://lex.uz/docs/6257288#6258932"
+      "source_url": "https://lex.uz/docs/6257288#6258932",
+      "quote_snippet": "..."
     }
   ],
-  "disability_category_detected": "first_degree_workplace_protection",
-  "processing_time_ms": 420.5
+  "detected_language": "uz",
+  "detected_script": "latn",
+  "mode": "plain",
+  "is_refusal": false,
+  "validation_passed": true,
+  "status_warnings": [],
+  "cached": false,
+  "cache_type": null,
+  "semantic_similarity": null,
+  "retrieval_confidence": 0.93
 }
 ```
+(Each citation also carries `law_number`, `article_title`, `status`, `source_type`, `normative_tier`, `normative_rank` and `confidence`.)
 
 ### 2. Direct Article Lookup (`GET /api/v1/article/{canonical_id}`)
 Fetches full bilingual canonical text and active amendment status for a specific legal article.

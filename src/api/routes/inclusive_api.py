@@ -16,9 +16,7 @@ from pydantic import BaseModel, Field, field_validator
 from src.domain.disability_taxonomy import CATEGORIES, CATEGORY_IDS, DISABILITY_GROUPS
 
 
-from src.nlp.query_analyzer import QueryAnalyzer
-from src.retrieval.pipeline import retrieve_contexts
-from src.generation.generator import AnswerGenerator
+from src.gateway.service import answer_question, answer_question_stream
 from src.generation.validator import CitationItem
 from src.api.middleware.security import sanitize_user_input
 from src.api.middleware.rate_limiter import rate_limiter
@@ -96,11 +94,14 @@ class InclusiveQueryResponse(BaseModel):
     citations: List[CitationItem]
     detected_language: str
     detected_script: str
+    mode: str = "plain"
     category: str
     disability_group: str
     validation_passed: bool
     is_refusal: bool
     cached: bool = False
+    cache_type: Optional[str] = None
+    semantic_similarity: Optional[float] = None
     response_time_ms: float = 0.0
     retrieval_confidence: Optional[float] = None
     status_warnings: List[dict] = []
@@ -182,102 +183,46 @@ async def query_inclusive_rag(
     if not cleaned_query:
         raise HTTPException(status_code=422, detail="Savol matni bo'sh bo'lishi mumkin emas.")
 
-    from src.api.app import get_store, get_cache, get_client
-    store = get_store()
-    cache = get_cache()
-    client = get_client()
-
-    user_lang = None if payload.language == "auto" else payload.language
-    analysis = QueryAnalyzer.analyze(cleaned_query, user_language=user_lang)
-    target_language = analysis.detected_language
-
-    # Inject explicit disability group if selected by client
-    if payload.disability_group != "all":
-        if payload.disability_group not in analysis.extracted_disability_types:
-            analysis.extracted_disability_types.append(payload.disability_group)
-
-    # 1. Dual-layer caching check
-    cache_key = f"{cleaned_query}_{payload.disability_group}_{payload.category}"
-    if not stream:
-        cached_resp = cache.get(cache_key, target_language, payload.mode)
-        if cached_resp:
-            cached_resp["cached"] = True
-            cached_resp["response_time_ms"] = round((time.time() - start_time) * 1000, 2)
-            return cached_resp
-
-    # 2-4. Hybrid retrieval, category focus, cross-references, status filter, rerank, relevance gate
-    retrieval = await retrieve_contexts(
-        analysis=analysis,
-        store=store,
-        client=client,
-        top_k=25,
-        max_extra=6,
-        rerank_top_n=6,
-        category=payload.category,
-    )
-    final_contexts = retrieval.contexts
-
-    # 4. Generation
-    generator = AnswerGenerator(client=client)
-
+    # Same answering pipeline as /api/v1/query: one retrieval depth, exact + semantic cache, one generation path.
     if stream:
         return StreamingResponse(
-            generator.generate_answer_stream(
-                query=cleaned_query,
-                contexts=final_contexts,
-                language=target_language,
+            answer_question_stream(
+                cleaned_query,
+                language=payload.language,
                 mode=payload.mode,
+                disability_group=payload.disability_group,
+                category=payload.category,
             ),
-            media_type="text/event-stream"
+            media_type="text/event-stream",
         )
 
-    try:
-        gen_result = await generator.generate_answer(
-            query=cleaned_query,
-            contexts=final_contexts,
-            language=target_language,
-            mode=payload.mode,
-        )
-    except RuntimeError as e:
-        logger.error(f"Answer generation unavailable: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="Javob yaratish xizmati vaqtincha mavjud emas. Iltimos, birozdan so'ng qayta urinib ko'ring.",
-        )
-
-    elapsed_ms = round((time.time() - start_time) * 1000, 2)
-
-    response_payload = InclusiveQueryResponse(
-        answer=gen_result.clean_answer or gen_result.answer,
-        clean_answer=gen_result.clean_answer or gen_result.answer,
-        telegram_formatted=gen_result.telegram_formatted or gen_result.answer,
-        citations=gen_result.citations,
-        detected_language=target_language,
-        detected_script=analysis.detected_script,
-        category=payload.category,
+    result = await answer_question(
+        cleaned_query,
+        language=payload.language,
+        mode=payload.mode,
         disability_group=payload.disability_group,
-        validation_passed=gen_result.validation_passed,
-        is_refusal=gen_result.is_refusal,
-        cached=False,
-        response_time_ms=elapsed_ms,
-        retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
-        status_warnings=retrieval.status_warnings,
+        category=payload.category,
     )
 
-    # Cache only verified, substantive answers
-    if (
-        response_payload.validation_passed
-        and not response_payload.is_refusal
-        and len((response_payload.clean_answer or response_payload.answer).strip()) > 80
-    ):
-        cache.set(
-            cache_key,
-            target_language,
-            payload.mode,
-            response_payload.model_dump()
-        )
-
-    return response_payload
+    return InclusiveQueryResponse(
+        answer=result.clean_answer or result.answer,
+        clean_answer=result.clean_answer or result.answer,
+        telegram_formatted=result.telegram_formatted or result.answer,
+        citations=result.citations,
+        detected_language=result.detected_language,
+        detected_script=result.detected_script,
+        mode=result.mode,
+        category=payload.category,
+        disability_group=payload.disability_group,
+        validation_passed=result.validation_passed,
+        is_refusal=result.is_refusal,
+        cached=result.cached,
+        cache_type=result.cache_type,
+        semantic_similarity=result.semantic_similarity,
+        response_time_ms=round((time.time() - start_time) * 1000, 2),
+        retrieval_confidence=result.retrieval_confidence,
+        status_warnings=result.status_warnings,
+    )
 
 
 # --- Public Norms and Categories Metadata ---

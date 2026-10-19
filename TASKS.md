@@ -51,7 +51,7 @@
 ## VAZIFA: Javobdagi har bir iqtibosni manbaga solishtiruvchi umumiy tekshiruv (citation support check) + o'lchov skripti
 
 9. [DONE] 1. Konfiguratsiya va sozlamalar:
-   - `src/config.py` va `.env.example`: `SUPPORT_CHECK_ENABLED` (True), `SUPPORT_CHECK_MODEL` (""), `SUPPORT_CHECK_TIMEOUT_S` (15.0).
+   - `src/config.py` va `.env.example`: `SUPPORT_CHECK_ENABLED` (**False** - ataylab o'chirilgan, `scripts/faithfulness_eval.py` bilan o'lchanib ko'rib chiqilmaguncha yoqilmaydi; `src/config.py` va `.env.example` shunday), `SUPPORT_CHECK_MODEL` (""), `SUPPORT_CHECK_TIMEOUT_S` (15.0).
    - Dalil: `src/config.py` va `.env.example` ga tegishli Field va parametrlar kiritildi.
 10. [DONE] 2. `src/generation/support_check.py` moduli:
    - `Claim` va `Verdict` ma'lumot tuzilmalari.
