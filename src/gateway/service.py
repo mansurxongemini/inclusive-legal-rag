@@ -295,8 +295,9 @@ async def answer_question_stream(
     if not cleaned_query:
         raise HTTPException(status_code=422, detail="Savol matni bo'sh bo'lishi mumkin emas.")
 
-    from src.api.app import get_store, get_client
+    from src.api.app import get_store, get_cache, get_client
     store = get_store()
+    cache = get_cache()
     client = get_client()
 
     user_lang = None if language == "auto" else language
@@ -308,7 +309,13 @@ async def answer_question_stream(
             analysis.extracted_disability_types.remove("general")
         if disability_group not in analysis.extracted_disability_types:
             analysis.extracted_disability_types.append(disability_group)
+    groups_key = sorted(analysis.extracted_disability_types)
+    has_filters = disability_group != "all" or category != "all"
+    cache_text = f"{cleaned_query} [{disability_group}|{category}]" if has_filters else cleaned_query
 
+    # Same two cache layers as answer_question; a hit is replayed as one token event plus the final event
+    cached = cache.get(cache_text, target_language, mode)
+    cache_type = "exact"
     query_vector = None
     embedding_available = True
     if not client.is_mock:
@@ -316,9 +323,38 @@ async def answer_question_stream(
             q_vectors = await client.get_embeddings([analysis.normalized_query])
             if q_vectors:
                 query_vector = q_vectors[0]
+                if not cached:
+                    cached = cache.get_semantic(
+                        query_vector,
+                        target_language,
+                        mode,
+                        threshold=0.95,
+                        accept=lambda d: d.get("_groups") == groups_key and not has_filters and not d.get("_filtered"),
+                    )
+                    cache_type = "semantic"
         except Exception as e:
             embedding_available = False
             logger.warning(f"Error computing query vector for streaming retrieval: {e}")
+
+    if cached:
+        text = cached.get("clean_answer") or cached.get("answer", "")
+        yield f"data: {json.dumps({'type': 'token', 'text': text})}\n\n"
+        done = {
+            "type": "done",
+            "citations": cached.get("citations", []),
+            "is_refusal": cached.get("is_refusal", False),
+            "validation_passed": cached.get("validation_passed", True),
+            "clean_answer": text,
+            "telegram_formatted": cached.get("telegram_formatted") or text,
+            "warnings": [],
+            "status_warnings": cached.get("status_warnings", []),
+            "language": target_language,
+            "mode": mode,
+            "cached": True,
+            "cache_type": cached.get("cache_type", cache_type),
+        }
+        yield f"data: {json.dumps(done)}\n\n"
+        return
 
     retrieval = await retrieve_contexts(
         analysis=analysis,
@@ -335,6 +371,7 @@ async def answer_question_stream(
     status_warnings = retrieval.status_warnings
 
     generator = AnswerGenerator(client=client)
+    final_event = None
     async for sse_chunk in generator.generate_answer_stream(
         query=cleaned_query,
         contexts=final_contexts,
@@ -343,3 +380,37 @@ async def answer_question_stream(
         status_warnings=status_warnings,
     ):
         yield sse_chunk
+        trimmed = sse_chunk.strip()
+        if trimmed.startswith("data: "):
+            try:
+                event = json.loads(trimmed[6:])
+            except json.JSONDecodeError:
+                continue
+            if event.get("type") == "done":
+                final_event = event
+
+    # Caching rules: verified, substantive, non-refusal (as in answer_question)
+    if final_event:
+        text = (final_event.get("clean_answer") or "").strip()
+        if final_event.get("validation_passed") and not final_event.get("is_refusal") and len(text) > 80:
+            try:
+                result = AnswerResult(
+                    answer=text,
+                    clean_answer=text,
+                    telegram_formatted=final_event.get("telegram_formatted") or text,
+                    citations=[CitationItem(**c) for c in final_event.get("citations", [])],
+                    detected_language=target_language,
+                    detected_script=analysis.detected_script,
+                    mode=mode,
+                    is_refusal=False,
+                    validation_passed=True,
+                    status_warnings=final_event.get("status_warnings", []),
+                    cached=False,
+                    retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
+                )
+                data = result.model_dump()
+                data["_groups"] = groups_key
+                data["_filtered"] = has_filters
+                cache.set(cache_text, target_language, mode, data, vector=query_vector)
+            except Exception:
+                logger.warning("Could not cache a streamed answer", exc_info=True)

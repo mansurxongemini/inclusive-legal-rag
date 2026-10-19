@@ -20,3 +20,6 @@ data/golden_dataset/last_report.json
 data/raw/
 src/admin/static/scratch/
 .codestudio/
+*.db
+*.db-shm
+*.db-wal

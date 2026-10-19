@@ -342,9 +342,11 @@
     - Barcha iqtibos qilingan Lex.uz hujjatlari 100% korpusimizda mavjudligi tasdiqlandi;
     - Dalil: `data/sources/harvested_benchmark/batch_14.json`, `scripts/analyze_harvested.py` chiqishi ("Barcha iqtibos qilingan Lex.uz hujjatlari 100% bizning korpusimizda mavjud!") va `http://127.0.0.1:8000/health` (`articles_indexed: 22296`).
 
-55. [DOING] 6-blokni (Ta'lim va OTM kvotalari: 101–120 savollar) API orqali orqa fonda avtomatik yuklash va auto-ingest (`task-1509`, `batch_15.json`):
-    - 20 ta kazuistik ta'lim savollari yengil API orqali yig'ilmoqda;
-    - Yangi paydo bo'ladigan OTM, imtiyozli kvota va maxsus ta'limga oid hujjatlar avtomatik korpusga kiritiladi.
+55. [DONE] 6-blokni (Ta'lim va OTM kvotalari: 101–118 savollar, `batch_15.json`) API orqali avtomatik yig'ish va korpusga kiritish:
+    - 17 ta kazuistik ta'lim savollari yig'ildi va FAQ bazasiga kiritildi;
+    - Yangi topilgan normativ hujjatlar (VMQ-304 va VMQ-149) yuklab olinib, korpusga kiritildi;
+    - Korpusdagi jami moddalar soni 22,296 tadan **22,386 taga** oshdi;
+    - Jami saralangan savol-javoblar (FAQ) soni: **156 ta**.
 
 56. [DONE] Agentic RAG arxitekturasini loyihalash va amalga oshirish (ReAct multi-hop agent, yuridik asboblar va gibrid marshrutlash):
     - 1-bosqich: Yuridik asboblar to'plami (`src/agents/legal_tools.py`):
@@ -362,6 +364,24 @@
     - 4-bosqich: Sinov va testlar (`tests/test_legal_agent.py`):
       * Dalil: `.venv/bin/pytest tests/test_legal_agent.py -v` muvaffaqiyatli o'tdi: **7 passed in 2.78s**;
       * To'liq loyiha testlari: `.venv/bin/pytest -q` to'liq muvaffaqiyatli o'tdi: **380 passed, 1 warning in 46.04s**.
+
+57. [DONE] Loyihaning to'liq va eng so'nggi holatini GitHub repozitoriyasiga yuklash (Push):
+    - `feat/editorial-qa-huquqplus` va `main` tarmoqlarining ikkalasi ham sinxronlashtirildi;
+    - Commit `ea3093c`: Agentic RAG arxitekturasi, QA Audit pipeline, 200 ta benchmark savollari, 156 ta FAQ kartasi va 380 ta test to'liq joylandi;
+    - Dalil: `git push origin feat/editorial-qa-huquqplus:main` muvaffaqiyatli yakunlandi.
+
+58. [DONE] 6-blok yakuni (119–120) hamda 7-blok (Uy-joy, yer uchastkalari va kommunal imtiyozlar: 121–140 savollar, jami 22 ta savol) bo'yicha API orqali avtomatik yig'ish va tahlil qilish (`batch_16.json`):
+    - 22 ta kazuistik savol to'liq yig'ildi va FAQ bazasiga integratsiya qilindi;
+    - Yangi topilgan 20 dan ortiq uy-joy, kommunal va yer imtiyozlariga oid normativ hujjatlar (VMQ-848, VMQ-709, VMQ-36, REG-3824, VMQ-617, VMQ-95, VMQ-687, VMQ-685, VMQ-319, PQ-20, VMQ-204, VMQ-275 va boshqalar) korpusga to'liq kiritildi;
+    - Korpusdagi jami moddalar soni 22,386 tadan **23,875 taga** (+1,489 modda) oshdi;
+    - Reestrdagi qonunchilik hujjatlari soni **318 taga** yetdi;
+    - Jami saralangan savol-javoblar (FAQ) soni: **178 ta**;
+    - Barcha iqtibos qilingan Lex.uz hujjatlari 100% korpusimizda mavjudligi tasdiqlandi;
+    - Dalil: `data/sources/harvested_benchmark/batch_16.json`, `scripts/analyze_harvested.py` chiqishi ("Barcha iqtibos qilingan Lex.uz hujjatlari 100% bizning korpusimizda mavjud!") va `http://127.0.0.1:8000/health` (`articles_indexed: 23875`).
+
+59. [TODO] 8-blok (Shaharsozlik, to'siqsiz infratuzilma va transport imtiyozlari: 141–160 savollar, 20 ta savol) bo'yicha API orqali avtomatik yig'ish va auto-ingest (`batch_17.json`).
+
+
 
 
 

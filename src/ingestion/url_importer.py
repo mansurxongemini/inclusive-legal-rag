@@ -14,6 +14,7 @@ import httpx
 from bs4 import BeautifulSoup
 from pydantic import BaseModel, Field
 
+from src.ingestion.localized import localized, provenance_for
 from src.nlp.transliteration import cyrillic_to_latin, detect_script, normalize_apostrophes
 from src.schema.canonical import (
     ArticleMetadata,
@@ -388,13 +389,13 @@ class LexUrlImporter:
                     pt_uz = cyrillic_to_latin(pt_txt) if body_script == "cyrillic" else normalize_apostrophes(pt_txt)
                     points.append(ArticlePoint(
                         point_id=pt_id,
-                        text={"uz": pt_uz, "ru": pt_txt, "en": pt_uz}
+                        text=localized(pt_uz, pt_txt)
                     ))
 
             if not points:
                 points.append(ArticlePoint(
                     point_id="1",
-                    text={"uz": body_uz, "ru": raw_body, "en": body_uz}
+                    text=localized(body_uz, raw_body)
                 ))
 
             # Cross references
@@ -408,11 +409,11 @@ class LexUrlImporter:
                 schema_version="1.1",
                 metadata=ArticleMetadata(
                     law_id=law_slug,
-                    law_title={"uz": law_title_uz, "ru": law_title, "en": law_title_uz},
+                    law_title=localized(law_title_uz, law_title),
                     law_number=law_number,
                     chapter_number="",
                     article_number=f"{current_art_num}-modda",
-                    article_title={"uz": title_uz or f"{current_art_num}-modda", "ru": current_art_title, "en": title_uz},
+                    article_title=localized(title_uz or f"{current_art_num}-modda", current_art_title),
                     source_url=source_url,
                     effective_date=today_str,
                     last_verified_date=today_str,
@@ -425,12 +426,8 @@ class LexUrlImporter:
                     embedding_model_version="baai/bge-m3",
                 ),
                 points=points,
-                translations={"uz": body_uz, "ru": raw_body, "en": body_uz},
-                translation_provenance={
-                    "uz": TranslationProvenanceType.OFFICIAL,
-                    "ru": TranslationProvenanceType.OFFICIAL if is_cyrillic else TranslationProvenanceType.MACHINE_TRANSLATED_UNREVIEWED,
-                    "en": TranslationProvenanceType.MACHINE_TRANSLATED_UNREVIEWED,
-                }
+                translations=localized(body_uz, raw_body),
+                translation_provenance=provenance_for(localized(body_uz, raw_body))
             )
             articles.append(art)
             current_art_num = None
@@ -513,11 +510,11 @@ class LexUrlImporter:
                 schema_version="1.1",
                 metadata=ArticleMetadata(
                     law_id=law_slug,
-                    law_title={"uz": law_title_uz, "ru": law_title_uz, "en": law_title_uz},
+                    law_title=localized(law_title_uz, law_title_uz),
                     law_number=law_number,
                     chapter_number="",
                     article_number=f"{current_band}-band",
-                    article_title={"uz": f"{current_band}-band", "ru": f"{current_band}-band", "en": f"Clause {current_band}"},
+                    article_title=localized(f"{current_band}-band", f"{current_band}-band"),
                     source_url=source_url,
                     effective_date=date.today().isoformat(),
                     last_verified_date=date.today().isoformat(),
@@ -529,13 +526,9 @@ class LexUrlImporter:
                     cross_references=[],
                     embedding_model_version="baai/bge-m3",
                 ),
-                points=[ArticlePoint(point_id="1", text={"uz": body_uz, "ru": full_text, "en": body_uz})],
-                translations={"uz": body_uz, "ru": full_text, "en": body_uz},
-                translation_provenance={
-                    "uz": TranslationProvenanceType.OFFICIAL,
-                    "ru": TranslationProvenanceType.OFFICIAL,
-                    "en": TranslationProvenanceType.MACHINE_TRANSLATED_UNREVIEWED,
-                }
+                points=[ArticlePoint(point_id="1", text=localized(body_uz, full_text))],
+                translations=localized(body_uz, full_text),
+                translation_provenance=provenance_for(localized(body_uz, full_text))
             )
             articles.append(art)
             current_band = None

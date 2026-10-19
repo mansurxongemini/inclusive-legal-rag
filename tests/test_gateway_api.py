@@ -768,6 +768,26 @@ async def test_openai_injection_in_history_is_rejected_before_condensation(gatew
         assert res.json()["error"]["code"] == "unsafe_input"
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("passed", [True, False])
+async def test_assistant_ask_returns_validation_passed(gateway_stores, monkeypatch, passed):
+    from src.gateway import router as gw_router
+    from src.gateway.service import AnswerResult
+
+    c_store, _ = gateway_stores
+    _, key = _make_client(c_store)
+
+    async def fake_answer(*a, **kw):
+        return AnswerResult(answer="Javob.", clean_answer="Javob.", detected_language="uz", validation_passed=passed)
+
+    monkeypatch.setattr(gw_router, "answer_question", fake_answer)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.post("/api/v1/assistant/ask", headers={"Authorization": f"Bearer {key}"},
+                            json={"question": "Savol?", "user_id": "u1", "format": "text"})
+    assert res.status_code == 200, res.text
+    assert res.json()["validation_passed"] is passed
+
+
 def test_telegram_html_post_design_formatting():
     from src.gateway.formatting import is_well_formed_telegram_html, to_telegram_html
 

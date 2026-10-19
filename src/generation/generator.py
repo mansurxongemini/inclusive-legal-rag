@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import AsyncGenerator, Dict, List, Optional
+from typing import AsyncGenerator, Dict, List, Optional, Tuple
 from pydantic import BaseModel
 from src.config import settings
 from src.retrieval.reranker import RetrievedArticleContext
@@ -60,6 +60,30 @@ class GeneratedAnswer(BaseModel):
     warnings: List[str] = []
 
 
+# An answer is 120-230 words; this bound only stops a model that loops (one run repeated a sentence 108 times).
+# Reasoning tokens share the budget, so the tight bound applies only when reasoning is switched off.
+MAX_ANSWER_TOKENS = 2048
+MAX_ANSWER_TOKENS_WITH_REASONING = 8192
+
+
+def _max_answer_tokens() -> int:
+    effort = (settings.GENERATION_REASONING_EFFORT or "").strip().lower()
+    return MAX_ANSWER_TOKENS if effort == "none" else MAX_ANSWER_TOKENS_WITH_REASONING
+
+
+def attach_disclaimer(val: ValidationResult, disclaimer: str, already_present: bool) -> Tuple[str, str, str]:
+    """(answer, clean_answer, telegram_formatted) with the disclaimer after the answer and before the source footer."""
+    if already_present:
+        return val.sanitized_answer, val.clean_answer, val.telegram_formatted
+    clean = val.clean_answer
+    footer = val.telegram_formatted[len(clean):] if val.telegram_formatted.startswith(clean) else ""
+    return (
+        val.sanitized_answer.rstrip() + disclaimer,
+        clean.rstrip() + disclaimer,
+        clean.rstrip() + disclaimer + footer,
+    )
+
+
 class AnswerGenerator:
     """
     Coordinates answer generation via OpenRouter with anti-hallucination guardrails and validation.
@@ -105,7 +129,7 @@ class AnswerGenerator:
         raw_llm_response = await self.client.chat_completion(
             messages=messages,
             temperature=0.0,
-            max_tokens=8192,
+            max_tokens=_max_answer_tokens(),
             reasoning=reasoning,
         )
         raw_llm_response = (raw_llm_response or "").strip()
@@ -117,7 +141,7 @@ class AnswerGenerator:
                     messages=messages,
                     model=self.client.fallback_model,
                     temperature=0.0,
-                    max_tokens=8192,
+                    max_tokens=_max_answer_tokens(),
                     reasoning=reasoning,
                 )
                 raw_llm_response = (raw_llm_response or "").strip()
@@ -137,12 +161,7 @@ class AnswerGenerator:
                 reasoning=reasoning,
             )
 
-        # Attach disclaimer if not present
-        disclaimer = DISCLAIMERS.get(language, DISCLAIMERS["uz"])
-        if disclaimer.strip() not in raw_llm_response:
-            raw_llm_response += disclaimer
-
-        # Validation pass
+        # Validation pass (on the answer itself: the disclaimer is attached afterwards)
         val_result: ValidationResult = CitationValidator.validate_and_sanitize(
             answer_text=raw_llm_response,
             retrieved_contexts=contexts,
@@ -151,10 +170,15 @@ class AnswerGenerator:
 
         all_warnings = list(val_result.warnings) + support_warnings
 
+        disclaimer = DISCLAIMERS.get(language, DISCLAIMERS["uz"])
+        answer_text, clean_text, telegram_text = attach_disclaimer(
+            val_result, disclaimer, already_present=disclaimer.strip() in raw_llm_response,
+        )
+
         return GeneratedAnswer(
-            answer=val_result.sanitized_answer,
-            clean_answer=val_result.clean_answer,
-            telegram_formatted=val_result.telegram_formatted,
+            answer=answer_text,
+            clean_answer=clean_text,
+            telegram_formatted=telegram_text,
             citations=val_result.resolved_citations,
             is_refusal=val_result.is_refusal,
             validation_passed=val_result.is_valid,
@@ -202,7 +226,7 @@ class AnswerGenerator:
             async for chunk in self.client.chat_completion_stream(
                 messages,
                 temperature=0.0,
-                max_tokens=4000,
+                max_tokens=_max_answer_tokens(),
                 reasoning=reasoning,
             ):
                 accumulated_chunks.append(chunk)
@@ -218,15 +242,19 @@ class AnswerGenerator:
 
         full_raw_text = "".join(accumulated_chunks)
         disclaimer = DISCLAIMERS.get(language, DISCLAIMERS["uz"])
-        if disclaimer.strip() not in full_raw_text:
+        disclaimer_present = disclaimer.strip() in full_raw_text
+        if not disclaimer_present:
             yield f"data: {json.dumps({'type': 'token', 'text': disclaimer})}\n\n"
-            full_raw_text += disclaimer
 
-        # Run validation
+        # Run validation on the answer itself; the disclaimer is attached to the final payload afterwards
         val_result = CitationValidator.validate_and_sanitize(
             answer_text=full_raw_text,
             retrieved_contexts=contexts,
             language=language,
+        )
+
+        stream_answer, stream_clean, stream_telegram = attach_disclaimer(
+            val_result, disclaimer, already_present=disclaimer_present,
         )
 
         # Emit final structured payload. The streamed tokens are the raw model output (they may still contain
@@ -236,8 +264,8 @@ class AnswerGenerator:
             "citations": [c.model_dump() for c in val_result.resolved_citations],
             "is_refusal": val_result.is_refusal,
             "validation_passed": val_result.is_valid,
-            "clean_answer": val_result.clean_answer or val_result.sanitized_answer,
-            "telegram_formatted": val_result.telegram_formatted,
+            "clean_answer": stream_clean or stream_answer,
+            "telegram_formatted": stream_telegram,
             "warnings": val_result.warnings,
             "status_warnings": status_warnings or [],
             "language": language,

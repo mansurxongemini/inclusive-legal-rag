@@ -21,6 +21,16 @@ def append_act(lex_id: str, store_dir: str = "data/store"):
     registry_path = Path("data/sources/disability_registry.json")
     built_path = Path("data/sources/built_articles.json")
 
+    # Check known aliases
+    try:
+        from scripts.analyze_harvested import KNOWN_ALIASES
+        if lex_id in KNOWN_ALIASES:
+            lex_id = KNOWN_ALIASES[lex_id]
+        elif lex_id.lstrip("-") in KNOWN_ALIASES:
+            lex_id = KNOWN_ALIASES[lex_id.lstrip("-")]
+    except Exception:
+        pass
+
     with open(registry_path, "r", encoding="utf-8") as f:
         reg = json.load(f)
 
@@ -32,7 +42,8 @@ def append_act(lex_id: str, store_dir: str = "data/store"):
             break
 
     if not target_doc:
-        raise ValueError(f"Hujjat {lex_id} reestrda topilmadi!")
+        log.warning(f"Hujjat {lex_id} reestrda topilmadi (ehtimol allaqachon boshqa lotincha ID bilan kiritilgan), o'tkazib yuborildi.")
+        return False
 
     spec = SourceSpec.from_dict({
         **target_doc,

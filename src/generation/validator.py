@@ -215,28 +215,18 @@ class CitationValidator:
         warnings = []
 
         no_explicit_citation = False
-        if cited_in_text:
-            sanitized_answer = answer_text
-        else:
-            if retrieved_contexts:
-                # The model cited nothing: attach the top-ranked norm as a reference for the reader, but do not
-                # present it as verification - the answer is flagged as not passing validation.
-                top_art = retrieved_contexts[0].article
-                sanitized_answer = f"{answer_text}\n\n[{top_art.canonical_id}]"
-                resolved_cids_in_answer.add(top_art.canonical_id)
-                no_explicit_citation = True
-                warnings.append("no_explicit_citation: answer did not cite any retrieved norm")
-            else:
-                sanitized_answer = answer_text
+        sanitized_answer = answer_text
+        if not cited_in_text and retrieved_contexts:
+            # The model cited nothing. No norm is attached on its behalf (that would present a source the model never
+            # relied on as if it were verified): the answer simply carries no citations and fails validation.
+            no_explicit_citation = True
+            warnings.append("no_explicit_citation: answer did not cite any retrieved norm")
 
         # Build ordered unique citations matching appearance
         citations: List[CitationItem] = []
         cid_to_index: Dict[str, int] = {}
         ordered_cids: List[str] = []
         for cid in cited_in_text:
-            if cid not in ordered_cids and cid in retrieved_map:
-                ordered_cids.append(cid)
-        for cid in resolved_cids_in_answer:
             if cid not in ordered_cids and cid in retrieved_map:
                 ordered_cids.append(cid)
 

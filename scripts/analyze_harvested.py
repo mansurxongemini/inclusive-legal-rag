@@ -58,6 +58,23 @@ KNOWN_ALIASES = {
     "-1470265": "-1470263",
     "2876352": "-2876354",  # Bojxona kodeksi Cyrillic ID -> Latin canonical doc ID
     "-2876352": "-2876354",
+    "6725094": "-6725077",  # PQ-410 Cyrillic ID -> Latin canonical doc ID
+    "-6725094": "-6725077",
+    "3765162": "-3765153",  # VMQ-411 Cyrillic ID -> Latin canonical doc ID
+    "-3765162": "-3765153",
+    "7215999": "-7215989",  # Cyrillic ID -> Latin canonical doc ID
+    "5013009": "-5013007",  # Cyrillic ID -> Latin canonical doc ID
+    "-5013009": "-5013007",
+    "2467539": "-2467536",  # VMQ-269 Cyrillic ID -> Latin canonical doc ID
+    "-2467539": "-2467536",
+    "6248469": "-6248467",  # PQ-407 Cyrillic ID -> Latin canonical doc ID
+    "-6248469": "-6248467",
+    "5569701": "-5569689",  # PQ-5216 Cyrillic ID -> Latin canonical doc ID
+    "-5569701": "-5569689",
+    "7051594": "-7051573",  # O'RQ-939 Cyrillic ID -> Latin canonical doc ID
+    "-7051594": "-7051573",
+    "3263332": "-3263328",  # VMQ-484 Cyrillic ID -> Latin canonical doc ID
+    "-3263332": "-3263328",
 }
 
 def load_registry():

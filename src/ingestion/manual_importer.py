@@ -18,6 +18,7 @@ from src.schema.canonical import (
     TranslationProvenanceType,
 )
 from src.storage.hybrid_store import HybridStore
+from src.ingestion.localized import localized, provenance_for
 from src.nlp.transliteration import cyrillic_to_latin
 
 logger = logging.getLogger(__name__)
@@ -81,11 +82,11 @@ class ManualImporter:
             schema_version="1.1",
             metadata=ArticleMetadata(
                 law_id=f"custom_{law_slug}",
-                law_title={"uz": inp.law_title, "ru": inp.law_title, "en": inp.law_title},
+                law_title=localized(inp.law_title, inp.law_title),
                 law_number=inp.law_number,
                 chapter_number="",
                 article_number=inp.article_number,
-                article_title={"uz": title_latin, "ru": inp.title, "en": title_latin},
+                article_title=localized(title_latin, inp.title),
                 source_url=inp.source_url,
                 effective_date=str(date.today()),
                 last_verified_date=str(date.today()),
@@ -96,13 +97,9 @@ class ManualImporter:
                 beneficiary_type=["person_with_disability"],
                 embedding_model_version="baai/bge-m3",
             ),
-            points=[ArticlePoint(point_id="1", text={"uz": text_latin, "ru": inp.text, "en": text_latin})],
-            translations={"uz": text_latin, "ru": inp.text, "en": text_latin},
-            translation_provenance={
-                "uz": TranslationProvenanceType.OFFICIAL,
-                "ru": TranslationProvenanceType.OFFICIAL,
-                "en": TranslationProvenanceType.MACHINE_TRANSLATED_REVIEWED,
-            }
+            points=[ArticlePoint(point_id="1", text=localized(text_latin, inp.text))],
+            translations=localized(text_latin, inp.text),
+            translation_provenance=provenance_for(localized(text_latin, inp.text))
         )
 
         await self.store.index_article(article)
