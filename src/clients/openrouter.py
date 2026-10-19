@@ -44,6 +44,8 @@ class OpenRouterClient:
 
     def provider_preferences(self) -> Optional[Dict]:
         """Builds OpenRouter provider routing and quantization preferences from settings."""
+        if "openrouter.ai" not in self.base_url:
+            return None
         order = [x.strip() for x in (settings.LLM_PROVIDER_ORDER or "").split(",") if x.strip()]
         quantizations = [x.strip() for x in (settings.LLM_PROVIDER_QUANTIZATIONS or "").split(",") if x.strip()]
         if not order and not quantizations:
@@ -213,9 +215,9 @@ class OpenRouterClient:
                         "temperature": temperature,
                         "max_tokens": max_tokens,
                     }
-                    if prefs is not None:
+                    if prefs is not None and "openrouter.ai" in self.base_url:
                         payload["provider"] = prefs
-                    if reasoning is not None:
+                    if reasoning is not None and "openrouter.ai" in self.base_url:
                         payload["reasoning"] = reasoning
                     if response_format is not None:
                         payload["response_format"] = response_format
@@ -274,9 +276,9 @@ class OpenRouterClient:
                     "max_tokens": max_tokens,
                     "stream": True,
                 }
-                if prefs is not None:
+                if prefs is not None and "openrouter.ai" in self.base_url:
                     payload["provider"] = prefs
-                if reasoning is not None:
+                if reasoning is not None and "openrouter.ai" in self.base_url:
                     payload["reasoning"] = reasoning
                 async with client.stream(
                     "POST",

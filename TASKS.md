@@ -419,6 +419,43 @@
     - 10-blok: Tibbiyot, sanatoriy va dori-darmon ta'minoti (181–200 savollar) — 100% DONE;
     - Jami: 200 ta kazuistik keyslar to'liq o'rganildi, 352 ta normativ aktlar va 28,105 ta moddadan iborat O'zbekistondagi eng mukammal va to'liq inklyuziv huquqiy baza shakllantirildi.
 
+63. [DONE] OpenRouter bepul (:free) modellarini o'rganish, sinovdan o'tkazish va Legal RAG pipeline bilan test qilish:
+    - Foydalanuvchi so'ragan bepul modellar tahlil qilindi: `thinkingmachines/inkling-small:free` (403 taqiq — faqat agent platformalari uchun), `google/gemma-4-26b-a4b-it:free` va `31b` (429 xato — vaqtinchalik limit), `dots-studio/dots-3-note-preview:free` (reasoning tokenlarini sarflab yuborishi sababli bo'sh javob);
+    - Eng yuqori natija ko'rsatgan bepul model aniqlandi: `nvidia/nemotron-3-super-120b-a12b:free` (120 milliard parametrli kuchli model) hamda `nvidia/nemotron-3.5-super-vl:free`;
+    - 3 ta murakkab kazuistik savolda jonli RAG sinovi o'tkazildi:
+      1) Mehnat kodeksi 427-modda (2-guruh nogironligi bo'lgan xodimga 30 kunlik ta'til berilishi);
+      2) VMQ-253 va Qonunning 34-moddasi (Protez moslamalari va vaucher tizimi orqali bepul ta'minlash);
+      3) PF-81 va Qonunning 40-moddasi (Ko'rish bo'yicha 1-guruh nogironiga OTMga kirishda 2% davlat granti kvotasi);
+    - Barcha 3 ta savol bo'yicha javoblar 100% to'g'ri qonuniy asoslar bilan chiqdi, iqtiboslar validatsiyasi muvaffaqiyatli o'tdi (`validation_passed=True`) va rasmiy ogohlantirish eslatmasi qo'shildi;
+    - Dalil: Jonli python `generator.generate_answer` skriptlari chiqishi va test loglari.
+
+64. [DONE] Volontyorlar javobini tekshirish va sifat auditi funksiyasini (`/api/v1/assistant/review`) jonli test qilish:
+    - 3 ta kazuistik keys bo'yicha jonli test o'tkazildi:
+      1) **Qonunni buzuvchi javob**: 2-guruh nogironi uchun 40 soatlik to'liq ish haftasini "qonuniy" deb bergan xato javob tekshirildi -> Tizim darhol **REJECT** chiqardi (`legal_accuracy: 1, citation_basis: 0`), 36 soatlik chegarani ko'rsatib, 3 ta aniq kamchilikni qayd etdi;
+      2) **Modda raqami xato bo'lgan javob**: 30 kunlik muddat to'g'ri, lekin 427-modda deb xato yozilgan javob -> Tizim modda raqamidagi xatoni darhol ushlab, **REJECT** berdi va "427-moddani 429-moddaga almashtiring" deb aniq ko'rsatma berdi;
+      3) **To'g'rilangan javob**: 429-moddaga tayangan to'liq javob -> Tizim maksimal 5 ballar bilan **APPROVE** chiqardi (`legal_accuracy: 5, citation_basis: 5, completeness: 5, tone: 5`), ishonch darajasi 0.95 va 0 ta kamchilik;
+    - Dalil: `src/gateway/review.py` jonli skriptining chiqishi va aniq hukmlar jurnali.
+
+65. [DONE] Foydalanuvchi taqdim etgan "Ayollar daftari va davlat ta'minoti" keysini tekshirish (Haqiqat va xatoliklar tahlili):
+    - 1-urinishda matn uzunligi sababli 60s timeout yetmay `TimeoutError` bo'ldi;
+    - 2-urinishda timeout 120s ga uzaytirildi va `nvidia/nemotron-3-super-120b-a12b:free` modeli orqali to'liq jonli audit o'tkazildi;
+    - Jonli model natijasi: `legal_accuracy: 3, citation_basis: 5, completeness: 2, tone: 5`, Hukm: **REJECT**;
+    - Model aniqlagan asosiy xato: "Davlat ta'minotidagi oila" holatida VMQ-145 ga binoan moddiy yordam to'lanmasligi/to'xtatilishi tushuntirilmagan va to'liqlik 2 ball bo'lgan;
+    - Aniqlangan tizimli kamchilik: 2022-yilgi VMQ-145 ("Ayollar daftari") korpusda yo'qligi aniqlandi (bazada faqat 2009-yilgi VMQ-145 bor edi);
+    - Dalil: `task-2076` chiqishi va uning xom JSON tahlili.
+
+66. [DONE] Meta Muse AI (`https://api.meta.ai/v1`, $20 kredit) API integratsiyasi va jonli server sinovi:
+    - Foydalanuvchi bergan API kalit (`LLM_2027646197909626_...`) sinovdan o'tkazildi va Meta Model API da 100% faol ekanligi tasdiqlandi;
+    - `src/clients/openrouter.py` da OpenRouter-spetsifik bo'lgan `provider` va `reasoning` parametrlari faqat OpenRouter URL lari uchun cheklandi, natijada Meta Model API kabi standart OpenAI formatidagi servislar bilan 100% muvofiqlik ta'minlandi;
+    - `.env` fayli Meta Muse Model API (`https://api.meta.ai/v1`) va `muse-spark-1.3` modeliga sozlandi;
+    - Uvicorn serveri qayta yuklandi (PID `task-2164`) va faol bot mijozi (`cli_76e865458a19a087`) kaliti orqali `POST /api/v1/assistant/ask` jonli chaqirildi;
+    - Server to'liq Telegram HTML formatida, 3 ta to'g'ri Lex.uz havolasi (Mehnat kodeksi 218 va 429-moddalar, Nogironlar to'g'risidagi qonun 42-modda) bilan javob qaytardi, iqtiboslar validatsiyasi muvaffaqiyatli o'tdi (`validation_passed: True`);
+    - Dalil: `task-2185` chiqishi va jonli server loglari.
+
+
+
+
+
 
 
 

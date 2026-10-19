@@ -112,6 +112,9 @@ def test_build_system_prompt_plain_word_limit():
 
 
 def test_openrouter_provider_preferences(monkeypatch):
+    monkeypatch.setattr(settings, "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    monkeypatch.setattr(settings, "LLM_PROVIDER_ORDER", "deepinfra")
+    monkeypatch.setattr(settings, "LLM_PROVIDER_QUANTIZATIONS", "fp8,fp16,bf16,fp32,unknown")
     client = OpenRouterClient()
     prefs = client.provider_preferences()
     assert prefs == {
@@ -126,7 +129,10 @@ def test_openrouter_provider_preferences(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_chat_completion_sends_provider_and_reasoning():
+async def test_chat_completion_sends_provider_and_reasoning(monkeypatch):
+    monkeypatch.setattr(settings, "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    monkeypatch.setattr(settings, "LLM_PROVIDER_ORDER", "deepinfra")
+    monkeypatch.setattr(settings, "LLM_PROVIDER_QUANTIZATIONS", "fp8,fp16,bf16,fp32,unknown")
     class StubHttpResponse:
         status_code = 200
 

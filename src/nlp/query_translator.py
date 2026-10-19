@@ -50,11 +50,13 @@ class QueryTranslator:
             {"role": "user", "content": query},
         ]
 
+        is_reasoning = any(k in getattr(client, "primary_model", "") for k in ("muse", "nemotron", "r1"))
+        max_toks = 1500 if is_reasoning else 300
         try:
             raw = await client.chat_completion(
                 messages=messages,
                 temperature=0.0,
-                max_tokens=300,
+                max_tokens=max_toks,
                 min_chars=2,  # short questions translate to short text; the default stub filter would reject them
                 reasoning={"enabled": False},
             )
@@ -103,11 +105,13 @@ class QueryTranslator:
             "Keep the meaning and every sub-question; do not add facts and do not answer. "
             "Output ONLY the rewritten question, no quotes or explanations."
         )
+        is_reasoning = any(k in getattr(client, "primary_model", "") for k in ("muse", "nemotron", "r1"))
+        max_toks = 1500 if is_reasoning else 300
         try:
             raw = await client.chat_completion(
                 messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": query}],
                 temperature=0.0,
-                max_tokens=300,
+                max_tokens=max_toks,
                 min_chars=2,
                 reasoning={"enabled": False},
             )
