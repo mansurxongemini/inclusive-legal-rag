@@ -1,3 +1,4 @@
+import re
 from typing import List, Literal
 from src.retrieval.reranker import RetrievedArticleContext
 
@@ -25,6 +26,12 @@ DISCLAIMERS = {
         "does not substitute for official decisions by competent state bodies or court rulings.*"
     ),
 }
+
+def disclaimer_text(language: str) -> str:
+    """The disclaimer as plain text in the answer's language (no markdown rule, asterisks or "Eslatma:" label)."""
+    raw = DISCLAIMERS.get(language, DISCLAIMERS["uz"])
+    return re.sub(r"^(?:Eslatma|Примечание|Disclaimer):\s*", "", raw.replace("---", "").strip().strip("*").strip())
+
 
 REFUSAL_MESSAGES = {
     "uz": (

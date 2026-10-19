@@ -182,10 +182,17 @@ async def retrieve_contexts(
     # norms are added even when retrieval missed them. Weak or unpublished curated hits are dropped.
     if any(c.article.canonical_id.startswith("qa_") or c.article.canonical_id.startswith("hp_") for c in contexts):
         try:
-            from src.editorial.retrieval import add_linked_act_units, ensure_curated_contexts
+            from src.editorial.retrieval import (
+                add_linked_act_units,
+                curated_relevance_threshold,
+                ensure_curated_contexts,
+            )
             from src.editorial.store import EditorialStore
             editorial = EditorialStore()
-            contexts = ensure_curated_contexts(contexts, store, editorial)
+            contexts = ensure_curated_contexts(
+                contexts, store, editorial,
+                min_rerank_score=curated_relevance_threshold(reranker.last_provider),
+            )
             contexts = add_linked_act_units(contexts, store, editorial, rerank_query)
         except Exception:
             logger.warning("Curated-context ordering failed; serving lex norms only.", exc_info=True)

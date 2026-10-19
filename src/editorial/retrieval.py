@@ -15,6 +15,21 @@ logger = logging.getLogger(__name__)
 _UNSCORED_MAX_POSITION = 3
 
 
+def curated_relevance_threshold(rerank_provider: str) -> float:
+    """
+    Minimum rerank score for a curated answer / Huquq+ article to count as relevant.
+
+    The two rerankers score on different scales. A cross-encoder (Cohere) rates every passage on its own, so
+    GATE_MIN_RERANK_SCORE (0.70) is meaningful. Jev picks the best passage out of a list: its scores sum to 1, so
+    any passage that is not the single top pick sits far below 0.70 (on the stress set no top pick scored under
+    0.30, hence a runner-up can never reach 0.70). For Jev "scored at least RERANK_PICK_MIN" is the existing
+    definition of a pick.
+    """
+    if rerank_provider == "jev":
+        return settings.RERANK_PICK_MIN
+    return settings.GATE_MIN_RERANK_SCORE
+
+
 def _answer_id(canonical_id: str) -> Optional[int]:
     try:
         return int(canonical_id.split("_", 1)[1])
@@ -64,12 +79,12 @@ def ensure_curated_contexts(
 
     * Curated answers (qa_):
       - Must be published;
-      - Must be relevant (rerank_score >= threshold or position < 3);
+      - Must be relevant (rerank_score >= threshold; position < 3 only when it has no rerank score);
       - Relevant moves to the front, linked Lex.uz norms added as legal_basis.
     * Huquq+ articles (hp_):
       - Must be active in hp_posts (not suspended or deleted);
       - If EDITORIAL_SUSPEND_ON_CHANGE is True, must have no open notifications in editorial;
-      - Must be relevant (rerank_score >= threshold or position < 3);
+      - Must be relevant (rerank_score >= threshold; position < 3 only when it has no rerank score);
       - Stand after curated, before raw lex norms; their resolved lex cross_references added (rerank_score=None).
     """
     threshold = settings.GATE_MIN_RERANK_SCORE if min_rerank_score is None else min_rerank_score

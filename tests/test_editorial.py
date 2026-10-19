@@ -444,6 +444,36 @@ async def test_weak_or_unpublished_curated_hits_are_not_served(store, editorial,
 
 
 @pytest.mark.asyncio
+async def test_curated_relevance_threshold_follows_the_reranker_scale(store, editorial, client):
+    from src.config import settings
+    from src.editorial.retrieval import curated_relevance_threshold, ensure_curated_contexts
+    from src.retrieval.reranker import RetrievedArticleContext
+
+    assert curated_relevance_threshold("jev") == settings.RERANK_PICK_MIN
+    assert curated_relevance_threshold("cohere") == settings.GATE_MIN_RERANK_SCORE
+    assert curated_relevance_threshold("rrf") == settings.GATE_MIN_RERANK_SCORE
+
+    published = await _published_answer(store, editorial, client)
+    qa = store.get_article(f"qa_{published['id']}")
+    lex = store.get_article("law_test_art_1")
+
+    def ctxs(qa_score):
+        return [RetrievedArticleContext(article=lex, final_score=0.6, source_tag="rrf", rerank_score=0.75),
+                RetrievedArticleContext(article=qa, final_score=0.5, source_tag="rrf", rerank_score=qa_score)]
+
+    def ids(contexts):
+        return [c.article.canonical_id for c in contexts]
+
+    # Jev spreads one unit of probability over the candidates: a runner-up with 0.2 is a real pick ...
+    jev = curated_relevance_threshold("jev")
+    assert qa.canonical_id in ids(ensure_curated_contexts(ctxs(0.2), store, editorial, jev))
+    # ... while the same score is weak on the cross-encoder scale, and noise (< RERANK_PICK_MIN) is dropped either way
+    cohere = curated_relevance_threshold("cohere")
+    assert qa.canonical_id not in ids(ensure_curated_contexts(ctxs(0.2), store, editorial, cohere))
+    assert qa.canonical_id not in ids(ensure_curated_contexts(ctxs(0.01), store, editorial, jev))
+
+
+@pytest.mark.asyncio
 async def test_answer_stays_suspended_until_every_change_is_reviewed(store, editorial, client):
     published = await _published_answer(store, editorial, client)
     aid = published["id"]

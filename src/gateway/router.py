@@ -23,6 +23,7 @@ from src.gateway.auth import (
 )
 from src.gateway.clients import get_client_store, user_ref
 from src.gateway.conversations import get_conversation_store
+from src.generation.prompts import disclaimer_text
 from src.gateway.formatting import (
     format_citations,
     split_parts,
@@ -40,10 +41,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/assistant", tags=["Assistant API"])
 
-DISCLAIMER_TEXT = (
-    "Ushbu ma'lumot O'zbekiston Respublikasining amaldagi qonunchiligi asosida axborot va tushuntirish berish maqsadida taqdim etildi. "
-    "U vakolatli davlat organlarining rasmiy qarori yoki sud hujjati o'rnini bosmaydi."
-)
+DISCLAIMER_TEXT = disclaimer_text("uz")  # kept for importers; responses use disclaimer_text(<answer language>)
 
 
 class AskRequest(BaseModel):
@@ -245,7 +243,7 @@ async def ask_assistant(
         "is_refusal": result.is_refusal,
         "language": result.detected_language,
         "standalone_question": standalone_q,
-        "disclaimer": DISCLAIMER_TEXT,
+        "disclaimer": disclaimer_text(result.detected_language),
         "latency_ms": latency_ms,
         "cached": result.cached,
     }
@@ -344,7 +342,7 @@ def _handle_streaming_ask(
             "is_refusal": is_refusal,
             "language": detected_lang,
             "standalone_question": standalone_q,
-            "disclaimer": DISCLAIMER_TEXT,
+            "disclaimer": disclaimer_text(detected_lang),
             "latency_ms": latency_ms,
             "cached": False,
         }

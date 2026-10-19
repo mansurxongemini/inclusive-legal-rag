@@ -711,6 +711,32 @@ async def test_telegram_html_answer_ends_with_sources(gateway_stores, monkeypatc
     _verify_tags_balanced(last)
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("language,starts", [
+    ("uz", "Ushbu ma'lumot"),
+    ("ru", "Данная информация"),
+    ("en", "This information"),
+])
+async def test_disclaimer_field_matches_the_answer_language(gateway_stores, monkeypatch, language, starts):
+    from src.gateway import router as gw_router
+    from src.gateway.service import AnswerResult
+
+    c_store, _ = gateway_stores
+    _, key = _make_client(c_store)
+
+    async def fake_answer(*a, **kw):
+        return AnswerResult(answer="Javob.", clean_answer="Javob.", is_refusal=False, detected_language=language, cached=False)
+
+    monkeypatch.setattr(gw_router, "answer_question", fake_answer)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.post("/api/v1/assistant/ask", headers={"Authorization": f"Bearer {key}"},
+                            json={"question": "Savol?", "user_id": "u1", "format": "text"})
+    assert res.status_code == 200, res.text
+    disclaimer = res.json()["disclaimer"]
+    assert disclaimer.startswith(starts)
+    assert "*" not in disclaimer and "---" not in disclaimer
+
+
 def test_telegram_html_post_design_formatting():
     from src.gateway.formatting import is_well_formed_telegram_html, to_telegram_html
 
