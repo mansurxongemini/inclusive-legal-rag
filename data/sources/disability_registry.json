@@ -9550,6 +9550,25 @@
       "units": 49,
       "verified_at": "2026-10-19",
       "source": "admin"
+    },
+    {
+      "lex_id": "-7429154",
+      "law_id": "",
+      "number": "VMQ-149",
+      "number_override": "",
+      "title": "Oliy taʼlim tashkilotlarida talabalarga grantlarni taqdim etish va qayta taqsimlash tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
+      "doc_type": "VMQ",
+      "adopted": "2025-03-10",
+      "effective": "2025-03-14",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 42,
+      "verified_at": "2026-10-19",
+      "source": "admin"
     }
   ],
   "updated_at": "2026-10-18"
