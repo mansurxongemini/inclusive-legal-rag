@@ -11,8 +11,10 @@ export function createModal({
   content = null,
   footer = null,
   onClose = null,
-  maxWidth = '520px'
+  maxWidth = '',
+  size = 'md'
 }) {
+  maxWidth = maxWidth || ({ sm: '440px', md: '560px', lg: '760px' }[size] || '560px');
   const titleId = `${id || 'modal'}-title`;
 
   let lastActiveElement = null;
@@ -82,6 +84,7 @@ export function createModal({
     element: backdrop,
     open: () => {
       lastActiveElement = document.activeElement;
+      if (!backdrop.isConnected) document.body.appendChild(backdrop);   // callers may forget to mount it
       backdrop.classList.remove('hidden');
       document.addEventListener('keydown', handleKeyDown);
       // Focus on first input or close button

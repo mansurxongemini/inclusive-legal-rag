@@ -30,5 +30,5 @@ services:
     deploy:
       resources:
         limits:
-          memory: 400M
+          memory: 800M  # serving plateau ~300-550 MB (2026-10-18)
           cpus: '1.5'

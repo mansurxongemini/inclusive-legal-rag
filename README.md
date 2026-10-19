@@ -169,7 +169,7 @@ cp .env.example .env
 pytest -v
 
 # 5. Start development server
-uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
+.venv/bin/python -m uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ---
@@ -181,7 +181,10 @@ Every route that changes the corpus, manages API keys or exports user feedback (
 
 - A **direct local connection** (the dashboard opened on the server itself) needs no key.
 - Anything else must send `X-Admin-Key: <ADMIN_API_KEY>` (or `Authorization: Bearer ...`). Set `ADMIN_API_KEY` in `.env`;
-  with it empty, remote administration is disabled. Requests that carry proxy headers (`X-Forwarded-For`, ...) count as remote.
+  with it empty, remote administration is disabled. Requests that carry proxy headers (`X-Forwarded-For`, ...) count as remote,
+  and so do local requests driven by another web page (foreign `Host`, `Origin` or `Sec-Fetch-Site: cross-site`).
+- **Behind a reverse proxy** that does not forward `X-Forwarded-For` / `X-Real-IP` (nginx does not by default) every visitor
+  looks like a direct local connection. Set `ADMIN_LOOPBACK_ENABLED=false` there: the key is then the only way in.
 - The dashboard asks for the key once per browser session when the server answers 401.
 - Third-party bots use regular API keys (`X-API-Key`) for `POST /api/v1/inclusive/query`; each key's `rate_limit_per_min` is enforced.
 

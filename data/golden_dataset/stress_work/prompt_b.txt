@@ -1,0 +1,3 @@
+BATCH B — write exactly 100 items, ids s101..s200, to data/golden_dataset/stress_work/batch_b.json
+Quotas (domain = file name part): transport_benefits 9, housing_rights 9, accessibility_infrastructure 9, legal_protection 9, disability_rights 12, international_treaty 8, social_protection_governance 9, sanatorium_health 4, cross_domain 15 (domain "cross_domain": multi_hop questions whose expected_ids come from TWO different corpus files), out_of_scope 16 (7 near, 4 far, 5 adversarial).
+Among the 84 in-scope: at least 8 russian, 8 cyrillic_uz, 8 noisy, 8 situational, 2 en.

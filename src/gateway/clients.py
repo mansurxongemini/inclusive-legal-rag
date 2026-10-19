@@ -26,7 +26,7 @@ from src.storage.sqlite_utils import connect as _sqlite_connect
 KIND_SERVER = "server"
 KIND_BROWSER = "browser"
 KINDS = (KIND_SERVER, KIND_BROWSER)
-SCOPES = ("ask", "feedback")
+SCOPES = ("ask", "feedback", "review")
 SECRET_PREFIX = "hpk_live_"
 PUBLIC_PREFIX = "hpk_pub_"
 MAX_KEY_LENGTH = 128

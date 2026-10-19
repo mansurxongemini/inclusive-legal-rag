@@ -10,7 +10,7 @@ from src.config import settings
 from src.storage.hybrid_store import HybridStore
 from src.api.cache import QueryCache
 from src.clients.openrouter import OpenRouterClient
-from src.api.routes import query, article, feedback, health, admin, inclusive_api, webhooks, huquqplus_admin
+from src.api.routes import query, article, feedback, health, admin, inclusive_api, webhooks, huquqplus_admin, corpus_admin
 from src.editorial.router import router as editorial_router
 
 logger = logging.getLogger(__name__)
@@ -103,6 +103,11 @@ async def lifespan(app: FastAPI):
         logger.warning(
             "OPENROUTER_API_KEY is not set: running in MOCK mode. Answers are deterministic placeholders, "
             "not real legal analysis. Configure the key (or set MOCK_EXTERNAL_APIS=true to silence this)."
+        )
+    if settings.ADMIN_LOOPBACK_ENABLED and settings.HOST not in ("127.0.0.1", "::1", "localhost"):
+        logger.warning(
+            "Administration is open to direct local connections without a key. Behind a reverse proxy that does not "
+            "forward X-Forwarded-For/X-Real-IP every visitor looks local: set ADMIN_LOOPBACK_ENABLED=false and ADMIN_API_KEY."
         )
     store = get_store()
     client = get_client()
@@ -210,9 +215,19 @@ def create_app() -> FastAPI:
 
     # Mount static files for admin panel
     from fastapi.staticfiles import StaticFiles
+
+    class RevalidatedStaticFiles(StaticFiles):
+        """The admin panel is ES modules imported by relative paths: without revalidation a browser keeps running an
+        old page module after an update. no-cache still lets it reuse the file when the ETag has not changed."""
+
+        def file_response(self, *args, **kwargs):
+            response = super().file_response(*args, **kwargs)
+            response.headers["Cache-Control"] = "no-cache"
+            return response
+
     static_dir = Path(__file__).resolve().parent.parent / "admin" / "static"
     if static_dir.exists():
-        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+        app.mount("/static", RevalidatedStaticFiles(directory=str(static_dir)), name="static")
 
     # Include routes
     app.include_router(health.router)
@@ -224,15 +239,20 @@ def create_app() -> FastAPI:
     app.include_router(editorial_router)
     app.include_router(webhooks.router)
     app.include_router(huquqplus_admin.router)
+    app.include_router(corpus_admin.router)
 
     # Assistant & Gateway routers
     from src.gateway.router import router as assistant_router
     from src.gateway.openai_router import router as openai_router
     from src.gateway.admin_router import router as gateway_admin_router
+    from src.gateway.review import admin_router as review_admin_router
+    from src.gateway.review import router as review_router
 
     app.include_router(assistant_router)
     app.include_router(openai_router)
     app.include_router(gateway_admin_router)
+    app.include_router(review_router)
+    app.include_router(review_admin_router)
 
     return app
 

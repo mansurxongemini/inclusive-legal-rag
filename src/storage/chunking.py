@@ -13,6 +13,30 @@ from src.schema.canonical import CanonicalArticle
 MAX_CHARS = 1700
 OVERLAP_CHARS = 180
 MAX_CHUNKS_PER_ARTICLE = 14
+MAX_CONTEXT_LINE_CHARS = 240
+
+
+def _cap_context_line(text: str, limit: int = MAX_CONTEXT_LINE_CHARS) -> str:
+    """Caps text at limit characters, cutting at a word boundary and appending '…'."""
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    if text[limit] == " ":
+        return cut.rstrip() + "…"
+    last_space = cut.rfind(" ")
+    if last_space > 0:
+        return cut[:last_space].rstrip() + "…"
+    return cut + "…"
+
+
+def has_context_header(article: CanonicalArticle) -> bool:
+    """Returns True when chapter_number or annex_title is non-empty."""
+    if not article or not hasattr(article, "metadata"):
+        return False
+    ch = (article.metadata.chapter_number or "").strip()
+    ax = (article.metadata.annex_title or "").strip()
+    return bool(ch or ax)
 
 
 def _header(article: CanonicalArticle, language: str) -> str:
@@ -20,7 +44,35 @@ def _header(article: CanonicalArticle, language: str) -> str:
     parts = [law_title, article.metadata.article_number]
     title = article.get_title(language)
     head = " | ".join(p for p in parts if p)
-    return f"{head}. {title}".strip() if title else head
+    first_line = f"{head}. {title}".strip() if title else head
+
+    chapter = (article.metadata.chapter_number or "").strip()
+    annex = (article.metadata.annex_title or "").strip()
+
+    if not chapter and not annex:
+        return first_line
+
+    lines = [first_line]
+
+    uz_law_title = (article.get_law_title("uz") or "").strip()
+    curr_law_title = (law_title or "").strip()
+
+    def _contained_in_law(line_text: str) -> bool:
+        if curr_law_title and line_text in curr_law_title:
+            return True
+        if uz_law_title and line_text in uz_law_title:
+            return True
+        return False
+
+    if chapter and not _contained_in_law(chapter):
+        lines.append(_cap_context_line(chapter))
+
+    if annex:
+        in_chapter = bool(chapter and annex in chapter)
+        if not in_chapter and not _contained_in_law(annex):
+            lines.append(_cap_context_line(annex))
+
+    return "\n".join(lines)
 
 
 def _paragraphs(text: str) -> List[str]:

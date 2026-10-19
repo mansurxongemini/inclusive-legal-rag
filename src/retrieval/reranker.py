@@ -187,7 +187,9 @@ class Reranker:
                 law_t = ctx.article.metadata.law_title.get(language, "") or ctx.article.metadata.law_title.get("uz", "")
                 art_num = ctx.article.metadata.article_number
                 art_title = ctx.article.get_title(language)
-                header = f"{law_t} {art_num} {art_title}."
+                annex_or_chap = ctx.article.metadata.annex_title or ctx.article.metadata.chapter_number or ""
+                annex_part = f" ({annex_or_chap})" if annex_or_chap else ""
+                header = f"{law_t} {art_num}{annex_part} {art_title}."
                 unit_headers.append(header)
 
                 body = ctx.article.get_text(language)

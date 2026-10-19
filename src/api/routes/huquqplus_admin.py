@@ -30,6 +30,53 @@ async def admin_huquqplus_status():
     return get_sync_status()
 
 
+def _get_law_source_url(store, law_id: str) -> str:
+    if store is None or not hasattr(store, "fts_store") or store.fts_store is None:
+        return ""
+    try:
+        with store.fts_store._get_connection() as conn:
+            row = conn.execute("""
+                SELECT json_extract(json_data, '$.metadata.source_url')
+                FROM articles_metadata
+                WHERE json_extract(json_data, '$.metadata.law_id') = ?
+                  AND json_extract(json_data, '$.metadata.source_url') IS NOT NULL
+                LIMIT 1
+            """, (law_id,)).fetchone()
+        if not row or not row[0]:
+            return ""
+        return str(row[0]).split("#")[0]
+    except Exception as e:
+        logger.warning(f"Error extracting source_url for {law_id}: {e}")
+        return ""
+
+
+def _enrich_posts_with_law_details(posts: list, store=None) -> None:
+    if store is None:
+        try:
+            from src.api.app import get_store
+            store = get_store()
+        except Exception:
+            store = None
+
+    from src.editorial.doc_watch import law_label
+
+    label_cache = {}
+    url_cache = {}
+
+    for post in posts:
+        unresolved = post.get("unresolved_links") or []
+        for ref in unresolved:
+            law_id = ref.get("law_id")
+            if law_id:
+                if law_id not in label_cache:
+                    label_cache[law_id] = law_label(store, law_id)
+                if law_id not in url_cache:
+                    url_cache[law_id] = _get_law_source_url(store, law_id)
+
+                ref["law_label"] = label_cache[law_id]
+                ref["source_url"] = url_cache[law_id] or ref.get("url") or ""
+
+
 @router.get("/posts", dependencies=_ADMIN)
 async def admin_huquqplus_posts(
     lang: Optional[str] = Query(default=None),
@@ -43,7 +90,23 @@ async def admin_huquqplus_posts(
     resolve bo'lgan/bo'lmagan havolalar.
     """
     posts, total = list_synced_posts(lang=lang, status=status, q=q, limit=limit, offset=offset)
+    _enrich_posts_with_law_details(posts)
     return {"total": total, "items": posts}
+
+
+@router.get("/posts/{lang}/{wp_id}", dependencies=_ADMIN)
+async def admin_huquqplus_get_post(lang: str, wp_id: int):
+    """
+    Alohida maqola tafsilotlari (bog'langan aktlar bilan).
+    """
+    if lang not in ("uz", "ru"):
+        raise HTTPException(status_code=422, detail="Til 'uz' yoki 'ru' bo'lishi kerak.")
+    posts, _ = list_synced_posts(lang=lang, limit=1000, offset=0, q=None)
+    matched = next((p for p in posts if p.get("wp_id") == wp_id and p.get("lang") == lang), None)
+    if not matched:
+        raise HTTPException(status_code=404, detail="Maqola topilmadi.")
+    _enrich_posts_with_law_details([matched])
+    return matched
 
 
 @router.post("/sync", status_code=202, dependencies=_ADMIN)

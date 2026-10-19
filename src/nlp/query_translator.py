@@ -92,9 +92,14 @@ class QueryTranslator:
 
         system_prompt = (
             "Rewrite the user's question in correct standard Uzbek, LATIN script only: fix spelling and typos, "
-            "transliterate Cyrillic correctly (o', g', q, h, sh, ch), and use the terminology of Uzbek legislation on "
-            "Lex.uz (examples: \"oziq-ovqat\", \"kiyim-kechak\", \"vaucher\", \"bank plastik kartasi\", "
-            "\"Ijtimoiy himoya yagona reyestri\", \"nogironligi bo'lgan shaxs\", \"nafaqa\", \"pensiya\"). "
+            "remove conversational greetings (e.g. 'Salom', 'Assalomu alaykum'), transliterate Cyrillic correctly "
+            "(o', g', q, h, sh, ch), and use the terminology of Uzbek legislation on Lex.uz (examples: \"oziq-ovqat\", "
+            "\"kiyim-kechak\", \"vaucher\", \"bank plastik kartasi\", \"Ijtimoiy himoya yagona reyestri\", "
+            "\"II guruh nogironligi bo'lgan shaxs\", \"nafaqa\", \"pensiya\", \"aperatsiya/operatsiya\" -> "
+            "\"jarrohlik amaliyoti (operatsiya), bepul ixtisoslashtirilgan tibbiy yordam va imtiyozli yo'llanma (order)\"). "
+            "Write common abbreviations out in full as the legislation does, keeping the abbreviation in brackets: "
+            "OTM -> oliy ta'lim muassasasi (tashkiloti), TIEK/TMEK/VTEK -> tibbiy-ijtimoiy ekspert komissiyasi, "
+            "FHDYO -> fuqarolik holati dalolatnomalarini yozish organi, DXM -> davlat xizmatlari markazi. "
             "Keep the meaning and every sub-question; do not add facts and do not answer. "
             "Output ONLY the rewritten question, no quotes or explanations."
         )

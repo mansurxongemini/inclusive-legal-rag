@@ -105,10 +105,10 @@ async def test_answer_generator_end_to_end():
 
 def test_build_system_prompt_plain_word_limit():
     plain_prompt = build_system_prompt(language="uz", mode="plain")
-    assert "120 so'zdan oshmasin" in plain_prompt
+    assert "230 so'zgacha" in plain_prompt and "To'liqlik qisqalikdan muhim" in plain_prompt
 
     legal_prompt = build_system_prompt(language="uz", mode="legal_text")
-    assert "120 so'zdan oshmasin" not in legal_prompt
+    assert "230 so'zgacha" not in legal_prompt
 
 
 def test_openrouter_provider_preferences(monkeypatch):

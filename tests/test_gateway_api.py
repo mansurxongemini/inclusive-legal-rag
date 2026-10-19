@@ -707,4 +707,31 @@ async def test_telegram_html_answer_ends_with_sources(gateway_stores, monkeypatc
     assert res.status_code == 200, res.text
     last = res.json()["parts"][-1]
     assert '[1] <a href="https://lex.uz/uz/docs/-5049511#-5054165">' in last and "📚 <b>Manbalar</b>" in last
+    assert '<a href="https://lex.uz/uz/docs/-5049511#-5054165">[1]</a>' in last
     _verify_tags_balanced(last)
+
+
+def test_telegram_html_post_design_formatting():
+    from src.gateway.formatting import is_well_formed_telegram_html, to_telegram_html
+
+    sample_md = (
+        "**Qisqa javob:** II guruh nogironligi bo'lgan shaxslarga bepul jarrohlik amaliyoti (operatsiya) uchun order beriladi [1].\n\n"
+        "**Sizga tegishli bo'lishi mumkin bo'lgan yordam turlari:**\n"
+        "- Davlat budjeti hisobidan bepul operatsiya [1].\n"
+        "- Shifoxonada bepul ovqatlanish [2].\n\n"
+        "**Nima qilish kerak:**\n"
+        "1. Oilaviy poliklinikaga murojaat qiling [1].\n"
+        "2. Elektron yo'llanma (order) oling [1].\n\n"
+        "---\n"
+        "*Eslatma: Ushbu ma'lumot axborot berish maqsadida taqdim etildi.*"
+    )
+    out = to_telegram_html(sample_md)
+    assert is_well_formed_telegram_html(out), out
+    assert "---" not in out
+    assert "⚖️ <b>Qisqa javob:</b>" in out
+    assert "📌 <b>Sizga tegishli bo'lishi mumkin bo'lgan yordam turlari:</b>" in out
+    assert "📋 <b>Nima qilish kerak:</b>" in out
+    assert "<blockquote><i>ℹ️ Eslatma: Ushbu ma'lumot axborot berish maqsadida taqdim etildi.</i></blockquote>" in out
+    assert "• Davlat budjeti hisobidan bepul operatsiya [1].\n\n• Shifoxonada bepul ovqatlanish [2]." in out
+    assert "<b>1.</b> Oilaviy poliklinikaga murojaat qiling [1].\n\n<b>2.</b> Elektron yo'llanma (order) oling [1]." in out
+

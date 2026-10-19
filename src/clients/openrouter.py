@@ -194,6 +194,7 @@ class OpenRouterClient:
         max_tokens: int = 8192,
         min_chars: int = 30,
         reasoning: Optional[Dict] = None,
+        response_format: Optional[Dict] = None,
     ) -> str:
         """Non-streaming generation with automatic fallback. Replies not longer than min_chars count as stubs."""
         if self.is_mock:
@@ -216,6 +217,8 @@ class OpenRouterClient:
                         payload["provider"] = prefs
                     if reasoning is not None:
                         payload["reasoning"] = reasoning
+                    if response_format is not None:
+                        payload["response_format"] = response_format
                     response = await client.post(
                         f"{self.base_url}/chat/completions",
                         json=payload,

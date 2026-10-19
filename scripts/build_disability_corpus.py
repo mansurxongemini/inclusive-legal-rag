@@ -224,6 +224,7 @@ def cmd_select(args) -> None:
                 "tier": tier,
                 "include": include,
                 "category": seed.get("category") if seed else None,
+                "chapters": (seed.get("chapters", []) if seed else []),
                 "nodes": d.get("nodes", []),
                 "relevance_title": rel_title,
                 "relevance_text": rel_text,
@@ -233,10 +234,10 @@ def cmd_select(args) -> None:
             if i % 25 == 0:
                 log.info(f"  {i}/{len(docs)} processed")
 
-    # documents added by `cited` (Huquq+ citations) are not in discovered.json - keep them across re-selects
+    # documents added by `cited` (Huquq+ citations) and `admin` are not in discovered.json - keep them across re-selects
     previous = _load_json(SOURCES / "disability_registry.json", {"documents": []})["documents"]
     have = {r["lex_id"] for r in registry}
-    registry.extend(r for r in previous if r.get("source") in ("huquqplus_cited", "domain_review") and r["lex_id"] not in have)
+    registry.extend(r for r in previous if r.get("source") in ("huquqplus_cited", "domain_review", "admin") and r["lex_id"] not in have)
 
     registry.sort(key=lambda r: (r["tier"], -(r["relevance_title"] * 10 + r["relevance_text"])))
     _save_json(SOURCES / "disability_registry.json", {"generated": date.today().isoformat(), "documents": registry})
@@ -479,6 +480,68 @@ def cmd_domain(args) -> None:
         log.info("registry updated. Next: build, then refresh --law-ids=" + ",".join(a["lex_id"] for a in added))
 
 
+def cmd_add(args) -> None:
+    """
+    Adds or updates a Lex.uz document in data/sources/disability_registry.json.
+    Verifies that the document exists and is active.
+    """
+    lex_id = str(args.lex_id).strip()
+    include = getattr(args, "include", "all") or "all"
+    if include not in ("all", "disability_articles"):
+        sys.exit(f"Noto'g'ri include rejimi: {include!r} ('all' yoki 'disability_articles' bo'lishi kerak)")
+
+    reg_file = Path(getattr(args, "registry_file", None) or (SOURCES / "disability_registry.json"))
+    reg = _load_json(reg_file, {"documents": []})
+    existing_map = {d["lex_id"]: d for d in reg.get("documents", [])}
+
+    parser = LexDocumentParser()
+    with LexClient(cache_dir=str(RAW), min_delay=getattr(args, "delay", 1.0)) as lex:
+        latin_id = _latin_edition(lex, parser, lex_id) or lex_id
+        html = lex.fetch_document(latin_id)
+        if not html:
+            sys.exit(f"Hujjat Lex.uz'dan topilmadi yoki yuklab bo'lmadi: {latin_id}")
+        doc = parser.parse(html, latin_id)
+        if doc.status != "active":
+            sys.exit(f"Hujjat faol emas (status={doc.status}): {latin_id}")
+        if not doc.units:
+            sys.exit(f"Hujjatda bandlar/matn mavjud emas: {latin_id}")
+
+        if latin_id in existing_map:
+            current = existing_map[latin_id]
+            if args.include and current.get("include") != include:
+                current["include"] = include
+                current["updated_at"] = date.today().isoformat()
+                _save_json(reg_file, reg)
+                log.info(f"Reestrdagi mavjud hujjat {latin_id} include='{include}' ga yangilandi.")
+            else:
+                log.info(f"Hujjat {latin_id} allaqachon reestrda mavjud (include='{current.get('include')}').")
+            return
+
+        entry = {
+            "lex_id": latin_id,
+            "law_id": "",
+            "number": doc.number or "",
+            "number_override": "",
+            "title": doc.title,
+            "doc_type": doc.doc_type or "",
+            "adopted": doc.adopted_date,
+            "effective": doc.effective_date,
+            "tier": 2,
+            "include": include,
+            "category": None,
+            "nodes": [],
+            "relevance_title": 0,
+            "relevance_text": 0,
+            "units": len(doc.units),
+            "verified_at": date.today().isoformat(),
+            "source": "admin",
+        }
+        reg["documents"].append(entry)
+        _save_json(reg_file, reg)
+        log.info(f"Hujjat {latin_id} ({doc.number}) reestrga qo'shildi: include={include}, units={len(doc.units)}")
+
+
+
 # --------------------------------------------------------------------------------------------------------------
 def _specs(max_tier: int) -> List[SourceSpec]:
     reg = _load_json(SOURCES / "disability_registry.json", None)
@@ -693,6 +756,93 @@ def cmd_refresh(args) -> None:
         log.warning(f"check_legal_links after refresh failed: {e}")
 
 
+def _read_cached_html(raw_dir: Path, doc_id: str):
+    """HTML from the disk cache only; never touches the network (missing cache -> None)."""
+    from src.ingestion.lex_client import doc_cache_name
+    raw = str(doc_id).strip()
+    variants = [raw] if raw.startswith("-") else [f"-{raw}", raw]
+    for variant in variants:
+        p = raw_dir / f"{doc_cache_name(variant)}.html"
+        if p.exists():
+            return p.read_text(encoding="utf-8", errors="replace")
+    return None
+
+
+def cmd_annex_titles(args) -> None:
+    """
+    Backfills metadata.annex_title of stored annex units from the cached Lex.uz HTML.
+
+    For every registry document: parse ONLY the disk cache (data/raw_lex; a document without
+    cached HTML is skipped with no network access) -> to_articles; for each parsed unit that has
+    an annex_title and already exists in the store (by canonical_id), sets only
+    metadata.annex_title on the stored article (text, source_hash, status and embeddings are
+    untouched; no units are added or removed). Finishes with rebuild_fts_index so the titles
+    become searchable. Without --apply this is a dry-run: nothing is written.
+    """
+    from src.storage.hybrid_store import HybridStore
+
+    registry_file = Path(getattr(args, "registry_file", None) or (SOURCES / "disability_registry.json"))
+    raw_dir = Path(getattr(args, "raw_dir", None) or RAW)
+    reg = _load_json(registry_file, None)
+    if not reg:
+        sys.exit(f"registry not found: {registry_file}")
+    docs = reg["documents"]
+    if getattr(args, "limit", None):
+        docs = docs[: args.limit]
+
+    parser = LexDocumentParser()
+    builder = CorpusBuilder(LexClient(cache_dir=str(raw_dir), min_delay=0))
+    try:
+        db_path = Path(args.store_dir) / "legal_rag.db"
+        if args.apply or db_path.exists():
+            store = HybridStore(args.store_dir)
+        else:
+            store = None
+            log.info(f"store db not found at {db_path} - dry-run counts units against an empty store")
+        n_docs = 0
+        updated = 0
+        no_cache_ids: List[str] = []
+        for d in docs:
+            lex_id = d.get("lex_id", "")
+            html = _read_cached_html(raw_dir, lex_id)
+            if html is None:
+                no_cache_ids.append(lex_id)
+                continue
+            doc = parser.parse(html, lex_id, language="uz")
+            spec = SourceSpec.from_dict(
+                {**d, "number": d.get("number_override", ""), "title_hint": d.get("title", "")})
+            arts, _rep = builder.to_articles(doc, spec, None)
+            n_docs += 1
+            if store is None:
+                continue
+            for a in arts:
+                want = a.metadata.annex_title
+                if not want:
+                    continue
+                stored = store.fts_store.get_article(a.canonical_id)
+                if stored is None:
+                    continue  # annex-titles never adds new units
+                if (stored.metadata.annex_title or None) == want:
+                    continue
+                updated += 1
+                if args.apply:
+                    stored.metadata.annex_title = want
+                    store.fts_store.upsert_article(stored)
+        if args.apply:
+            fts_n = store.fts_store.rebuild_fts_index()
+            log.info(f"re-indexed {fts_n} articles in the full-text index")
+        else:
+            log.info("dry-run: nothing was written (re-run with --apply to write)")
+        if no_cache_ids:
+            shown = ", ".join(no_cache_ids[:10]) + ("..." if len(no_cache_ids) > 10 else "")
+            log.info(f"docs without cache ({len(no_cache_ids)}): {shown}")
+    finally:
+        builder.client.close()
+    summary = f"annex-titles: {n_docs} docs, {updated} units updated, {len(no_cache_ids)} docs without cache"
+    log.info(summary)
+    print(summary)
+
+
 def cmd_reindex_fts(args) -> None:
     from src.storage.fts_store import SqliteFtsStore
     store = SqliteFtsStore(str(Path(args.store_dir) / "legal_rag.db"))
@@ -750,12 +900,15 @@ def cmd_report(args) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name, fn in (("discover", cmd_discover), ("select", cmd_select), ("cited", cmd_cited), ("widen", cmd_widen), ("domain", cmd_domain), ("build", cmd_build), ("ingest", cmd_ingest), ("report", cmd_report), ("reindex-fts", cmd_reindex_fts), ("refresh", cmd_refresh)):
+    for name, fn in (("discover", cmd_discover), ("select", cmd_select), ("cited", cmd_cited), ("widen", cmd_widen), ("domain", cmd_domain), ("add", cmd_add), ("build", cmd_build), ("ingest", cmd_ingest), ("report", cmd_report), ("reindex-fts", cmd_reindex_fts), ("refresh", cmd_refresh), ("annex-titles", cmd_annex_titles)):
         p = sub.add_parser(name)
         p.add_argument("--delay", type=float, default=1.0, help="seconds between Lex.uz requests")
         p.add_argument("--seed-pages", type=int, default=15, help="max result pages scanned per curated seed")
         p.add_argument("--seeds-only", action="store_true", help="discover: re-resolve seeds, keep earlier OKOZ results")
         p.set_defaults(func=fn)
+    sub.choices["add"].add_argument("--lex-id", required=True, help="Lex.uz document ID")
+    sub.choices["add"].add_argument("--include", choices=["all", "disability_articles"], default="all", help="all or disability_articles")
+    sub.choices["add"].add_argument("--registry-file", default=None, help="custom registry file path for tests")
     sub.choices["cited"].add_argument("--apply", action="store_true", help="append the accepted acts to the registry")
     sub.choices["cited"].add_argument("--max-units-all", type=int, default=150,
                                       help="largest act without 'nogironlik' in its title that is kept whole")
@@ -766,6 +919,13 @@ def main() -> None:
     sub.choices["build"].add_argument("--max-tier", type=int, default=3)
     sub.choices["build"].add_argument("--no-russian", action="store_true")
     sub.choices["reindex-fts"].add_argument("--store-dir", default=str(ROOT / "data" / "store"))
+    sub.choices["annex-titles"].add_argument("--store-dir", default=str(ROOT / "data" / "store"))
+    sub.choices["annex-titles"].add_argument("--apply", action="store_true",
+                                             help="write metadata.annex_title into the store (default is dry-run)")
+    sub.choices["annex-titles"].add_argument("--limit", type=int, default=None,
+                                             help="process at most N registry documents")
+    sub.choices["annex-titles"].add_argument("--registry-file", default=None)
+    sub.choices["annex-titles"].add_argument("--raw-dir", default=None)
     ing = sub.choices["ingest"]
     ing.add_argument("--store-dir", default=str(ROOT / "data" / "store"))
     ing.add_argument("--batch-size", type=int, default=15)

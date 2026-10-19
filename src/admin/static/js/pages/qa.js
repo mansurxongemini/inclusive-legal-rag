@@ -375,30 +375,52 @@ export function renderQAPage() {
         text: 'Nashr qilish', variant: 'primary',
         onClick: async () => {
           try {
-            if (!answerId) { showToast('Avval javobni saqlang', 'warning'); return; }
+            if (!answerId) {
+              showToast('Avval javobni qoralama sifatida saqlang', 'warning');
+              return;
+            }
+            if (!links || links.length === 0) {
+              showToast('Nashr qilish uchun kamida 1 ta Lex.uz moddasi bog‘langan bo‘lishi shart', 'warning');
+              return;
+            }
             const payload = await collectPayload();
             await api.editorialAnswerUpdate(answerId, payload);
             await api.editorialPublish(answerId);
             if (resolveNotifId) {
               await api.editorialResolve(resolveNotifId, { action: 'edited', note: 'Tahrir + nashr' });
             }
-            showToast('Javob nashr qilindi', 'success');
+            showToast('Javob muvaffaqiyatli nashr qilindi', 'success');
             editor.close();
             loadList();
-          } catch (e) { showToast(e.message, 'danger'); }
+          } catch (e) { showToast(`Nashr qilishda xatolik: ${e.message}`, 'danger'); }
         },
       }),
     ];
     if (answerId) {
+      if (answer && answer.status === 'published') {
+        footerBtns.push(Button({
+          text: 'Nashrdan olish', variant: 'secondary',
+          onClick: async () => {
+            try {
+              await api.editorialUnpublish(answerId);
+              showToast('Javob nashrdan olindi (qoralama holatiga o‘tdi)', 'success');
+              editor.close();
+              loadList();
+            } catch (e) { showToast(`Xatolik: ${e.message}`, 'danger'); }
+          },
+        }));
+      }
       footerBtns.push(Button({
-        text: 'Nashrdan olish', variant: 'secondary',
+        text: answer && answer.status === 'archived' ? 'Arxivdan chiqarish' : 'Arxivlash',
+        variant: 'secondary',
         onClick: async () => {
           try {
-            await api.editorialUnpublish(answerId);
-            showToast('Nashrdan olindi', 'success');
+            const nextStatus = answer && answer.status === 'archived' ? 'draft' : 'archived';
+            await api.editorialAnswerUpdate(answerId, { status: nextStatus });
+            showToast(nextStatus === 'archived' ? 'Javob arxivlandi' : 'Javob arxivdan chiqarildi', 'success');
             editor.close();
             loadList();
-          } catch (e) { showToast(e.message, 'danger'); }
+          } catch (e) { showToast(`Xatolik: ${e.message}`, 'danger'); }
         },
       }));
       footerBtns.push(Button({

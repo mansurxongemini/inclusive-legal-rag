@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from src.config import settings
 from src.domain.disability_taxonomy import classify_category
 from src.editorial import service as svc
-from src.editorial.doc_watch import doc_link_id, doc_snapshot, is_doc_link, law_id_of, law_label
+from src.editorial.doc_watch import doc_link_id, doc_snapshot, is_doc_link, law_id_of, law_label, refresh_doc_link
 from src.editorial.store import EditorialStore
 from src.ingestion.huquqplus_client import HuquqPlusClient, HuquqPlusPost, LexRef, diff_index, lex_element_id
 from src.integrations.huquqplus_webhook import WebhookQueue
@@ -218,9 +218,10 @@ def _add_watch_link(store: HybridStore, editorial: EditorialStore, owner_id: str
         snap = doc_snapshot(store, law_id)
         if snap is None:
             return False
-        editorial.add_link(owner_type="huquqplus", owner_id=owner_id, canonical_id=link_id, law_id=law_id,
+        link = editorial.add_link(owner_type="huquqplus", owner_id=owner_id, canonical_id=link_id, law_id=law_id,
                            article_label=f"{law_label(store, law_id)} (butun hujjat)",
                            snapshot_text=snap[0], snapshot_hash=snap[1], snapshot_status=snap[2])
+        refresh_doc_link(store, editorial, link)
         return True
     lex_art = store.get_article(link_id)
     if lex_art is None:

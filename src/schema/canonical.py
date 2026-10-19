@@ -41,6 +41,7 @@ class ArticleMetadata(BaseModel):
     chapter_number: Optional[str] = Field(default=None, description="Chapter/Bob/Глава")
     article_number: str = Field(..., description="Article number (e.g. 15-modda)")
     article_title: Dict[str, str] = Field(..., description="Article title in uz, ru, en")
+    annex_title: Optional[str] = Field(default=None, description="Title of the annex/list this unit is an item of (ilova/ro'yxat sarlavhasi)")
     source_url: str = Field(..., description="Official source URL on lex.uz")
     effective_date: str = Field(..., description="Effective date (YYYY-MM-DD)")
     last_verified_date: str = Field(..., description="Last verification date (YYYY-MM-DD)")
@@ -142,5 +143,8 @@ class CanonicalArticle(BaseModel):
         law_title = self.get_law_title(language)
         body = self.get_text(language)
         points_text = " ".join([pt.text.get(language, "") for pt in self.points])
-        
-        return f"{self.metadata.law_number} {self.metadata.article_number} {title} {law_title} {body} {points_text}".strip()
+        annex = self.metadata.annex_title or ""
+        chapter = self.metadata.chapter_number or ""
+        extra = f"{annex} {chapter}".strip() if chapter not in annex else annex
+
+        return f"{self.metadata.law_number} {self.metadata.article_number} {title} {law_title} {extra} {body} {points_text}".strip()

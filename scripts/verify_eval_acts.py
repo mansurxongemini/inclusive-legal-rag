@@ -67,6 +67,8 @@ def verify_dataset(
     print("\nVerifying each expected act against Lex.uz...")
     for idx, item in enumerate(items, start=1):
         item_id = item.get("id", f"item_{idx}")
+        if item.get("out_of_scope"):
+            continue
         lex_ids = item.get("expected_lex_ids", [])
         expected_numbers = item.get("expected_law_numbers", [])
         in_corpus = bool(item.get("in_corpus"))

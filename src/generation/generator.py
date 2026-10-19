@@ -27,6 +27,7 @@ def _has_curated_context(contexts) -> bool:
             return True
     return False
 from src.generation.validator import CitationValidator, CitationItem, ValidationResult
+from src.generation.support_check import run_support_check
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +124,19 @@ class AnswerGenerator:
             except Exception as e:
                 logger.error(f"Fallback generation also failed: {e}")
 
+        # Citation support check (manbaga solishtirish va tozalash) - disclaimer va validatsiyadan OLDIN
+        support_warnings: List[str] = []
+        if settings.SUPPORT_CHECK_ENABLED:
+            raw_llm_response, support_warnings = await run_support_check(
+                raw_answer=raw_llm_response,
+                question=query,
+                contexts=contexts,
+                client=self.client,
+                original_messages=messages,
+                language=language,
+                reasoning=reasoning,
+            )
+
         # Attach disclaimer if not present
         disclaimer = DISCLAIMERS.get(language, DISCLAIMERS["uz"])
         if disclaimer.strip() not in raw_llm_response:
@@ -135,6 +149,8 @@ class AnswerGenerator:
             language=language,
         )
 
+        all_warnings = list(val_result.warnings) + support_warnings
+
         return GeneratedAnswer(
             answer=val_result.sanitized_answer,
             clean_answer=val_result.clean_answer,
@@ -144,7 +160,7 @@ class AnswerGenerator:
             validation_passed=val_result.is_valid,
             language=language,
             mode=mode,
-            warnings=val_result.warnings,
+            warnings=all_warnings,
         )
 
     async def generate_answer_stream(
@@ -157,6 +173,9 @@ class AnswerGenerator:
     ) -> AsyncGenerator[str, None]:
         """
         Streams generated text via SSE tokens, followed by a final JSON metadata event containing validated citations.
+
+        NOTE: Support check (citation verification and regeneration) is intentionally NOT run in the streaming path
+        because response tokens are already sent to the client in real time.
         """
         if not contexts:
             refusal = REFUSAL_MESSAGES.get(language, REFUSAL_MESSAGES["uz"])

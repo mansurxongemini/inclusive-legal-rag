@@ -7,7 +7,7 @@ so any amendment of those units raises one "document_amended" notification listi
 """
 import hashlib
 import json
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 DOC_PREFIX = "law:"
 
@@ -36,7 +36,48 @@ def law_units(store, law_id: str) -> Dict[str, Tuple[str, str, str]]:
     return {r[0]: (r[1] or "", r[2] or "active", r[3] or r[0]) for r in rows}
 
 
+def law_units_full(store, law_id: str) -> List[dict]:
+    """Fetch full details of an act's statutory units: canonical_id, hash, status, label, text (uz), url."""
+    if store is None or not hasattr(store, "fts_store") or store.fts_store is None:
+        return []
+    with store.fts_store._get_connection() as conn:
+        rows = conn.execute("""
+            SELECT
+                canonical_id,
+                source_hash,
+                status,
+                coalesce(json_extract(json_data, '$.metadata.article_number'), canonical_id),
+                coalesce(json_extract(json_data, '$.translations.uz'), ''),
+                coalesce(json_extract(json_data, '$.metadata.source_url'), '')
+            FROM articles_metadata
+            WHERE json_extract(json_data, '$.metadata.law_id') = ?
+              AND coalesce(json_extract(json_data, '$.metadata.source_type'), 'lex') = 'lex'
+        """, (law_id,)).fetchall()
+    return [
+        {
+            "canonical_id": r[0],
+            "hash": r[1] or "",
+            "status": r[2] or "active",
+            "label": r[3] or r[0],
+            "text": r[4] or "",
+            "url": r[5] or "",
+        }
+        for r in rows
+    ]
+
+
+def archive_law_texts(store, editorial, law_id: str) -> int:
+    """Archive texts of all units in this act into unit_text_archive."""
+    if store is None or editorial is None or not hasattr(editorial, "archive_unit_texts"):
+        return 0
+    units = law_units_full(store, law_id)
+    rows = [(u["hash"], u["label"], u["text"]) for u in units if u["hash"]]
+    return editorial.archive_unit_texts(rows)
+
+
 def law_label(store, law_id: str) -> str:
+    if store is None or not hasattr(store, "fts_store") or store.fts_store is None:
+        return law_id
     with store.fts_store._get_connection() as conn:
         row = conn.execute("""
             SELECT json_extract(json_data, '$.metadata.law_number'), json_extract(json_data, '$.metadata.law_title.uz')
@@ -60,24 +101,140 @@ def doc_snapshot(store, law_id: str) -> Optional[Tuple[str, str, str]]:
     return state_json, aggregate, status
 
 
-def doc_change_summary(store, law_id: str, old_state_json: str) -> str:
-    """Human-readable list of the units that changed since the snapshot (shown in the notification card)."""
+def doc_changes(store, editorial, law_id: str, old_state_json: str) -> dict:
+    """
+    Compare current units of an act against the snapshotted state by TEXT HASH rather than ID.
+
+    Rules:
+    - If an old hash still exists in the live act -> unchanged, even if its canonical_id moved.
+      If it was 'active' in snapshot but the live unit is now 'repealed' -> repealed.
+    - If an old hash vanished and that canonical_id is still in the live act (with a new hash not in snapshot)
+      -> changed {canonical_id, label, url, old_text, new_text}.
+    - If an old hash vanished and its canonical_id is also not in live act (or not part of changed)
+      -> removed {canonical_id, label, old_text}.
+    - If a live unit's hash was not in snapshot and wasn't consumed by changed -> added {canonical_id, label, url, new_text}.
+
+    Why real = bool(changed or removed or repealed):
+    Adding new units to the corpus or re-ingesting with different filters does not invalidate
+    existing articles. What invalidates an article or answer is when a statutory norm it relied on
+    changes, is repealed, or is removed. Therefore, newly added units alone are never a reason to
+    notify the editor.
+    """
     try:
-        old = json.loads(old_state_json or "{}")
-    except ValueError:
-        old = {}
-    units = law_units(store, law_id)
-    changed = [label for cid, (h, st, label) in units.items() if cid in old and old[cid] != f"{h}|{st}"]
-    added = [label for cid, (_, _, label) in units.items() if cid not in old]
-    removed = [cid for cid in old if cid not in units]
+        old_state = json.loads(old_state_json or "{}")
+    except (ValueError, TypeError):
+        old_state = {}
+
+    live_units = law_units_full(store, law_id)
+    live_by_cid: Dict[str, dict] = {u["canonical_id"]: u for u in live_units}
+    live_by_hash: Dict[str, dict] = {u["hash"]: u for u in live_units if u["hash"]}
+    live_hashes = set(live_by_hash.keys())
+
+    old_hashes = set()
+    old_entries: Dict[str, dict] = {}
+    for ocid, val in old_state.items():
+        parts = val.split("|", 1) if isinstance(val, str) else []
+        ohash = parts[0] if parts else ""
+        ostatus = parts[1] if len(parts) > 1 else "active"
+        old_entries[ocid] = {"hash": ohash, "status": ostatus}
+        if ohash:
+            old_hashes.add(ohash)
+
+    archived = editorial.get_archived_texts(list(old_hashes)) if editorial else {}
+
+    changed = []
+    removed = []
+    repealed = []
+    used_in_changed_cids = set()
+
+    for ocid, entry in old_entries.items():
+        ohash = entry["hash"]
+        ostatus = entry["status"]
+        arch_lbl, arch_txt = archived.get(ohash, ("", ""))
+
+        if ohash in live_hashes:
+            live_u = live_by_hash[ohash]
+            if ostatus == "active" and live_u["status"] == "repealed":
+                repealed.append({
+                    "canonical_id": live_u["canonical_id"],
+                    "label": live_u["label"] or arch_lbl or ocid,
+                    "url": live_u["url"],
+                    "old_text": arch_txt,
+                    "new_text": live_u["text"],
+                })
+        else:
+            if ocid in live_by_cid and live_by_cid[ocid]["hash"] not in old_hashes:
+                live_u = live_by_cid[ocid]
+                changed.append({
+                    "canonical_id": ocid,
+                    "label": live_u["label"] or arch_lbl or ocid,
+                    "url": live_u["url"],
+                    "old_text": arch_txt,
+                    "new_text": live_u["text"],
+                })
+                used_in_changed_cids.add(ocid)
+            else:
+                removed.append({
+                    "canonical_id": ocid,
+                    "label": arch_lbl or ocid,
+                    "url": "",
+                    "old_text": arch_txt,
+                    "new_text": "",
+                })
+
+    added = []
+    for u in live_units:
+        if u["hash"] not in old_hashes and u["canonical_id"] not in used_in_changed_cids:
+            added.append({
+                "canonical_id": u["canonical_id"],
+                "label": u["label"],
+                "url": u["url"],
+                "new_text": u["text"],
+            })
+
+    real = bool(changed or removed or repealed)
+    return {
+        "changed": changed,
+        "removed": removed,
+        "repealed": repealed,
+        "added": added,
+        "real": real,
+    }
+
+
+def doc_change_summary(store, law_id: str, old_state_json: str, editorial=None) -> str:
+    """Human-readable list of the units that changed since the snapshot (shown in the notification card)."""
+    if editorial is None:
+        from src.editorial.store import get_editorial_store
+        editorial = get_editorial_store()
+    changes = doc_changes(store, editorial, law_id, old_state_json)
     lines = [f"Hujjat: {law_label(store, law_id)}"]
-    if changed:
-        lines.append("O'zgartirilgan bandlar: " + ", ".join(sorted(changed)[:40]))
-    if added:
-        lines.append("Qo'shilgan bandlar: " + ", ".join(sorted(added)[:40]))
-    if removed:
-        lines.append("Olib tashlangan bandlar: " + ", ".join(sorted(removed)[:40]))
+    for c in changes.get("changed", []):
+        lines.append(f"• {c['label']} — o'zgartirildi")
+    for r in changes.get("repealed", []):
+        lines.append(f"• {r['label']} — kuchini yo'qotdi")
+    for rm in changes.get("removed", []):
+        lines.append(f"• {rm['label']} — olib tashlandi")
+    added_count = len(changes.get("added", []))
+    if added_count > 0:
+        lines.append(f"(+{added_count} ta yangi band qo'shilgan)")
     return "\n".join(lines)
+
+
+def refresh_doc_link(store, editorial, link: dict) -> Optional[Tuple[str, str, str]]:
+    """Update a whole-act link's snapshot to current act state and archive all unit texts."""
+    cid = link["canonical_id"]
+    law_id = law_id_of(cid) if is_doc_link(cid) else link.get("law_id", "")
+    snap = doc_snapshot(store, law_id)
+    if snap is not None:
+        editorial.refresh_link_snapshot(
+            link["id"],
+            snapshot_text=snap[0],
+            snapshot_hash=snap[1],
+            snapshot_status=snap[2],
+        )
+        archive_law_texts(store, editorial, law_id)
+    return snap
 
 
 def rebaseline_widened(store, editorial, law_ids) -> int:
@@ -103,8 +260,13 @@ def rebaseline_widened(store, editorial, law_ids) -> int:
         snap = doc_snapshot(store, law_id_of(cid))
         if snap is None or snap[1] == (link.get("snapshot_hash") or ""):
             continue
-        editorial.refresh_link_snapshot(link["id"], snapshot_text=snap[0], snapshot_hash=snap[1], snapshot_status=snap[2])
-        editorial.resolve_open_for_owner_link(owner_type=link["owner_type"], owner_id=link["owner_id"], canonical_id=cid,
-                                              resolution="corpus_widened", resolved_by="system")
+        refresh_doc_link(store, editorial, link)
+        editorial.resolve_open_for_owner_link(
+            owner_type=link["owner_type"],
+            owner_id=link["owner_id"],
+            canonical_id=cid,
+            resolution="corpus_widened",
+            resolved_by="system",
+        )
         rebased += 1
     return rebased

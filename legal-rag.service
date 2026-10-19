@@ -8,7 +8,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/opt/legal-rag
 EnvironmentFile=/opt/legal-rag/.env
-ExecStart=/opt/legal-rag/.venv/bin/uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --workers 1
+ExecStart=/opt/legal-rag/.venv/bin/python -m uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --workers 1
 Restart=always
 RestartSec=5s
 
@@ -17,9 +17,9 @@ PrivateTmp=true
 ProtectSystem=full
 NoNewPrivileges=true
 
-# Memory ceiling limit (350MB ceiling)
-MemoryMax=380M
-MemoryHigh=320M
+# Memory: idle ~175 MB, serving plateau ~300-550 MB (LanceDB/FTS caches); MEMORY_BUDGET_MB=700 in /health
+MemoryMax=800M
+MemoryHigh=700M
 
 [Install]
 WantedBy=multi-user.target

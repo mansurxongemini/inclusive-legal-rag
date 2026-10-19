@@ -34,9 +34,6 @@ export function h(tag, props = {}, ...children) {
         el.addEventListener(eventName, value);
       } else if (key === 'dataset' && typeof value === 'object') {
         Object.assign(el.dataset, value);
-      } else if (key === 'html') {
-        // Explicit sanitized HTML insertion (use sparingly)
-        el.innerHTML = value;
       } else {
         if (typeof value === 'boolean') {
           if (value) el.setAttribute(key, '');

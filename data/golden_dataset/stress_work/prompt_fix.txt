@@ -1,0 +1,34 @@
+TOOLING: shell commands are DENIED — do not try to run python/pytest/grep/cat. Use only your file-view and file-edit/write tools. The supervisor will run the tests.
+
+GOAL: implement three retrieval fixes in this Python RAG project. Change ONLY the files listed; keep the surrounding code style (type hints, short comments, logging via logger). Do not touch generation, data files, the corpus, or unrelated code. Keep the existing fusion weights and direct_match handling exactly as they are.
+
+=== FIX 1+2: src/retrieval/reranker.py (Reranker.rerank) ===
+Current problems: only the first 18 candidates are reranked (subset_size = min(len, max(top_n*3, 16))) and each unit is sent as text[:600], so answers that sit later in long articles are invisible. Also only the API's top_n results get scores.
+Implement:
+- Module constants: MAX_RERANK_UNITS = 40, MAX_RERANK_DOCS = 100, WINDOW_SIZE = 700, WINDOW_OVERLAP = 150, MAX_WINDOWS_PER_UNIT = 8.
+- Module-level function `split_windows(text: str, size: int = WINDOW_SIZE, overlap: int = WINDOW_OVERLAP, max_windows: int = MAX_WINDOWS_PER_UNIT) -> List[str]`: strip text; if len <= size return [text] (or [] for empty); otherwise sliding windows of `size` chars stepping by size-overlap; end each window at the last whitespace inside the final 80 chars of the window when there is one (do not cut words); stop after max_windows; never return empty strings.
+- candidate_subset = article_contexts[:MAX_RERANK_UNITS].
+- Build documents: for each unit, header = f"{law_title} {article_number} {article_title}." exactly as the current code builds it (language fallback as now), and one document per window: f"{header} {window}". Keep a parallel list doc_owner[i] = index of the unit in candidate_subset. Budget: every unit gets its first window; then fill the remaining budget (MAX_RERANK_DOCS - number of units) with the units' further windows in candidate order.
+- Call self.client.rerank_documents(query=query, documents=documents, model=settings.RERANK_MODEL, top_n=len(documents)).
+- Unit score = max relevance_score over its windows. Apply the existing per-unit logic (rerank_score, direct_match -> 3.0 + rel, otherwise hierarchy boost fusion 0.25/0.60/0.15) to EVERY unit of the subset that received a score; keep the direct_match protection loop; sort and return [:top_n]. Keep the existing try/except fallback to RRF ordering.
+- Update the comment that mentions "up to 18 candidates".
+
+=== FIX 3: Russian/English query -> Uzbek translation with dual retrieval ===
+Only 1686 of 3843 corpus units have an official Russian text; BM25 for language "ru" only searches Russian rows, so Russian questions miss Uzbek-only units. NEVER translate corpus text; translate only the user query.
+(a) New file src/nlp/query_translator.py with class QueryTranslator:
+  - in-memory LRU cache (collections.OrderedDict, max 512 entries) keyed by (source_language, query).
+  - `async def to_uzbek(cls, query: str, source_language: str, client: OpenRouterClient) -> Optional[str]` (classmethod): return None when source_language == "uz", when client.is_mock, or on any exception (log a warning). Otherwise call `await client.chat_completion(messages=[system, user], temperature=0.0, max_tokens=2000)` with a system prompt telling the model: translate the user's legal question into Uzbek (Latin script) using the terminology of Uzbek legislation on Lex.uz (examples: "nogironligi bo'lgan shaxs", "tibbiy-ijtimoiy ekspert komissiyasi (TIEK)", "nafaqa", "pensiya", "reabilitatsiya texnik vositalari"); keep numbers, names and abbreviations; output ONLY the translated question, no quotes or explanations. Strip whitespace and surrounding quotes; return None if the result is empty or longer than 3*len(query)+200 chars. Cache successful results.
+(b) src/retrieval/pipeline.py, retrieve_contexts: right after `candidates = await retriever.retrieve(...)` and BEFORE the category boost:
+  - translated = None; if language in ("ru", "en"): translated = await QueryTranslator.to_uzbek(analysis.normalized_query, language, client).
+  - if translated: uz_analysis = QueryAnalyzer.analyze(translated, user_language="uz"); uz_candidates = await retriever.retrieve(uz_analysis, top_k=top_k, use_vector=use_vector); candidates = merge_candidates([candidates, uz_candidates], limit=top_k + 10).
+  - Add module-level `merge_candidates(lists: List[List[ScoredArticle]], limit: int) -> List[ScoredArticle]` in pipeline.py: group by canonical_id; rrf_score = sum; bm25_rank and vector_rank = min of non-None; bm25_score and vector_score = max of non-None; source_tag = "direct_match" if any list tagged it so, else the first one seen; return sorted by rrf_score desc, cut to limit. Do not mutate the input objects (use model_copy or build new ScoredArticle).
+  - rerank_query = analysis.normalized_query if not translated else f"{analysis.normalized_query}\n{translated}"; pass rerank_query to Reranker.rerank(query=...) and to RelevanceGate().assess(query=...).
+  - Update the module docstring pipeline line to mention the translation step. Import QueryAnalyzer from src.nlp.query_analyzer.
+
+=== TESTS: add to tests/test_retrieval.py (read the file and tests/conftest.py first and reuse their fixtures/patterns; tests run with MOCK_EXTERNAL_APIS so no network) ===
+1. split_windows: short text -> 1 window; a 3000-char text -> several windows, each <= 700 chars, consecutive windows overlap, no window starts or ends in the middle of a word when spaces exist, at most 8 windows.
+2. Reranker scores units beyond position 18 and sees text after char 600: build 25 candidates (use the store fixture/pattern already used in the file, or a minimal fake store object with get_articles_batch) and a stub client object whose async rerank_documents returns a high relevance_score only for documents containing a marker word that appears only after character 1000 of the 22nd candidate's text, low scores for the rest; assert that candidate is first in the result.
+3. merge_candidates: an id present in both lists gets the summed score and the best ranks; direct_match tag survives; limit is respected; input objects are unchanged.
+4. QueryTranslator.to_uzbek returns None for a mock client and for language "uz".
+
+When done, reply only with the list of changed/created files and a 3-line summary.

@@ -1,0 +1,25 @@
+TOOLING: shell commands are DENIED — use only your file-view tool to read and your file-write tool to write. Do NOT modify any code or data file; write only the report file below.
+
+TASK: Analyse the 200-question stress test of this disability-law RAG (Uzbekistan) and write a report in UZBEK (Latin) to data/golden_dataset/STRESS_TEST_REPORT.md.
+
+INPUTS (read):
+- data/golden_dataset/stress_report.json — "summary" (metrics by domain/difficulty/language) and "items" (per question: rank = position of the expected unit in the final 6 contexts or null; pool_rank = position among 25 hybrid candidates before rerank or null; refused_by_gate, gate_reason, answer, cited_ids, judge {verdict, issues, reason}).
+- data/golden_dataset/stress_eval_200.json — questions with expected_ids, evidence, note (the reference answer).
+- Code, only to cite exact places: src/retrieval/reranker.py, src/retrieval/relevance_gate.py, src/retrieval/hybrid_retriever.py, src/retrieval/pipeline.py, src/nlp/query_analyzer.py, src/generation/prompts.py.
+
+VERIFIED FACTS (already checked by the supervisor — use them, do not contradict them):
+1. Reranker sees only the first 18 candidates: subset_size = max(top_n*3, 16) in src/retrieval/reranker.py (~line 67). 24 in-scope items had the expected unit in the pool but not in the final contexts; 12 of them had pool_rank >= 19, so they were never reranked.
+2. Reranker gets only text[:600] per unit (reranker.py ~line 70). In 16 of those 24 losses the evidence phrase lies beyond character 600; 38% of all corpus units are longer than 600 chars. Even pool_rank 1 units were dropped (s038, s119, s121, s155).
+3. Russian questions: hit@3 37.5%, false refusals 25%. Only 1686 of 3843 units have an official Russian text; 7 of the 9 Russian failures target units without Russian text (cross-lingual gap: BM25 cannot match, dense retrieval alone is weak).
+4. Out-of-scope: the relevance gate itself refused only 42.9% (near-domain legal questions 25%); the LLM prompt caught most of the rest (judge 92.9% correct), 2 items answered out of scope.
+5. The many "returned empty content" warnings in the run log came from the judge calls (max_tokens 600), not from production generation (16/16 production calls were fine). Do not list this as a production defect.
+6. Corpus rule: legal text must only come from Lex.uz; never propose machine-translating statutes into the corpus as authoritative text (query-side translation is fine).
+
+REPORT STRUCTURE:
+1. Qisqa xulosa (5-7 qator) + asosiy metrikalar jadvali (overall, by_language, by_difficulty; compare with the old golden set: hit@3 98%, MRR 0.91).
+2. Zaif joylar — each weakness: which difficulty/domain, numbers, 2-3 example ids with one-line explanation.
+3. Har bir muvaffaqiyatsiz savol katalogi — a table of EVERY in-scope item where rank is null or > 3, or refused_by_gate, or judge verdict != correct, and every out-of-scope item where judge verdict != correct: id | turi | nima bo'ldi (short) | ildiz sabab (one of: rerank_subset, rerank_truncation, crosslingual, lexical_gap_retrieval, not_in_pool, gate_false_refusal, gate_miss_oos, multi_hop_partial, generation_hallucination, generation_incomplete, label_or_judge_doubt). Use pool_rank, rank and the evidence position logic to decide. If the judge looks wrong (answer actually matches the note), mark label_or_judge_doubt.
+4. Kuchaytirish yo'llari — prioritized list (P0/P1/P2). For each: what to change, exact file/function, expected effect on which failure ids, risk/cost. Must include at least: rerank on more candidates; passage-level reranking for long units (split into windows, take max) instead of [:600]; query translation ru->uz (and Cyrillic->Latin check) with dual retrieval + RRF; multi-hop query decomposition / ensuring both acts in context; gate improvements for near-domain out-of-scope; synonym/colloquial expansion for lexical_gap; adding this stress set as a regression gate. Be concrete, no generic advice.
+5. Keyingi o'lchov rejasi — which metrics to re-run and targets.
+
+When done, reply only: the file path and the number of rows in the failure catalog.

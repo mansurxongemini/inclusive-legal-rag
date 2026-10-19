@@ -1,8 +1,7 @@
 /**
  * Tahririyat — Bildirishnomalar sahifasi.
- * Lex.uz moddasi o'zgarganda/kuchini yo'qotganda tushadigan bildirishnomalar:
- * eski va yangi matn yonma-yon, so'z darajasida diff bilan.
- * Barcha matn textContent orqali chiqariladi (XSS siz).
+ * Lex.uz moddasi o'zgarganda/kuchini yo'qotganda tushadigan bildirishnomalar.
+ * Barcha matn textContent va h() orqali chiqariladi (innerHTML taqiqlangan).
  */
 import { h, clear } from '../dom.js';
 import { api } from '../api.js';
@@ -26,12 +25,26 @@ function kindVariant(k) {
   return 'warning';
 }
 
+function formatResolution(res) {
+  if (!res) return '';
+  const r = String(res);
+  const prefix = r.split(':')[0];
+  if (prefix === 'keep') return 'Hali to‘g‘ri deb tasdiqlandi';
+  if (prefix === 'edited') return 'Saytda/javobda yangilandi';
+  if (prefix === 'unpublish') return 'AI‘dan olib turilgan';
+  if (prefix === 'delete') return 'O‘chirilgan';
+  if (r === 'corpus_widened' || r === 'auto:no_real_change' || prefix === 'auto') {
+    return 'Avtomatik yopildi: Lex.uz‘da matn o‘zgarmagan';
+  }
+  if (prefix === 'article_updated') return 'Maqola yangilangani uchun yopildi';
+  return r;
+}
+
 /** So'z darajasida diff (LCS): [{t:'same'|'del'|'ins', w}]. Katta matnlar 2000 belgigacha kesiladi. */
 export function wordDiff(oldText, newText) {
   const a = (oldText || '').slice(0, 2000).split(/(\s+)/);
   const b = (newText || '').slice(0, 2000).split(/(\s+)/);
   const n = a.length, m = b.length;
-  // Xotira chegarasi: juda uzun matnlar uchun sodda rejim
   if (n * m > 400000) {
     return { left: [{ t: 'same', w: (oldText || '').slice(0, 2000) }], right: [{ t: 'same', w: (newText || '').slice(0, 2000) }] };
   }
@@ -84,7 +97,7 @@ export function renderNotificationsPage() {
       )
     ),
     Button({
-      text: 'Hozir tekshirish', icon: icons.refresh('icon-sm'), variant: 'secondary',
+      text: 'Hozir tekshirish', icon: icons.refresh ? icons.refresh('icon-sm') : null, variant: 'secondary',
       onClick: async () => {
         try {
           const res = await api.editorialCheckLinks();
@@ -93,6 +106,24 @@ export function renderNotificationsPage() {
         } catch (e) { showToast(e.message, 'danger'); }
       },
     })
+  );
+
+  // Tepada yig'iladigan izoh
+  const helpDetails = h('details', {
+    className: 'card-surface p-4 text-xs',
+    open: true,
+  },
+    h('summary', { className: 'cursor-pointer font-bold text-main select-none flex items-center justify-between' },
+      h('span', { className: 'inline-flex items-center gap-1.5' },
+        'Bu nima va nima qilish kerak?'
+      )
+    ),
+    h('div', { className: 'mt-2.5 text-xs text-muted leading-relaxed space-y-1.5 pt-2 border-t border-border' },
+      h('p', {}, 'Huquq+ maqolasi yoki tayyor javob tayangan qonun bandi Lex.uz‘da o‘zgarsa, shu yerga xabar keladi.'),
+      h('p', {}, '1) Quyida bandning avvalgi va yangi matnini solishtiring.'),
+      h('p', {}, '2) Maqoladagi maʼlumot hali to‘g‘rimi — tekshiring.'),
+      h('p', {}, '3) Tugmalardan birini tanlang. Siz qaror qilguningizcha AI bu maqoladan foydalanmaydi.')
+    )
   );
 
   const filterRow = h('div', { className: 'flex items-center gap-1-5 flex-wrap' },
@@ -120,6 +151,7 @@ export function renderNotificationsPage() {
     + '.diff-ins{background:#dcfce7;color:#166534;border-radius:3px;padding:0 2px;}');
   container.appendChild(styleEl);
   container.appendChild(header);
+  container.appendChild(helpDetails);
   container.appendChild(filterRow);
   container.appendChild(listEl);
 
@@ -130,12 +162,15 @@ export function renderNotificationsPage() {
     for (let i = 0; i < 3; i++) listEl.appendChild(SkeletonCard({ rows: 3 }));
     try {
       const data = await api.editorialNotifications({ status: statusFilter, limit: 50, offset: 0 });
-      badgeOpen.textContent = `${data.open_count || 0} ta ochiq`;
+      const openCount = data.open_count || 0;
+      badgeOpen.textContent = `${openCount} ta ochiq`;
+      helpDetails.open = openCount > 0;
+
       const items = data.items || [];
       clear(listEl);
       if (!items.length) {
         listEl.appendChild(EmptyState({
-          icon: icons.check ? icons.check('icon-lg') : icons.search('icon-lg'),
+          icon: icons.check ? icons.check('icon-lg') : null,
           title: statusFilter === 'open' ? 'Ochiq bildirishnoma yo‘q' : 'Bildirishnoma topilmadi',
           description: 'Bog‘langan moddalar o‘zgarmagan. Hammasi joyida.',
         }));
@@ -145,7 +180,7 @@ export function renderNotificationsPage() {
     } catch (err) {
       clear(listEl);
       listEl.appendChild(EmptyState({
-        icon: icons.close('icon-lg text-danger'),
+        icon: icons.close ? icons.close('icon-lg text-danger') : null,
         title: 'Yuklashda xatolik',
         description: err.message,
       }));
@@ -153,36 +188,129 @@ export function renderNotificationsPage() {
   }
 
   function renderCard(n) {
-    const diff = wordDiff(n.old_text || '', n.new_text || '');
-    const leftBox = h('div', { className: 'p-3 bg-surface-2 rounded-md border border-border text-2xs leading-relaxed whitespace-pre-wrap select-text' });
-    const rightBox = h('div', { className: 'p-3 bg-surface-2 rounded-md border border-border text-2xs leading-relaxed whitespace-pre-wrap select-text' });
-    renderTokens(leftBox, diff.left);
-    renderTokens(rightBox, diff.right);
+    const isHp = n.owner_kind === 'huquqplus' || n.owner_type === 'huquqplus';
+    const ownerBadgeText = isHp ? 'Huquq+ maqolasi' : 'Tayyor javob';
+    const ownerBadgeVariant = isHp ? 'primary' : 'neutral';
 
-    // whole-act links (law:<id>) carry a list of changed units instead of one norm's old/new wording
-    const isDocLink = (n.canonical_id || '').startsWith('law:');
-    const summaryBox = h('div', { className: 'p-3 bg-surface-2 rounded-md border border-border text-2xs leading-relaxed whitespace-pre-wrap select-text' },
-      n.new_text || '');
-    const diffGrid = isDocLink
-      ? h('div', { className: 'grid grid-cols-1 gap-2' },
-        h('div', {}, h('p', { className: 'text-2xs font-bold text-main mb-1' }, 'Maqola tayangan hujjatdagi o‘zgarishlar'), summaryBox))
-      : (n.kind === 'norm_removed')
-      ? h('div', { className: 'grid grid-cols-1 gap-2' },
-        h('div', {}, h('p', { className: 'text-2xs font-bold text-main mb-1' }, 'Eski matn (modda store‘da topilmadi)'), leftBox))
-      : h('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-2' },
-        h('div', {}, h('p', { className: 'text-2xs font-bold text-main mb-1' }, 'Eski matn'), leftBox),
-        h('div', {}, h('p', { className: 'text-2xs font-bold text-main mb-1' }, 'Yangi matn'), rightBox));
+    // Holat jumlasi
+    const lawRef = n.law_label || 'hujjat';
+    const ownerNoun = isHp ? 'maqola' : 'javob';
+    let statusSentenceText = `Bu ${ownerNoun} tayangan ${lawRef} Lex.uz‘da o‘zgardi.`;
+    if (n.kind === 'norm_repealed') {
+      statusSentenceText = `Bu ${ownerNoun} tayangan ${lawRef} Lex.uz‘da kuchini yo‘qotdi.`;
+    } else if (n.kind === 'norm_removed') {
+      statusSentenceText = `Bu ${ownerNoun} tayangan ${lawRef} Lex.uz‘da olib tashlandi.`;
+    }
+    const statusSentence = h('p', { className: 'text-2xs text-main font-medium' }, statusSentenceText);
+
+    // AI paused bildirishnomasi
+    const aiPausedNotice = n.ai_paused
+      ? h('div', { className: 'p-2.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-md text-2xs font-medium flex items-center gap-1.5 border border-amber-500/20' },
+          `⏸ AI hozir bu ${isHp ? 'maqoladan' : 'javobdan'} foydalanmayapti — siz qaror qilguningizcha.`
+        )
+      : null;
+
+    // Changes bloklari
+    let changesBlock;
+    if (n.changes && n.changes.length > 0) {
+      const changeItems = n.changes.map((ch) => {
+        let chBadgeText = 'O‘zgartirildi';
+        let chBadgeVar = 'warning';
+        if (ch.kind === 'repealed') {
+          chBadgeText = 'Kuchini yo‘qotdi';
+          chBadgeVar = 'danger';
+        } else if (ch.kind === 'removed') {
+          chBadgeText = 'Olib tashlandi';
+          chBadgeVar = 'danger';
+        }
+
+        const head = h('div', { className: 'flex items-center gap-2 flex-wrap mb-1.5' },
+          h('span', { className: 'text-2xs font-bold text-main' }, ch.label || 'Band'),
+          Badge({ text: chBadgeText, variant: chBadgeVar }),
+          (ch.url && /^https:\/\/lex\.uz\//.test(ch.url))
+            ? h('a', {
+                href: ch.url,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                className: 'text-2xs text-accent underline inline-flex items-center gap-0.5 ml-auto'
+              }, 'Lex.uz‘da ochish ↗')
+            : null
+        );
+
+        let body;
+        if (ch.old_text && ch.new_text) {
+          const diff = wordDiff(ch.old_text, ch.new_text);
+          const leftBox = h('div', { className: 'p-2.5 bg-surface-2 rounded-md border border-border text-2xs leading-relaxed whitespace-pre-wrap select-text max-h-72 overflow-y-auto' });
+          const rightBox = h('div', { className: 'p-2.5 bg-surface-2 rounded-md border border-border text-2xs leading-relaxed whitespace-pre-wrap select-text max-h-72 overflow-y-auto' });
+          renderTokens(leftBox, diff.left);
+          renderTokens(rightBox, diff.right);
+          body = h('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-2 mt-1' },
+            h('div', {}, h('p', { className: 'text-2xs font-bold text-muted mb-1' }, 'Avval'), leftBox),
+            h('div', {}, h('p', { className: 'text-2xs font-bold text-muted mb-1' }, 'Hozir'), rightBox)
+          );
+        } else {
+          const txt = ch.new_text || ch.old_text || '';
+          const isLong = txt.length > 400;
+          let expanded = false;
+          const textContainer = h('div', { className: 'p-2.5 bg-surface-2 rounded-md border border-border text-2xs leading-relaxed whitespace-pre-wrap select-text' },
+            isLong ? txt.slice(0, 400) + '...' : txt
+          );
+          const toggleBtn = isLong
+            ? h('button', {
+                type: 'button',
+                className: 'text-2xs text-accent hover:underline mt-1 inline-block',
+                onclick: () => {
+                  expanded = !expanded;
+                  textContainer.textContent = expanded ? txt : (txt.slice(0, 400) + '...');
+                  toggleBtn.textContent = expanded ? 'Qisqartirish' : 'To‘liq ko‘rsatish';
+                }
+              }, 'To‘liq ko‘rsatish')
+            : null;
+          body = h('div', { className: 'mt-1' },
+            h('p', { className: 'text-2xs font-bold text-muted mb-1' }, ch.new_text ? 'Matn' : 'Eski matn'),
+            textContainer,
+            toggleBtn
+          );
+        }
+
+        return h('div', { className: 'p-3 bg-surface-1 rounded-lg border border-border space-y-1' }, head, body);
+      });
+
+      const addedNotice = (n.added_count && n.added_count > 0)
+        ? h('p', { className: 'text-2xs text-muted italic pt-1' }, `Hujjatga yana ${n.added_count} ta yangi band qo‘shilgan.`)
+        : null;
+
+      changesBlock = h('div', { className: 'space-y-2' }, ...changeItems, addedNotice);
+    } else {
+      // Fallback
+      const isDocLink = (n.canonical_id || '').startsWith('law:');
+      if (isDocLink) {
+        changesBlock = h('div', { className: 'p-3 bg-surface-2 rounded-md border border-border text-2xs leading-relaxed whitespace-pre-wrap select-text' }, n.new_text || '');
+      } else if (n.old_text && n.new_text) {
+        const diff = wordDiff(n.old_text, n.new_text);
+        const leftBox = h('div', { className: 'p-2.5 bg-surface-2 rounded-md border border-border text-2xs leading-relaxed whitespace-pre-wrap select-text' });
+        const rightBox = h('div', { className: 'p-2.5 bg-surface-2 rounded-md border border-border text-2xs leading-relaxed whitespace-pre-wrap select-text' });
+        renderTokens(leftBox, diff.left);
+        renderTokens(rightBox, diff.right);
+        changesBlock = h('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-2' },
+          h('div', {}, h('p', { className: 'text-2xs font-bold text-muted mb-1' }, 'Avval'), leftBox),
+          h('div', {}, h('p', { className: 'text-2xs font-bold text-muted mb-1' }, 'Hozir'), rightBox)
+        );
+      } else {
+        changesBlock = h('div', { className: 'p-2.5 bg-surface-2 rounded-md border border-border text-2xs leading-relaxed whitespace-pre-wrap select-text' }, n.new_text || n.old_text || '');
+      }
+    }
 
     const card = h('div', { className: 'card-surface p-4 space-y-3', role: 'listitem' },
       h('div', { className: 'flex items-center gap-2 flex-wrap' },
         Badge({ text: KIND_LABELS[n.kind] || n.kind, variant: kindVariant(n.kind) }),
-        Badge({ text: n.owner_type === 'huquqplus' ? 'Huquq+' : 'Curated QA', variant: n.owner_type === 'huquqplus' ? 'primary' : 'neutral' }),
+        Badge({ text: ownerBadgeText, variant: ownerBadgeVariant }),
         n.status !== 'open' ? Badge({ text: n.status === 'resolved' ? 'Hal qilingan' : 'Yopilgan', variant: 'neutral' }) : null,
         h('span', { className: 'text-2xs text-subtle font-mono' }, n.canonical_id || '')
       ),
-      n.owner_type === 'huquqplus'
+      isHp
         ? h('div', { className: 'space-y-1' },
-            n.url
+            (n.url && /^https:\/\//.test(n.url))
               ? h('a', {
                   href: n.url,
                   target: '_blank',
@@ -202,55 +330,72 @@ export function renderNotificationsPage() {
               : null
           )
         : (n.question ? h('h3', { className: 'text-xs font-bold text-main leading-relaxed' }, n.question) : null),
-      n.resolution ? h('p', { className: 'text-2xs text-muted' }, `Hal etish: ${n.resolution}`) : null,
-      diffGrid
+      statusSentence,
+      aiPausedNotice,
+      n.resolution ? h('p', { className: 'text-2xs text-muted font-medium' }, `Hal etish: ${formatResolution(n.resolution)}`) : null,
+      changesBlock
     );
 
     if (n.status === 'open') {
-      let btnRow;
-      if (n.owner_type === 'huquqplus') {
-        btnRow = h('div', { className: 'flex items-center gap-2 flex-wrap pt-1 border-t border-border' },
-          Button({
-            text: 'Maqola hali to‘g‘ri', variant: 'primary', size: 'sm',
-            onClick: () => resolveNotif(n.id, 'keep', 'Maqola hali to‘g‘ri deb tasdiqlandi'),
-          }),
-          Button({
-            text: 'Saytda yangiladim', variant: 'secondary', size: 'sm',
-            onClick: () => resolveNotif(n.id, 'edited', 'Saytda yangilandi, qayta sinxronlandi'),
-          }),
-          Button({
-            text: 'RAG‘dan vaqtincha olish', variant: 'secondary', size: 'sm',
-            onClick: () => resolveNotif(n.id, 'unpublish', 'RAG dan vaqtincha olindi'),
-          })
+      let actionSection;
+      if (isHp) {
+        actionSection = h('div', { className: 'pt-3 border-t border-border space-y-2' },
+          h('div', { className: 'flex items-center gap-2 flex-wrap' },
+            Button({
+              text: 'Maqola hali to‘g‘ri', variant: 'primary', size: 'sm',
+              onClick: () => resolveNotif(n.id, 'keep', 'Maqola hali to‘g‘ri deb tasdiqlandi'),
+            }),
+            Button({
+              text: 'Saytda yangiladim', variant: 'secondary', size: 'sm',
+              onClick: () => resolveNotif(n.id, 'edited', 'Saytda yangilandi, qayta sinxronlandi'),
+            }),
+            Button({
+              text: 'AI‘dan vaqtincha olish', variant: 'secondary', size: 'sm',
+              onClick: () => resolveNotif(n.id, 'unpublish', 'AI dan vaqtincha olindi'),
+            })
+          ),
+          h('div', { className: 'space-y-1 text-2xs text-muted pt-1 border-t border-border/50' },
+            h('p', {}, '• ', h('span', { className: 'font-semibold text-main' }, 'Maqola hali to‘g‘ri:'), ' O‘zgarish maqoladagi maʼlumotga taʼsir qilmaydi. Xabar yopiladi, AI maqoladan yana foydalanadi.'),
+            h('p', {}, '• ', h('span', { className: 'font-semibold text-main' }, 'Saytda yangiladim:'), ' Maqolani WordPress‘da tuzatib bo‘ldingiz. Tizim yangi matnni saytdan oladi.'),
+            h('p', {}, '• ', h('span', { className: 'font-semibold text-main' }, 'AI‘dan vaqtincha olish:'), ' Maqolani tuzatguningizcha AI undan foydalanmaydi. Saytda yangilaganingizdan keyin avtomatik qaytadi.')
+          )
         );
       } else {
-        btnRow = h('div', { className: 'flex items-center gap-2 flex-wrap pt-1 border-t border-border' },
-          Button({
-            text: 'Javob hali to‘g‘ri', variant: 'primary', size: 'sm',
-            onClick: () => resolveNotif(n.id, 'keep', 'Javob hali to‘g‘ri deb tasdiqlandi'),
-          }),
-          Button({
-            text: 'Tahrirlash', variant: 'secondary', size: 'sm',
-            onClick: () => {
-              try {
-                sessionStorage.setItem('editorial_edit_answer',
-                  JSON.stringify({ answerId: n.owner_id, notifId: n.id }));
-              } catch { /* saqlanmasa ham navigatsiya ishlaydi */ }
-              window.location.hash = 'qa';
-            },
-          }),
-          Button({
-            text: 'Nashrdan olish', variant: 'secondary', size: 'sm',
-            onClick: () => resolveNotif(n.id, 'unpublish', ''),
-          }),
-          h('button', {
-            type: 'button', className: 'btn btn-danger btn-sm',
-            'aria-label': 'Javobni o‘chirish',
-            onclick: () => confirmDeleteNotif(n),
-          }, 'O‘chirish')
+        actionSection = h('div', { className: 'pt-3 border-t border-border space-y-2' },
+          h('div', { className: 'flex items-center gap-2 flex-wrap' },
+            Button({
+              text: 'Javob hali to‘g‘ri', variant: 'primary', size: 'sm',
+              onClick: () => resolveNotif(n.id, 'keep', 'Javob hali to‘g‘ri deb tasdiqlandi'),
+            }),
+            Button({
+              text: 'Tahrirlash', variant: 'secondary', size: 'sm',
+              onClick: () => {
+                try {
+                  sessionStorage.setItem('editorial_edit_answer',
+                    JSON.stringify({ answerId: n.owner_id, notifId: n.id }));
+                } catch { /* saqlanmasa ham navigatsiya ishlaydi */ }
+                window.location.hash = 'qa';
+              },
+            }),
+            Button({
+              text: 'Nashrdan olish', variant: 'secondary', size: 'sm',
+              onClick: () => resolveNotif(n.id, 'unpublish', ''),
+            }),
+            h('button', {
+              type: 'button', className: 'btn btn-danger btn-sm',
+              'aria-label': 'Javobni o‘chirish',
+              onclick: () => confirmDeleteNotif(n),
+            }, 'O‘chirish')
+          ),
+          h('div', { className: 'space-y-1 text-2xs text-muted pt-1 border-t border-border/50' },
+            h('p', {}, '• ', h('span', { className: 'font-semibold text-main' }, 'Javob hali to‘g‘ri:'), ' O‘zgarish javob mazmuniga taʼsir qilmaydi. Havola yangilanadi, javob qayta eʼlon qilinadi.'),
+            h('p', {}, '• ', h('span', { className: 'font-semibold text-main' }, 'Tahrirlash:'), ' Javob matnini yoki huquqiy asosini tahrirlash sahifasida yangilash.'),
+            h('p', {}, '• ', h('span', { className: 'font-semibold text-main' }, 'Nashrdan olish:'), ' Javob arxivlanadi va AI qidiruvidan butunlay olinadi.'),
+            h('p', {}, '• ', h('span', { className: 'font-semibold text-main' }, 'O‘chirish:'), ' Javob va uning barcha havolalari butunlay o‘chiriladi.')
+          )
         );
       }
-      card.appendChild(btnRow);
+      card.appendChild(actionSection);
     }
     return card;
   }

@@ -1,0 +1,1752 @@
+{
+ "total": 63,
+ "in_scope": 50,
+ "out_of_scope": 13,
+ "hit_at_1": 0.8,
+ "hit_at_3": 0.98,
+ "hit_at_5": 1.0,
+ "mrr": 0.894,
+ "recall_at_5": 1.0,
+ "pool_hit_at_10": 0.98,
+ "pool_hit_at_30": 1.0,
+ "false_refusal_rate": 0.0,
+ "correct_refusal_rate": 0.8462,
+ "avg_latency_ms": 3758.3,
+ "by_language": {
+  "en": {
+   "n": 2,
+   "hit@3": 1.0,
+   "mrr": 1.0
+  },
+  "ru": {
+   "n": 6,
+   "hit@3": 1.0,
+   "mrr": 0.9167
+  },
+  "uz": {
+   "n": 42,
+   "hit@3": 0.9762,
+   "mrr": 0.8857
+  }
+ },
+ "failures": [
+  {
+   "id": "o002",
+   "question": "Kriptovalyuta bilan savdo qilishdan olingan daromad qanday soliqqa tortiladi?",
+   "expected": [],
+   "returned": [
+    "tax_code_2020_art_378",
+    "tax_code_2020_art_369",
+    "tax_code_2020_art_317"
+   ],
+   "refused": false,
+   "gate": "reranker_match",
+   "vector": 0.812
+  },
+  {
+   "id": "o012",
+   "question": "Yakka tartibdagi tadbirkorni ro'yxatdan o'tkazish tartibi qanday?",
+   "expected": [],
+   "returned": [
+    "pf_126_2025_a2_p_6",
+    "vmq_271_2026_a1_p_10",
+    "vmq_253_2024_a1_p_17"
+   ],
+   "refused": false,
+   "gate": "reranker_match",
+   "vector": 0.845
+  }
+ ],
+ "items": [
+  {
+   "id": "d001",
+   "question": "TIEK hujjatlar qabul qilingandan keyin necha kun ichida ko'rikdan o'tkazadi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_31",
+    "vmq_62_2022_a9_p_18"
+   ],
+   "returned_ids": [
+    "vmq_62_2022_a9_p_18",
+    "vmq_62_2022_a9_p_14",
+    "vmq_62_2022_a9_p_35",
+    "vmq_62_2022_a9_p_60",
+    "vmq_253_2024_a1_p_46",
+    "vmq_742_2024_a1_p_16",
+    "reg_2667_2015_a1_p_18",
+    "vmq_62_2022_a9_p_55"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.9,
+   "latency_ms": 2858.0238450012985,
+   "pool_rank": 1,
+   "top_rerank_score": 0.983,
+   "category": "medical_social_expertise"
+  },
+  {
+   "id": "d002",
+   "question": "Sog'lig'im sababli komissiyaga bora olmasam, tibbiy-ijtimoiy ekspertiza uyda o'tkazilishi mumkinmi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_31"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_31",
+    "pq_22_2021_p_3",
+    "vmq_62_2022_a9_p_16",
+    "vmq_62_2022_a9_p_20",
+    "vmq_62_2022_a9_p_6",
+    "vmq_62_2022_a9_p_21",
+    "vmq_62_2022_p_2",
+    "vmq_742_2024_a1_p_3"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.862,
+   "latency_ms": 1812.3580389983545,
+   "pool_rank": 3,
+   "top_rerank_score": 0.969,
+   "category": "medical_social_expertise"
+  },
+  {
+   "id": "d003",
+   "question": "TIEK xulosasidan norozi bo'lsam, necha kun ichida qayerga shikoyat qilishim mumkin?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_62_2022_a9_p_60"
+   ],
+   "returned_ids": [
+    "vmq_62_2022_a9_p_60",
+    "vmq_62_2022_a9_p_18",
+    "vmq_62_2022_a9_p_11",
+    "vmq_271_2026_a2_p_40",
+    "vmq_62_2022_a11_p_12",
+    "vmq_62_2022_a9_p_32",
+    "vmq_62_2022_a8_p_12",
+    "reg_2667_2015_a1_p_18"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.91,
+   "latency_ms": 2277.314300998114,
+   "pool_rank": 1,
+   "top_rerank_score": 0.976,
+   "category": "medical_social_expertise"
+  },
+  {
+   "id": "d004",
+   "question": "Nogironlik birlamchi belgilangan deb qachon hisoblanadi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_62_2022_a9_p_26"
+   ],
+   "returned_ids": [
+    "vmq_62_2022_a9_p_26",
+    "vmq_62_2022_a9_p_19",
+    "law_disability_2020_art_31",
+    "pq_257_2024_p_2",
+    "vmq_742_2024_p_1",
+    "labor_code_2022_art_327",
+    "vmq_62_2022_a9_p_55",
+    "pq_266_2024_p_12"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.843,
+   "latency_ms": 2250.7974110012583,
+   "pool_rank": 1,
+   "top_rerank_score": 0.957,
+   "category": "medical_social_expertise"
+  },
+  {
+   "id": "d005",
+   "question": "Nogironligi bo'lgan shaxsni reabilitatsiya qilishning yakka tartibdagi dasturi nima?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_33"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_33",
+    "law_disability_2020_art_32",
+    "law_disability_2020_art_41",
+    "reg_3360_2022_a1_p_23",
+    "vmq_166_2009_a1_p_2",
+    "vmq_271_2026_a3_p_29",
+    "vmq_486_2022_a2_p_3",
+    "vmq_62_2022_a12_p_5"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.926,
+   "latency_ms": 2483.825507999427,
+   "pool_rank": 1,
+   "top_rerank_score": 0.987,
+   "category": "rehabilitation_prosthetics"
+  },
+  {
+   "id": "d006",
+   "question": "Nogironligi bo'lgan shaxslarga ijtimoiy yordamning qanday turlari ko'rsatiladi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_36"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_36",
+    "law_disability_2020_art_37",
+    "law_disability_2020_art_3",
+    "pf_69_2026_p_3",
+    "pq_410_2023_p_1",
+    "law_disability_2020_art_32",
+    "pq_57_2021_p_3",
+    "pq_5217_2021_p_1"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.935,
+   "latency_ms": 2171.4175779998186,
+   "pool_rank": 1,
+   "top_rerank_score": 0.989,
+   "category": "pensions_and_benefits"
+  },
+  {
+   "id": "d007",
+   "question": "Nogironlik belgisiga ko'ra kamsitish nima va u taqiqlanganmi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_6"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_18",
+    "law_disability_2020_art_6",
+    "law_disability_2020_art_42",
+    "law_disability_2020_art_3",
+    "labor_code_2022_art_4",
+    "labor_code_2022_art_424",
+    "law_disability_2020_art_4",
+    "pf_5270_2017_p_2"
+   ],
+   "first_hit_rank": 2,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.814,
+   "latency_ms": 3057.960097998148,
+   "pool_rank": 2,
+   "top_rerank_score": 0.979,
+   "category": "disability_rights"
+  },
+  {
+   "id": "d008",
+   "question": "Nogironligi bo'lgan shaxslar uy-joy olishda davlatdan qanday yordam oladi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_22"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_22",
+    "law_disability_2020_art_36",
+    "constitution_uz_art_57",
+    "law_disability_2020_art_37",
+    "vmq_737_2021_a1_p_26",
+    "vmq_897_2024_preamble",
+    "vmq_124_2024_a1_p_6",
+    "law_disability_2020_art_20"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.907,
+   "latency_ms": 2294.257428002311,
+   "pool_rank": 1,
+   "top_rerank_score": 0.975,
+   "category": "housing_rights"
+  },
+  {
+   "id": "d009",
+   "question": "Binolarga to'siqsiz kirish uchun qanday shart-sharoitlar yaratilishi kerak?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_23",
+    "law_disability_2020_art_9"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_23",
+    "pq_266_2024_p_7",
+    "pq_266_2024_a5_p_3",
+    "pq_20_2024_p_1",
+    "vmq_376_2025_a5_p_2",
+    "vmq_376_2025_a5_p_5",
+    "pq_20_2024_p_2",
+    "vmq_498_2024_preamble"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.843,
+   "latency_ms": 2139.694612000312,
+   "pool_rank": 10,
+   "top_rerank_score": 0.886,
+   "category": "accessibility_infrastructure"
+  },
+  {
+   "id": "d010",
+   "question": "Jamoat transportida nogironligi bo'lgan yo'lovchilar uchun qanday qulayliklar bo'lishi kerak?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_24"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_24",
+    "pq_266_2024_p_9",
+    "law_disability_2020_art_23",
+    "law_disability_2020_art_9",
+    "vmq_733_2024_p_1",
+    "vmq_377_2025_a1_p_4",
+    "vmq_507_2022_p_1",
+    "reg_2100_2010_a1_p_117"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.91,
+   "latency_ms": 1996.3905490003526,
+   "pool_rank": 1,
+   "top_rerank_score": 0.978,
+   "category": "transport_benefits"
+  },
+  {
+   "id": "d011",
+   "question": "Imo-ishora tili va axborotdan foydalanish huquqi qanday ta'minlanadi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_26"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_26",
+    "constitution_uz_art_33",
+    "law_disability_2020_art_38",
+    "constitution_uz_art_81",
+    "pq_407_2022_p_6",
+    "crpd_2006_art_21",
+    "law_disability_2020_art_41",
+    "law_disability_2020_art_7"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.86,
+   "latency_ms": 2289.362944000459,
+   "pool_rank": 1,
+   "top_rerank_score": 0.927,
+   "category": "accessibility_infrastructure"
+  },
+  {
+   "id": "d012",
+   "question": "Nogironligi bo'lgan shaxs ish o'rinlari kvotasi bo'yicha ishga qanday joylashadi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "labor_code_2022_art_423",
+    "law_disability_2020_art_43"
+   ],
+   "returned_ids": [
+    "labor_code_2022_art_423",
+    "law_disability_2020_art_43",
+    "pf_126_2025_p_3",
+    "vmq_203_2022_p_3",
+    "labor_code_2022_art_96",
+    "vmq_486_2022_a2_p_8",
+    "pf_85_2025_p_4",
+    "vmq_486_2022_a2_p_7"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.886,
+   "latency_ms": 2206.771471999673,
+   "pool_rank": 1,
+   "top_rerank_score": 0.959,
+   "category": "labor_rights"
+  },
+  {
+   "id": "d013",
+   "question": "Nogironligi bo'lgan bolasi bor yolg'iz ota-onaga ishga joylashishda qanday qo'shimcha kafolatlar beriladi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "labor_code_2022_art_96"
+   ],
+   "returned_ids": [
+    "labor_code_2022_art_96",
+    "labor_code_2022_art_399",
+    "labor_code_2022_art_401",
+    "labor_code_2022_art_423",
+    "labor_code_2022_art_227",
+    "child_rights_law_art_28",
+    "pq_74_2023_p_2",
+    "tax_code_2020_art_374"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.864,
+   "latency_ms": 2350.0715420013876,
+   "pool_rank": 1,
+   "top_rerank_score": 0.973,
+   "category": "labor_rights"
+  },
+  {
+   "id": "d014",
+   "question": "2026-yil 1-iyuldan nogironlik pensiyasining eng kam miqdori qancha?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "pf_115_2026_a1_p_1"
+   ],
+   "returned_ids": [
+    "pf_115_2026_p_1",
+    "pf_115_2026_a1_p_1",
+    "pf_196_2023_p_2",
+    "pf_128_2022_a1_p_4",
+    "pf_115_2026_a1_p_2",
+    "pf_128_2022_p_2",
+    "pf_74_2022_p_1",
+    "pension_provision_law_art_26"
+   ],
+   "first_hit_rank": 2,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.89,
+   "latency_ms": 2332.3441489992547,
+   "pool_rank": 2,
+   "top_rerank_score": 0.981,
+   "category": "pensions_and_benefits"
+  },
+  {
+   "id": "d015",
+   "question": "Konstitutsiya nogironligi bo'lgan shaxslarning huquqlarini qanday himoya qiladi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "constitution_uz_art_57"
+   ],
+   "returned_ids": [
+    "constitution_uz_art_57",
+    "law_disability_2020_art_28",
+    "law_disability_2020_art_18",
+    "law_disability_2020_art_11",
+    "law_disability_2020_art_13",
+    "o_rq_955_preamble",
+    "law_disability_2020_art_16",
+    "law_disability_2020_art_19"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.874,
+   "latency_ms": 1902.413150000939,
+   "pool_rank": 6,
+   "top_rerank_score": 0.966,
+   "category": "disability_rights"
+  },
+  {
+   "id": "d016",
+   "question": "Nogironligi bo'lgan bolalar uchun kunduzgi parvarish xizmati kimlar tomonidan tashkil etilishi mumkin?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_126_2025_p_3",
+    "vmq_126_2025_p_2"
+   ],
+   "returned_ids": [
+    "vmq_126_2025_p_3",
+    "pq_41_2025_p_1",
+    "vmq_48_2026_a4_p_7",
+    "vmq_126_2025_a1_p_7",
+    "vmq_126_2025_a1_p_18",
+    "vmq_126_2025_a2_p_2",
+    "vmq_126_2025_a1_p_6",
+    "vmq_126_2025_a1_p_5"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.907,
+   "latency_ms": 1849.2441090020293,
+   "pool_rank": 6,
+   "top_rerank_score": 0.981,
+   "category": "social_services"
+  },
+  {
+   "id": "d017",
+   "question": "Bolaning alohida ta'lim ehtiyojlariga muhtojligi kim tomonidan aniqlanadi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_46_2024_p_3"
+   ],
+   "returned_ids": [
+    "vmq_46_2024_p_3",
+    "pq_292_2026_p_3",
+    "vmq_46_2024_a1_p_7",
+    "pq_292_2026_preamble",
+    "preschool_education_law_art_3",
+    "vmq_46_2024_a1_p_26",
+    "vmq_46_2024_a1_p_28",
+    "vmq_818_2025_a3_p_2"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.877,
+   "latency_ms": 2408.865576999233,
+   "pool_rank": 9,
+   "top_rerank_score": 0.978,
+   "category": "inclusive_education"
+  },
+  {
+   "id": "d018",
+   "question": "Protez-ortopediya moslamalari bilan ta'minlashda vaucher tizimi joriy etilmagan hududlarda qanday tartib qo'llanadi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_253_2024_p_5"
+   ],
+   "returned_ids": [
+    "vmq_253_2024_p_5",
+    "pq_88_2024_p_2",
+    "vmq_253_2024_a1_p_55",
+    "vmq_253_2024_p_1",
+    "vmq_253_2024_a1_p_60",
+    "pq_88_2024_p_5",
+    "vmq_253_2024_a1_p_12",
+    "vmq_253_2024_a1_p_14"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.894,
+   "latency_ms": 2252.8493969984993,
+   "pool_rank": 1,
+   "top_rerank_score": 0.985,
+   "category": "rehabilitation_prosthetics"
+  },
+  {
+   "id": "d019",
+   "question": "Ulug' Vatan urushi nogironlari uchun transportdan imtiyozli foydalanish qachondan joriy etiladi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_440_2026_p_1"
+   ],
+   "returned_ids": [
+    "vmq_440_2026_p_1",
+    "vmq_440_2026_a1_p_2",
+    "vmq_440_2026_p_8",
+    "vmq_440_2026_a4_p_1",
+    "vmq_440_2026_p_2",
+    "vmq_440_2026_a1_p_4",
+    "vmq_440_2026_a1_p_12",
+    "vmq_440_2026_p_5"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.912,
+   "latency_ms": 3907.558186001552,
+   "pool_rank": 1,
+   "top_rerank_score": 0.961,
+   "category": "transport_benefits"
+  },
+  {
+   "id": "d020",
+   "question": "I va II guruh nogironlari xizmat turar joyidan boshqa turar joy berilgan holda ko'chiriladimi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "housing_code_art_80"
+   ],
+   "returned_ids": [
+    "housing_code_art_80",
+    "vmq_124_2024_a1_p_70",
+    "law_disability_2020_art_22",
+    "vmq_447_2026_a1_p_29",
+    "o_rq_1149_art_44",
+    "pf_69_2026_p_13",
+    "pf_69_2026_p_5",
+    "housing_code_art_84"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.904,
+   "latency_ms": 4356.904580999981,
+   "pool_rank": 1,
+   "top_rerank_score": 0.98,
+   "category": "housing_rights"
+  },
+  {
+   "id": "d021",
+   "question": "Odil sudlovdan foydalanish huquqi nogironligi bo'lgan shaxslar uchun qanday kafolatlanadi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_30_1"
+   ],
+   "returned_ids": [
+    "o_rq_955_art_1",
+    "law_disability_2020_art_30_1",
+    "constitution_uz_art_29",
+    "law_disability_2020_art_18",
+    "o_rq_955_preamble",
+    "law_disability_2020_art_35",
+    "law_disability_2020_art_26",
+    "law_disability_2020_art_36"
+   ],
+   "first_hit_rank": 2,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.921,
+   "latency_ms": 3535.8197269997618,
+   "pool_rank": 1,
+   "top_rerank_score": 0.975,
+   "category": "legal_protection"
+  },
+  {
+   "id": "d022",
+   "question": "Nogironligi bo'lgan shaxslarga bepul tibbiy yordam ko'rsatishning davlat kafolatlari nimalardan iborat?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_35"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_35",
+    "law_disability_2020_art_36",
+    "child_rights_law_art_28",
+    "law_disability_2020_art_32",
+    "psychiatric_care_law_art_6",
+    "pq_5217_2021_p_1",
+    "law_disability_2020_art_11",
+    "healthcare_law_art_22"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.877,
+   "latency_ms": 4063.098799000727,
+   "pool_rank": 1,
+   "top_rerank_score": 0.967,
+   "category": "healthcare"
+  },
+  {
+   "id": "d023",
+   "question": "Nogironligi bo'lgan shaxslarning inklyuziv ta'lim olish huquqi qanday kafolatlanadi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_38",
+    "law_disability_2020_art_39",
+    "law_disability_2020_art_40"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_38",
+    "law_disability_2020_art_40",
+    "law_disability_2020_art_11",
+    "constitution_uz_art_50",
+    "child_rights_law_art_29",
+    "constitution_uz_art_57",
+    "law_disability_2020_art_41",
+    "law_disability_2020_art_7"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.894,
+   "latency_ms": 5638.043098002527,
+   "pool_rank": 3,
+   "top_rerank_score": 0.984,
+   "category": "inclusive_education"
+  },
+  {
+   "id": "d024",
+   "question": "Oliy ta'limga kirishda nogironligi bo'lgan abituriyentlar uchun qanday alohida qabul parametrlari bor?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_578_2025_a1_p_47"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_40",
+    "vmq_578_2025_a1_p_47",
+    "pq_292_2026_p_4",
+    "pf_5270_2017_p_6",
+    "vmq_417_2018_a1_p_2",
+    "vmq_417_2018_a1_p_10",
+    "vmq_417_2018_a1_p_12",
+    "vmq_417_2018_a1_p_7"
+   ],
+   "first_hit_rank": 2,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.905,
+   "latency_ms": 3696.555451999302,
+   "pool_rank": 5,
+   "top_rerank_score": 0.97,
+   "category": "inclusive_education"
+  },
+  {
+   "id": "d025",
+   "question": "Davlat organlariga murojaat qilish huquqi nogironligi bo'lgan shaxslar uchun qanday amalga oshiriladi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_28"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_28",
+    "law_disability_2020_art_10",
+    "law_disability_2020_art_18",
+    "law_disability_2020_art_38",
+    "law_disability_2020_art_13",
+    "law_disability_2020_art_35",
+    "law_disability_2020_art_14",
+    "law_disability_2020_art_26"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.917,
+   "latency_ms": 2144.9390739981027,
+   "pool_rank": 1,
+   "top_rerank_score": 0.976,
+   "category": "legal_protection"
+  },
+  {
+   "id": "d026",
+   "question": "BMT Konvensiyasi bo'yicha nogironlarning ta'lim olish huquqi nimani anglatadi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "crpd_2006_art_24"
+   ],
+   "returned_ids": [
+    "crpd_2006_art_24",
+    "crpd_2006_art_26",
+    "crpd_2006_art_1",
+    "crpd_2006_art_27",
+    "crpd_2006_art_30",
+    "crpd_2006_art_4",
+    "crpd_2006_art_7",
+    "crpd_2006_art_28"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.891,
+   "latency_ms": 2298.8206000009086,
+   "pool_rank": 1,
+   "top_rerank_score": 0.918,
+   "category": "international_treaty"
+  },
+  {
+   "id": "d027",
+   "question": "Konvensiyaga ko'ra nogironlarning mehnat qilish huquqi qanday e'tirof etiladi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "crpd_2006_art_27"
+   ],
+   "returned_ids": [
+    "crpd_2006_art_27",
+    "law_disability_2020_art_42",
+    "labor_code_2022_art_425",
+    "crpd_2006_art_19",
+    "crpd_2006_art_4",
+    "crpd_2006_preamble",
+    "crpd_2006_art_30",
+    "law_disability_2020_art_43"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.865,
+   "latency_ms": 2813.7948989970027,
+   "pool_rank": 2,
+   "top_rerank_score": 0.965,
+   "category": "international_treaty"
+  },
+  {
+   "id": "d028",
+   "question": "Ruhiy holati buzilgan nogironligi bo'lgan shaxslar uchun internat muassasalarini isloh qilish tartibi qanday?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_271_2026_p_1",
+    "vmq_271_2026_p_2",
+    "vmq_271_2026_preamble"
+   ],
+   "returned_ids": [
+    "vmq_271_2026_a7_p_1",
+    "vmq_271_2026_a6_p_1",
+    "vmq_271_2026_p_1",
+    "vmq_271_2026_p_2",
+    "pf_69_2026_a2_p_4",
+    "vmq_271_2026_a2_p_1",
+    "vmq_271_2026_a3_p_28",
+    "pf_69_2026_p_13"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.891,
+   "latency_ms": 2035.8827019990713,
+   "pool_rank": 1,
+   "top_rerank_score": 0.97,
+   "category": "social_services"
+  },
+  {
+   "id": "d029",
+   "question": "Штат қисқарганда ногиронлиги бўлган ходимларга қандай афзаллик берилади?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "labor_code_2022_art_167"
+   ],
+   "returned_ids": [
+    "labor_code_2022_art_167",
+    "labor_code_2022_art_429",
+    "law_disability_2020_art_42",
+    "law_disability_2020_art_43",
+    "pf_258_2025_a4_p_20",
+    "labor_code_2022_art_218",
+    "vmq_486_2022_p_1",
+    "labor_code_2022_art_227"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.852,
+   "latency_ms": 2059.4299679978576,
+   "pool_rank": 1,
+   "top_rerank_score": 0.945,
+   "category": "labor_rights"
+  },
+  {
+   "id": "d030",
+   "question": "В какой срок комиссия МСЭК обязана провести освидетельствование после получения документов?",
+   "language": "ru",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_31",
+    "vmq_62_2022_a9_p_18"
+   ],
+   "returned_ids": [
+    "vmq_62_2022_a9_p_18",
+    "vmq_62_2022_a9_p_14",
+    "vmq_62_2022_preamble",
+    "vmq_62_2022_a9_p_60",
+    "vmq_62_2022_a9_p_21",
+    "law_disability_2020_art_31",
+    "vmq_62_2022_a9_p_24",
+    "vmq_62_2022_a9_p_11"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.914,
+   "latency_ms": 19957.849927002826,
+   "pool_rank": 1,
+   "top_rerank_score": 0.971,
+   "category": "medical_social_expertise"
+  },
+  {
+   "id": "d031",
+   "question": "Что гарантирует Конституция Узбекистана лицам с инвалидностью?",
+   "language": "ru",
+   "out_of_scope": false,
+   "expected_ids": [
+    "constitution_uz_art_57"
+   ],
+   "returned_ids": [
+    "constitution_uz_art_57",
+    "constitution_uz_art_19",
+    "constitution_uz_art_50",
+    "constitution_uz_art_48",
+    "constitution_uz_art_23",
+    "law_disability_2020_art_36",
+    "law_disability_2020_art_38",
+    "constitution_uz_art_70"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.896,
+   "latency_ms": 5239.765950002038,
+   "pool_rank": 1,
+   "top_rerank_score": 0.962,
+   "category": "disability_rights"
+  },
+  {
+   "id": "d032",
+   "question": "Каков минимальный размер пенсии по инвалидности с 1 июля 2026 года?",
+   "language": "ru",
+   "out_of_scope": false,
+   "expected_ids": [
+    "pf_115_2026_a1_p_1"
+   ],
+   "returned_ids": [
+    "pf_115_2026_p_1",
+    "pf_115_2026_a1_p_1",
+    "pf_115_2026_a1_p_2",
+    "pf_74_2022_p_1",
+    "pf_128_2022_a1_p_4",
+    "pf_115_2026_a1_p_3",
+    "pf_196_2023_p_2",
+    "pf_128_2022_p_2"
+   ],
+   "first_hit_rank": 2,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.898,
+   "latency_ms": 8144.009775998711,
+   "pool_rank": 3,
+   "top_rerank_score": 0.975,
+   "category": "pensions_and_benefits"
+  },
+  {
+   "id": "d033",
+   "question": "Как обжаловать заключение медико-социальной экспертной комиссии?",
+   "language": "ru",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_62_2022_a9_p_60"
+   ],
+   "returned_ids": [
+    "vmq_62_2022_a9_p_60",
+    "healthcare_law_art_37",
+    "vmq_62_2022_a9_p_35",
+    "law_disability_2020_art_31",
+    "constitution_uz_art_55",
+    "vmq_62_2022_a8_p_11",
+    "vmq_700_2023_a4_p_22",
+    "vmq_62_2022_a8_p_12"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.897,
+   "latency_ms": 6423.902007001743,
+   "pool_rank": 1,
+   "top_rerank_score": 0.946,
+   "category": "medical_social_expertise"
+  },
+  {
+   "id": "d034",
+   "question": "Имеет ли лицо с инвалидностью право на трудоустройство в счёт квоты рабочих мест?",
+   "language": "ru",
+   "out_of_scope": false,
+   "expected_ids": [
+    "labor_code_2022_art_423",
+    "law_disability_2020_art_43"
+   ],
+   "returned_ids": [
+    "labor_code_2022_art_423",
+    "law_disability_2020_art_43",
+    "labor_code_2022_art_96",
+    "law_disability_2020_art_42",
+    "labor_code_2022_art_425",
+    "constitution_uz_art_57",
+    "law_disability_2020_art_14",
+    "pf_126_2025_p_3"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.895,
+   "latency_ms": 7351.62456299804,
+   "pool_rank": 1,
+   "top_rerank_score": 0.966,
+   "category": "labor_rights"
+  },
+  {
+   "id": "d035",
+   "question": "Ногиронлик пенсиясининг энг кам миқдори қанча?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "pf_115_2026_a1_p_1"
+   ],
+   "returned_ids": [
+    "pf_115_2026_a1_p_1",
+    "pf_196_2023_p_2",
+    "pf_115_2026_p_1",
+    "pf_74_2022_p_1",
+    "pf_128_2022_p_2",
+    "pf_128_2022_a1_p_4",
+    "pf_115_2026_a1_p_3",
+    "pf_128_2022_a1_p_2"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.889,
+   "latency_ms": 1786.0499010021158,
+   "pool_rank": 1,
+   "top_rerank_score": 0.972,
+   "category": "pensions_and_benefits"
+  },
+  {
+   "id": "d036",
+   "question": "ТИЭК хулосасидан норози бўлсам, қаерга шикоят қилишим мумкин?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_62_2022_a9_p_60"
+   ],
+   "returned_ids": [
+    "vmq_62_2022_a9_p_60",
+    "vmq_62_2022_a8_p_12",
+    "vmq_62_2022_a9_p_35",
+    "vmq_62_2022_a8_p_11",
+    "reg_2839_2016_a1_p_20",
+    "vmq_271_2026_a2_p_40",
+    "vmq_62_2022_a11_p_11",
+    "vmq_700_2023_a4_p_22"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.9,
+   "latency_ms": 1940.8222579986614,
+   "pool_rank": 1,
+   "top_rerank_score": 0.976,
+   "category": "medical_social_expertise"
+  },
+  {
+   "id": "d037",
+   "question": "How long does the medical-social expert commission have to examine a person after receiving the documents?",
+   "language": "en",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_31",
+    "vmq_62_2022_a9_p_18"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_31",
+    "vmq_62_2022_a9_p_18",
+    "pq_22_2021_p_3",
+    "vmq_62_2022_a11_p_12",
+    "vmq_62_2022_a9_p_14",
+    "vmq_62_2022_a9_p_55",
+    "vmq_62_2022_a9_p_11",
+    "vmq_62_2022_a9_p_60"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.919,
+   "latency_ms": 18277.408611000283,
+   "pool_rank": 3,
+   "top_rerank_score": 0.968,
+   "category": "medical_social_expertise"
+  },
+  {
+   "id": "d038",
+   "question": "What does the Constitution say about the rights of persons with disabilities?",
+   "language": "en",
+   "out_of_scope": false,
+   "expected_ids": [
+    "constitution_uz_art_57"
+   ],
+   "returned_ids": [
+    "constitution_uz_art_57",
+    "law_disability_2020_art_18",
+    "law_disability_2020_art_21",
+    "law_disability_2020_art_28",
+    "law_disability_2020_art_13",
+    "law_disability_2020_art_4",
+    "law_disability_2020_art_3",
+    "law_disability_2020_art_11"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.861,
+   "latency_ms": 6896.064551998279,
+   "pool_rank": 1,
+   "top_rerank_score": 0.954,
+   "category": "disability_rights"
+  },
+  {
+   "id": "o001",
+   "question": "Mas'uliyati cheklangan jamiyat (MChJ) ochish uchun qanday hujjatlar kerak?",
+   "language": "uz",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "vmq_247_2018_p_4",
+    "election_code_art_49",
+    "tax_code_2020_art_317",
+    "pq_3909_2018_p_6",
+    "vmq_1_2011_preamble",
+    "admin_liability_code_art_313_8",
+    "law_disability_2020_art_10",
+    "pf_126_2025_p_3"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.797,
+   "latency_ms": 2177.2172860000865,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  },
+  {
+   "id": "o002",
+   "question": "Kriptovalyuta bilan savdo qilishdan olingan daromad qanday soliqqa tortiladi?",
+   "language": "uz",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "tax_code_2020_art_378",
+    "tax_code_2020_art_369",
+    "tax_code_2020_art_317",
+    "tax_code_2020_art_337",
+    "tax_code_2020_art_483",
+    "tax_code_2020_art_243",
+    "tax_code_2020_art_408",
+    "tax_code_2020_art_75"
+   ],
+   "first_hit_rank": null,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.812,
+   "latency_ms": 2291.367995003384,
+   "pool_rank": null,
+   "top_rerank_score": 0.767,
+   "category": ""
+  },
+  {
+   "id": "o003",
+   "question": "Ertaga Toshkentda ob-havo qanday bo'ladi?",
+   "language": "uz",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "constitution_uz_art_6",
+    "constitution_uz_art_136",
+    "constitution_uz_art_124",
+    "election_code_art_49",
+    "pf_69_2026_a2_p_25",
+    "pq_41_2025_p_1",
+    "pq_111_2022_preamble",
+    "pq_266_2024_p_5"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.78,
+   "latency_ms": 1719.7575480022351,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  },
+  {
+   "id": "o004",
+   "question": "Как получить туристическую визу в Германию?",
+   "language": "ru",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "vmq_498_2024_a1_p_2",
+    "vmq_498_2024_a1_p_8",
+    "pq_20_2024_p_1",
+    "vmq_498_2024_a1_p_7",
+    "vmq_498_2024_a1_p_6",
+    "vmq_498_2024_p_3",
+    "vmq_309_2018_a1_p_42",
+    "constitution_uz_art_44"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.786,
+   "latency_ms": 4770.529386998533,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  },
+  {
+   "id": "o005",
+   "question": "Футбол бўйича жаҳон чемпионати қачон бошланади?",
+   "language": "uz",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "pq_389_2024_a3_p_13",
+    "pq_389_2024_a3_p_14",
+    "pq_389_2024_p_20",
+    "pq_389_2024_a3_p_8",
+    "pq_389_2024_a3_p_7",
+    "pq_389_2024_a3_p_5",
+    "pq_389_2024_a3_p_6",
+    "pq_389_2024_p_1"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.793,
+   "latency_ms": 2131.34915000046,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  },
+  {
+   "id": "o006",
+   "question": "What is the capital of France?",
+   "language": "en",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "constitution_uz_art_6",
+    "pq_390_2022_p_4",
+    "pq_20_2026_preamble",
+    "pf_5454_2018_a1_p_2",
+    "pq_390_2022_p_2",
+    "pq_49_2026_a11_p_6",
+    "pf_69_2026_a2_p_13",
+    "pq_270_2022_p_9"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.764,
+   "latency_ms": 8237.28018300244,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  },
+  {
+   "id": "o007",
+   "question": "Avtomobil sotib olishda QQS stavkasi qancha foizni tashkil etadi?",
+   "language": "uz",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "tax_code_2020_art_337",
+    "tax_code_2020_art_414",
+    "pf_126_2025_preamble",
+    "tax_code_2020_art_483",
+    "tax_code_2020_art_429",
+    "pq_266_2024_p_5",
+    "pf_5270_2017_p_5",
+    "vmq_126_2025_a1_p_34"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.78,
+   "latency_ms": 2150.0944100007473,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  },
+  {
+   "id": "o008",
+   "question": "Qaysi dasturlash tilini o'rganish yaxshiroq: Python yoki Java?",
+   "language": "uz",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "vmq_341_2022_a1_p_2",
+    "vmq_526_2026_a2_p_26",
+    "constitution_uz_art_35",
+    "constitution_uz_art_106",
+    "constitution_uz_art_12",
+    "pq_292_2026_preamble",
+    "vmq_700_2023_a3_p_18",
+    "vmq_526_2026_a1_p_5"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.727,
+   "latency_ms": 2153.8396430005378,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  },
+  {
+   "id": "o009",
+   "question": "Как испечь пирог с яблоками?",
+   "language": "ru",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "constitution_uz_art_44",
+    "constitution_uz_art_136",
+    "tax_code_2020_art_408",
+    "constitution_uz_art_42",
+    "vmq_893_2024_a10_p_34",
+    "vmq_48_2026_a1_p_34",
+    "vmq_271_2026_a1_p_34_2",
+    "vmq_175_2025_preamble"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.747,
+   "latency_ms": 10947.898930997326,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  },
+  {
+   "id": "o010",
+   "question": "Toshkentda eng yaxshi restoranlar qaysilar?",
+   "language": "uz",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "constitution_uz_art_78",
+    "constitution_uz_art_9",
+    "constitution_uz_art_106",
+    "constitution_uz_art_6",
+    "constitution_uz_art_42",
+    "pq_20_2026_preamble",
+    "pq_49_2026_a11_p_6",
+    "pf_6195_2021_p_1"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.765,
+   "latency_ms": 3866.4410900018993,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  },
+  {
+   "id": "h001",
+   "question": "TMEKga borish uchun qaysi hujjat kerak bo'ladi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_62_2022_a9_p_13"
+   ],
+   "returned_ids": [
+    "vmq_62_2022_a12_p_2",
+    "vmq_62_2022_a9_p_15",
+    "reg_2667_3_2021_a1_p_3",
+    "law_disability_2020_art_31",
+    "vmq_62_2022_a9_p_13",
+    "vmq_62_2022_preamble",
+    "vmq_62_2022_a9_p_21",
+    "vmq_62_2022_a9_p_14"
+   ],
+   "first_hit_rank": 5,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.836,
+   "latency_ms": 5433.365218999825,
+   "pool_rank": 10,
+   "top_rerank_score": 0.805,
+   "category": "medical_social_expertise"
+  },
+  {
+   "id": "h002",
+   "question": "nogironlik muddati tugayapti, qayta ko'rik haqida qachon xabar berishadi",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_62_2022_a9_p_55"
+   ],
+   "returned_ids": [
+    "vmq_62_2022_a9_p_55",
+    "vmq_62_2022_a9_p_59",
+    "vmq_62_2022_a9_p_26",
+    "vmq_253_2024_a1_p_9",
+    "vmq_62_2022_a9_p_31",
+    "vmq_271_2026_a2_p_41",
+    "law_disability_2020_art_31",
+    "pension_provision_law_art_55"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.899,
+   "latency_ms": 3742.965033001383,
+   "pool_rank": 2,
+   "top_rerank_score": 0.974,
+   "category": "medical_social_expertise"
+  },
+  {
+   "id": "h003",
+   "question": "o'zgalar parvarishiga muhtoj bolaning onasiga qancha nafaqa to'lanadi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "pf_115_2026_a1_p_7"
+   ],
+   "returned_ids": [
+    "pf_196_2023_p_2",
+    "pf_115_2026_a1_p_7",
+    "pf_74_2022_p_2",
+    "pq_258_2022_p_1",
+    "pf_128_2022_a1_p_5",
+    "vmq_119_2023_a1_p_62",
+    "vmq_893_2024_a6_p_45",
+    "labor_code_2022_art_237"
+   ],
+   "first_hit_rank": 2,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.886,
+   "latency_ms": 2162.065288001031,
+   "pool_rank": 20,
+   "top_rerank_score": 0.928,
+   "category": "pensions_and_benefits"
+  },
+  {
+   "id": "h004",
+   "question": "vaucher tizimi bo'lmagan hududda protez qanday olinadi",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_253_2024_p_5"
+   ],
+   "returned_ids": [
+    "vmq_253_2024_p_5",
+    "pq_88_2024_p_2",
+    "vmq_253_2024_a1_p_55",
+    "vmq_253_2024_a1_p_12",
+    "vmq_253_2024_a1_p_3",
+    "vmq_253_2024_a1_p_54",
+    "vmq_253_2024_p_1",
+    "vmq_253_2024_a1_p_60"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.847,
+   "latency_ms": 2185.6148280021443,
+   "pool_rank": 7,
+   "top_rerank_score": 0.971,
+   "category": "rehabilitation_prosthetics"
+  },
+  {
+   "id": "h005",
+   "question": "ногирон абитуриентлар ОТМга кираётганда имтиёзлар борми?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_578_2025_a1_p_47"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_40",
+    "vmq_578_2025_a1_p_47",
+    "vmq_417_2018_a1_p_6",
+    "law_disability_2020_art_38",
+    "vmq_417_2018_a1_p_13",
+    "vmq_417_2018_a1_p_12",
+    "pf_5270_2017_p_6",
+    "vmq_417_2018_a1_p_2"
+   ],
+   "first_hit_rank": 2,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.873,
+   "latency_ms": 1987.1321649989113,
+   "pool_rank": 7,
+   "top_rerank_score": 0.929,
+   "category": "inclusive_education"
+  },
+  {
+   "id": "h006",
+   "question": "Ulug' Vatan urushi nogironi yilda necha marta bepul yo'l chiptasi oladi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_440_2026_a1_p_4"
+   ],
+   "returned_ids": [
+    "vmq_440_2026_a4_p_1",
+    "vmq_440_2026_a1_p_4",
+    "vmq_440_2026_p_1",
+    "vmq_440_2026_p_2",
+    "vmq_733_2024_a1_p_4",
+    "vmq_440_2026_preamble",
+    "vmq_440_2026_a1_p_13",
+    "vmq_733_2024_p_1"
+   ],
+   "first_hit_rank": 2,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.856,
+   "latency_ms": 2630.383948002418,
+   "pool_rank": 2,
+   "top_rerank_score": 0.929,
+   "category": "transport_benefits"
+  },
+  {
+   "id": "h007",
+   "question": "imkoniyati cheklangan fuqarolarni uy-joy uchun navbatga qo'yish kim tomonidan amalga oshiriladi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_22"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_22",
+    "vmq_124_2024_a1_p_30",
+    "constitution_uz_art_47",
+    "vmq_764_2018_p_5",
+    "vmq_285_2018_a1_p_2",
+    "vmq_737_2021_a1_p_5",
+    "vmq_285_2018_a1_p_10",
+    "vmq_285_2018_a1_p_11"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.843,
+   "latency_ms": 2294.222239001101,
+   "pool_rank": 1,
+   "top_rerank_score": 0.914,
+   "category": "housing_rights"
+  },
+  {
+   "id": "h008",
+   "question": "nogironligi bor odam TIEK qaroridan norozi bo'lsa sudga murojaat qila oladimi",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "vmq_62_2022_a9_p_60"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_28",
+    "vmq_62_2022_a9_p_60",
+    "vmq_62_2022_a11_p_11",
+    "reg_3171_2019_a1_p_37",
+    "vmq_62_2022_a8_p_12",
+    "vmq_271_2026_a2_p_40",
+    "vmq_498_2024_a1_p_20",
+    "vmq_62_2022_preamble"
+   ],
+   "first_hit_rank": 2,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.871,
+   "latency_ms": 2566.485309998825,
+   "pool_rank": 2,
+   "top_rerank_score": 0.96,
+   "category": "legal_protection"
+  },
+  {
+   "id": "h009",
+   "question": "Davlat nogironlarga dori-darmon bilan ta'minlashni kafolatlaydimi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_36",
+    "law_disability_2020_art_35"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_36",
+    "law_disability_2020_art_35",
+    "law_disability_2020_art_12",
+    "law_disability_2020_art_13",
+    "law_disability_2020_art_43",
+    "pf_5270_2017_p_13",
+    "law_disability_2020_art_38",
+    "pf_258_2025_a4_p_41"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.865,
+   "latency_ms": 2015.6670860014856,
+   "pool_rank": 2,
+   "top_rerank_score": 0.958,
+   "category": "healthcare"
+  },
+  {
+   "id": "h010",
+   "question": "yetaklovchi it bilan jamoat binosiga kirish mumkinmi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_23"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_23",
+    "o_rq_955_art_1",
+    "law_disability_2020_art_21",
+    "law_disability_2020_art_17",
+    "law_disability_2020_art_24",
+    "pq_266_2024_p_12",
+    "labor_code_2022_art_540",
+    "pq_111_2022_preamble"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.8,
+   "latency_ms": 2497.153922999132,
+   "pool_rank": 1,
+   "top_rerank_score": 0.956,
+   "category": "accessibility_infrastructure"
+  },
+  {
+   "id": "h011",
+   "question": "Какие права на доступ к информации есть у лиц с нарушением зрения (Брайль)?",
+   "language": "ru",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_26",
+    "law_disability_2020_art_3"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_26",
+    "law_disability_2020_art_3",
+    "law_disability_2020_art_38",
+    "law_disability_2020_art_7",
+    "law_disability_2020_art_18",
+    "law_disability_2020_art_9",
+    "crpd_2006_art_21",
+    "o_rq_955_art_1"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.865,
+   "latency_ms": 6804.202758001338,
+   "pool_rank": 1,
+   "top_rerank_score": 0.946,
+   "category": "accessibility_infrastructure"
+  },
+  {
+   "id": "h012",
+   "question": "Kamsitishga yo'l qo'ymaslik: ishga qabul qilishda nogironligi sababli rad etish mumkinmi?",
+   "language": "uz",
+   "out_of_scope": false,
+   "expected_ids": [
+    "law_disability_2020_art_42",
+    "law_disability_2020_art_6",
+    "labor_code_2022_art_4"
+   ],
+   "returned_ids": [
+    "law_disability_2020_art_42",
+    "law_disability_2020_art_18",
+    "labor_code_2022_art_423",
+    "law_disability_2020_art_6",
+    "pq_3782_2018_p_5",
+    "law_disability_2020_art_43",
+    "labor_code_2022_art_426",
+    "labor_code_2022_art_424"
+   ],
+   "first_hit_rank": 1,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.867,
+   "latency_ms": 2249.7538679999707,
+   "pool_rank": 2,
+   "top_rerank_score": 0.935,
+   "category": "labor_rights"
+  },
+  {
+   "id": "o011",
+   "question": "Shahar ichida avtomobil harakati uchun tezlik chegarasi qancha?",
+   "language": "uz",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "pq_111_2022_preamble",
+    "vmq_172_2022_preamble",
+    "admin_liability_code_art_128_5",
+    "vmq_172_2022_a1_p_6",
+    "vmq_172_2022_a1_p_92",
+    "pf_5270_2017_p_5",
+    "vmq_172_2022_a1_p_176",
+    "vmq_183_2018_p_5"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.828,
+   "latency_ms": 2231.3311170000816,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  },
+  {
+   "id": "o012",
+   "question": "Yakka tartibdagi tadbirkorni ro'yxatdan o'tkazish tartibi qanday?",
+   "language": "uz",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "pf_126_2025_a2_p_6",
+    "vmq_271_2026_a1_p_10",
+    "vmq_253_2024_a1_p_17",
+    "tax_code_2020_art_408",
+    "law_disability_2020_art_33",
+    "vmq_405_2025_a1_p_5",
+    "vmq_126_2025_a5_p_1",
+    "pq_390_2022_p_7"
+   ],
+   "first_hit_rank": null,
+   "refused": false,
+   "gate_reason": "reranker_match",
+   "best_vector_score": 0.845,
+   "latency_ms": 1940.1474119986233,
+   "pool_rank": null,
+   "top_rerank_score": 0.919,
+   "category": ""
+  },
+  {
+   "id": "o014",
+   "question": "Ko'chmas mulkni notarial tasdiqlash uchun qancha to'lanadi?",
+   "language": "uz",
+   "out_of_scope": true,
+   "expected_ids": [],
+   "returned_ids": [
+    "o_rq_1149_art_41",
+    "vmq_378_2025_a1_p_4",
+    "tax_code_2020_art_483",
+    "tax_code_2020_art_378",
+    "tax_code_2020_art_421",
+    "civil_code_1_art_1126",
+    "constitution_uz_art_107",
+    "o_rq_1149_art_44"
+   ],
+   "first_hit_rank": null,
+   "refused": true,
+   "gate_reason": "low_reranker_score",
+   "best_vector_score": 0.812,
+   "latency_ms": 2081.3863900002616,
+   "pool_rank": null,
+   "top_rerank_score": null,
+   "category": ""
+  }
+ ]
+}

@@ -78,7 +78,7 @@ def telegram_sources_block(citations: List[StructuredCitation], language: str = 
     if not lines:
         return ""
     heading = "📚 <b>Источники</b>" if language == "ru" else "📚 <b>Manbalar</b>"
-    return heading + "\n" + "\n".join(lines)
+    return heading + "\n\n" + "\n\n".join(lines)
 
 
 def to_plain_text(markdown_text: str) -> str:
@@ -96,6 +96,8 @@ def to_plain_text(markdown_text: str) -> str:
     text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
     # Images ![alt](url) -> ""
     text = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"", text)
+    # Horizontal rules
+    text = re.sub(r"^\s*(?:---+|\*\*\*+|___+)\s*$", "", text, flags=re.MULTILINE)
     # Bold / italic
     text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
     text = re.sub(r"__([^_]+)__", r"\1", text)
@@ -145,12 +147,34 @@ def to_telegram_html(markdown_text: str) -> str:
     return html.escape(to_plain_text(markdown_text), quote=False)
 
 
+def _decorate_section_heading(line: str) -> str:
+    """Adds subtle visual icons to standalone bold section headings in Telegram HTML."""
+    m = re.match(r"^<b>([^<]+)</b>(:?)$", line.strip())
+    if not m:
+        if line.strip().startswith("<b>Qisqa javob:") or line.strip().startswith("<b>Короткий ответ:"):
+            return "⚖️ " + line.strip()
+        return line
+    heading_inner = m.group(1).strip()
+    trail = m.group(2)
+    # Skip if already starts with an emoji/symbol
+    if heading_inner and not heading_inner[0].isalnum():
+        return line
+    low = heading_inner.lower()
+    if any(k in low for k in ("nima qilish", "qadam", "murojaat", "tartib", "что делать", "порядок", "шаг", "what to do", "steps")):
+        return f"📋 <b>{heading_inner}{trail}</b>"
+    if any(k in low for k in ("yordam", "imtiyoz", "huquq", "shart", "toifa", "льгот", "помощ", "прав", "услов", "benefit", "right")):
+        return f"📌 <b>{heading_inner}{trail}</b>"
+    return line
+
+
 def _markdown_to_telegram_html(markdown_text: str) -> str:
     """
     Converts markdown to Telegram-compatible HTML:
     - Escapes &, <, > in regular text
-    - Headings -> bold lines (<b>Heading</b>)
-    - List items -> • Item
+    - Removes raw horizontal rules (---)
+    - Wraps disclaimer (*Eslatma:...*) in a clean <blockquote><i>ℹ️ ...</i></blockquote>
+    - Headings -> bold lines (<b>Heading</b>) with contextual icons
+    - List items -> spaced • Item and <b>1.</b> Item for clean mobile readability
     - Markdown bold -> <b>...</b>
     - Markdown italic -> <i>...</i>
     - Markdown underline / strike -> <u>...</u> / <s>...</s>
@@ -187,14 +211,18 @@ def _markdown_to_telegram_html(markdown_text: str) -> str:
 
     text = re.sub(r"`([^`\n]+)`", _save_code, text)
 
+    # 2b. Remove standalone markdown horizontal rules (---, ***, ___)
+    text = re.sub(r"^\s*(?:---+|\*\*\*+|___+)\s*$", "", text, flags=re.MULTILINE)
+
     # 3. Escape HTML in the remaining text (&, <, >)
     text = html.escape(text, quote=False)
 
     # 4. Headings: `# Heading` -> `<b>Heading</b>`
     text = re.sub(r"^#{1,6}\s+(.+)$", r"<b>\1</b>", text, flags=re.MULTILINE)
 
-    # 5. List items: `* item` or `- item` -> `• item`
+    # 5. List items: `* item` or `- item` -> `• item`; numbered `1. item` -> `**1.** item`
     text = re.sub(r"^(\s*)[*+-]\s+", r"\1• ", text, flags=re.MULTILINE)
+    text = re.sub(r"^(\s*)(\d+\.)\s+(?!\*)", r"\1**\2** ", text, flags=re.MULTILINE)
 
     # 6. Blockquotes: `> quote` -> `<blockquote>quote</blockquote>`
     # Handle single or multi-line blockquotes
@@ -243,6 +271,29 @@ def _markdown_to_telegram_html(markdown_text: str) -> str:
     # 10. Italic: *italic* or _italic_
     text = re.sub(r"(?<!\w)\*([^*\n]+)\*(?!\w)", r"<i>\1</i>", text)
     text = re.sub(r"(?<!\w)_([^_\n]+)_(?!\w)", r"<i>\1</i>", text)
+
+    # 10b. Convert italicized disclaimer into a styled blockquote card
+    text = re.sub(
+        r"^<i>((?:Eslatma|Примечание|Disclaimer):[^\n]+)</i>$",
+        r"<blockquote><i>ℹ️ \1</i></blockquote>",
+        text,
+        flags=re.MULTILINE,
+    )
+
+    # 10c. Decorate section headings and add breathing room between consecutive list/step items
+    raw_out_lines = text.split("\n")
+    spaced_lines: List[str] = []
+    for idx, ln in enumerate(raw_out_lines):
+        decorated = _decorate_section_heading(ln)
+        if idx > 0:
+            prev = spaced_lines[-1].strip() if spaced_lines else ""
+            curr = decorated.strip()
+            is_curr_list = curr.startswith("• ") or bool(re.match(r"^<b>\d+\.</b>\s", curr))
+            is_prev_list = prev.startswith("• ") or bool(re.match(r"^<b>\d+\.</b>\s", prev))
+            if is_curr_list and is_prev_list:
+                spaced_lines.append("")
+        spaced_lines.append(decorated)
+    text = "\n".join(spaced_lines)
 
     # 11. Restore inline code and code blocks
     for idx, code_html in enumerate(inline_codes):

@@ -92,8 +92,31 @@ def _format_answer_text(raw_markdown: str, fmt: str) -> str:
 
 
 def _with_sources(formatted_answer: str, citations, language: str) -> str:
+    import html as _html
+    import re as _re
+    from src.gateway.formatting import is_well_formed_telegram_html
+
+    body = formatted_answer
+    url_map = {
+        c.number: _html.escape(c.url, quote=True)
+        for c in (citations or [])
+        if getattr(c, "url", None) and c.url.startswith(("https://", "http://"))
+    }
+    if url_map:
+        # Link inline [n] markers that are not already inside an <a>...</a> tag
+        parts = _re.split(r"(<a\s[^>]*>.*?</a>)", body, flags=_re.DOTALL | _re.IGNORECASE)
+        for idx in range(0, len(parts), 2):
+            def _sub_cit(m):
+                num = int(m.group(1))
+                u = url_map.get(num)
+                return f'<a href="{u}">[{num}]</a>' if u else m.group(0)
+            parts[idx] = _re.sub(r"\[(\d{1,2})\]", _sub_cit, parts[idx])
+        candidate = "".join(parts)
+        if is_well_formed_telegram_html(candidate):
+            body = candidate
+
     sources = telegram_sources_block(citations, language)
-    return f"{formatted_answer}\n\n{sources}" if sources else formatted_answer
+    return f"{body}\n\n{sources}" if sources else body
 
 
 @router.post("/ask")

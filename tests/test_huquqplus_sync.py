@@ -623,3 +623,57 @@ async def test_whole_act_reference_is_watched_at_document_level(custom_store, cu
     assert card["kind"] == "norm_repealed"
     with pytest.raises(ValueError, match="kuchini yo'qotgan"):
         svc.resolve_notification_action(custom_store, custom_editorial, card, action="keep")
+
+
+def test_admin_huquqplus_posts_enrichment(custom_store, db_path):
+    from src.integrations.huquqplus_sync import init_huquqplus_db
+
+    test_client = TestClient(app)
+    init_huquqplus_db(db_path)
+
+    unresolved_data = [
+        {"doc_id": "48496", "law_id": "vmq_62", "url": "https://lex.uz/docs/48496"},
+        {"doc_id": "99999", "law_id": None, "url": "https://lex.uz/docs/99999"},
+    ]
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("""
+            INSERT INTO hp_posts (wp_id, lang, modified, content_hash, title, url, section, status, unit_ids, lex_refs, unresolved_refs, synced_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            101, "uz", "2026-10-10T10:00:00", "hash101", "Sinov maqolasi", "https://huquqplus.uz/p/101",
+            "ijtimoiy", "active", "[]", "[]", json.dumps(unresolved_data), "2026-10-10T10:00:00"
+        ))
+
+    norm = _create_lex_norm("lex_vmq62_art_1", "48496", "48500")
+    norm.metadata.law_id = "vmq_62"
+    norm.metadata.law_number = "VMQ-62"
+    norm.metadata.law_title = {"uz": "Tibbiy-ijtimoiy ekspertiza xizmati"}
+    norm.metadata.source_url = "https://lex.uz/uz/docs/48496#48500"
+    custom_store.fts_store.upsert_article(norm)
+
+    with patch("src.integrations.huquqplus_sync.get_huquqplus_db_path", return_value=db_path), \
+         patch("src.api.app.get_store", return_value=custom_store):
+        res = test_client.get("/api/v1/admin/huquqplus/posts")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["total"] >= 1
+        post = next(p for p in data["items"] if p["wp_id"] == 101)
+        unresolved = post["unresolved_links"]
+        assert len(unresolved) == 2
+
+        # Bog'langan akt: law_label va source_url qo'shilgan
+        linked = next(r for r in unresolved if r["law_id"] == "vmq_62")
+        assert linked["law_label"] == "VMQ-62 Tibbiy-ijtimoiy ekspertiza xizmati"
+        assert linked["source_url"] == "https://lex.uz/uz/docs/48496"
+
+        # Korpusda yo'q akt
+        missing = next(r for r in unresolved if not r["law_id"])
+        assert "law_label" not in missing
+
+        # Alohida get post endpointi
+        res_single = test_client.get("/api/v1/admin/huquqplus/posts/uz/101")
+        assert res_single.status_code == 200
+        single_post = res_single.json()
+        single_linked = next(r for r in single_post["unresolved_links"] if r["law_id"] == "vmq_62")
+        assert single_linked["law_label"] == "VMQ-62 Tibbiy-ijtimoiy ekspertiza xizmati"
+        assert single_linked["source_url"] == "https://lex.uz/uz/docs/48496"

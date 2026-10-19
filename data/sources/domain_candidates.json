@@ -2814,6 +2814,48 @@
       "decision": "skip",
       "reason": "Giyohvandlikka qarshi xalqaro texnik koʻmak va grant loyihalarini boshqarish boʻyicha idoraviy tartib.",
       "in_registry": false
+    },
+    {
+      "lex_id": "-152653",
+      "number": "",
+      "title": "Oʻzbekiston Respublikasining Yer kodeksi",
+      "doc_type": "Kodeks",
+      "adopted": "1998-04-30",
+      "status": "active",
+      "units": 110,
+      "domain": "housing_land",
+      "group": "eval_v2_gap",
+      "decision": "include",
+      "reason": "Yer kodeksi: uy-joy qurish uchun yer uchastkasi berish (eval v2 v011/v012)",
+      "in_registry": false
+    },
+    {
+      "lex_id": "-1824288",
+      "number": "REG-2238",
+      "title": "Havo transportida yoʻlovchi va bagaj tashish qoidalarini tasdiqlash haqida",
+      "doc_type": "Buyruq",
+      "adopted": "2011-06-29",
+      "status": "active",
+      "units": 139,
+      "domain": "transport",
+      "group": "eval_v2_gap",
+      "decision": "include",
+      "reason": "Havo transportida yo'lovchi va bagaj tashish qoidalari: harakati cheklangan yo'lovchilar (eval v2 v018/v019)",
+      "in_registry": false
+    },
+    {
+      "lex_id": "-5182451",
+      "number": "VMQ-806",
+      "title": "Oʻzini oʻzi band qilgan shaxs sifatida faoliyatni amalga oshirish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
+      "doc_type": "VMQ",
+      "adopted": "2020-12-23",
+      "status": "active",
+      "units": 39,
+      "domain": "employment",
+      "group": "eval_v2_gap",
+      "decision": "include",
+      "reason": "O'zini o'zi band qilgan shaxs faoliyati tartibi (eval v2 v024/v025)",
+      "in_registry": false
     }
   ]
 }

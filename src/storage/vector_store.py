@@ -129,3 +129,26 @@ class LanceVectorStore:
 
     def count(self) -> int:
         return len(self.table)
+
+    def optimize(self, cleanup_older_than: Optional[timedelta] = None) -> dict:
+        """Compact fragments and prune old versions in the vector table.
+
+        Default keeps versions younger than 7 days; timedelta(seconds=0) prunes all.
+        Returns {'fragments_before': int, 'fragments_after': int} via table.stats().
+        Never raises: logs a warning and returns {} on error.
+        """
+        if cleanup_older_than is None:
+            cleanup_older_than = timedelta(days=7)
+        try:
+            stats_before = self.table.stats()
+            frag_before = stats_before.get("fragment_stats", {}).get("num_fragments", 0)
+            self.table.optimize(cleanup_older_than=cleanup_older_than)
+            stats_after = self.table.stats()
+            frag_after = stats_after.get("fragment_stats", {}).get("num_fragments", 0)
+            return {
+                "fragments_before": frag_before,
+                "fragments_after": frag_after,
+            }
+        except Exception as e:
+            logger.warning(f"Error optimizing LanceDB table {self.TABLE_NAME}: {e}")
+            return {}

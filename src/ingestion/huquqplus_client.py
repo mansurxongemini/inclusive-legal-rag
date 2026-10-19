@@ -7,12 +7,14 @@ from __future__ import annotations
 
 import hashlib
 import html as html_lib
+import json
 import logging
 import re
 import time
 import urllib.parse
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 import httpx
 from bs4 import BeautifulSoup
@@ -31,6 +33,23 @@ EXCLUDED_CATEGORIES = {1, 41} # 1: Yangiliklar, 41: Huquqshunoslar (Uzbek ids)
 ROOT_SLUGS_MATERIALS = {"materials"}
 ROOT_SLUGS_QA = {"faq"}
 CONTENT_PAGE_SIZE = 20          # posts with full content per request
+# Legal explainers published outside the materials/faq trees (e.g. under news), admitted one by one by the editors
+EXTRA_POSTS_FILE = Path(__file__).resolve().parents[2] / "data" / "sources" / "huquqplus_extra_posts.json"
+
+
+def load_extra_posts(path: Path = EXTRA_POSTS_FILE) -> Dict[str, Set[int]]:
+    """{lang: {wp_id}} of the extra posts; empty when the file is missing or unreadable."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out: Dict[str, Set[int]] = {}
+    for p in data.get("posts", []):
+        try:
+            out.setdefault(str(p["lang"]), set()).add(int(p["wp_id"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
 
 
 @dataclass
@@ -219,8 +238,11 @@ class HuquqPlusClient:
         min_interval_s: float = 0.5,
         timeout: float = 30.0,
         max_retries: int = 3,
+        extra_posts: Optional[Dict[str, Iterable[int]]] = None,
     ):
         self.base_url = base_url.rstrip("/")
+        source = load_extra_posts() if extra_posts is None else extra_posts
+        self.extra_posts: Dict[str, Set[int]] = {lang: {int(i) for i in ids} for lang, ids in source.items()}
         parsed_base = urllib.parse.urlsplit(self.base_url)
         if parsed_base.netloc.lower() != ALLOWED_HOST:
             raise ValueError(f"FAQAT https://{ALLOWED_HOST} hostiga ruxsat berilgan, berildi: {self.base_url}")
@@ -379,6 +401,8 @@ class HuquqPlusClient:
                 section = allowed_cats[cid]
                 break
 
+        if section is None and wp_id in self.extra_posts.get(post_lang, set()):
+            section = SECTION_MATERIALS
         if section is None:
             if "/news/" in post_link or (post_lang == "uz" and any(cid in EXCLUDED_CATEGORIES for cid in cat_ids)):
                 return None
@@ -478,7 +502,7 @@ class HuquqPlusClient:
                 wp_id = item.get("id")
                 modified = item.get("modified", "")
                 cats = [int(c) for c in item.get("categories", [])]
-                if any(cid in allowed_cats for cid in cats):
+                if any(cid in allowed_cats for cid in cats) or int(wp_id) in self.extra_posts.get(lang, set()):
                     index[int(wp_id)] = str(modified)
 
             total_pages = self._extract_total_pages(headers)

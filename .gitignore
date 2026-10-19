@@ -17,3 +17,6 @@ data/raw_lex/
 data/sources/built_articles.json
 data/golden_dataset/last_report.json
 .havola_kesh/
+data/raw/
+src/admin/static/scratch/
+.codestudio/

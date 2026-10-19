@@ -74,3 +74,22 @@ def test_lex_link_fragment_with_encoded_junk_resolves_to_element_id():
     assert lex_element_id("#-5054422 ") == "-5054422"
     assert lex_element_id("") is None and lex_element_id("top") is None
     assert parse_lex_ref("https://lex.uz/docs/-5049511").element_id is None
+
+
+def test_partial_code_keeps_listed_chapters_besides_disability_units():
+    from src.ingestion.corpus_builder import CorpusBuilder, SourceSpec
+    from src.ingestion.lex_structured import LexDocument, LexUnit
+
+    doc = LexDocument(doc_id="-1", url="https://lex.uz/docs/-1", title="Fuqarolik kodeksi (ikkinchi qism)", units=[
+        LexUnit(kind="article", number="914", chapter="52-bob. Sug'urta", text="Sug'urta shartnomasi yozma shaklda tuziladi."),
+        LexUnit(kind="article", number="1141", chapter="68-bob. Qonun bo'yicha vorislik",
+                text="Merosdagi majburiy ulush mehnatga layoqatsiz vorislarga beriladi."),
+        LexUnit(kind="article", number="1180", chapter="166-bob. Boshqa", text="Boshqa qoida bu yerda yozilgan."),
+        LexUnit(kind="article", number="1009", chapter="57-bob. Zarar", text="Nogironligi bo'lgan shaxsga yetkazilgan zarar qoplanadi."),
+    ])
+    spec = SourceSpec(lex_id="-1", law_id="cc2", include="disability_articles", chapters=["66-bob.", "68-bob."])
+    arts, _ = CorpusBuilder(today="2026-10-13").to_articles(doc, spec)
+    assert sorted(a.metadata.article_number for a in arts) == ["1009-modda", "1141-modda"]
+    # without chapters only the unit that mentions disability is kept
+    arts, _ = CorpusBuilder(today="2026-10-13").to_articles(doc, SourceSpec(lex_id="-1", law_id="cc2", include="disability_articles"))
+    assert [a.metadata.article_number for a in arts] == ["1009-modda"]

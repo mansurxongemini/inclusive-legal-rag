@@ -1,0 +1,108 @@
+# ==============================================================================
+# GEMINI ARGON UCHUN 2-BOSQICH STRATEGIK TOPSHIRIQLAR (PHASE 2 LEGAL PROMPTS)
+# ==============================================================================
+# Ushbu so'rovlar loyihani oddiy savol-javob tizimidan fuqarolar uchun to'liq
+# amaliy huquqiy yordamchi va interaktiv yo'l xaritasiga (Legal Navigator) aylantiradi.
+# 
+# Gemini Argonga ushbu matnni to'liq nusxalab bering.
+# Natijani "legal_intelligence_phase2.json" nomi bilan saqlab berishini talab qiling.
+# ==============================================================================
+
+Siz O'zbekiston Respublikasi qonunchiligi bo'yicha oliy toifali huquqshunos-ekspert, normativ-huquqiy hujjatlar tahlilchisi va AI arxitektori sifatida harakat qilasiz.
+
+Biz nogironligi bo'lgan shaxslar, ularning oila a'zolari va ijtimoiy himoyaga muhtoj qatlamlar uchun O'zbekistonning eng ilg'or Legal RAG va Huquqiy Navigatsiya platformasini yaratmoqdamiz.
+
+Sizdan quyidagi 3 ta o'ta muhim strategik topshiriqni bitta yaxlit, to'liq, hech qanday qisqartirishlarsiz (truncated/ellipsislarsiz) JSON fayl ko'rinishida generatsiya qilib berishingizni so'raymiz:
+
+--------------------------------------------------------------------------------
+1-TOPSHIRIQ: 10 TA ASOSIY XIZMAT BO'YICHA DETERMINISTIK QARORLAR DARAXTI (DECISION TREES IN JSON)
+--------------------------------------------------------------------------------
+Fuqarolar va ijtimoiy xodimlar "Men qayerdan boshlashim kerak? Qaysi hujjatlarni kimga olib boraman? Rad etishsa keyingi qadam nima?" degan savollarga interaktiv yo'l xaritasi orqali javob topishlari kerak.
+
+Quyidagi 10 ta yo'nalishning HAR BIRI bo'yicha boshidan oxirigacha (arizadan tortib natijagacha) bosqichma-bosqich huquqiy qarorlar daraxtini JSON formatida tuzing:
+  1. Bolalikdan nogironlikni belgilash marshruti (0–18 yosh: poliklinika -> tibbiy yo'llanma -> TIEK ko'rigi -> IRD -> nafaqa).
+  2. Kattalarda ilk bor nogironlik guruhini olish (Byulleten muddati -> poliklinika yo'llanmasi -> TIEK ekspertizasi -> pensiya yoki nafaqa).
+  3. Bepul kreslo-aravacha yoki protez-ortopediya buyumini olish va almashtirish (TIEK ehtiyoj xulosasi -> elektron vaucher -> savdo platformasi -> ta'mirlash/almashtirish).
+  4. Ish joyida mehnatda mayiblanish bo'yicha bir martalik va oylik zararni ish beruvchidan undirish (dalolatnoma -> TIEK kasbiy layoqatsizlik darajasi -> kompensatsiya/sud).
+  5. Imtiyozli uy-joy yoki yer uchastkasini navbatsiz olish uchun hisobga turish (hokimlik / "Inson" markazi -> ariza -> navbat -> subsidiyalar).
+  6. Oliy ta'lim muassasalari va texnikumlarga 2% li davlat granti kvotasi bo'yicha o'qishga kirish tartibi (hujjat topshirish -> imtiyozli ball -> grant).
+  7. Ko'rish va eshitish bo'yicha assistiv vositalar (ovozli tonometr, Brayl yozuv jihozlari, eshitish apparati, koxlear implantatsiya) bilan ta'minlanish tartibi.
+  8. Soliq imtiyozlarini qo'llash (JShDS bo'yicha 3 MHTEKM, mol-mulk va yer solig'i imtiyozi, o'rindoshlikdan ortiqcha to'langan soliqni qaytarish).
+  9. TIEK xulosasidan norozi bo'lganda yuqori TIEK, Ijtimoiy inspeksiya va ma'muriy/fuqarolik sudiga shikoyat qilish algoritmi.
+  10. O'zgalar parvarishiga muhtoj yolg'iz keksalar va 1-guruh nogironlari uchun bepul ijtimoiy xodim va tagliklar (pampers) biriktirish tartibi.
+
+Har bir xizmat daraxtida kamida 4-6 ta aniq qadam bo'lishi va har bir qadamda quyidagilar aks etishi shart:
+- `step_id`: qadam identifikatori (masalan: `step_1`);
+- `step_title`: qadam nomi (o'zbek tilida);
+- `responsible_authority`: qaysi davlat organi yoki tashkilotga murojaat qilinadi (masalan: "Oilaviy poliklinika", "Tuman TIEK", "Inson markazi");
+- `required_documents`: taqdim etilishi shart bo'lgan barcha hujjatlar ro'yxati;
+- `statutory_deadline_days`: qonunda belgilangan ko'rib chiqish muddati (kunlarda);
+- `cost`: xizmat narxi (davlat xizmati bepulmi yoki boj bormi);
+- `next_step_on_success`: ijobiy natijada keyingi qadam IDsi;
+- `appeal_step_on_rejection`: rad javobi berilganda shikoyat qilish qadami IDsi;
+- `exact_legal_basis`: qonun, qaror nomi, moddasi va rasmiy Lex.uz havolasi.
+
+--------------------------------------------------------------------------------
+2-TOPSHIRIQ: FUQAROLAR UCHUN 15 TA RASMIY ARIZA VA SHIKOYAT SHABLONLARI (LEGAL TEMPLATES)
+--------------------------------------------------------------------------------
+Fuqarolar davlat organlari va sudlarga mustaqil, savodli va qat'iy qonuniy asoslangan ariza yozishlari uchun 15 ta tayyor shablon tuzing.
+
+Har bir shablon uchun:
+- `template_id`: 1 dan 15 gacha;
+- `title`: Ariza/shikoyatning to'liq yuridik nomi;
+- `target_authority`: Kim nomiga yoziladi (Masalan: "Toshkent viloyati TIEK raisiga", "Tuman davlat soliq inspeksiyasiga", "Fuqarolik ishlari bo'yicha sudga");
+- `purpose`: Qaysi vaziyatda ishlatiladi;
+- `legal_grounds`: Arizaga asos bo'lgan O'zbekiston qonunlari va qarorlari moddalari (Lex.uz havolalari bilan);
+- `template_body`: To'liq rasmiy matn. Fuqaro o'z ma'lumotlarini qo'yishi uchun `[FUQARO_FIO]`, `[PASSPORT_SERIYA_RAQAM]`, `[YAShash_MANZIL]`, `[NOGIRONLIK_GURUHI]`, `[KASALLIK_TASHXISI]`, `[ISH_JOYI]` kabi to'ldirish joylari bilan;
+- `required_attachments`: Arizaga ilova qilinishi shart bo'lgan hujjatlar ro'yxati.
+
+15 ta shablon ro'yxati:
+1. Tuman TIEK xulosasidan norozi bo'lib yuqori turuvchi viloyat TIEKiga qayta ko'rikdan o'tkazish haqida shikoyat arizasi.
+2. Ish beruvchiga (tashkilot rahbariga) 1 yoki 2-guruh nogironligi munosabati bilan haftalik 36 soatlik qisqartirilgan ish vaqti belgilash to'g'risida ariza.
+3. Ish beruvchiga yillik uzaytirilgan (kamida 30 kalendar kun) mehnat ta'tili berish haqida ariza.
+4. Tuman soliq inspeksiyasiga asosiy va o'rindoshlik ish joylaridagi jami daromaddan MHTEKMning 3 baravari miqdoridagi imtiyoz bo'yicha ortiqcha ushlangan daromad solig'ini qaytarish arizasi.
+5. "Inson" ijtimoiy xizmatlar markaziga bepul elektr yuritgichli aravacha / protez-ortopediya vositasi uchun vaucher ajratish arizasi.
+6. "Inson" markaziga o'zgalar parvarishiga muhtoj 1-guruh nogironiga bir martalik bepul gigiyena vositalari (tagliklar) ajratish arizasi.
+7. Tuman Pensiya jamg'armasi bo'limiga 1-guruh nogironiga birga yashab qarab turgan shaxs sifatida qarov davrini ish stajiga qo'shish haqida ariza.
+8. Tuman Pensiya jamg'armasi bo'limiga bolalikdan nogiron farzandni 8 yoshgacha tarbiyalagan ona sifatida 50 yoshda imtiyozli pensiya tayinlash arizasi.
+9. Tuman hokimligiga (yoki uy-joy komissiyasiga) imtiyozli subsidiya asosida uy-joy navbatiga turish arizasi.
+10. Maktab / maktabgacha ta'lim muassasasi direktoriga ko'zi ojiz yoki eshitishida nuqsoni bo'lgan bola uchun inklyuziv ta'lim sharoiti yaratish va yordamchi ajratish arizasi.
+11. Davlat xizmatlari markaziga (TIEKga) harakatlanish imkoniyati bo'lmagan shaxsni uyida yoki yotgan joyida ko'rikdan o'tkazish haqida ariza.
+12. OTM rektoriga 1 yoki 2-guruh nogironligi bo'lgan talaba sifatida davlat granti asosida o'qish imtiyozini qo'llash arizasi.
+13. Ish beruvchiga ish joyida mehnatda mayiblanish natijasida etkazilgan zararni qoplash bo'yicha to'lov to'lash talabnomasi.
+14. Fuqarolik ishlari bo'yicha tumanlararo sudiga ruhiy holati buzilgan fuqaroni muomalaga layoqatsiz deb topish va vasiylik belgilash haqida ariza.
+15. Ma'muriy sudga davlat organi yoki komissiyasining nogironlik huquqlarini cheklovchi noqonuniy qarori / harakatsizligi ustidan shikoyat arizasi.
+
+--------------------------------------------------------------------------------
+3-TOPSHIRIQ: 30 TA CHALG'ITUVCHI VA KO'P BOSQICHLI DIALOG SENARIYLARI (MULTI-TURN ADVERSARIAL BENCHMARK)
+--------------------------------------------------------------------------------
+Vektorli qidiruv va BM25 tizimimizni haqiqiy hayotiy, chalg'ituvchi va ko'p bosqichli suhbatlarda testlash uchun 30 ta ssenariy tuzing.
+
+Har bir ssenariyda:
+- `scenario_id`: 1 dan 30 gacha;
+- `user_initial_vague_query`: Fuqaroning dastlabki noaniq, chalkash yoki chalg'ituvchi savoli (masalan: "Menga oylik berishmadi, kasal edim");
+- `legal_trap_or_distractor`: Ushbu savolda qidiruv tizimi adashishi mumkin bo'lgan noto'g'ri qonunlar (masalan: oddiy mehnat ta'tili qonuni);
+- `ai_clarification_question`: Sun'iy intellekt to'g'ri yechimga kelish uchun fuqaroga berishi shart bo'lgan aniqlashtiruvchi savol;
+- `user_followup_response`: Fuqaroning aniqlashtiruvchi javobi;
+- `final_exact_verdict`: To'g'ri yakuniy yuridik xulosa va moddalar.
+
+--------------------------------------------------------------------------------
+YAKUNIY JSON TUZILISHI:
+--------------------------------------------------------------------------------
+Faylni quyidagi schema bo'yicha to'liq JSON sifatida chiqaring:
+
+```json
+{
+  "phase2_metadata": {
+    "title": "O'ZBEKISTON LEGAL RAG: HUQUQIY MARSHRUTLAR, ARIZA SHABLONLARI VA STRESS-BENCHMARK",
+    "version": "2.1.0",
+    "jurisdiction": "O'zbekiston Respublikasi",
+    "generated_by": "Gemini Argon"
+  },
+  "blok_1_huquqiy_qarorlar_daraxti": [ ... 10 ta to'liq daraxt ... ],
+  "blok_2_rasmiy_ariza_shablonlari": [ ... 15 ta to'liq shablon ... ],
+  "blok_3_multiturn_adversarial_benchmark": [ ... 30 ta to'liq ssenariy ... ]
+}
+```
+
+MUHIM TALAB: Javobni to'xtab qolmasdan, birorta qismini "va boshqalar..." yoki "..." deb tashlab ketmasdan, to'liq yuklab olinadigan yaxlit JSON fayl shaklida taqdim eting.

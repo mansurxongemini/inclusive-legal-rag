@@ -140,3 +140,12 @@ async def test_admin_dashboard_served():
         res = await ac.get("/admin")
         assert res.status_code == 200
         assert "Uzbekistan Legal RAG" in res.text
+
+
+@pytest.mark.asyncio
+async def test_admin_v2_redirects_to_admin():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test", follow_redirects=False) as ac:
+        res = await ac.get("/admin-v2")
+        assert res.status_code == 307
+        assert res.headers["location"] == "/admin"

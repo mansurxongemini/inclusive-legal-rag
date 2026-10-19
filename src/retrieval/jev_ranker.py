@@ -59,8 +59,10 @@ class JevRanker:
         for n, ctx in enumerate(contexts):
             law_title_uz = ctx.article.metadata.law_title.get("uz", "") if ctx.article.metadata.law_title else ""
             article_number = ctx.article.metadata.article_number
+            annex_title = ctx.article.metadata.annex_title or ctx.article.metadata.chapter_number or ""
+            annex_part = f" ({annex_title})" if annex_title else ""
             passage_text = ctx.article.get_text("uz")[:settings.JEV_RERANK_CHARS]
-            passages.append(f"[{n+1}] {law_title_uz} {article_number}. {passage_text}")
+            passages.append(f"[{n+1}] {law_title_uz} {article_number}{annex_part}. {passage_text}")
 
         state = f"QUESTION: {query}\n\nPASSAGES:\n" + "\n\n".join(passages)
         questions = {

@@ -1,0 +1,730 @@
+[
+  {
+    "id": 1,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "1-guruh nogironligini muddatidan oldin qayta ko'rikdan o'tkazish tartibi va asoslari qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 2,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "2-guruh nogironligini muddatidan oldin qayta ko'rikdan o'tkazish tartibi va asoslari qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 3,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "3-guruh nogironligini muddatidan oldin qayta ko'rikdan o'tkazish tartibi va asoslari qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 4,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "TIEK komissiyasi xulosasidan norozi bo'lganda qaysi muddatda va qayerga shikoyat qilinadi?",
+    "status": "pending"
+  },
+  {
+    "id": 5,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "Muddatsiz (umrbod) nogironlik guruhi qaysi kasalliklar va anatomik nuqsonlarda belgilanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 6,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "Uzoq muddat davolangan xodim necha kun kasallik varaqasida bo'lgandan so'ng TIEK ko'rigiga yuboriladi?",
+    "status": "pending"
+  },
+  {
+    "id": 7,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "Xorijda olingan jarohat yoki kasallik bo'yicha O'zbekistonda nogironlik qanday rasmiylashtiriladi?",
+    "status": "pending"
+  },
+  {
+    "id": 8,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "Nogironlikni belgilashda Yakka tartibdagi reabilitatsiya dasturi (IRD) majburiymi?",
+    "status": "pending"
+  },
+  {
+    "id": 9,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "Bolalikdan nogironlikni 18 yoshga to'lgandan keyin kattalar guruhiga o'tkazish tartibi qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 10,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "Harakatlanish imkoniyati cheklangan shaxsni TIEK tomonidan uyida yoki statsionarda ko'rikdan o'tkazish qoidalari qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 11,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "Ruhiy kasalliklar bo'yicha nogironlikni belgilashda sud qarori yoki vasiylik talab qilinadimi?",
+    "status": "pending"
+  },
+  {
+    "id": 12,
+    "category_id": "msek_tiek",
+    "category_name": "Tibbiy-ijtimoiy ekspertiza (VTEK/TIEK) va nogironlikni belgilash",
+    "question": "Onkologik kasallikka chalingan fuqaroga nogironlik guruhi qachon va qanday mezonlar bilan beriladi?",
+    "status": "pending"
+  },
+  {
+    "id": 13,
+    "category_id": "reabilitatsiya_texnika",
+    "category_name": "Reabilitatsiya texnik vositalari va protez-ortopediya",
+    "question": "Nogironligi bo'lgan shaxsga elektr yuritgichli aravacha davlat hisobidan qanday tartibda beriladi?",
+    "status": "pending"
+  },
+  {
+    "id": 14,
+    "category_id": "reabilitatsiya_texnika",
+    "category_name": "Reabilitatsiya texnik vositalari va protez-ortopediya",
+    "question": "O'z hisobidan sotib olingan protez yoki kreslo-aravacha puli davlat tomonidan qoplanadimi?",
+    "status": "pending"
+  },
+  {
+    "id": 15,
+    "category_id": "reabilitatsiya_texnika",
+    "category_name": "Reabilitatsiya texnik vositalari va protez-ortopediya",
+    "question": "Eshitish moslamasi (apparati) va koxlear implant bilan davlat hisobidan ta'minlash shartlari qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 16,
+    "category_id": "reabilitatsiya_texnika",
+    "category_name": "Reabilitatsiya texnik vositalari va protez-ortopediya",
+    "question": "Nogironligi bo'lgan shaxsga ajratilgan protez yoki aravachani necha yilda yangisiga almashtirish mumkin?",
+    "status": "pending"
+  },
+  {
+    "id": 17,
+    "category_id": "reabilitatsiya_texnika",
+    "category_name": "Reabilitatsiya texnik vositalari va protez-ortopediya",
+    "question": "Ko'zi ojiz shaxslar uchun ovozli tonometr, termometr va Brayl soatlari davlat tomonidan beriladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 18,
+    "category_id": "reabilitatsiya_texnika",
+    "category_name": "Reabilitatsiya texnik vositalari va protez-ortopediya",
+    "question": "Bir martalik gigiyena vositalari (pampers/tagliklar) bilan bepul ta'minlash tartibi qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 19,
+    "category_id": "reabilitatsiya_texnika",
+    "category_name": "Reabilitatsiya texnik vositalari va protez-ortopediya",
+    "question": "Protez-ortopediya buyumlarini ta'mirlash xarajatlari davlat tomonidan to'lanadimi?",
+    "status": "pending"
+  },
+  {
+    "id": 20,
+    "category_id": "reabilitatsiya_texnika",
+    "category_name": "Reabilitatsiya texnik vositalari va protez-ortopediya",
+    "question": "Nogiron bolalar uchun maxsus vertikalizator va yurish moslamalari olish tartibi qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 21,
+    "category_id": "reabilitatsiya_texnika",
+    "category_name": "Reabilitatsiya texnik vositalari va protez-ortopediya",
+    "question": "Surdotexnika va tiflotexnika vositalarini olish uchun ariza qaysi organga topshiriladi?",
+    "status": "pending"
+  },
+  {
+    "id": 22,
+    "category_id": "reabilitatsiya_texnika",
+    "category_name": "Reabilitatsiya texnik vositalari va protez-ortopediya",
+    "question": "Protez buyumlari olish uchun berilgan sertifikat (vaucher) qancha muddat amal qiladi?",
+    "status": "pending"
+  },
+  {
+    "id": 23,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "Ish stajiga ega bo'lmagan 1-guruh nogironiga qancha miqdorda nafaqa tayinlanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 24,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "Ish stajiga ega bo'lmagan 2-guruh nogironiga qancha miqdorda nafaqa tayinlanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 25,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "Ish stajiga ega bo'lmagan 3-guruh nogironiga qancha miqdorda nafaqa tayinlanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 26,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "1-guruh nogironligi bo'lgan shaxs bir vaqtning o'zida boquvchisini yo'qotganlik pensiyasini ham olishi mumkinmi?",
+    "status": "pending"
+  },
+  {
+    "id": 27,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "Nogiron bolani tarbiyalayotgan onalar necha yoshda imtiyozli pensiyaga chiqish huquqiga ega?",
+    "status": "pending"
+  },
+  {
+    "id": 28,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "Nogironlik pensiyasidan sud qarorisiz yoki aliment uchun qancha qism ushlab qolinishi mumkin?",
+    "status": "pending"
+  },
+  {
+    "id": 29,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "Nogironligi bo'lgan shaxs ishga kirsa, uning nogironlik pensiyasi to'xtatiladimi yoki to'liq to'lanadimi?",
+    "status": "pending"
+  },
+  {
+    "id": 30,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "18 yoshdan katta bolalikdan nogiron shaxs vafot etsa, dafn marosimi uchun qancha nafaqa to'lanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 31,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "Harbiy xizmat majburiyatini bajarishda nogiron bo'lgan shaxslarga pensiya qanday ustama bilan to'lanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 32,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "Чернобил AES halokatida nogiron bo'lgan fuqarolarga qanday qo'shimcha kompensatsiyalar bor?",
+    "status": "pending"
+  },
+  {
+    "id": 33,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "Nogironlik pensiyasini tayinlash muddati o'tib ketgan bo'lsa, o'tgan davr uchun pul undirib olinadimi?",
+    "status": "pending"
+  },
+  {
+    "id": 34,
+    "category_id": "pensiya_va_nafaqa",
+    "category_name": "Pensiyalar, nafaqalar va to'lovlar",
+    "question": "1-guruh nogironiga qarayotgan shaxsga parvarishlash nafaqasi qancha miqdorda to'lanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 35,
+    "category_id": "mehnat_munosabatlari",
+    "category_name": "Mehnat kafolatlari va ish o'rinlari",
+    "question": "1 va 2-guruh nogironligi bo'lgan xodimlarga haftalik qisqartirilgan ish vaqti necha soat qilib belgilanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 36,
+    "category_id": "mehnat_munosabatlari",
+    "category_name": "Mehnat kafolatlari va ish o'rinlari",
+    "question": "Nogironligi bo'lgan xodimga yillik asosiy uzaytirilgan mehnat ta'tili necha kalendar kun berilishi shart?",
+    "status": "pending"
+  },
+  {
+    "id": 37,
+    "category_id": "mehnat_munosabatlari",
+    "category_name": "Mehnat kafolatlari va ish o'rinlari",
+    "question": "Nogiron xodim o'z hisobidan (ish haqi saqlanmagan holda) yiliga necha kun ta'til olishga haqli?",
+    "status": "pending"
+  },
+  {
+    "id": 38,
+    "category_id": "mehnat_munosabatlari",
+    "category_name": "Mehnat kafolatlari va ish o'rinlari",
+    "question": "Tashkilotda nogironligi bo'lgan shaxslar uchun 3 foizlik ish o'rni kvotasi qanday korxonalarga tatbiq etiladi?",
+    "status": "pending"
+  },
+  {
+    "id": 39,
+    "category_id": "mehnat_munosabatlari",
+    "category_name": "Mehnat kafolatlari va ish o'rinlari",
+    "question": "Nogironligi bo'lgan shaxsni ishga qabul qilishda sinov muddati belgilash mumkinmi?",
+    "status": "pending"
+  },
+  {
+    "id": 40,
+    "category_id": "mehnat_munosabatlari",
+    "category_name": "Mehnat kafolatlari va ish o'rinlari",
+    "question": "Xodim ish paytida mayib bo'lib nogiron bo'lib qolsa, ish beruvchi qanday tovon puli to'lashi shart?",
+    "status": "pending"
+  },
+  {
+    "id": 41,
+    "category_id": "mehnat_munosabatlari",
+    "category_name": "Mehnat kafolatlari va ish o'rinlari",
+    "question": "Nogiron xodimni uning roziligisiz tungi yoki dam olish kunlaridagi ishlarga jalb qilsa bo'ladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 42,
+    "category_id": "mehnat_munosabatlari",
+    "category_name": "Mehnat kafolatlari va ish o'rinlari",
+    "question": "Shtatlar qisqarganda nogironligi bo'lgan xodim ishda qolishda imtiyozga egami?",
+    "status": "pending"
+  },
+  {
+    "id": 43,
+    "category_id": "mehnat_munosabatlari",
+    "category_name": "Mehnat kafolatlari va ish o'rinlari",
+    "question": "Ko'zi ojiz xodimning ish joyini tiflotexnika bilan jihozlash uchun ish beruvchiga subsidiya beriladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 44,
+    "category_id": "mehnat_munosabatlari",
+    "category_name": "Mehnat kafolatlari va ish o'rinlari",
+    "question": "Nogiron xodimni ish beruvchi tashabbusi bilan ishdan bo'shatishda kasaba uyushmasi roziligi shartmi?",
+    "status": "pending"
+  },
+  {
+    "id": 45,
+    "category_id": "soliq_va_bojxona",
+    "category_name": "Soliq, boj va davlat bojlari imtiyozlari",
+    "question": "Bolalikdan nogironligi bo'lgan shaxslarning daromad solig'i bo'yicha qanday imtiyozi bor?",
+    "status": "pending"
+  },
+  {
+    "id": 46,
+    "category_id": "soliq_va_bojxona",
+    "category_name": "Soliq, boj va davlat bojlari imtiyozlari",
+    "question": "1 va 2-guruh nogironlari mol-mulk solig'ini to'lashdan to'liq ozod qilinadimi?",
+    "status": "pending"
+  },
+  {
+    "id": 47,
+    "category_id": "soliq_va_bojxona",
+    "category_name": "Soliq, boj va davlat bojlari imtiyozlari",
+    "question": "Nogironligi bo'lgan shaxs yer solig'i to'lashdan qaysi maydon doirasida ozod qilinadi?",
+    "status": "pending"
+  },
+  {
+    "id": 48,
+    "category_id": "soliq_va_bojxona",
+    "category_name": "Soliq, boj va davlat bojlari imtiyozlari",
+    "question": "Nogironligi bo'lgan shaxs sudga da'vo arizasi berganda davlat bojidan qaysi hollarda ozod bo'ladi?",
+    "status": "pending"
+  },
+  {
+    "id": 49,
+    "category_id": "soliq_va_bojxona",
+    "category_name": "Soliq, boj va davlat bojlari imtiyozlari",
+    "question": "Notarius orqali vasiyatnoma yoki ishonchnoma tasdiqlatishda nogironlarga qanday chegirma bor?",
+    "status": "pending"
+  },
+  {
+    "id": 50,
+    "category_id": "soliq_va_bojxona",
+    "category_name": "Soliq, boj va davlat bojlari imtiyozlari",
+    "question": "Chet eldan o'zi uchun maxsus moslashtirilgan avtomobil olib kirayotgan nogiron bojxona to'lovlaridan ozodmi?",
+    "status": "pending"
+  },
+  {
+    "id": 51,
+    "category_id": "soliq_va_bojxona",
+    "category_name": "Soliq, boj va davlat bojlari imtiyozlari",
+    "question": "Nogironlar jamoat birlashmalari tomonidan ishlab chiqarilgan tovarlar QQSdan ozod qilinadimi?",
+    "status": "pending"
+  },
+  {
+    "id": 52,
+    "category_id": "soliq_va_bojxona",
+    "category_name": "Soliq, boj va davlat bojlari imtiyozlari",
+    "question": "Nogironligi bo'lgan yakka tartibdagi tadbirkor (YaTT) qat'iy belgilangan soliqdan qanday imtiyozga ega?",
+    "status": "pending"
+  },
+  {
+    "id": 53,
+    "category_id": "soliq_va_bojxona",
+    "category_name": "Soliq, boj va davlat bojlari imtiyozlari",
+    "question": "O'zini o'zi band qilgan nogiron fuqaro daromad solig'i va ijtimoiy soliq to'laydimi?",
+    "status": "pending"
+  },
+  {
+    "id": 54,
+    "category_id": "soliq_va_bojxona",
+    "category_name": "Soliq, boj va davlat bojlari imtiyozlari",
+    "question": "Davlat xizmatlari markazlarida pasport yoki guvohnoma olishda nogironlarga davlat boji imtiyozi bormi?",
+    "status": "pending"
+  },
+  {
+    "id": 55,
+    "category_id": "talim_va_inklyuziv",
+    "category_name": "Ta'lim, OTM kvotasi va inklyuzivlik",
+    "question": "1 va 2-guruh nogironligi bo'lgan abituriyentlar uchun OTMlarga 2 foizlik davlat granti kvotasi tartibi qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 56,
+    "category_id": "talim_va_inklyuziv",
+    "category_name": "Ta'lim, OTM kvotasi va inklyuzivlik",
+    "question": "Ko'zi ojiz talabalarga darsliklar va o'quv materiallari tayyorlash uchun alohida kotib beriladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 57,
+    "category_id": "talim_va_inklyuziv",
+    "category_name": "Ta'lim, OTM kvotasi va inklyuzivlik",
+    "question": "Nogiron bolalarni davlat bog'chalarida (MTT) bepul ovqatlantirish tartibi qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 58,
+    "category_id": "talim_va_inklyuziv",
+    "category_name": "Ta'lim, OTM kvotasi va inklyuzivlik",
+    "question": "Umumta'lim maktablarida inklyuziv sinflar ochish uchun o'quvchilar soni minimal qancha bo'lishi kerak?",
+    "status": "pending"
+  },
+  {
+    "id": 59,
+    "category_id": "talim_va_inklyuziv",
+    "category_name": "Ta'lim, OTM kvotasi va inklyuzivlik",
+    "question": "Inklyuziv sinfda dars beradigan o'qituvchilarning oylik maoshiga qanday ustama to'lanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 60,
+    "category_id": "talim_va_inklyuziv",
+    "category_name": "Ta'lim, OTM kvotasi va inklyuzivlik",
+    "question": "Nogironligi bo'lgan talaba OTM yotoqxonasiga navbatsiz va bepul joylashish huquqiga egami?",
+    "status": "pending"
+  },
+  {
+    "id": 61,
+    "category_id": "talim_va_inklyuziv",
+    "category_name": "Ta'lim, OTM kvotasi va inklyuzivlik",
+    "question": "Magistratura bosqichiga kirishda nogironligi bo'lgan shaxslar uchun qanday imtiyozlar nazarda tutilgan?",
+    "status": "pending"
+  },
+  {
+    "id": 62,
+    "category_id": "talim_va_inklyuziv",
+    "category_name": "Ta'lim, OTM kvotasi va inklyuzivlik",
+    "question": "Xususiy maktablar inklyuziv ta'limga muhtoj bolalarni qabul qilishdan bosh tortishi qonuniymi?",
+    "status": "pending"
+  },
+  {
+    "id": 63,
+    "category_id": "talim_va_inklyuziv",
+    "category_name": "Ta'lim, OTM kvotasi va inklyuzivlik",
+    "question": "Alohida ta'lim ehtiyoji bo'lgan bolani uyda yakka tartibda o'qitishda o'qituvchi soatlari qanday to'lanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 64,
+    "category_id": "talim_va_inklyuziv",
+    "category_name": "Ta'lim, OTM kvotasi va inklyuzivlik",
+    "question": "Imtiyozli qabul qilingan nogiron talaba o'qishini boshqa viloyatga ko'chirishda (perevod) imtiyoz bormi?",
+    "status": "pending"
+  },
+  {
+    "id": 65,
+    "category_id": "uy_joy_kommunal",
+    "category_name": "Uy-joy, kommunal to'lovlar va shaharsozlik",
+    "question": "Uy-joyga muhtoj 1 va 2-guruh nogironlariga arzon va bepul uy-joy ajratish tartibi qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 66,
+    "category_id": "uy_joy_kommunal",
+    "category_name": "Uy-joy, kommunal to'lovlar va shaharsozlik",
+    "question": "Nogironligi bo'lgan shaxslarga kommunal to'lovlar (gaz, svet, suv) uchun oylik kompensatsiya qancha?",
+    "status": "pending"
+  },
+  {
+    "id": 67,
+    "category_id": "uy_joy_kommunal",
+    "category_name": "Uy-joy, kommunal to'lovlar va shaharsozlik",
+    "question": "Yangi qurilayotgan ko'p qavatli uylarda pandus va ko'targich bo'lmasa, uni qabul qilish qonuniymi?",
+    "status": "pending"
+  },
+  {
+    "id": 68,
+    "category_id": "uy_joy_kommunal",
+    "category_name": "Uy-joy, kommunal to'lovlar va shaharsozlik",
+    "question": "Uy-joy sotib olish uchun subsidiya olishda nogironligi bo'lgan fuqarolarga qanday ustunlik beriladi?",
+    "status": "pending"
+  },
+  {
+    "id": 69,
+    "category_id": "uy_joy_kommunal",
+    "category_name": "Uy-joy, kommunal to'lovlar va shaharsozlik",
+    "question": "Og'ir kasallikka chalingan nogiron shaxsga alohida qo'shimcha xona berilishi qaysi me'yorda belgilangan?",
+    "status": "pending"
+  },
+  {
+    "id": 70,
+    "category_id": "uy_joy_kommunal",
+    "category_name": "Uy-joy, kommunal to'lovlar va shaharsozlik",
+    "question": "Yerto'la yoki 1-qavatda yashovchi nogiron o'z hisobidan shaxsiy pandus o'rnatishi uchun ruxsat kerakmi?",
+    "status": "pending"
+  },
+  {
+    "id": 71,
+    "category_id": "uy_joy_kommunal",
+    "category_name": "Uy-joy, kommunal to'lovlar va shaharsozlik",
+    "question": "Eski ko'p qavatli uylarning kirish qismiga pandus o'rnatish kimning (boshqaruvchi tashkilot yoki hokimlik) zimmasida?",
+    "status": "pending"
+  },
+  {
+    "id": 72,
+    "category_id": "uy_joy_kommunal",
+    "category_name": "Uy-joy, kommunal to'lovlar va shaharsozlik",
+    "question": "Nogironligi bo'lgan shaxsga ijara to'lovining bir qismini davlat tomonidan qoplash tartibi bormi?",
+    "status": "pending"
+  },
+  {
+    "id": 73,
+    "category_id": "uy_joy_kommunal",
+    "category_name": "Uy-joy, kommunal to'lovlar va shaharsozlik",
+    "question": "Ijtimoiy uy-joylarda yashayotgan nogironligi bo'lgan shaxs vafot etsa, uy uning oilasida qoladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 74,
+    "category_id": "uy_joy_kommunal",
+    "category_name": "Uy-joy, kommunal to'lovlar va shaharsozlik",
+    "question": "Nogironligi bo'lgan shaxslar yashaydigan xonadonlar kommunal qarzdorlik sababli tarmoqdan uzilishi mumkinmi?",
+    "status": "pending"
+  },
+  {
+    "id": 75,
+    "category_id": "tibbiyot_va_dorilar",
+    "category_name": "Tibbiy yordam, bepul dorilar va sanatoriylar",
+    "question": "Imtiyozli toifadagi nogironlarga bepul dori vositalari yozib beriladigan retsept shakli qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 76,
+    "category_id": "tibbiyot_va_dorilar",
+    "category_name": "Tibbiy yordam, bepul dorilar va sanatoriylar",
+    "question": "Nogironligi bo'lgan shaxs respublika ixtisoslashtirilgan tibbiyot markazlariga bepul davolanish orderini qanday oladi?",
+    "status": "pending"
+  },
+  {
+    "id": 77,
+    "category_id": "tibbiyot_va_dorilar",
+    "category_name": "Tibbiy yordam, bepul dorilar va sanatoriylar",
+    "question": "Sanatoriy-kurortlarda bepul davolanish yo'llanmasi necha yilda bir marta beriladi va navbat qanday tekshiriladi?",
+    "status": "pending"
+  },
+  {
+    "id": 78,
+    "category_id": "tibbiyot_va_dorilar",
+    "category_name": "Tibbiy yordam, bepul dorilar va sanatoriylar",
+    "question": "Nogiron bolaga qarovchi ota-onaga ham sanatoriyga birga borish uchun yo'llanma beriladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 79,
+    "category_id": "tibbiyot_va_dorilar",
+    "category_name": "Tibbiy yordam, bepul dorilar va sanatoriylar",
+    "question": "Kam uchraydigan (orfan) kasalliklar ro'yxatiga kirgan bemorlar dori vositalarini qayerdan oladi?",
+    "status": "pending"
+  },
+  {
+    "id": 80,
+    "category_id": "tibbiyot_va_dorilar",
+    "category_name": "Tibbiy yordam, bepul dorilar va sanatoriylar",
+    "question": "Statsionar shifoxonada davolanayotgan 1-guruh nogironiga bepul ovqat va dori-darmon ta'minoti qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 81,
+    "category_id": "tibbiyot_va_dorilar",
+    "category_name": "Tibbiy yordam, bepul dorilar va sanatoriylar",
+    "question": "Yurak yoki buyrak operatsiyasiga muhtoj nogiron fuqaroning xarajati qaysi jamg'arma hisobidan to'lanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 82,
+    "category_id": "tibbiyot_va_dorilar",
+    "category_name": "Tibbiy yordam, bepul dorilar va sanatoriylar",
+    "question": "Nogironligi bo'lgan shaxsga dori vositalari o'rniga naqd pul shaklida kompensatsiya olish mumkinmi?",
+    "status": "pending"
+  },
+  {
+    "id": 83,
+    "category_id": "tibbiyot_va_dorilar",
+    "category_name": "Tibbiy yordam, bepul dorilar va sanatoriylar",
+    "question": "Chet elda davolanishga muhtoj og'ir nogiron bemorlarga davlat yordami ajratiladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 84,
+    "category_id": "tibbiyot_va_dorilar",
+    "category_name": "Tibbiy yordam, bepul dorilar va sanatoriylar",
+    "question": "Nogironligi bo'lgan shaxslarni profilaktik dispanser ko'rigidan o'tkazish qanchalik tez-tez o'tkaziladi?",
+    "status": "pending"
+  },
+  {
+    "id": 85,
+    "category_id": "transport_harakat",
+    "category_name": "Transport, yo'l harakati va to'xtash joylari",
+    "question": "Shahar yo'lovchi transportida (avtobus, metro) 1 va 2-guruh nogironlari bepul yurish huquqiga egami?",
+    "status": "pending"
+  },
+  {
+    "id": 86,
+    "category_id": "transport_harakat",
+    "category_name": "Transport, yo'l harakati va to'xtash joylari",
+    "question": "Temir yo'l va samolyot chiptalariga nogironlar uchun yillik 50 foizlik chegirma qanday olinadi?",
+    "status": "pending"
+  },
+  {
+    "id": 87,
+    "category_id": "transport_harakat",
+    "category_name": "Transport, yo'l harakati va to'xtash joylari",
+    "question": "Avtomobillar to'xtash joylarida nogironlar uchun kamida 10 foiz joy ajratilmagan bo'lsa, kim jarimaga tortiladi?",
+    "status": "pending"
+  },
+  {
+    "id": 88,
+    "category_id": "transport_harakat",
+    "category_name": "Transport, yo'l harakati va to'xtash joylari",
+    "question": "Avtomobilida 'Nogiron' belgisi bo'lgan haydovchi qaysi yo'l harakati belgilariga bo'ysunmaslik huquqiga ega?",
+    "status": "pending"
+  },
+  {
+    "id": 89,
+    "category_id": "transport_harakat",
+    "category_name": "Transport, yo'l harakati va to'xtash joylari",
+    "question": "Nogironligi bo'lgan shaxsning shaxsiy avtomobili uchun benzin yoki yoqilg'i kompensatsiyasi qancha to'lanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 90,
+    "category_id": "transport_harakat",
+    "category_name": "Transport, yo'l harakati va to'xtash joylari",
+    "question": "Taksi xizmatlarida (inklyuziv taksi) nogironligi bo'lgan shaxslarga davlat tomonidan subsidiya beriladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 91,
+    "category_id": "transport_harakat",
+    "category_name": "Transport, yo'l harakati va to'xtash joylari",
+    "question": "Kreslo-aravachani poyezd yoki samolyotda bepul yuk sifatida tashish me'yorlari qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 92,
+    "category_id": "transport_harakat",
+    "category_name": "Transport, yo'l harakati va to'xtash joylari",
+    "question": "Jamoat transportida pandus yoki ko'targich ishlamasa, yo'lovchi qayerga shikoyat qilishi mumkin?",
+    "status": "pending"
+  },
+  {
+    "id": 93,
+    "category_id": "transport_harakat",
+    "category_name": "Transport, yo'l harakati va to'xtash joylari",
+    "question": "Maxsus qo'l boshqaruvli avtomobil sotib olishda bojxona va utilizatsiya yig'imi undiriladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 94,
+    "category_id": "transport_harakat",
+    "category_name": "Transport, yo'l harakati va to'xtash joylari",
+    "question": "Piyodalar o'tish joyida oq hassa bilan harakatlanayotgan ko'zi ojiz piyodaga haydovchi qanday yo'l berishi shart?",
+    "status": "pending"
+  },
+  {
+    "id": 95,
+    "category_id": "vasiylik_ijtimoiy_xizmat",
+    "category_name": "Vasiylik, 'Inson' markazlari va qarovchilik",
+    "question": "1-guruh nogironiga qarab turgan shaxsning qarovchilik davri uning pensiya stajiga qanday qo'shiladi?",
+    "status": "pending"
+  },
+  {
+    "id": 96,
+    "category_id": "vasiylik_ijtimoiy_xizmat",
+    "category_name": "Vasiylik, 'Inson' markazlari va qarovchilik",
+    "question": "'Inson' ijtimoiy xizmatlar markazlari orqali yolg'iz yashovchi nogironga ijtimoiy xodim qanday biriktiriladi?",
+    "status": "pending"
+  },
+  {
+    "id": 97,
+    "category_id": "vasiylik_ijtimoiy_xizmat",
+    "category_name": "Vasiylik, 'Inson' markazlari va qarovchilik",
+    "question": "Ijtimoiy himoya yagona reyestri orqali kam ta'minlanganlik nafaqasi olishda nogironlik nafaqasi daromadga qo'shiladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 98,
+    "category_id": "vasiylik_ijtimoiy_xizmat",
+    "category_name": "Vasiylik, 'Inson' markazlari va qarovchilik",
+    "question": "Muomalaga layoqatsiz deb topilgan nogiron shaxs nomidan mulkni sotish yoki hadya qilish qoidalari qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 99,
+    "category_id": "vasiylik_ijtimoiy_xizmat",
+    "category_name": "Vasiylik, 'Inson' markazlari va qarovchilik",
+    "question": "Nogiron farzandi bor yolg'iz onalarga davlat tomonidan qanday moddiy va ijtimoiy yordamlar beriladi?",
+    "status": "pending"
+  },
+  {
+    "id": 100,
+    "category_id": "vasiylik_ijtimoiy_xizmat",
+    "category_name": "Vasiylik, 'Inson' markazlari va qarovchilik",
+    "question": "Vasiylik va homiylik organining ruxsatisiz nogironning pensiyasini vasiy o'z ehtiyoji uchun sarflashi javobgarlikka sabab bo'ladimi?",
+    "status": "pending"
+  },
+  {
+    "id": 101,
+    "category_id": "vasiylik_ijtimoiy_xizmat",
+    "category_name": "Vasiylik, 'Inson' markazlari va qarovchilik",
+    "question": "Nogiron shaxsga o'zgalar parvarishi zarurligini tasdiqlovchi dalolatnoma qanday tuziladi?",
+    "status": "pending"
+  },
+  {
+    "id": 102,
+    "category_id": "vasiylik_ijtimoiy_xizmat",
+    "category_name": "Vasiylik, 'Inson' markazlari va qarovchilik",
+    "question": "Keksa va nogironlar pansionatiga ('Sahovat' va 'Muruvvat' uylariga) joylashtirish tartibi qanday?",
+    "status": "pending"
+  },
+  {
+    "id": 103,
+    "category_id": "vasiylik_ijtimoiy_xizmat",
+    "category_name": "Vasiylik, 'Inson' markazlari va qarovchilik",
+    "question": "Nogironligi bo'lgan shaxsga bepul yuridik yordam ko'rsatuvchi davlat advokati qanday tayinlanadi?",
+    "status": "pending"
+  },
+  {
+    "id": 104,
+    "category_id": "vasiylik_ijtimoiy_xizmat",
+    "category_name": "Vasiylik, 'Inson' markazlari va qarovchilik",
+    "question": "Nogiron shaxsning shaxsiy ma'lumotlari (tashxisi va guruhi) uning roziligisiz tarqatilsa, qanday jazo bor?",
+    "status": "pending"
+  }
+]

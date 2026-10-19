@@ -4,7 +4,7 @@ import json
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from src.config import settings
 from src.storage.sqlite_utils import connect as sqlite_connect
@@ -114,6 +114,14 @@ class EditorialStore:
             if "acknowledged_marker" not in link_columns:
                 # last change marker an editor has already decided on (kept / unpublished): not re-reported
                 c.execute("ALTER TABLE legal_links ADD COLUMN acknowledged_marker TEXT NOT NULL DEFAULT ''")
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS unit_text_archive (
+                    hash TEXT PRIMARY KEY,
+                    label TEXT,
+                    text TEXT,
+                    created_at TEXT
+                );
+            """)
             conn.commit()
 
     # -- answers --------------------------------------------------------------------------------
@@ -394,6 +402,42 @@ class EditorialStore:
             conn.commit()
             return cur.rowcount
 
+    # -- text archive ---------------------------------------------------------------------------
+    def archive_unit_texts(self, rows: Sequence[Tuple[str, str, str]]) -> int:
+        """Archive unit texts by hash. rows: (hash, label, text). Uses INSERT OR IGNORE."""
+        if not rows:
+            return 0
+        now_ts = _now()
+        payload = [(h, lbl or "", txt or "", now_ts) for h, lbl, txt in rows if h]
+        if not payload:
+            return 0
+        with self._conn() as conn:
+            cur = conn.executemany("""
+                INSERT OR IGNORE INTO unit_text_archive (hash, label, text, created_at)
+                VALUES (?, ?, ?, ?)
+            """, payload)
+            conn.commit()
+            return cur.rowcount
+
+    def get_archived_texts(self, hashes: Sequence[str]) -> Dict[str, Tuple[str, str]]:
+        """Retrieve archived (label, text) by hashes -> {hash: (label, text)}."""
+        hash_list = [h for h in hashes if h]
+        if not hash_list:
+            return {}
+        result: Dict[str, Tuple[str, str]] = {}
+        with self._conn() as conn:
+            for i in range(0, len(hash_list), 500):
+                chunk = hash_list[i:i + 500]
+                placeholders = ",".join("?" for _ in chunk)
+                rows = conn.execute(f"""
+                    SELECT hash, label, text FROM unit_text_archive
+                    WHERE hash IN ({placeholders})
+                """, chunk).fetchall()
+                for r in rows:
+                    result[r["hash"]] = (r["label"] or "", r["text"] or "")
+        return result
+
 
 def get_editorial_store(db_path: Optional[str] = None) -> EditorialStore:
     return EditorialStore(db_path)
+

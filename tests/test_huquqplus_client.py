@@ -547,3 +547,27 @@ def test_russian_posts_use_the_russian_category_tree():
     expected = [p for p in posts_ru if "/news/" not in p["link"]]
     assert len(posts) == len(expected) > 0
     assert all(p.lang == "ru" and "/news/" not in p.url for p in posts)
+
+
+def test_extra_posts_admit_a_listed_news_explainer_only(categories_fixture: List[dict], posts_page_ru_fixture: List[dict]):
+    def mock_get_json(url: str) -> Tuple[Any, Dict[str, str]]:
+        parsed = urllib.parse.urlsplit(url)
+        if parsed.path.endswith("/categories"):
+            return categories_fixture, {"X-WP-TotalPages": "1"}
+        return posts_page_ru_fixture, {"X-WP-TotalPages": "1"}
+
+    client = HuquqPlusClient(get_json=mock_get_json, min_interval_s=0.0, extra_posts={"ru": [11178]})
+    news = next(p for p in client.fetch_posts(lang="ru") if p.wp_id == 11178)
+    assert news.section == "materials"
+    assert 11178 in client.list_post_index(lang="ru")
+    # the allowlist is per language: the same id listed for uz does not admit the ru news post
+    uz_only = HuquqPlusClient(get_json=mock_get_json, min_interval_s=0.0, extra_posts={"uz": [11178]})
+    assert 11178 not in [p.wp_id for p in uz_only.fetch_posts(lang="ru")]
+
+
+def test_load_extra_posts_reads_lang_ids(tmp_path):
+    from src.ingestion.huquqplus_client import load_extra_posts
+    f = tmp_path / "extra.json"
+    f.write_text('{"posts": [{"lang": "uz", "wp_id": 606}, {"lang": "ru", "wp_id": "8161"}, {"lang": "uz"}]}')
+    assert load_extra_posts(f) == {"uz": {606}, "ru": {8161}}
+    assert load_extra_posts(tmp_path / "missing.json") == {}

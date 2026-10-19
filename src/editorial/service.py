@@ -4,7 +4,7 @@ import logging
 from typing import Optional
 
 from src.config import settings
-from src.editorial.doc_watch import doc_snapshot, is_doc_link, law_id_of
+from src.editorial.doc_watch import doc_snapshot, is_doc_link, law_id_of, refresh_doc_link
 from src.editorial.store import EditorialStore
 from src.schema.canonical import (
     ArticleMetadata,
@@ -188,8 +188,7 @@ def resolve_notification_action(store, editorial: EditorialStore, notif: dict,
         if snap is None or snap[2] != "active":
             raise ValueError("Bu hujjat kuchini yo'qotgan yoki bazadan olib tashlangan: \"hali to'g'ri\" deb bo'lmaydi. "
                              "Maqolani WordPress'da yangilang yoki RAG'dan vaqtincha oling.")
-        editorial.refresh_link_snapshot(link["id"], snapshot_text=snap[0], snapshot_hash=snap[1],
-                                        snapshot_status=snap[2])
+        refresh_doc_link(store, editorial, link)
         link = None                                   # handled: skip the single-norm path below
     article = store.get_article(canonical_id) if store and not is_doc_link(canonical_id) else None
     if link is not None:

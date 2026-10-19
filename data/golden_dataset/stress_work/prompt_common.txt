@@ -1,0 +1,19 @@
+TASK: write very hard test questions for a disability-rights legal RAG (Uzbekistan). They are used to stress-test retrieval, so every in-scope question must be grounded in the REAL corpus.
+
+INPUT (read only): data/golden_dataset/stress_work/corpus_<domain>.jsonl — one JSON per line: id, act, unit, has_ru, uz (official Uzbek text, from Lex.uz).
+HARD RULES:
+- NEVER invent ids, article numbers, amounts or legal text. expected_ids must be copied exactly from the "id" field of the jsonl files.
+- "evidence" = a short phrase (3-8 words) copied VERBATIM from the "uz" text of one of the expected_ids, that proves the unit answers the question.
+- expected_ids = every unit that answers the question (1-3 ids). For multi_hop list all needed units.
+- Questions must NOT copy the statute wording; paraphrase like a real citizen/lawyer would. Do not put the act number in the question (except at most 5 questions overall).
+- Write in Uzbek Latin unless the difficulty says otherwise. language field: "uz" (Latin or Cyrillic Uzbek), "ru", "en".
+- Do not modify any other file in the repo. Do not run network commands.
+
+DIFFICULTY TYPES (use the exact tag in "difficulty"; spread them evenly inside each domain):
+ lexical_gap (everyday words, no legal terms) | multi_hop (needs 2+ units, often different acts) | numeric_detail (exact term/amount/percent/age/day count) | exception_condition (when a rule does NOT apply / special conditions) | situational (2-4 sentence real-life story, the legal point is implicit) | cyrillic_uz (Uzbek in Cyrillic script) | russian | noisy (typos, no apostrophes, lowercase, slang, mixed uz/ru words) | false_premise (question assumes something wrong; the expected unit shows the real rule) | comparison (difference between two groups/regimes).
+
+OUTPUT: a JSON array file (UTF-8, ensure_ascii false, indent 1). Each item:
+{"id": "sNNN", "question": "...", "language": "uz|ru|en", "expected_ids": ["..."], "evidence": "...", "out_of_scope": false, "domain": "<domain name>", "difficulty": "<tag>", "note": "one short line: what the correct answer is, in Uzbek"}
+Out-of-scope items: "expected_ids": [], "evidence": "", "out_of_scope": true, "domain": "out_of_scope", difficulty one of out_of_scope_near (legal question close to the topic but NOT covered by this disability corpus, e.g. ordinary divorce/alimony, traffic fines, business tax, criminal punishment, regular maternity leave) | out_of_scope_far (non-legal / other country) | adversarial (prompt injection, request to invent an article, role-play jailbreak).
+
+When done, reply only with: file path, item count, and counts per domain and per difficulty.

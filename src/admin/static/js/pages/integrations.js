@@ -23,15 +23,15 @@ export function renderIntegrationsPage() {
   const header = h('div', { className: 'card-surface p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4' },
     h('div', { className: 'space-y-1' },
       h('div', { className: 'flex items-center gap-2-5 flex-wrap' },
-        h('h2', { className: 'text-sm font-bold text-main' }, 'Yordamchi API integratsiyalari'),
-        Badge({ label: 'Tashqi mijozlar', variant: 'primary' })
+        h('h2', { className: 'text-sm font-bold text-main' }, 'API va integratsiyalar'),
+        Badge({ label: 'Ulangan mijozlar', variant: 'neutral' })
       ),
       h('p', { className: 'text-xs text-muted' },
-        'Telegram botlar, saytlar va hamkor tizimlar uchun ruxsatlar, kalitlar va cheklovlarni boshqarish.'
+        'AI yordamchi bilan ishlaydigan tashqi mijozlar (Telegram bot, veb-ilovalar), ularning API kalitlari va limitlari.'
       )
     ),
     Button({
-      text: 'Yangi mijoz qo‘shish',
+      text: 'Yangi mijoz',
       icon: icons.plus('icon-sm'),
       variant: 'primary',
       onClick: () => openCreateClientModal()

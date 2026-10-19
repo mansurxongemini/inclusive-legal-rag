@@ -43,6 +43,7 @@ async def health_check():
         "version": "1.0.0",
         "mock_mode": settings.is_mock_mode,
         "rss_memory_mb": rss_mb,
-        "memory_budget_exceeded": (rss_mb > 350.0),
+        "memory_budget_mb": settings.MEMORY_BUDGET_MB,
+        "memory_budget_exceeded": (rss_mb > settings.MEMORY_BUDGET_MB),
         "articles_indexed": article_count,
     }

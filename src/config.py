@@ -31,6 +31,21 @@ class Settings(BaseSettings):
     LLM_PROVIDER_ORDER: str = Field(default="deepinfra")            # comma-separated OpenRouter provider slugs tried first; "" = OpenRouter default routing
     LLM_PROVIDER_QUANTIZATIONS: str = Field(default="fp8,fp16,bf16,fp32,unknown")  # allowed quantizations (excludes fp4/int4); "" = no filter
     GENERATION_REASONING_EFFORT: str = Field(default="none")        # "", "none", "low", "high" or "max"; "" = model default, "none" = reasoning off
+    SUPPORT_CHECK_ENABLED: bool = Field(default=False)              # off until reviewed and measured (scripts/faithfulness_eval.py)
+    SUPPORT_CHECK_MODEL: str = Field(default="")                    # "" = GENERATION_MODEL_PRIMARY
+    SUPPORT_CHECK_TIMEOUT_S: float = Field(default=15.0)
+    # Volunteer-answer review (POST /api/v1/assistant/review, TASKS.md 14.1-14.2)
+    REVIEW_MODEL: str = Field(default="")                           # "" = GENERATION_MODEL_PRIMARY
+    REVIEW_TIMEOUT_S: float = Field(default=60.0)
+    REVIEW_MIN_SCORE: int = Field(default=3)                        # every score must be >= this for approve
+    REVIEW_MIN_CONFIDENCE: float = Field(default=0.5)
+    REVIEW_TOP_K: int = Field(default=6)                            # retrieved norms given to the reviewer LLM
+    REVIEW_RUBRIC_VERSION: str = Field(default="1.0")
+    REVIEW_MAX_QUESTION_CHARS: int = Field(default=4000)
+    REVIEW_MAX_ANSWER_CHARS: int = Field(default=6000)
+    # /health budget for a SERVING process: idle is ~175 MB (tests/test_memory_budget.py keeps it < 350),
+    # retrieval warms LanceDB/FTS caches to a ~300-550 MB plateau (measured 2026-10-18), not a leak.
+    MEMORY_BUDGET_MB: float = Field(default=700.0)
 
     # Storage paths
     STORAGE_DIR: str = Field(default="./data/store")
@@ -59,6 +74,9 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_MINUTE: int = Field(default=60)
     # Shared secret for remote administration (X-Admin-Key / Bearer). Direct loopback access needs no key.
     ADMIN_API_KEY: Optional[str] = Field(default=None)
+    # A direct local connection may administer without the key (the dashboard on the server itself). Switch it off
+    # behind a reverse proxy that does not forward X-Forwarded-For / X-Real-IP: every visitor then looks local.
+    ADMIN_LOOPBACK_ENABLED: bool = Field(default=True)
     CACHE_TTL_SECONDS: int = Field(default=86400)
     MOCK_EXTERNAL_APIS: bool = Field(default=False)
     # Editorial module: a published curated answer with a fresh open notification is suspended from search.

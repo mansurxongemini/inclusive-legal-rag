@@ -7,7 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from src.api.auth.admin import require_admin
+from src.config import settings
 from src.editorial import service as svc
+from src.editorial.doc_watch import doc_changes, is_doc_link, law_id_of, law_label
 from src.editorial.schemas import CuratedAnswerCreate, CuratedAnswerUpdate, LegalLinkCreate, NotificationResolve
 from src.editorial.store import EditorialStore
 from src.editorial.watch import check_legal_links
@@ -289,21 +291,33 @@ async def list_notifications(
     offset: int = Query(default=0, ge=0),
 ):
     editorial = _get_editorial()
+    store = None
+    try:
+        store = _get_store()
+    except Exception as e:
+        logger.warning(f"Could not load store in list_notifications: {e}")
+
     items, total = editorial.list_notifications(status=status, limit=limit, offset=offset)
-    # Attach question or huquqplus article metadata for display
     enriched = []
     for n in items:
         question = ""
         post_title = ""
         post_url = ""
         wp_admin_url = ""
-        if n["owner_type"] == "curated":
+        owner_kind = "huquqplus" if n.get("owner_type") == "huquqplus" else "curated"
+        ai_paused = False
+
+        if n.get("owner_type") == "curated":
             try:
                 a = editorial.get_answer(int(n["owner_id"]))
                 question = (a or {}).get("question", "")
-            except ValueError:
+                if n.get("status") == "open":
+                    ai_paused = bool(a and a.get("status") == "needs_review")
+            except Exception:
                 pass
-        elif n["owner_type"] == "huquqplus":
+        elif n.get("owner_type") == "huquqplus":
+            if n.get("status") == "open":
+                ai_paused = bool(settings.EDITORIAL_SUSPEND_ON_CHANGE)
             parts = n["owner_id"].split(":", 1)
             if len(parts) == 2:
                 lang, wp_id_str = parts
@@ -322,12 +336,96 @@ async def list_notifications(
                             post_url = row[1]
                 except Exception as e:
                     logger.warning(f"Huquq+ post metadata error for {n['owner_id']}: {e}")
+
+        law_label_val = ""
+        changes = []
+        added_count = 0
+        cid = n.get("canonical_id") or ""
+
+        try:
+            if store:
+                if is_doc_link(cid):
+                    lid = law_id_of(cid)
+                    law_label_val = law_label(store, lid)
+                else:
+                    art = store.get_article(cid)
+                    if art:
+                        law_label_val = f"{art.metadata.law_number} {art.get_law_title('uz')}".strip()
+                        if not law_label_val and art.metadata.law_id:
+                            law_label_val = law_label(store, art.metadata.law_id)
+        except Exception as e:
+            logger.warning(f"Error getting law_label for notification {n.get('id')}: {e}")
+
+        try:
+            if n.get("status") == "open":
+                if n.get("kind") == "document_amended" and is_doc_link(cid) and store:
+                    lid = law_id_of(cid)
+                    links = editorial.list_links(owner_type=n["owner_type"], owner_id=n["owner_id"])
+                    link = next((l for l in links if l["canonical_id"] == cid), None)
+                    old_state_json = link.get("snapshot_text") if link else n.get("old_text")
+                    doc_res = doc_changes(store, editorial, lid, old_state_json or "")
+                    added_count = len(doc_res.get("added", []))
+                    for c in doc_res.get("changed", []):
+                        changes.append({
+                            "kind": "changed",
+                            "label": c.get("label", ""),
+                            "url": c.get("url", ""),
+                            "old_text": (c.get("old_text") or "")[:1500],
+                            "new_text": (c.get("new_text") or "")[:1500],
+                        })
+                    for r in doc_res.get("repealed", []):
+                        changes.append({
+                            "kind": "repealed",
+                            "label": r.get("label", ""),
+                            "url": r.get("url", ""),
+                            "old_text": (r.get("old_text") or "")[:1500],
+                            "new_text": (r.get("new_text") or "")[:1500],
+                        })
+                    for rm in doc_res.get("removed", []):
+                        changes.append({
+                            "kind": "removed",
+                            "label": rm.get("label", ""),
+                            "url": rm.get("url", ""),
+                            "old_text": (rm.get("old_text") or "")[:1500],
+                            "new_text": (rm.get("new_text") or "")[:1500],
+                        })
+                elif not is_doc_link(cid):
+                    kind_map = {
+                        "norm_amended": "amended",
+                        "norm_repealed": "repealed",
+                        "norm_removed": "removed",
+                    }
+                    kind_val = kind_map.get(n.get("kind"), n.get("kind", ""))
+                    art = store.get_article(cid) if store else None
+                    label_val = (
+                        art.metadata.article_number
+                        if art
+                        else cid
+                    )
+                    url_val = (art.metadata.source_url if art else "")
+                    changes = [{
+                        "kind": kind_val,
+                        "label": label_val,
+                        "url": url_val,
+                        "old_text": (n.get("old_text") or "")[:1500],
+                        "new_text": (n.get("new_text") or "")[:1500],
+                    }]
+        except Exception as e:
+            logger.warning(f"Error enriching notification changes for {n.get('id')}: {e}")
+            changes = []
+            added_count = 0
+
         enriched.append({
             **n,
             "question": question or post_title,
             "title": post_title,
             "url": post_url,
             "wp_admin_url": wp_admin_url,
+            "owner_kind": owner_kind,
+            "law_label": law_label_val,
+            "ai_paused": ai_paused,
+            "changes": changes,
+            "added_count": added_count,
         })
     return {"total": total, "items": enriched, "open_count": editorial.count_open_notifications()}
 

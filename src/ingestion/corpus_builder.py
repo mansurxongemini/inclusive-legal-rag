@@ -48,6 +48,9 @@ class SourceSpec:
     include: str = "all"            # all | disability_articles
     category: Optional[str] = None  # force a category for every unit
     notes: str = ""
+    # with include=disability_articles, whole chapters kept as well (prefix of the unit's chapter, e.g. "66-bob"):
+    # the topic a huge code is needed for (inheritance in the Civil Code) rarely mentions disability
+    chapters: List[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, d: dict) -> "SourceSpec":
@@ -210,16 +213,17 @@ class CorpusBuilder:
                 continue
             if unit.status == "repealed" and len(unit.text) < 200:   # just "(o'z kuchini yo'qotgan)"
                 continue
-            probe = f"{unit.title}\n{unit.text}"
-            if spec.include == "disability_articles" and disability_relevance(probe) == 0:
-                continue
-
             cid = unit_canonical_id(law_id, unit)
             if cid in seen_ids:                       # duplicate numbers inside one document
                 seen_ids[cid] += 1
                 cid = f"{cid}_{seen_ids[cid]}"
             else:
                 seen_ids[cid] = 1
+
+            probe = f"{unit.annex_title}\n{unit.chapter}\n{unit.title}\n{unit.text}"
+            if spec.include == "disability_articles" and disability_relevance(probe) == 0 \
+                    and not any((unit.chapter or "").startswith(c) for c in spec.chapters):
+                continue
 
             ru_unit = ru_units.get(_unit_key(unit))
             ru_text = ru_unit.text if ru_unit and ru_unit.text else ""
@@ -229,9 +233,9 @@ class CorpusBuilder:
             title_uz = normalize_apostrophes(unit.title or _first_sentence(unit.text))
             title_ru = (ru_unit.title or _first_sentence(ru_text)) if ru_unit else ""
             category = spec.category or classify_category(
-                title=title_uz, text=unit.text, default=doc_category, min_score=6.0
+                title=f"{unit.annex_title} {title_uz}".strip(), text=unit.text, default=doc_category, min_score=6.0
             )
-            groups = detect_disability_groups(f"{law_title_uz}\n{unit.text}")
+            groups = detect_disability_groups(f"{law_title_uz}\n{unit.annex_title}\n{unit.text}")
 
             text_for_hash = unit.text.strip()
             source_hash = "sha256:" + hashlib.sha256(text_for_hash.encode("utf-8")).hexdigest()
@@ -265,6 +269,13 @@ class CorpusBuilder:
             if law_title_ru:
                 law_title["ru"] = law_title_ru
 
+            chap = normalize_apostrophes(unit.chapter or unit.section).strip()
+            annex_t = normalize_apostrophes(unit.annex_title).strip()
+            if annex_t and chap and annex_t.lower() not in chap.lower():
+                chapter_label = f"{annex_t} — {chap}"
+            else:
+                chapter_label = chap or annex_t or None
+
             articles.append(CanonicalArticle(
                 canonical_id=cid,
                 schema_version="1.2",
@@ -272,9 +283,10 @@ class CorpusBuilder:
                     law_id=law_id,
                     law_title=law_title,
                     law_number=number or _short_label(law_title_uz),
-                    chapter_number=normalize_apostrophes(unit.chapter or unit.section) or None,
+                    chapter_number=chapter_label,
                     article_number=unit.display_number,
                     article_title=article_title,
+                    annex_title=normalize_apostrophes(unit.annex_title) or None,
                     source_url=deep_link,
                     effective_date=doc.effective_date or doc.adopted_date or self.today,
                     last_verified_date=self.today,

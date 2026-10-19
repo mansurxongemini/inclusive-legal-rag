@@ -24,9 +24,7 @@ from src.api.middleware.security import sanitize_user_input
 from src.api.middleware.rate_limiter import rate_limiter
 from src.api.auth.admin import is_direct_loopback, require_admin
 from src.api.auth.api_keys import api_key_manager, ApiKeyRecord
-from src.ingestion.url_importer import LexUrlImporter, UrlImportRequest, UrlImportResponse
 from src.ingestion.file_importer import LocalFileImporter, BatchFileImportReport
-from src.ingestion.manual_importer import ManualImporter, ManualArticleInput, ManualImportResult
 from src.ingestion.document_inspector import DocumentInspector, DocumentInspectionReport
 from src.clients.openrouter import OpenRouterClient
 
@@ -126,12 +124,6 @@ class TestJevRequest(BaseModel):
     law_title: Optional[str] = Field(default=None, description="Optional parent law title")
 
 
-class NormUpdateRequest(BaseModel):
-    title: Optional[str] = Field(default=None, description="Modda yoki band sarlavhasi")
-    text_uz: str = Field(..., min_length=1, description="Normaning o'zbek tilidagi rasmiy matni")
-    text_ru: Optional[str] = Field(default=None, description="Normaning rus tilidagi rasmiy matni")
-    category: Optional[str] = Field(default=None, description="Huquqiy soha identifikatori")
-    disability_types: Optional[List[str]] = Field(default=None, description="Tegishli nogironlik toifalari")
 
 
 
@@ -436,60 +428,6 @@ async def get_document_norms(law_identifier: str):
     }
 
 
-@router.put("/norms/{canonical_id}", dependencies=_ADMIN)
-async def update_and_revectorize_norm(canonical_id: str, payload: NormUpdateRequest):
-    """
-    Updates statutory norm content, category, or title, and immediately re-computes its
-    BGE-M3 embedding (1024-dim), updating both SQLite and LanceDB in real-time.
-    Embeddings are computed before anything is written, so a failure leaves the stored norm untouched.
-    """
-    from datetime import datetime, timezone
-    from src.api.app import get_store, get_client
-    store = get_store()
-    client = get_client()
-
-    existing = store.get_article(canonical_id)
-    if not existing:
-        raise HTTPException(status_code=404, detail="Bunday identifikatorga ega norma topilmadi.")
-
-    # Work on a copy: the store hands out its cached instance and an edit that fails must not leak into it.
-    article = existing.model_copy(deep=True)
-
-    # 1. Update text translations
-    article.translations["uz"] = payload.text_uz.strip()
-    if payload.text_ru is not None:
-        article.translations["ru"] = payload.text_ru.strip()
-
-    # 2. Update metadata
-    if payload.title is not None and payload.title.strip():
-        article.metadata.article_title["uz"] = payload.title.strip()
-
-    if payload.category is not None and payload.category.strip():
-        article.metadata.category = payload.category.strip()
-
-    if payload.disability_types is not None:
-        article.metadata.disability_types = payload.disability_types
-
-    article.metadata.last_verified_date = datetime.now(timezone.utc).date().isoformat()
-
-    # 3. Re-index in SQLite FTS5 and LanceDB Vector Store
-    try:
-        await store.index_article(article, client=client)
-    except Exception as e:
-        logger.error(f"Error re-vectorizing article {canonical_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=502, detail="Normani qayta vektorlashda xatolik yuz berdi. Norma o'zgarmadi.")
-
-    _invalidate_answer_cache()
-
-    return {
-        "success": True,
-        "message": "Norma muvaffaqiyatli saqlandi va BGE-M3 modeli orqali qayta vektorlandi.",
-        "canonical_id": canonical_id,
-        "article_number": article.metadata.article_number,
-        "law_number": article.metadata.law_number,
-        "category": article.metadata.category,
-        "last_verified_date": article.metadata.last_verified_date,
-    }
 
 
 
@@ -500,10 +438,25 @@ async def get_system_stats():
     store = get_store()
     with store.fts_store._get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM articles_metadata")
-        total_norms = c.fetchone()[0]
+        c.execute("""
+            SELECT 
+                COUNT(*), 
+                COUNT(DISTINCT json_extract(json_data, '$.metadata.law_id')) 
+            FROM articles_metadata
+            WHERE (json_extract(json_data, '$.metadata.source_type') = 'lex' OR json_extract(json_data, '$.metadata.source_type') IS NULL)
+              AND canonical_id NOT LIKE 'hp_%' AND canonical_id NOT LIKE 'qa_%'
+        """)
+        row = c.fetchone()
+        total_norms = row[0] if row else 0
+        total_docs = row[1] if row else 0
 
-        c.execute("SELECT json_extract(json_data, '$.metadata.category'), COUNT(*) FROM articles_metadata GROUP BY 1")
+        c.execute("""
+            SELECT json_extract(json_data, '$.metadata.category'), COUNT(*) 
+            FROM articles_metadata 
+            WHERE (json_extract(json_data, '$.metadata.source_type') = 'lex' OR json_extract(json_data, '$.metadata.source_type') IS NULL)
+              AND canonical_id NOT LIKE 'hp_%' AND canonical_id NOT LIKE 'qa_%'
+            GROUP BY 1
+        """)
         cat_distribution = {row[0]: row[1] for row in c.fetchall() if row[0]}
 
     api_keys = api_key_manager.list_keys()
@@ -512,6 +465,7 @@ async def get_system_stats():
     return {
         "status": "healthy",
         "total_statutory_norms": total_norms,
+        "total_documents": total_docs,
         "database_storage": "Clean Inclusive SQLite + FTS5 + LanceDB",
         "category_distribution": cat_distribution,
         "active_api_keys": len([k for k in api_keys if k.is_active]),
@@ -522,31 +476,6 @@ async def get_system_stats():
 
 # --- Administration: Ingestion (URL & Local Folder) & Manual Upload ---
 
-@router.post("/admin/import-url", dependencies=_ADMIN, response_model=UrlImportResponse)
-async def import_from_lex_url(payload: UrlImportRequest):
-    """Directly fetches and indexes a legal document from an official Lex.uz URL."""
-    from src.api.app import get_store
-    importer = LexUrlImporter(store=get_store())
-    try:
-        result = await importer.import_from_url(payload)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error importing Lex.uz URL {payload.url}: {e}", exc_info=True)
-        raise HTTPException(status_code=502, detail="Lex.uz dan hujjatni yuklab bo'lmadi. Keyinroq qayta urinib ko'ring.")
-    _invalidate_answer_cache()
-    return result
-
-
-@router.post("/admin/import-folder", dependencies=_ADMIN, response_model=BatchFileImportReport)
-async def import_from_local_folder(directory_path: str = "data/qonunlar"):
-    """Scans data/qonunlar (or a sub-folder of data/) for Word (.docx, .doc), PDF, and text files."""
-    from src.api.app import get_store
-    target = _resolve_import_dir(directory_path)
-    importer = LocalFileImporter(store=get_store())
-    report = await importer.scan_and_import_directory(str(target))
-    _invalidate_answer_cache()
-    return report
 
 
 @router.post("/admin/inspect-document", dependencies=_ADMIN, response_model=DocumentInspectionReport)
@@ -610,24 +539,6 @@ async def legacy_sync_alias():
     }
 
 
-@router.post("/admin/upload-json", dependencies=_ADMIN, response_model=ManualImportResult)
-async def upload_json_norms(payload: List[dict]):
-    """Uploads pre-structured CanonicalArticle JSON records."""
-    from src.api.app import get_store
-    importer = ManualImporter(store=get_store())
-    result = await importer.import_json_data(payload)
-    _invalidate_answer_cache()
-    return result
-
-
-@router.post("/admin/upload-article", dependencies=_ADMIN, response_model=ManualImportResult)
-async def upload_single_article(payload: ManualArticleInput):
-    """Creates and indexes a single article from manual form input."""
-    from src.api.app import get_store
-    importer = ManualImporter(store=get_store())
-    result = await importer.import_single_article(payload)
-    _invalidate_answer_cache()
-    return result
 
 
 # --- Administration: API Keys Management ---

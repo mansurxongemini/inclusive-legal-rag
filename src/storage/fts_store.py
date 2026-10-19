@@ -222,6 +222,12 @@ class SqliteFtsStore:
                 })
             return results
 
+    def clear_article_cache(self) -> None:
+        """Drops the in-memory article objects. Needed after another process (the corpus build script) wrote to the
+        database: nothing else invalidates this cache, so a repealed or amended act would keep being served."""
+        if hasattr(self, "_article_cache"):
+            self._article_cache.clear()
+
     def get_article(self, canonical_id: str) -> Optional[CanonicalArticle]:
         if not hasattr(self, "_article_cache"):
             self._article_cache = {}
@@ -410,7 +416,9 @@ class SqliteFtsStore:
                     json_extract(json_data, '$.metadata.source_url') as source_url,
                     COUNT(*) as norm_count
                 FROM articles_metadata
-                GROUP BY law_num
+                WHERE (json_extract(json_data, '$.metadata.source_type') = 'lex' OR json_extract(json_data, '$.metadata.source_type') IS NULL)
+                  AND canonical_id NOT LIKE 'hp_%' AND canonical_id NOT LIKE 'qa_%'
+                GROUP BY json_extract(json_data, '$.metadata.law_id')
                 ORDER BY norm_count DESC
             """)
             rows = cursor.fetchall()
