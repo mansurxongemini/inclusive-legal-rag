@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import math
+import time
 from typing import AsyncGenerator, Dict, List, Optional
 import httpx
 import numpy as np
@@ -25,6 +26,37 @@ def output_token_budget(model: Optional[str], max_tokens: int) -> int:
     return max_tokens
 
 
+META_REASONING_EFFORTS = ("minimal", "low", "medium", "high", "xhigh", "max")
+
+
+def reasoning_fields(base_url: str, reasoning: Optional[Dict]) -> Dict:
+    """
+    Request fields that control a model's reasoning, from the OpenRouter-style `reasoning` option.
+    OpenRouter takes the object as it is. The Meta API rejects `reasoning` (HTTP 400, unknown parameter) and takes
+    `reasoning_effort` instead (minimal..max; "off" is not supported, so {"enabled": False} means minimal).
+    Other endpoints get no reasoning field.
+    """
+    if not reasoning:
+        return {}
+    if "openrouter.ai" in base_url:
+        return {"reasoning": reasoning}
+    if "meta.ai" in base_url:
+        if reasoning.get("enabled") is False:
+            return {"reasoning_effort": "minimal"}
+        effort = str(reasoning.get("effort") or "").lower()
+        if effort in META_REASONING_EFFORTS:
+            return {"reasoning_effort": effort}
+    return {}
+
+
+def _error_body(response) -> str:
+    """First part of an error response body for the log (never the request, which may hold a user's question)."""
+    try:
+        return (response.text or "")[:200].replace("\n", " ")
+    except Exception:
+        return ""
+
+
 class OpenRouterClient:
     """Client for OpenRouter API with retry, fallback models, and offline deterministic mock support."""
 
@@ -41,10 +73,16 @@ class OpenRouterClient:
         self.jev_base_url = self._api_root(
             settings.JEV_BASE_URL or settings.EMBEDDING_BASE_URL or settings.OPENROUTER_BASE_URL)
         self.jev_api_key = settings.JEV_API_KEY or settings.EMBEDDING_API_KEY or settings.OPENROUTER_API_KEY
+        self.utility_base_url = self._api_root(
+            settings.UTILITY_BASE_URL or settings.EMBEDDING_BASE_URL or settings.OPENROUTER_BASE_URL)
+        self.utility_api_key = settings.UTILITY_API_KEY or settings.EMBEDDING_API_KEY or settings.OPENROUTER_API_KEY
         self.is_mock = settings.is_mock_mode
         self._http_client: Optional[httpx.AsyncClient] = None
         self._embedding_http_client: Optional[httpx.AsyncClient] = None
         self._jev_http_client: Optional[httpx.AsyncClient] = None
+        self._utility_http_client: Optional[httpx.AsyncClient] = None
+        self._utility_failures = 0                    # consecutive failures of the utility endpoint
+        self._utility_open_until = 0.0                # circuit breaker: utility calls are skipped until then
 
     @staticmethod
     def _api_root(url: str) -> str:
@@ -91,6 +129,76 @@ class OpenRouterClient:
             )
         return self._embedding_http_client
 
+    @property
+    def utility_enabled(self) -> bool:
+        """Light calls and the generation backup can run on the utility endpoint."""
+        return (not self.is_mock) and bool(self.utility_api_key) and bool(
+            settings.UTILITY_MODEL or settings.GENERATION_MODEL_BACKUP)
+
+    async def get_utility_client(self) -> httpx.AsyncClient:
+        """HTTP client for the utility endpoint (OpenRouter by default, see UTILITY_BASE_URL)."""
+        if self.utility_base_url == self.base_url and self.utility_api_key == self.api_key:
+            return await self.get_client()
+        if self.utility_base_url == self.embedding_base_url and self.utility_api_key == self.embedding_api_key:
+            return await self.get_embedding_client()
+        if self._utility_http_client is None or self._utility_http_client.is_closed:
+            self._utility_http_client = httpx.AsyncClient(
+                timeout=httpx.Timeout(60.0, connect=10.0),
+                headers={
+                    "Authorization": f"Bearer {self.utility_api_key or ''}",
+                    "HTTP-Referer": "https://legal-rag.uz",
+                    "X-Title": "Uzbekistan Legal RAG",
+                }
+            )
+        return self._utility_http_client
+
+    async def utility_chat(
+        self,
+        messages: List[Dict[str, str]],
+        *,
+        model: Optional[str] = None,
+        temperature: float = 0.0,
+        max_tokens: int = 300,
+        min_chars: int = 2,
+        timeout: Optional[float] = None,
+        response_format: Optional[Dict] = None,
+        breaker: bool = True,
+    ) -> Optional[str]:
+        """
+        One non-reasoning completion on the utility endpoint. Returns None on any failure (the caller falls back to
+        the generation model). After 3 failures in a row the endpoint is skipped for 60 s instead of making every
+        request wait for its timeout (breaker=False: evaluation judges neither trip nor honour the breaker).
+        """
+        target = model or settings.UTILITY_MODEL
+        if not target or not self.utility_enabled or (breaker and time.monotonic() < self._utility_open_until):
+            return None
+        payload: Dict = {"model": target, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
+        payload.update(reasoning_fields(self.utility_base_url, {"enabled": False}))
+        if response_format is not None:
+            payload["response_format"] = response_format
+        try:
+            client = await self.get_utility_client()
+            response = await client.post(f"{self.utility_base_url}/chat/completions", json=payload,
+                                         timeout=timeout or settings.UTILITY_TIMEOUT_S)
+            if response.status_code == 200:
+                content = (response.json().get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+                if len(content) >= min_chars and content:
+                    self._utility_failures = 0
+                    return content
+                logger.warning(f"Utility model {target} returned an empty reply")
+            else:
+                logger.warning(f"Utility model {target} failed with HTTP {response.status_code}: {_error_body(response)}")
+        except Exception as e:
+            logger.warning(f"Utility model {target} call failed: {type(e).__name__}: {e}")
+        if not breaker:
+            return None
+        self._utility_failures += 1
+        if self._utility_failures >= 3:
+            self._utility_open_until = time.monotonic() + 60.0
+            self._utility_failures = 0
+            logger.error("Utility endpoint failed 3 times in a row; skipping it for 60 s")
+        return None
+
     async def get_client(self) -> httpx.AsyncClient:
         if self._http_client is None or self._http_client.is_closed:
             self._http_client = httpx.AsyncClient(
@@ -110,6 +218,8 @@ class OpenRouterClient:
             await self._embedding_http_client.aclose()
         if self._jev_http_client and not self._jev_http_client.is_closed:
             await self._jev_http_client.aclose()
+        if self._utility_http_client and not self._utility_http_client.is_closed:
+            await self._utility_http_client.aclose()
 
     def provider_preferences(self) -> Optional[Dict]:
         """Builds OpenRouter provider routing and quantization preferences from settings."""
@@ -269,12 +379,29 @@ class OpenRouterClient:
         min_chars: int = 30,
         reasoning: Optional[Dict] = None,
         response_format: Optional[Dict] = None,
+        light: bool = False,
     ) -> str:
-        """Non-streaming generation with automatic fallback. Replies not longer than min_chars count as stubs."""
+        """
+        Non-streaming generation with automatic fallback. Replies not longer than min_chars count as stubs.
+
+        light=True marks a cheap helper call (query rewriting, translation, history condensing): it goes to the fast
+        non-reasoning utility model first and only falls back to the generation model, with minimal reasoning.
+        When every generation model fails, GENERATION_MODEL_BACKUP (on the utility endpoint) answers instead.
+        """
         if self.is_mock:
             return self._mock_grounded_response(messages)
 
-        models_to_try = [model or self.primary_model, self.fallback_model]
+        if light:
+            text = await self.utility_chat(messages, temperature=temperature, max_tokens=max_tokens,
+                                            min_chars=min_chars, response_format=response_format)
+            if text:
+                return text
+            reasoning = reasoning or {"enabled": False}
+
+        models_to_try: List[str] = []
+        for name in (model or self.primary_model, self.fallback_model):
+            if name and name not in models_to_try:
+                models_to_try.append(name)
         client = await self.get_client()
         prefs = self.provider_preferences()
 
@@ -289,8 +416,7 @@ class OpenRouterClient:
                     }
                     if prefs is not None and "openrouter.ai" in self.base_url:
                         payload["provider"] = prefs
-                    if reasoning is not None and "openrouter.ai" in self.base_url:
-                        payload["reasoning"] = reasoning
+                    payload.update(reasoning_fields(self.base_url, reasoning))
                     if response_format is not None:
                         payload["response_format"] = response_format
                     response = await client.post(
@@ -307,10 +433,23 @@ class OpenRouterClient:
                         # If reasoning took all tokens or content is empty
                         logger.warning(f"Model {cur_model} returned empty or stub content ({repr(content)[:50]}). Triggering fallback...")
                     else:
-                        logger.warning(f"Chat completion model {cur_model} failed with HTTP {response.status_code}")
+                        logger.warning(f"Chat completion model {cur_model} failed with HTTP {response.status_code}: "
+                                       f"{_error_body(response)}")
+                        if 400 <= response.status_code < 500 and response.status_code not in (408, 429):
+                            break          # the same request would be rejected again: next model
                 except Exception as e:
                     logger.warning(f"Chat completion model {cur_model} attempt {attempt+1} error: {e}")
-                await asyncio.sleep(1.0)
+                if attempt == 0:
+                    await asyncio.sleep(1.0)
+
+        backup = settings.GENERATION_MODEL_BACKUP
+        if backup and backup not in models_to_try and not light:
+            text = await self.utility_chat(messages, model=backup, temperature=temperature, max_tokens=max_tokens,
+                                            min_chars=min_chars, timeout=settings.GENERATION_BACKUP_TIMEOUT_S,
+                                            response_format=response_format)
+            if text:
+                logger.warning(f"Generation models failed; answered by the backup model {backup}")
+                return text
 
         raise RuntimeError("All configured LLM models failed on OpenRouter. Please try again later.")
 
@@ -331,16 +470,22 @@ class OpenRouterClient:
                 await asyncio.sleep(0.01)
             return
 
-        client = await self.get_client()
-        prefs = self.provider_preferences()
-        models_to_try = [model or self.primary_model]
-        if self.fallback_model and self.fallback_model not in models_to_try:
-            models_to_try.append(self.fallback_model)
+        names: List[str] = []
+        for name in (model or self.primary_model, self.fallback_model):
+            if name and name not in names:
+                names.append(name)
+        # (model, on the utility endpoint): the backup model is tried last, on the other provider
+        targets = [(name, False) for name in names]
+        backup = settings.GENERATION_MODEL_BACKUP
+        if backup and backup not in names and self.utility_enabled and time.monotonic() >= self._utility_open_until:
+            targets.append((backup, True))
 
         last_error: Optional[str] = None
-        for target_model in models_to_try:
+        for target_model, on_utility in targets:
             emitted = False
+            base_url = self.utility_base_url if on_utility else self.base_url
             try:
+                client = await (self.get_utility_client() if on_utility else self.get_client())
                 payload: Dict = {
                     "model": target_model,
                     "messages": messages,
@@ -348,18 +493,23 @@ class OpenRouterClient:
                     "max_tokens": output_token_budget(target_model, max_tokens),
                     "stream": True,
                 }
-                if prefs is not None and "openrouter.ai" in self.base_url:
+                prefs = None if on_utility else self.provider_preferences()
+                if prefs is not None and "openrouter.ai" in base_url:
                     payload["provider"] = prefs
-                if reasoning is not None and "openrouter.ai" in self.base_url:
-                    payload["reasoning"] = reasoning
+                payload.update(reasoning_fields(base_url, {"enabled": False} if on_utility else reasoning))
                 async with client.stream(
                     "POST",
-                    f"{self.base_url}/chat/completions",
+                    f"{base_url}/chat/completions",
                     json=payload,
                 ) as response:
                     if response.status_code != 200:
                         last_error = f"HTTP {response.status_code}"
-                        logger.warning(f"Streaming model {target_model} failed with {last_error}")
+                        body = ""
+                        try:
+                            body = (await response.aread()).decode("utf-8", "replace")[:200].replace("\n", " ")
+                        except Exception:
+                            pass
+                        logger.warning(f"Streaming model {target_model} failed with {last_error}: {body}")
                         continue
 
                     async for line in response.aiter_lines():

@@ -37,6 +37,15 @@ class Settings(BaseSettings):
     JEV_RERANK_CHARS: int = Field(default=1500)                     # characters of each unit shown to Jev
     PASSAGE_FOCUS: bool = Field(default=True)                       # long units: show Jev/LLM the matched chunk, not only the head
     JEV_TIMEOUT_S: float = Field(default=20.0)
+    # Light LLM calls (query rewriting and translation, history condensing) run on a fast non-reasoning model over
+    # OpenRouter instead of the always-reasoning generation model: ~1 s instead of 7-10 s. Empty model = off.
+    UTILITY_MODEL: str = Field(default="anthropic/claude-haiku-5.5")
+    UTILITY_BASE_URL: str = Field(default="")                       # empty = EMBEDDING_BASE_URL, then OPENROUTER_BASE_URL
+    UTILITY_API_KEY: Optional[str] = Field(default=None)            # empty = EMBEDDING_API_KEY, then OPENROUTER_API_KEY
+    UTILITY_TIMEOUT_S: float = Field(default=8.0)
+    # Tried on the utility endpoint when every generation model failed, so that a Meta outage is not an answer outage.
+    GENERATION_MODEL_BACKUP: str = Field(default="anthropic/claude-sonnet-5.5")   # empty = no backup
+    GENERATION_BACKUP_TIMEOUT_S: float = Field(default=60.0)
     LLM_PROVIDER_ORDER: str = Field(default="deepinfra")            # comma-separated OpenRouter provider slugs tried first; "" = OpenRouter default routing
     LLM_PROVIDER_QUANTIZATIONS: str = Field(default="fp8,fp16,bf16,fp32,unknown")  # allowed quantizations (excludes fp4/int4); "" = no filter
     GENERATION_REASONING_EFFORT: str = Field(default="none")        # "", "none", "low", "high" or "max"; "" = model default, "none" = reasoning off

@@ -67,6 +67,7 @@ async def condense_question(history, question: str, client: Optional[OpenRouterC
             max_tokens=300,
             min_chars=2,
             reasoning={"enabled": False},
+            light=True,
         )
         if not raw:
             return question

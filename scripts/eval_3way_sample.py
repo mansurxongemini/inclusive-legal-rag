@@ -1,8 +1,9 @@
+import os
 import json
 import urllib.request
 import time
 
-API_KEY = "REDACTED"
+API_KEY = os.environ.get("GATEWAY_API_KEY", "")   # gateway client key: set in the environment, never in the file
 BASE_URL = "http://127.0.0.1:8000"
 
 def call_ask(question: str):

@@ -22,6 +22,7 @@ def _client(lines_for_request):
     c = OpenRouterClient()
     c.is_mock = False
     c.primary_model = c.fallback_model = "muse-spark-1.3"
+    c.utility_api_key = None                      # no backup model: these tests never leave the mock transport
     c._http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
     return c, seen
 

@@ -59,6 +59,7 @@ class QueryTranslator:
                 max_tokens=max_toks,
                 min_chars=2,  # short questions translate to short text; the default stub filter would reject them
                 reasoning={"enabled": False},
+                light=True,
             )
             if not raw:
                 return None
@@ -114,6 +115,7 @@ class QueryTranslator:
                 max_tokens=max_toks,
                 min_chars=2,
                 reasoning={"enabled": False},
+                light=True,
             )
             rewritten = (raw or "").strip().strip('"\'`«»').strip()
             if not rewritten or len(rewritten) > 2 * len(query) + 100 or any("Ѐ" <= ch <= "ӿ" for ch in rewritten):
