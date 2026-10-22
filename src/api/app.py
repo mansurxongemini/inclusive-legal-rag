@@ -1,5 +1,10 @@
 import asyncio
 import logging
+
+from src.runtime_tuning import tune_malloc
+
+tune_malloc()      # before any worker thread exists; see src/runtime_tuning.py
+
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional

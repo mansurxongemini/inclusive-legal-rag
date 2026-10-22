@@ -1,14 +1,5 @@
 #!/usr/bin/env bash
+# Consistent backup of data/store (SQLite online backup + verified LanceDB copy). See scripts/backup_store.py --help.
 set -euo pipefail
-
-BACKUP_DIR="${1:-./data/backups}"
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-TARGET_ARCHIVE="${BACKUP_DIR}/legal_rag_backup_${TIMESTAMP}.tar.gz"
-
-mkdir -p "${BACKUP_DIR}"
-
-echo "[*] Creating atomic knowledge base backup..."
-tar -czf "${TARGET_ARCHIVE}" -C "./data" store/
-
-echo "[✓] Backup created successfully: ${TARGET_ARCHIVE}"
-echo "    Size: $(du -sh "${TARGET_ARCHIVE}" | cut -f1)"
+cd "$(dirname "$0")/.."
+exec "${PYTHON:-.venv/bin/python}" scripts/backup_store.py "$@"

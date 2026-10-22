@@ -79,6 +79,7 @@ class OpenRouterClient:
             settings.UTILITY_BASE_URL or settings.EMBEDDING_BASE_URL or settings.OPENROUTER_BASE_URL)
         self.utility_api_key = settings.UTILITY_API_KEY or settings.EMBEDDING_API_KEY or settings.OPENROUTER_API_KEY
         self.is_mock = settings.is_mock_mode
+        self._plus_api_key = settings.PLUS_META_AI_API_KEY if settings.PLUS_META_AI_API_KEY != self.api_key else None
         self._http_client: Optional[httpx.AsyncClient] = None
         self._embedding_http_client: Optional[httpx.AsyncClient] = None
         self._jev_http_client: Optional[httpx.AsyncClient] = None
@@ -206,6 +207,20 @@ class OpenRouterClient:
             self._utility_failures = 0
             logger.error("Utility endpoint failed 3 times in a row; skipping it for 60 s")
         return None
+
+    def _rotate_main_key(self) -> bool:
+        """The generation provider answered 402 (billing / limit used up): switch to the second key, once."""
+        if not self._plus_api_key or self.api_key == self._plus_api_key:
+            return False
+        logger.warning("Generation provider answered HTTP 402; switching to the second API key")
+        self.api_key = self._plus_api_key
+        old, self._http_client = self._http_client, None      # get_client() builds a new one with the new key
+        if old is not None and not old.is_closed:
+            try:
+                asyncio.get_running_loop().create_task(old.aclose())
+            except RuntimeError:
+                pass
+        return True
 
     async def get_client(self) -> httpx.AsyncClient:
         if self._http_client is None or self._http_client.is_closed:
@@ -417,12 +432,12 @@ class OpenRouterClient:
         for name in (model or self.primary_model, self.fallback_model):
             if name and name not in models_to_try:
                 models_to_try.append(name)
-        client = await self.get_client()
         prefs = self.provider_preferences()
 
         for cur_model in models_to_try:
             for attempt in range(2):
                 try:
+                    client = await self.get_client()
                     payload: Dict = {
                         "model": cur_model,
                         "messages": messages,
@@ -450,6 +465,8 @@ class OpenRouterClient:
                     else:
                         logger.warning(f"Chat completion model {cur_model} failed with HTTP {response.status_code}: "
                                        f"{_error_body(response)}")
+                        if response.status_code == 402 and self._rotate_main_key():
+                            continue       # same model, second key
                         if 400 <= response.status_code < 500 and response.status_code not in (408, 429):
                             break          # the same request would be rejected again: next model
                 except Exception as e:
@@ -496,7 +513,10 @@ class OpenRouterClient:
             targets.append((backup, True))
 
         last_error: Optional[str] = None
-        for target_model, on_utility in targets:
+        position = 0
+        while position < len(targets):
+            target_model, on_utility = targets[position]
+            position += 1
             emitted = False
             base_url = self.utility_base_url if on_utility else self.base_url
             try:
@@ -525,6 +545,8 @@ class OpenRouterClient:
                         except Exception:
                             pass
                         logger.warning(f"Streaming model {target_model} failed with {last_error}: {body}")
+                        if response.status_code == 402 and not on_utility and self._rotate_main_key():
+                            targets.insert(position, (target_model, on_utility))      # same model again, second key
                         continue
 
                     async for line in response.aiter_lines():

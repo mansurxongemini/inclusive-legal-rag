@@ -131,3 +131,77 @@ async def test_stream_falls_over_to_the_backup_model_when_nothing_was_emitted(mo
     out = [t async for t in c.chat_completion_stream(MSG, max_tokens=2048, reasoning={"effort": "low"})]
     assert "".join(out) == "Zaxira javob."
     assert calls["main"][0]["reasoning_effort"] == "low" and calls["utility"][0]["model"] == "backup/model"
+
+
+# --- second generation key ---------------------------------------------------------------------------------------------
+
+def _two_key_client(statuses_by_key):
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        key = request.headers["authorization"].split()[-1]
+        seen.append(key)
+        status = statuses_by_key[key]
+        if status == 200:
+            return httpx.Response(200, json=_reply("Javob matni " * 6))
+        return httpx.Response(status, json={"error": {"code": "billing_not_configured"}})
+
+    c = OpenRouterClient()
+    c.is_mock = False
+    c.base_url = META
+    c.api_key, c._plus_api_key = "first", "second"
+    c.primary_model = c.fallback_model = "muse-spark-1.3"
+    c.utility_api_key = None
+    c._http_client = None
+
+    async def get_client():
+        if c._http_client is None:
+            c._http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler), headers={"Authorization": f"Bearer {c.api_key}"})
+        return c._http_client
+
+    c.get_client = get_client
+    return c, seen
+
+
+@pytest.mark.asyncio
+async def test_a_402_from_the_first_key_switches_to_the_second_and_stays_there():
+    c, seen = _two_key_client({"first": 402, "second": 200})
+    assert (await c.chat_completion(MSG)).startswith("Javob matni")
+    assert seen == ["first", "second"] and c.api_key == "second"
+    await c.chat_completion(MSG)
+    assert seen[-1] == "second" and seen.count("first") == 1
+
+
+@pytest.mark.asyncio
+async def test_both_keys_out_of_credit_is_an_error_not_a_loop():
+    c, seen = _two_key_client({"first": 402, "second": 402})
+    with pytest.raises(RuntimeError):
+        await c.chat_completion(MSG)
+    assert len(seen) == 2
+
+
+@pytest.mark.asyncio
+async def test_stream_switches_key_on_402_too():
+    seen = []
+
+    def handler(request):
+        key = request.headers["authorization"].split()[-1]
+        seen.append(key)
+        if key == "first":
+            return httpx.Response(402, json={"error": {"code": "billing_not_configured"}})
+        return _sse("Javob ", "matni.")(None)
+
+    c = OpenRouterClient()
+    c.is_mock = False
+    c.base_url, c.api_key, c._plus_api_key = META, "first", "second"
+    c.primary_model = c.fallback_model = "muse-spark-1.3"
+    c.utility_api_key = None
+
+    async def get_client():
+        if c._http_client is None:
+            c._http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler), headers={"Authorization": f"Bearer {c.api_key}"})
+        return c._http_client
+
+    c.get_client = get_client
+    out = [t async for t in c.chat_completion_stream(MSG, max_tokens=2048)]
+    assert "".join(out) == "Javob matni." and seen == ["first", "second"]

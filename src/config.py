@@ -13,6 +13,8 @@ class Settings(BaseSettings):
 
     # OpenRouter API
     OPENROUTER_API_KEY: Optional[str] = Field(default=None)
+    # Second key of the generation provider (Meta AI): used from the moment the first one answers HTTP 402 (billing / limit)
+    PLUS_META_AI_API_KEY: Optional[str] = Field(default=None)
     OPENROUTER_BASE_URL: str = Field(default="https://openrouter.ai/api/v1")
     # Embeddings may live on another endpoint than the LLM (e.g. LLM on Meta AI, embeddings on OpenRouter).
     # Empty = use OPENROUTER_BASE_URL / OPENROUTER_API_KEY.

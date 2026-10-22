@@ -3,6 +3,7 @@ import psutil
 from fastapi import APIRouter, Depends
 from src.storage.hybrid_store import HybridStore
 from src.config import settings
+from src.clients.spend import ledger
 
 router = APIRouter(tags=["Health"])
 
@@ -37,8 +38,11 @@ async def health_check():
     except Exception:
         store_healthy = False
 
+    budget_state = ledger.state()
     return {
-        "status": "healthy" if store_healthy else "degraded",
+        "status": "healthy" if store_healthy and budget_state != "exhausted" else "degraded",
+        # ok | soft (light calls on the free provider) | exhausted (embeddings and Jev paused: full-text search only)
+        "openrouter_budget": budget_state,
         "service": "uzbekistan-legal-rag",
         "version": "1.0.0",
         "mock_mode": settings.is_mock_mode,
