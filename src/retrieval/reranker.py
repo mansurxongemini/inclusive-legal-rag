@@ -128,7 +128,9 @@ class Reranker:
         store: HybridStore,
         top_n: int = 5,
         use_model: bool = True,
+        subquestions: Optional[List[str]] = None,
     ) -> List[RetrievedArticleContext]:
+        """subquestions: the legal sub-questions of a long question; Jev picks the best passage for each of them too."""
         self.last_provider = "none"
         self.last_answerable = None
 
@@ -164,9 +166,10 @@ class Reranker:
         # Jev reranker path
         if settings.RERANK_PROVIDER == "jev" and not getattr(self.client, "is_mock", False):
             # (Capping the units one act may send here was tried: it lowered MRR on both eval sets, so RRF order is kept.)
-            subset = article_contexts[:settings.JEV_RERANK_UNITS]
+            units = settings.JEV_RERANK_UNITS + settings.JEV_RERANK_UNITS_PER_SUBQUESTION * len(subquestions or [])
+            subset = article_contexts[:units]
             try:
-                result = await JevRanker(self.client).rank(query, subset)
+                result = await JevRanker(self.client).rank(query, subset, subquestions=subquestions)
             except Exception as e:  # an unexpected response must not fail the request: Cohere takes over
                 logger.warning(f"Jev rerank failed: {e}")
                 result = None
@@ -181,8 +184,15 @@ class Reranker:
                 self.last_provider = "jev"
                 self.last_answerable = result.answerable
                 return ranked[:top_n]
-            else:
+            elif "openrouter.ai" in getattr(self.client, "base_url", "openrouter.ai"):
                 logger.warning("Jev rerank unavailable, falling back to Cohere")
+            else:
+                # Jev is down or paused (monthly budget) and the generation provider has no /rerank endpoint: the RRF
+                # order serves the request instead of an endpoint that cannot answer.
+                logger.warning("Jev rerank unavailable, serving the RRF order")
+                self.last_provider = "rrf"
+                article_contexts.sort(key=lambda x: x.final_score, reverse=True)
+                return article_contexts[:top_n]
 
         # Use OpenRouter dedicated /rerank endpoint
         try:

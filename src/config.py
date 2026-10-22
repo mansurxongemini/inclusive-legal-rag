@@ -34,9 +34,14 @@ class Settings(BaseSettings):
     JEV_API_KEY: Optional[str] = Field(default=None)
     JEV_MODEL: str = Field(default="typesafe/jev-1.13")
     JEV_RERANK_UNITS: int = Field(default=30)                       # candidates sent to Jev
+    JEV_RERANK_UNITS_PER_SUBQUESTION: int = Field(default=5)        # ... plus this many for each legal sub-question of a long question
     JEV_RERANK_CHARS: int = Field(default=1500)                     # characters of each unit shown to Jev
     PASSAGE_FOCUS: bool = Field(default=True)                       # long units: show Jev/LLM the matched chunk, not only the head
     JEV_TIMEOUT_S: float = Field(default=20.0)
+    # Monthly OpenRouter budget (embeddings + Jev + the one light chat model). Above SOFT_RATIO the light calls move to the
+    # free generation provider; at 100% embeddings and Jev pause too and retrieval degrades to full-text + RRF. 0 = no guard.
+    OPENROUTER_MONTHLY_BUDGET_USD: float = Field(default=15.0)
+    OPENROUTER_BUDGET_SOFT_RATIO: float = Field(default=0.8)
     # Light LLM calls (query rewriting and translation, history condensing) run on a fast non-reasoning model over
     # OpenRouter instead of the always-reasoning generation model: ~1 s instead of 7-10 s. Empty model = off.
     UTILITY_MODEL: str = Field(default="anthropic/claude-haiku-5.5")
@@ -44,7 +49,7 @@ class Settings(BaseSettings):
     UTILITY_API_KEY: Optional[str] = Field(default=None)            # empty = EMBEDDING_API_KEY, then OPENROUTER_API_KEY
     UTILITY_TIMEOUT_S: float = Field(default=8.0)
     # Tried on the utility endpoint when every generation model failed, so that a Meta outage is not an answer outage.
-    GENERATION_MODEL_BACKUP: str = Field(default="anthropic/claude-sonnet-5.5")   # empty = no backup
+    GENERATION_MODEL_BACKUP: str = Field(default="anthropic/claude-haiku-5.5")   # empty = no backup
     GENERATION_BACKUP_TIMEOUT_S: float = Field(default=60.0)
     LLM_PROVIDER_ORDER: str = Field(default="deepinfra")            # comma-separated OpenRouter provider slugs tried first; "" = OpenRouter default routing
     LLM_PROVIDER_QUANTIZATIONS: str = Field(default="fp8,fp16,bf16,fp32,unknown")  # allowed quantizations (excludes fp4/int4); "" = no filter
@@ -88,8 +93,17 @@ class Settings(BaseSettings):
     GATE_JEV_SCOPE_ENABLED: bool = Field(default=True)
     # Uzbek questions are also searched through an LLM rewrite in standard Latin (fixes Cyrillic/misspelled chat input)
     QUERY_NORMALIZE_UZ: bool = Field(default=True)
-    GATE_JEV_MIN_IN_SCOPE: float = Field(default=0.3)               # refuse when P(in_scope) is below this ...
-    GATE_JEV_ANSWERABLE_CEILING: float = Field(default=0.8)         # ... and P(answerable) is below this (calibrated: OOS max 0.62, in-scope >= 0.9)
+    # A question of at least this many words (a story with several issues) is also searched through up to 4 short
+    # legal sub-questions written by the LLM; each one gets its own share of the candidates and its own Jev pick. 0 = off
+    QUERY_SUBQUESTIONS_MIN_WORDS: int = Field(default=25)
+    # Full-text query: drop question/function words and cut words to their search stem, because the wildcard only
+    # extends the query word ("nogironligidan"* never matched a unit's "nogironlik")
+    VECTOR_WINDOW_FACTOR: int = Field(default=8)      # nearest chunk rows read per wanted unit (rows of one long unit repeat)
+    VECTOR_DEDUP_QUERIES: bool = Field(default=True)   # embed/search each distinct sub-query text once
+    FTS_STOPWORDS: bool = Field(default=True)
+    FTS_STEM_PREFIX: int = Field(default=1)            # 0 = whole words (stemming off), 1 = on
+    GATE_JEV_MIN_IN_SCOPE: float = Field(default=0.2)               # refuse when P(in_scope) is below this (calibrated on the stress set and the held-out set: 100% / 95% of the out-of-scope questions, 1-4% of the in-scope ones)
+    GATE_JEV_ANSWERABLE_CEILING: float = Field(default=1.01)        # a high P(answerable) no longer excuses a low scope: the Traffic/Criminal codes in the corpus answer their questions (0.89-0.96) just like the Convention questions that Jev misjudges. 0.8 = the old exemption
     GATE_JEV_MIN_ANSWERABLE: float = Field(default=0.0)             # refuse any question whose P(answerable) is below this (0 = off)
 
     # Rate limiting & Security

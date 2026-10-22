@@ -13,7 +13,10 @@ from src.schema.canonical import CanonicalArticle
 
 MAX_CHARS = 1700
 OVERLAP_CHARS = 180
-MAX_CHUNKS_PER_ARTICLE = 14
+# Only 100 article-languages have more than 14 chunks (Tax Code art. 483: 44 chunks, the benefit sits in chunk 29). Four
+# preambles of 100-450 chunks stay truncated: they are whole decrees parsed as one unit.
+MAX_CHUNKS_PER_ARTICLE = 100
+LEGACY_CHUNK_CAP = 14          # what the index held before: units longer than this have chunks to add
 MAX_CONTEXT_LINE_CHARS = 240
 
 

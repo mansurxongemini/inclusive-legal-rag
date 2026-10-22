@@ -75,6 +75,7 @@ def main() -> int:
             "expected_ids": [], "evidence": "", "out_of_scope": True, "domain": "out_of_scope",
             "difficulty": "injection" if it.get("kind") == "injection" else f"oos_{it.get('kind', 'other')}",
             "note": it.get("note", ""),
+            **({"scope": it["scope"]} if it.get("scope") else {}),
         })
 
     out = Path(args.out)

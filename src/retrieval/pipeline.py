@@ -27,6 +27,9 @@ from src.storage.hybrid_store import HybridStore
 logger = logging.getLogger(__name__)
 
 CATEGORY_BOOST = 0.03
+# Rank constant of the fusion of a long question's hits with its sub-questions' hits: small, so the first hits of
+# every list lead the pool whatever their raw scores (with k=60 a unit that is 20th in two lists beats every list's first).
+ASPECT_RRF_K = 5
 
 
 def merge_candidates(lists: List[List[ScoredArticle]], limit: int) -> List[ScoredArticle]:
@@ -83,6 +86,36 @@ def merge_candidates(lists: List[List[ScoredArticle]], limit: int) -> List[Score
     return merged[:limit]
 
 
+def fuse_aspect_candidates(
+    base: List[ScoredArticle], aspect_lists: List[List[ScoredArticle]], limit: int, k: int = ASPECT_RRF_K,
+) -> List[ScoredArticle]:
+    """
+    Fuses the hits of a long question (base) with the hits of each of its legal sub-questions by rank:
+    rrf_score = sum over the lists of 1 / (k + rank). Raw scores are not comparable here: the story's own hits are
+    summed over the original and the rewritten text and would bury the norms only one sub-question finds (the appeal
+    procedure when the story is about a refused application). In a sub-question's list a unit ranks by the better of
+    its place and its dense rank: the short question embeds cleanly, while its lexical side is padded with domain
+    terms and pulls generic laws ahead of the regulation that answers it. Other fields are merged as in merge_candidates.
+    """
+    lists = [base] + aspect_lists
+    fused: Dict[str, float] = {}
+    for n, cand_list in enumerate(lists):
+        for rank, cand in enumerate(cand_list, start=1):
+            if n:
+                rank = min([rank] + [r for r in (cand.vector_rank, cand.bm25_rank) if r is not None])
+            fused[cand.canonical_id] = fused.get(cand.canonical_id, 0.0) + 1.0 / (k + rank)
+    merged = merge_candidates(lists, limit=len(fused))
+    for cand in merged:
+        cand.rrf_score = fused[cand.canonical_id]
+    merged.sort(key=lambda c: c.rrf_score, reverse=True)
+    return merged[:limit]
+
+
+def _wants_subquestions(analysis: QueryAnalysis) -> bool:
+    min_words = settings.QUERY_SUBQUESTIONS_MIN_WORDS
+    return min_words > 0 and len(analysis.normalized_query.split()) >= min_words
+
+
 @dataclass
 class RetrievalResult:
     contexts: List[RetrievedArticleContext] = field(default_factory=list)
@@ -136,15 +169,18 @@ async def retrieve_contexts(
     elif language == "uz" and settings.QUERY_NORMALIZE_UZ:
         # chat questions are often Cyrillic and misspelled; a standard-Latin rewrite is searched as well
         translation = asyncio.create_task(QueryTranslator.normalize_uzbek(analysis.raw_query, client))
+    # A long story is also split into short legal sub-questions, each searched on its own (see fuse_aspect_candidates)
+    subquestions_task: Optional[asyncio.Task] = None
+    if _wants_subquestions(analysis):
+        subquestions_task = asyncio.create_task(QueryTranslator.legal_subquestions(analysis.raw_query, client))
     try:
         candidates = await retriever.retrieve(
             analysis, top_k=top_k, precomputed_query_vector=query_vector, use_vector=use_vector,
         )
     except BaseException:
-        if translation:
-            translation.cancel()
-        if scope_task:
-            scope_task.cancel()
+        for task in (translation, subquestions_task, scope_task):
+            if task:
+                task.cancel()
         raise
     translated = await translation if translation else None
 
@@ -155,6 +191,16 @@ async def retrieve_contexts(
         uz_analysis = QueryAnalyzer.analyze(translated, user_language="uz")
         uz_candidates = await retriever.retrieve(uz_analysis, top_k=top_k, use_vector=use_vector)
         candidates = merge_candidates([candidates, uz_candidates], limit=top_k + 10)
+
+    subquestions = (await subquestions_task) if subquestions_task else None
+    if subquestions:
+        aspect_lists = await asyncio.gather(*(
+            retriever.retrieve(QueryAnalyzer.analyze(q, user_language="uz"), top_k=top_k, use_vector=use_vector)
+            for q in subquestions
+        ))
+        # every sub-question brings its own norms, so the pool (and Jev's share of it) grows with their number
+        limit = top_k + 10 + settings.JEV_RERANK_UNITS_PER_SUBQUESTION * len(subquestions)
+        candidates = fuse_aspect_candidates(candidates, list(aspect_lists), limit=limit)
 
     # A client-selected legal domain is a hint, not a filter: act/unit categories are heuristic labels and a
     # hard filter silently drops a correct article whenever the label is imperfect. Matching units get a boost.
@@ -170,6 +216,8 @@ async def retrieve_contexts(
     valid, warnings = apply_status_and_amendment_filter(expanded, store)
 
     rerank_query = analysis.normalized_query if not uz_analysis else f"{analysis.normalized_query}\n{uz_analysis.normalized_query}"
+    if subquestions:
+        rerank_query += "\n" + "\n".join(subquestions)
 
     reranker = Reranker(client=client)
     contexts = await reranker.rerank(
@@ -179,6 +227,7 @@ async def retrieve_contexts(
         store=store,
         top_n=rerank_top_n,
         use_model=use_reranker,
+        subquestions=subquestions,
     )
 
     # Editorial curated answers that the reranker found relevant become the primary answer; their linked Lex.uz
@@ -232,6 +281,7 @@ async def retrieve_contexts(
         "rerank_provider": reranker.last_provider,
         "jev_in_scope": in_scope,
         "jev_answerable": reranker.last_answerable,
+        "subquestions": subquestions or [],
     }
 
     return RetrievalResult(

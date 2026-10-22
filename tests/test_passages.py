@@ -58,7 +58,7 @@ def _article(n_paras: int = 30, target_at: int = 22, ru: bool = False) -> Canoni
 # --- chunk layout ----------------------------------------------------------------------------------------------------
 
 def test_layout_covers_the_whole_text_and_only_the_cap_is_embedded():
-    art = _article(n_paras=120, target_at=110)
+    art = _article(n_paras=30 * MAX_CHUNKS_PER_ARTICLE, target_at=110)
     layout = chunk_layout(art, "uz")
     assert len(layout.texts) > MAX_CHUNKS_PER_ARTICLE
     assert build_chunks(art, "uz") == layout.texts[:MAX_CHUNKS_PER_ARTICLE]

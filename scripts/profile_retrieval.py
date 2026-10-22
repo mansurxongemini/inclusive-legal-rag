@@ -12,12 +12,14 @@ import asyncio
 import collections
 import json
 import statistics
+import os
 import sys
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+os.environ.setdefault("SPEND_SCOPE", "eval")      # evaluation spend is counted apart and never limited by the service budget
 
 from src.clients.openrouter import OpenRouterClient  # noqa: E402
 from src.nlp.query_analyzer import QueryAnalyzer  # noqa: E402

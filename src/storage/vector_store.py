@@ -97,9 +97,14 @@ class LanceVectorStore:
         if len(self.table) == 0:
             return []
 
-        search_query = self.table.search(query_vector).metric("cosine").limit(top_k * 4)
-
-        results = search_query.to_list()
+        # Several chunk rows can belong to one unit (long units are embedded chunk by chunk), so the window is wide
+        # enough for top_k distinct units even when one long unit fills many of the nearest rows.
+        window = top_k * settings.VECTOR_WINDOW_FACTOR
+        columns = ["canonical_id", "language", "status", "category"] + (["chunk_index"] if self.has_chunk_index else [])
+        try:   # the 1024-number vectors of the matched rows are not needed
+            results = self.table.search(query_vector).metric("cosine").select(columns).limit(window).to_list()
+        except Exception:
+            results = self.table.search(query_vector).metric("cosine").limit(window).to_list()
         
         # Deduplicate by canonical_id, boosting same language if available
         seen_cids = {}

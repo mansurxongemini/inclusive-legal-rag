@@ -9,6 +9,7 @@ import httpx
 import numpy as np
 
 from src.config import settings
+from src.clients.spend import cost_of, ledger
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +176,8 @@ class OpenRouterClient:
         target = model or settings.UTILITY_MODEL
         if not target or not self.utility_enabled or (breaker and time.monotonic() < self._utility_open_until):
             return None
+        if ledger.state() != "ok":      # budget guard: the free generation provider does the light work instead
+            return None
         payload: Dict = {"model": target, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
         payload.update(reasoning_fields(self.utility_base_url, reasoning))
         if response_format is not None:
@@ -184,7 +187,9 @@ class OpenRouterClient:
             response = await client.post(f"{self.utility_base_url}/chat/completions", json=payload,
                                          timeout=timeout or settings.UTILITY_TIMEOUT_S)
             if response.status_code == 200:
-                content = (response.json().get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+                body = response.json()
+                ledger.add("utility", cost_of(body.get("usage")))
+                content = (body.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
                 if len(content) >= min_chars and content:
                     self._utility_failures = 0
                     return content
@@ -280,6 +285,8 @@ class OpenRouterClient:
                 vectors.extend(await self.get_embeddings(texts[i:i + self.EMBEDDING_BATCH], model=model))
             return vectors
 
+        if ledger.state() == "exhausted":
+            raise RuntimeError("OpenRouter monthly budget used up: embeddings are paused until the month changes.")
         target_model = model or self.embedding_model
         client = await self.get_embedding_client()
 
@@ -297,6 +304,7 @@ class OpenRouterClient:
                 )
                 if response.status_code == 200:
                     data = response.json()
+                    ledger.add("embedding", cost_of(data.get("usage")))
                     # OpenRouter format: data: [{"embedding": [...], "index": 0}, ...]
                     return [item["embedding"] for item in sorted(data["data"], key=lambda x: x["index"])]
                 elif response.status_code == 429:
@@ -352,6 +360,8 @@ class OpenRouterClient:
             scores.sort(key=lambda x: x["relevance_score"], reverse=True)
             return scores[:top_n] if top_n else scores
 
+        if ledger.state() == "exhausted":
+            return []
         client = await self.get_client()
         try:
             response = await client.post(
@@ -365,13 +375,15 @@ class OpenRouterClient:
             )
             if response.status_code == 200:
                 data = response.json()
+                ledger.add("rerank", cost_of(data.get("usage")))
                 return data.get("results", [])
             logger.warning(f"OpenRouter /rerank returned HTTP {response.status_code}: {response.text}")
         except Exception as e:
             logger.warning(f"OpenRouter /rerank call failed: {e}")
 
-        # Fallback to original order
-        return [{"index": i, "relevance_score": 1.0 / (1.0 + i)} for i in range(min(top_n or len(documents), len(documents)))]
+        # No scores: an invented order would pass for a model's judgement (and clear the relevance gate); the caller
+        # falls back to the RRF order.
+        return []
 
     async def chat_completion(
         self,
@@ -704,6 +716,8 @@ class OpenRouterClient:
 
         if not self.jev_api_key or "openrouter.ai" not in self.jev_base_url:
             return None
+        if ledger.state() == "exhausted":
+            return None
 
         client = await self.get_jev_client()
         url = "https://openrouter.ai/api/alpha/decisions"
@@ -717,7 +731,9 @@ class OpenRouterClient:
         try:
             response = await client.post(url, json=payload, timeout=req_timeout)
             if response.status_code == 200:
-                return response.json()
+                body = response.json()
+                ledger.add("jev", cost_of(body.get("usage")))
+                return body
             logger.warning(f"OpenRouter decisions API returned HTTP {response.status_code}: {response.text}")
             return None
         except Exception as e:

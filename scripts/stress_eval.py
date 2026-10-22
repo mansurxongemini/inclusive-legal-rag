@@ -17,12 +17,14 @@ import asyncio
 import collections
 import json
 import re
+import os
 import sys
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+os.environ.setdefault("SPEND_SCOPE", "eval")      # evaluation spend is counted apart and never limited by the service budget
 
 from fastapi import HTTPException  # noqa: E402
 
@@ -294,7 +296,7 @@ async def main() -> int:
     ap.add_argument("--concurrency", type=int, default=4)
     ap.add_argument("--retrieval-only", action="store_true")
     ap.add_argument("--no-judge", dest="judge", action="store_false")
-    ap.add_argument("--judge-model", default="", help="OpenRouter model that grades the answers (not the generator)")
+    ap.add_argument("--judge-model", default="", help="OpenRouter model that grades the answers (not the generator). Iterations: anthropic/claude-haiku-5.5 ($0.1/$0.5 per M tokens); milestones only: anthropic/claude-sonnet-5.5 ($2/$10)")
     ap.add_argument("--profile", choices=["inclusive", "prod"], default="inclusive",
                     help="retrieval sizes: inclusive = 25/6/6 (stress history), prod = 40/8/8 (gateway)")
     ap.add_argument("--top-k", type=int, default=0)

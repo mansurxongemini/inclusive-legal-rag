@@ -1,6 +1,8 @@
+import asyncio
 import logging
 from typing import Dict, List, Optional, Tuple, Union
 from pydantic import BaseModel
+from src.config import settings
 from src.storage.hybrid_store import HybridStore
 from src.storage.sqlite_utils import connect as sqlite_connect
 from src.clients.openrouter import OpenRouterClient
@@ -101,13 +103,14 @@ class HybridRetriever:
         bm25_best_ranks: Dict[str, int] = {}
         bm25_best_scores: Dict[str, float] = {}
 
-        for sq_idx, sq in enumerate(subqueries):
+        # SQLite and LanceDB calls block: run them in worker threads so that one slow search does not stall every other
+        # request served by the event loop, and let the sub-queries search in parallel.
+        bm25_matches = await asyncio.gather(*(
+            asyncio.to_thread(self.store.fts_store.bm25_search, query=sq.enriched_query, language=language, top_k=top_k)
+            for sq in subqueries
+        ))
+        for sq_idx, matches in enumerate(bm25_matches):
             sq_weight = 1.0 if sq_idx == 0 else 0.85
-            matches = self.store.fts_store.bm25_search(
-                query=sq.enriched_query,
-                language=language,
-                top_k=top_k
-            )
             for rank, m in enumerate(matches, start=1):
                 cid = m["canonical_id"]
                 score_contrib = sq_weight * (1.0 / (rrf_k + rank))
@@ -121,6 +124,10 @@ class HybridRetriever:
         query_vectors: List[List[float]] = []
         if use_vector:
             embed_texts = [sq.query_text for sq in subqueries[:2]]
+            if settings.VECTOR_DEDUP_QUERIES:
+                # the domain sub-query of a short question carries the very same text: embedding and searching it twice
+                # only counted the dense side 1.8 times against the full-text side
+                embed_texts = list(dict.fromkeys(embed_texts))
             if precomputed_query_vector is not None:
                 query_vectors = [precomputed_query_vector]
             try:
@@ -137,16 +144,14 @@ class HybridRetriever:
         vec_best_scores: Dict[str, float] = {}
         vec_best_chunks: Dict[str, Tuple[str, int]] = {}
 
-        for v_idx, q_vec in enumerate(query_vectors):
+        vector_results = await asyncio.gather(*(
+            asyncio.to_thread(self.store.vector_store.search_vector, query_vector=q_vec, top_k=top_k, language=language)
+            for q_vec in query_vectors
+        ), return_exceptions=True)
+        for v_idx, matches in enumerate(vector_results):
             v_weight = 1.0 if v_idx == 0 else 0.80
-            try:
-                matches = self.store.vector_store.search_vector(
-                    query_vector=q_vec,
-                    top_k=top_k,
-                    language=language
-                )
-            except Exception as e:
-                logger.warning(f"Vector search failed, skipping dense results: {e}")
+            if isinstance(matches, Exception):
+                logger.warning(f"Vector search failed, skipping dense results: {matches}")
                 continue
             for rank, m in enumerate(matches, start=1):
                 cid = m["canonical_id"]
@@ -166,7 +171,7 @@ class HybridRetriever:
             all_ids.add(direct_cid)
 
         # 5. Batch fetch articles for metadata matching and boosts
-        articles_map = self.store.get_articles_batch(list(all_ids))
+        articles_map = await asyncio.to_thread(self.store.get_articles_batch, list(all_ids))
 
         scored_articles: List[ScoredArticle] = []
 

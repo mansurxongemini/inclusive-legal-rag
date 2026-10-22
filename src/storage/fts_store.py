@@ -9,6 +9,8 @@ from src.config import settings
 from src.schema.canonical import CanonicalArticle
 from src.storage.sqlite_utils import connect as _sqlite_connect
 from src.nlp.transliteration import normalize_apostrophes
+from src.nlp.stopwords import STOPWORDS
+from src.nlp.stemming import search_stem
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,30 @@ def fts_text(text: str) -> str:
     Both sides now use the apostrophe-free form: bo'lgan -> bolgan, to'siqsiz -> tosiqsiz, ta'lim -> talim.
     """
     return _INNER_APOSTROPHE.sub("", normalize_apostrophes(text or ""))
+
+
+def build_fts_terms(query: str) -> List[str]:
+    """
+    FTS5 prefix terms of a question: `"stem"*`. Words without a topic are dropped (nlp/stopwords.py; when nothing else
+    is left the question keeps them), and a long word is cut to its search stem (nlp/stemming.py) because the wildcard only
+    extends the query word: the query form "nogironligidan" never matched the unit's "nogironlik". Numbers and codes
+    (483-modda, VMQ-62) are kept whole.
+    """
+    words = []
+    for word in fts_text(query).replace('"', '').replace("'", "").split():
+        clean = "".join(c for c in word if c.isalnum() or c in "-_")
+        if clean:
+            words.append(clean)
+    content = [w for w in words if w.lower() not in STOPWORDS] if settings.FTS_STOPWORDS else words
+    stem = settings.FTS_STEM_PREFIX
+    terms: List[str] = []
+    for w in content or words:
+        if stem:
+            w = search_stem(w)
+        term = f'"{w}"*'
+        if term not in terms:
+            terms.append(term)
+    return terms
 
 
 class SqliteFtsStore:
@@ -150,13 +176,7 @@ class SqliteFtsStore:
         Executes BM25 search on FTS5 virtual table.
         Returns list of {canonical_id, score, rank}.
         """
-        # Clean query for FTS5 (escape special chars)
-        clean_terms = []
-        for word in fts_text(query).replace('"', '').replace("'", "").split():
-            clean = "".join(c for c in word if c.isalnum() or c in "-_")
-            if clean:
-                clean_terms.append(f'"{clean}"*')
-
+        clean_terms = build_fts_terms(query)
         if not clean_terms:
             return []
 

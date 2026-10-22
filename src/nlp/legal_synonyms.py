@@ -45,7 +45,8 @@ LEGAL_SYNONYM_DICTIONARY: Dict[str, List[str]] = {
     "parvarish": ["parvarishlash", "qarovchi", "o'zgalar parvarishiga muhtoj", "parvarish nafaqasi"],
     "moddiy yordam": ["ijtimoiy yordam", "yagona ijtimoiy reyestr", "moddiy yordam to'lovi"],
     "kompensatsiya": ["kompensatsiya to'lovlari", "pul kompensatsiyasi"],
-    "reyestr": ["yagona ijtimoiy reyestr", "ijtimoiy himoya yagona reyestri"],
+    "reyestr": ["Ijtimoiy reyestr", "yagona ijtimoiy reyestr", "ijtimoiy himoya yagona reyestri"],
+    "reestr": ["Ijtimoiy reyestr", "yagona ijtimoiy reyestr", "ijtimoiy himoya yagona reyestri"],
     "to'lov": ["to'lovlar", "nafaqa", "kompensatsiya"],
 
     # --- work ------------------------------------------------------------------------------------------

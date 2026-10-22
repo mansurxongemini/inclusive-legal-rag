@@ -14,11 +14,13 @@ import argparse
 import asyncio
 import copy
 import json
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+os.environ.setdefault("SPEND_SCOPE", "eval")      # evaluation spend is counted apart and never limited by the service budget
 
 from fastapi import HTTPException  # noqa: E402
 

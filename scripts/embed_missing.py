@@ -10,6 +10,8 @@ interrupted run resumes where it stopped.
     python scripts/embed_missing.py --run --limit 50  # small trial first
     python scripts/embed_missing.py --fill-chunk-index [--run]
                                                     # re-embed multi-chunk articles whose vectors have no chunk_index
+    python scripts/embed_missing.py --extend-chunks [--run]
+                                                    # re-embed units that have more chunks than the 14 the index held
 
 Embeddings need EMBEDDING_BASE_URL (https://openrouter.ai/api/v1) and EMBEDDING_API_KEY in .env when the LLM
 uses another provider (OPENROUTER_BASE_URL / OPENROUTER_API_KEY).
@@ -19,6 +21,7 @@ import asyncio
 import logging
 import math
 import shutil
+import os
 import sys
 import time
 from collections import Counter
@@ -28,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.clients.openrouter import OpenRouterClient  # noqa: E402
 from src.config import settings  # noqa: E402
-from src.storage.chunking import build_chunks  # noqa: E402
+from src.storage.chunking import LEGACY_CHUNK_CAP, build_chunks, chunk_layout  # noqa: E402
 from src.storage.hybrid_store import HybridStore  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -61,6 +64,18 @@ def multi_chunk_ids(store: HybridStore, ids: list) -> list:
     """Articles with more than one embedded chunk in uz or ru: the only ones where chunk_index matters."""
     return [art.canonical_id for art in load(store, ids)
             if any(len(build_chunks(art, lang)) > 1 for lang in ("uz", "ru"))]
+
+
+def long_unit_ids(store: HybridStore, ids: list) -> list:
+    """Units whose uncapped layout has more chunks than the index used to hold, in uz or ru."""
+    out = []
+    for art in load(store, ids):
+        for lang in ("uz", "ru"):
+            layout = chunk_layout(art, lang)
+            if layout is not None and len(layout.texts) > LEGACY_CHUNK_CAP:
+                out.append(art.canonical_id)
+                break
+    return out
 
 
 def fts_ids(store: HybridStore) -> list:
@@ -151,6 +166,8 @@ async def main() -> None:
     ap.add_argument("--batch-size", type=int, default=15)
     ap.add_argument("--concurrency", type=int, default=3)
     ap.add_argument("--no-backup", action="store_true")
+    ap.add_argument("--extend-chunks", action="store_true",
+                    help="re-embed the units longer than the old 14-chunk cap, so that their later chunks are searchable")
     ap.add_argument("--fill-chunk-index", action="store_true",
                     help="re-embed multi-chunk articles whose vectors have no chunk_index (instead of missing ones)")
     args = ap.parse_args()
@@ -158,7 +175,10 @@ async def main() -> None:
     store = HybridStore()
     known = lancedb_ids(store)
     all_ids = fts_ids(store)
-    if args.fill_chunk_index:
+    if args.extend_chunks:
+        missing = long_unit_ids(store, all_ids)
+        logger.info(f"Units with more than {LEGACY_CHUNK_CAP} chunks in uz or ru (to re-embed whole): {len(missing)}")
+    elif args.fill_chunk_index:
         no_index = ids_without_chunk_index(store)
         missing = multi_chunk_ids(store, [c for c in all_ids if c in no_index])
         logger.info(f"Vector table has chunk_index: {store.vector_store.has_chunk_index} | articles with rows "
