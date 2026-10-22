@@ -11,6 +11,19 @@ from src.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Models that always reason before answering. Their reasoning tokens count against max_tokens: muse-spark-1.3 spends
+# ~1,900 reasoning tokens on a three-sentence question and ~3,000 on a legal question with retrieved context, so a
+# 2,048-token budget ends the reply before any answer text (an empty answer with finish_reason "stop").
+REASONING_MODEL_MARKERS = ("muse", "nemotron", "r1", "deepseek-r1")
+REASONING_MODEL_MIN_TOKENS = 8192
+
+
+def output_token_budget(model: Optional[str], max_tokens: int) -> int:
+    """max_tokens for one request: at least REASONING_MODEL_MIN_TOKENS for an always-reasoning model."""
+    if any(m in (model or "").lower() for m in REASONING_MODEL_MARKERS):
+        return max(max_tokens, REASONING_MODEL_MIN_TOKENS)
+    return max_tokens
+
 
 class OpenRouterClient:
     """Client for OpenRouter API with retry, fallback models, and offline deterministic mock support."""
@@ -268,15 +281,11 @@ class OpenRouterClient:
         for cur_model in models_to_try:
             for attempt in range(2):
                 try:
-                    eff_max_tokens = max_tokens
-                    if any(m in (cur_model or "").lower() for m in ["muse", "nemotron", "r1", "deepseek-r1"]):
-                        eff_max_tokens = max(max_tokens, 8192)
-
                     payload: Dict = {
                         "model": cur_model,
                         "messages": messages,
                         "temperature": temperature,
-                        "max_tokens": eff_max_tokens,
+                        "max_tokens": output_token_budget(cur_model, max_tokens),
                     }
                     if prefs is not None and "openrouter.ai" in self.base_url:
                         payload["provider"] = prefs
@@ -336,7 +345,7 @@ class OpenRouterClient:
                     "model": target_model,
                     "messages": messages,
                     "temperature": temperature,
-                    "max_tokens": max_tokens,
+                    "max_tokens": output_token_budget(target_model, max_tokens),
                     "stream": True,
                 }
                 if prefs is not None and "openrouter.ai" in self.base_url:
@@ -368,7 +377,13 @@ class OpenRouterClient:
                             if delta:
                                 emitted = True
                                 yield delta
-                    return
+                    if emitted:
+                        return
+                    # A stream that ends without answer text (reasoning used the whole budget) is a failure, not an
+                    # empty answer: try the next model, or let the caller show its error message.
+                    last_error = "empty stream"
+                    logger.warning(f"Streaming model {target_model} returned no answer text")
+                    continue
             except Exception as e:
                 last_error = type(e).__name__
                 logger.error(f"Streaming error with model {target_model}: {e}")
