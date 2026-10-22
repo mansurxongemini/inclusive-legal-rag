@@ -31,6 +31,13 @@ class HybridRetriever:
         self.store = store
         self.client = client or OpenRouterClient()
 
+    @staticmethod
+    async def _call(fn, *args, **kwargs):
+        """Runs a blocking store call in a worker thread (RETRIEVAL_THREADS) so the event loop keeps serving requests."""
+        if settings.RETRIEVAL_THREADS:
+            return await asyncio.to_thread(fn, *args, **kwargs)
+        return fn(*args, **kwargs)
+
     def _lookup_direct_article(self, law_id: str, article_number: str) -> Optional[str]:
         """Resolves direct canonical ID for explicit law_id and article_number mention."""
         import re
@@ -106,7 +113,7 @@ class HybridRetriever:
         # SQLite and LanceDB calls block: run them in worker threads so that one slow search does not stall every other
         # request served by the event loop, and let the sub-queries search in parallel.
         bm25_matches = await asyncio.gather(*(
-            asyncio.to_thread(self.store.fts_store.bm25_search, query=sq.enriched_query, language=language, top_k=top_k)
+            self._call(self.store.fts_store.bm25_search, query=sq.enriched_query, language=language, top_k=top_k)
             for sq in subqueries
         ))
         for sq_idx, matches in enumerate(bm25_matches):
@@ -145,7 +152,7 @@ class HybridRetriever:
         vec_best_chunks: Dict[str, Tuple[str, int]] = {}
 
         vector_results = await asyncio.gather(*(
-            asyncio.to_thread(self.store.vector_store.search_vector, query_vector=q_vec, top_k=top_k, language=language)
+            self._call(self.store.vector_store.search_vector, query_vector=q_vec, top_k=top_k, language=language)
             for q_vec in query_vectors
         ), return_exceptions=True)
         for v_idx, matches in enumerate(vector_results):
@@ -171,7 +178,7 @@ class HybridRetriever:
             all_ids.add(direct_cid)
 
         # 5. Batch fetch articles for metadata matching and boosts
-        articles_map = await asyncio.to_thread(self.store.get_articles_batch, list(all_ids))
+        articles_map = await self._call(self.store.get_articles_batch, list(all_ids))
 
         scored_articles: List[ScoredArticle] = []
 

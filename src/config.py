@@ -100,6 +100,7 @@ class Settings(BaseSettings):
     QUERY_SUBQUESTIONS_MIN_WORDS: int = Field(default=25)
     # Full-text query: drop question/function words and cut words to their search stem, because the wildcard only
     # extends the query word ("nogironligidan"* never matched a unit's "nogironlik")
+    RETRIEVAL_THREADS: bool = Field(default=True)     # blocking store calls run in worker threads
     VECTOR_WINDOW_FACTOR: int = Field(default=8)      # nearest chunk rows read per wanted unit (rows of one long unit repeat)
     VECTOR_DEDUP_QUERIES: bool = Field(default=True)   # embed/search each distinct sub-query text once
     FTS_STOPWORDS: bool = Field(default=True)
