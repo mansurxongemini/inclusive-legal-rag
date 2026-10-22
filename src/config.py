@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     JEV_MODEL: str = Field(default="typesafe/jev-1.13")
     JEV_RERANK_UNITS: int = Field(default=30)                       # candidates sent to Jev
     JEV_RERANK_CHARS: int = Field(default=1500)                     # characters of each unit shown to Jev
+    PASSAGE_FOCUS: bool = Field(default=True)                       # long units: show Jev/LLM the matched chunk, not only the head
     JEV_TIMEOUT_S: float = Field(default=20.0)
     LLM_PROVIDER_ORDER: str = Field(default="deepinfra")            # comma-separated OpenRouter provider slugs tried first; "" = OpenRouter default routing
     LLM_PROVIDER_QUANTIZATIONS: str = Field(default="fp8,fp16,bf16,fp32,unknown")  # allowed quantizations (excludes fp4/int4); "" = no filter

@@ -1,4 +1,4 @@
-"""Retrieval helper: published curated answers and Huquq+ articles become the primary answer source."""
+"""Retrieval helper: published curated answers lead the context; Huquq+ articles follow the statutory norms."""
 
 import logging
 from typing import List, Optional, Tuple
@@ -85,7 +85,9 @@ def ensure_curated_contexts(
       - Must be active in hp_posts (not suspended or deleted);
       - If EDITORIAL_SUSPEND_ON_CHANGE is True, must have no open notifications in editorial;
       - Must be relevant (rerank_score >= threshold; position < 3 only when it has no rerank score);
-      - Stand after curated, before raw lex norms; their resolved lex cross_references added (rerank_score=None).
+      - Their resolved lex cross_references are added (rerank_score=None);
+      - Never stand before a Lex.uz norm: a portal article is a practical explanation that may be older than the
+        law it describes (sums, repealed acts), so it follows every statutory unit of the context.
     """
     threshold = settings.GATE_MIN_RERANK_SCORE if min_rerank_score is None else min_rerank_score
 
@@ -163,8 +165,8 @@ def ensure_curated_contexts(
             ))
             have.add(target_cid)
 
-    # curated answers first, then their bases, then huquqplus articles, then high-scoring rerank picks,
-    # then huquqplus bases, then other rest contexts
+    # curated answers first, then their bases, then high-scoring rerank picks, then huquqplus bases, then other
+    # rest contexts; huquqplus articles come last, after all statutory text
     picks: List[RetrievedArticleContext] = []
     others: List[RetrievedArticleContext] = []
     for c in rest:
@@ -173,7 +175,7 @@ def ensure_curated_contexts(
         else:
             others.append(c)
 
-    return primary + basis + hp_primary + picks + hp_basis + others
+    return primary + basis + picks + hp_basis + others + hp_primary
 
 
 _STOP_STEMS = {"bo'la", "bo'ld", "qanda", "qanday", "nechi", "necha", "uchun", "yoki", "bilan", "mumki", "kerak",
@@ -196,8 +198,8 @@ def add_linked_act_units(contexts: List[RetrievedArticleContext], store: HybridS
     A Huquq+ article usually cites a whole act (a Lex.uz link without an article anchor), so it has no
     cross_references and the answer would rest on the article alone. For each such whole-act link of a Huquq+
     context, the act's units sharing the most query words are added after the leading block
-    (curated, huquq+, legal bases, and high-scoring rerank picks), before the first unscored or low-scoring
-    non-basis context, or at the end if no such context exists.
+    (curated, legal bases, and high-scoring rerank picks), before the first unscored or low-scoring non-basis
+    context or the first Huquq+ article (statutory text never follows a Huquq+ article), or at the end.
     """
     from src.editorial.doc_watch import is_doc_link, law_id_of, law_units
 
@@ -238,9 +240,9 @@ def add_linked_act_units(contexts: List[RetrievedArticleContext], store: HybridS
     insert_idx: Optional[int] = None
     for idx, ctx in enumerate(contexts):
         cid = ctx.article.canonical_id
-        if not (cid.startswith("qa_") or cid.startswith("hp_")) \
-           and ctx.source_tag != "legal_basis" \
-           and (ctx.rerank_score is None or ctx.rerank_score < settings.RERANK_PICK_MIN):
+        if cid.startswith("qa_") or ctx.source_tag == "legal_basis":
+            continue
+        if cid.startswith("hp_") or ctx.rerank_score is None or ctx.rerank_score < settings.RERANK_PICK_MIN:
             insert_idx = idx
             break
 

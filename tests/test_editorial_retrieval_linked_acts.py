@@ -47,12 +47,13 @@ def test_matching_units_of_whole_act_link_follow_the_article(monkeypatch):
     hp = _ctx(_Art("hp_uz_5862_2", "maqola"), rerank_score=0.9)
     other = _ctx(_Art("pq_267_2024_p_2", "boshqa"), rerank_score=None)
 
-    # When no picks exist, linked acts follow the article before unscored contexts as before
-    out = add_linked_act_units([hp, other], store, editorial,
+    # ensure_curated_contexts puts the article after the statutory units; with no picks the linked units of
+    # its act lead, ahead of unscored contexts and of the article itself
+    out = add_linked_act_units([other, hp], store, editorial,
                                "Oziq-ovqat, kiyim-kechakni vaucher yoki kartamga olsam bo'ladimi?")
     ids = [c.article.canonical_id for c in out]
-    assert ids == ["hp_uz_5862_2", "vmq_313_2024_a1_p_6", "pq_267_2024_p_2"]   # unrelated and repealed units stay out
-    assert out[1].source_tag == "legal_basis"
+    assert ids == ["vmq_313_2024_a1_p_6", "pq_267_2024_p_2", "hp_uz_5862_2"]   # unrelated and repealed units stay out
+    assert out[0].source_tag == "legal_basis"
 
 
 def test_picks_stand_before_hp_basis_in_ensure_curated_contexts(monkeypatch):
@@ -75,8 +76,8 @@ def test_picks_stand_before_hp_basis_in_ensure_curated_contexts(monkeypatch):
     contexts = [hp, pick, other]
     out = ensure_curated_contexts(contexts, store, editorial)
     ids = [c.article.canonical_id for c in out]
-    # Ordering: hp_primary -> picks -> hp_basis -> others
-    assert ids == ["hp_uz_100_1", "law_pick_1", "law_ref_1", "law_other_1"]
+    # Ordering: picks -> hp_basis -> others -> hp_primary (a Huquq+ article never precedes statutory text)
+    assert ids == ["law_pick_1", "law_ref_1", "law_other_1", "hp_uz_100_1"]
 
 
 def test_picks_stand_before_linked_acts_in_add_linked_act_units(monkeypatch):
@@ -97,10 +98,28 @@ def test_picks_stand_before_linked_acts_in_add_linked_act_units(monkeypatch):
     pick = _ctx(_Art("law_pick_modda_1", "muhim qonun"), rerank_score=0.7)  # pick >= RERANK_PICK_MIN
     low = _ctx(_Art("law_low_modda_9", "past balli qonun"), rerank_score=0.01)  # low < RERANK_PICK_MIN
 
-    out = add_linked_act_units([hp, pick, low], store, editorial, "vaucher oziq-ovqat")
+    out = add_linked_act_units([pick, low, hp], store, editorial, "vaucher oziq-ovqat")
     ids = [c.article.canonical_id for c in out]
-    # pick stands before linked act units, linked units stand before low/unscored
-    assert ids == ["hp_uz_5862_2", "law_pick_modda_1", "vmq_313_2024_a1_p_6", "law_low_modda_9"]
+    # pick stands before linked act units, linked units stand before low/unscored and before the article
+    assert ids == ["law_pick_modda_1", "vmq_313_2024_a1_p_6", "law_low_modda_9", "hp_uz_5862_2"]
+
+
+def test_linked_units_never_follow_the_huquqplus_article(monkeypatch):
+    units = {"vmq_313_2024_a1_p_6": _Art("vmq_313_2024_a1_p_6", "vaucher oziq-ovqat yordam")}
+    import src.editorial.doc_watch as dw
+    import src.editorial.retrieval as er
+
+    monkeypatch.setattr(er, "RetrievedArticleContext",
+                        type("Ctx", (), {"__new__": lambda cls, **kw: RetrievedArticleContext.model_construct(**kw)}))
+    monkeypatch.setattr(dw, "law_units", lambda store, law_id: {cid: ("h", "active", cid) for cid in units})
+    store = SimpleNamespace(get_articles_batch=lambda ids: {i: units[i] for i in ids})
+    editorial = SimpleNamespace(list_links=lambda owner_type, owner_id: [{"canonical_id": "law:vmq_313_2024"}])
+
+    pick = _ctx(_Art("law_pick_modda_1", "muhim qonun"), rerank_score=0.7)
+    hp = _ctx(_Art("hp_uz_5862_2", "maqola"), rerank_score=0.9)
+    # no low-scoring context: the linked units go before the article, not to the end
+    out = add_linked_act_units([pick, hp], store, editorial, "vaucher oziq-ovqat")
+    assert [c.article.canonical_id for c in out] == ["law_pick_modda_1", "vmq_313_2024_a1_p_6", "hp_uz_5862_2"]
 
 
 def test_no_hp_context_leaves_contexts_unchanged():

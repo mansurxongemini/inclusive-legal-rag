@@ -1,5 +1,6 @@
 import re
 from typing import List, Literal
+from src.retrieval.passages import focused_text
 from src.retrieval.reranker import RetrievedArticleContext
 
 ResponseMode = Literal["plain", "legal_text", "easy_read", "subsumption"]
@@ -121,6 +122,8 @@ CURATED_INSTRUCTION = (
     "Lex.uz canonical_id lari bilan iqtibos qilinsin; 'qa_' yoki 'hp_' identifikatorlari amaliy tushuntirish manbai sifatida "
     "keltirilishi mumkin, lekin rasmiy qonuniy asos Lex.uz moddalari bo'lib qoladi. "
     "Agar maqola va qonun o'rtasida ziddiyat kuzatilsa, qonun ustun turadi va bu javobda aniq aytiladi. "
+    "Maqola qonundan eskiroq bo'lishi mumkin: summa, BHM miqdori va muddatlarni Lex.uz matnidan oling; raqam faqat "
+    "maqolada bo'lsa, u maqola yozilgan paytdagi ma'lumot ekanini ayting. "
     "Agar kontekstda bir xil fakt uchun ham maqola, ham Lex.uz moddasi bo'lsa, Lex.uz moddasini iqtibos qiling."
 )
 
@@ -137,9 +140,9 @@ def format_context_for_llm(contexts: List[RetrievedArticleContext], language: st
         meta = art.metadata
         title = art.get_title(language)
         law_title = art.get_law_title(language)
-        body = art.get_text(language)
-        if len(body) > MAX_CONTEXT_CHARS_PER_ARTICLE:
-            body = body[:MAX_CONTEXT_CHARS_PER_ARTICLE].rsplit(" ", 1)[0] + " [...matn qisqartirildi]"
+        # a long unit: its beginning plus the part that matches the question, not just the first characters
+        body = focused_text(art, language, getattr(ctx, "focus", None), MAX_CONTEXT_CHARS_PER_ARTICLE,
+                            marker="[...matn qisqartirildi]")
 
         status = meta.status.value.upper()
         status_line = f"Status: {status}"

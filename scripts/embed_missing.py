@@ -8,6 +8,8 @@ interrupted run resumes where it stopped.
     python scripts/embed_missing.py                 # dry run: counts, chunks, token and cost estimate
     python scripts/embed_missing.py --run           # backup, endpoint check, embed everything missing
     python scripts/embed_missing.py --run --limit 50  # small trial first
+    python scripts/embed_missing.py --fill-chunk-index [--run]
+                                                    # re-embed multi-chunk articles whose vectors have no chunk_index
 
 Embeddings need EMBEDDING_BASE_URL (https://openrouter.ai/api/v1) and EMBEDDING_API_KEY in .env when the LLM
 uses another provider (OPENROUTER_BASE_URL / OPENROUTER_API_KEY).
@@ -42,6 +44,23 @@ def lancedb_ids(store: HybridStore) -> set:
         return set()
     arrow = table.search().select(["canonical_id"]).limit(len(table) + 10).to_arrow()
     return set(arrow.column("canonical_id").to_pylist())
+
+
+def ids_without_chunk_index(store: HybridStore) -> set:
+    """Articles with at least one vector row that predates chunk_index (all of them when the column is missing)."""
+    table = store.vector_store.table
+    if len(table) == 0:
+        return set()
+    if not store.vector_store.has_chunk_index:
+        return lancedb_ids(store)
+    arrow = table.search().where("chunk_index < 0").select(["canonical_id"]).limit(len(table) + 10).to_arrow()
+    return set(arrow.column("canonical_id").to_pylist())
+
+
+def multi_chunk_ids(store: HybridStore, ids: list) -> list:
+    """Articles with more than one embedded chunk in uz or ru: the only ones where chunk_index matters."""
+    return [art.canonical_id for art in load(store, ids)
+            if any(len(build_chunks(art, lang)) > 1 for lang in ("uz", "ru"))]
 
 
 def fts_ids(store: HybridStore) -> list:
@@ -119,7 +138,8 @@ async def check_endpoint(store: HybridStore, client: OpenRouterClient, known_ids
     mean_own = sum(own) / len(own)
     logger.info(f"Endpoint {host}: dim={len(new[0])}, similarity to stored vectors: mean {mean_own:.3f}, min {min(own):.3f}, "
                 f"min gap to other articles {min(gaps):.3f}")
-    if mean_own < 0.93 or min(own) < 0.85 or min(gaps) < 0.2:
+    # the gap guards against an endpoint returning near-identical vectors; an exact reproduction (>= 0.99) needs none
+    if mean_own < 0.93 or min(own) < 0.85 or (min(gaps) < 0.2 and min(own) < 0.99):
         sys.exit("This endpoint/model does not reproduce the stored vectors (different model or space). Nothing written.")
 
 
@@ -131,14 +151,22 @@ async def main() -> None:
     ap.add_argument("--batch-size", type=int, default=15)
     ap.add_argument("--concurrency", type=int, default=3)
     ap.add_argument("--no-backup", action="store_true")
+    ap.add_argument("--fill-chunk-index", action="store_true",
+                    help="re-embed multi-chunk articles whose vectors have no chunk_index (instead of missing ones)")
     args = ap.parse_args()
 
     store = HybridStore()
     known = lancedb_ids(store)
     all_ids = fts_ids(store)
-    missing = [c for c in all_ids if c not in known]
-    stale = len(known - set(all_ids))
-    logger.info(f"FTS articles: {len(all_ids)} | with vectors: {len(known)} | missing: {len(missing)} | vectors without text: {stale}")
+    if args.fill_chunk_index:
+        no_index = ids_without_chunk_index(store)
+        missing = multi_chunk_ids(store, [c for c in all_ids if c in no_index])
+        logger.info(f"Vector table has chunk_index: {store.vector_store.has_chunk_index} | articles with rows "
+                    f"without it: {len(no_index)} | multi-chunk among them (to re-embed): {len(missing)}")
+    else:
+        missing = [c for c in all_ids if c not in known]
+        stale = len(known - set(all_ids))
+        logger.info(f"FTS articles: {len(all_ids)} | with vectors: {len(known)} | missing: {len(missing)} | vectors without text: {stale}")
     if not missing:
         logger.info("Nothing to do.")
         return
@@ -163,6 +191,9 @@ async def main() -> None:
         shutil.copytree(Path(settings.STORAGE_DIR) / "lancedb", dest / "lancedb")
         logger.info(f"LanceDB backup: {dest}")
 
+    if args.fill_chunk_index and store.vector_store.ensure_chunk_index_column():
+        logger.info("Added chunk_index column (-1 for existing rows)")
+
     done = failed = 0
     started = time.time()
     for i in range(0, len(todo), args.group):
@@ -184,8 +215,11 @@ async def main() -> None:
     await client.close()
 
     after = lancedb_ids(store)
-    still = [c for c in all_ids if c not in after]
-    logger.info(f"Done. Articles with vectors: {len(after)} | still missing: {len(still)}")
+    if args.fill_chunk_index:
+        still = multi_chunk_ids(store, [c for c in todo if c in ids_without_chunk_index(store)])
+    else:
+        still = [c for c in all_ids if c not in after]
+    logger.info(f"Done. Articles with vectors: {len(after)} | still to do: {len(still)}")
     if still:
         logger.info(f"Run again to retry the rest, e.g. {still[:3]}")
 

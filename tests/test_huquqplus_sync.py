@@ -431,10 +431,10 @@ async def test_retrieval_huquqplus_contexts(custom_store, custom_editorial, db_p
         strong_ctx = RetrievedArticleContext(article=hp_art, rerank_score=0.85, final_score=0.85, source_tag="hybrid")
         res_strong = ensure_curated_contexts([strong_ctx], custom_store, custom_editorial, min_rerank_score=0.70)
         assert len(res_strong) >= 2
-        # Birinchi hp_art, keyin legal_basis bo'lgan lex_norm
-        assert res_strong[0].article.canonical_id == "hp_uz_2966_1"
-        assert res_strong[1].article.canonical_id == "lex_vmq62_art_1"
-        assert res_strong[1].rerank_score is None
+        # Avval legal_basis bo'lgan lex_norm, Huquq+ maqolasi qonundan keyin turadi
+        assert res_strong[0].article.canonical_id == "lex_vmq62_art_1"
+        assert res_strong[0].rerank_score is None
+        assert res_strong[-1].article.canonical_id == "hp_uz_2966_1"
 
         # 3. Ochiq bildirishnomasi bo'lsa -> tashlanadi
         custom_editorial.create_notification(

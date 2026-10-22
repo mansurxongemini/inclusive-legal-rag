@@ -2,12 +2,13 @@ import json
 import logging
 import re
 from typing import Dict, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from src.schema.canonical import CanonicalArticle
 from src.storage.hybrid_store import HybridStore
 from src.clients.openrouter import OpenRouterClient
 from src.retrieval.hybrid_retriever import ScoredArticle
 from src.retrieval.jev_ranker import JevRanker
+from src.retrieval.passages import focus_chunks
 from src.config import settings
 
 logger = logging.getLogger(__name__)
@@ -105,6 +106,8 @@ class RetrievedArticleContext(BaseModel):
     is_superseded: bool = False
     superseded_by: Optional[str] = None
     rerank_score: Optional[float] = None     # cross-encoder relevance (0..1) when a reranker model scored it
+    # {text language: chunk index} of the part of a long unit that matches the question (see retrieval.passages)
+    focus: Dict[str, int] = Field(default_factory=dict)
 
 
 class Reranker:
@@ -146,6 +149,7 @@ class Reranker:
                     source_tag=c.source_tag,
                     is_superseded=(art.metadata.status.value in ("repealed", "amended")),
                     superseded_by=art.metadata.superseded_by,
+                    focus=focus_chunks(art, query, ("uz", language), c.vector_chunk) if settings.PASSAGE_FOCUS else {},
                 ))
 
         # RERANK_PROVIDER "rrf" / "none": no model reranking at all, fused (RRF) order is the final order

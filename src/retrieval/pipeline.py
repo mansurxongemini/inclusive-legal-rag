@@ -34,7 +34,7 @@ def merge_candidates(lists: List[List[ScoredArticle]], limit: int) -> List[Score
     Groups candidate lists by canonical_id, aggregating scores and ranks without mutating inputs:
     - rrf_score = sum
     - bm25_rank and vector_rank = min of non-None
-    - bm25_score and vector_score = max of non-None
+    - bm25_score and vector_score = max of non-None; vector_chunk comes from the item with the best vector_score
     - source_tag = 'direct_match' if any tagged so, else the first seen
     - returns sorted by rrf_score desc, cut to limit.
     """
@@ -58,6 +58,8 @@ def merge_candidates(lists: List[List[ScoredArticle]], limit: int) -> List[Score
 
         vector_scores = [item.vector_score for item in items if item.vector_score is not None]
         best_vector_score = max(vector_scores) if vector_scores else None
+        with_chunk = [item for item in items if item.vector_chunk is not None and item.vector_score is not None]
+        best_vector_chunk = max(with_chunk, key=lambda item: item.vector_score).vector_chunk if with_chunk else None
 
         if any(item.source_tag == "direct_match" for item in items):
             source_tag = "direct_match"
@@ -72,6 +74,7 @@ def merge_candidates(lists: List[List[ScoredArticle]], limit: int) -> List[Score
                 vector_rank=best_vector_rank,
                 bm25_score=best_bm25_score,
                 vector_score=best_vector_score,
+                vector_chunk=best_vector_chunk,
                 source_tag=source_tag,
             )
         )

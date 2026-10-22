@@ -43,13 +43,13 @@ class HybridStore:
         texts_to_embed: List[str] = []
         langs: List[str] = []
         for lang in article.translations:
-            for chunk in build_chunks(article, lang):
+            for idx, chunk in enumerate(build_chunks(article, lang)):
                 texts_to_embed.append(chunk)
-                langs.append(lang)
+                langs.append((lang, idx))
 
         if texts_to_embed:
             embeddings = await client.get_embeddings(texts_to_embed)
-            for lang, vector in zip(langs, embeddings):
+            for (lang, idx), vector in zip(langs, embeddings):
                 vector_records.append({
                     "canonical_id": article.canonical_id,
                     "vector": vector,
@@ -58,6 +58,7 @@ class HybridStore:
                     "category": article.metadata.category,
                     "disability_types": json.dumps(article.metadata.disability_types),
                     "embedding_model_version": article.metadata.embedding_model_version,
+                    "chunk_index": idx,
                 })
 
         # 2. Persist metadata + full-text search, then vectors
@@ -73,7 +74,7 @@ class HybridStore:
         mapping: List[tuple] = []
         for art in articles:
             for lang in ("uz", "ru"):
-                for text in build_chunks(art, lang):
+                for idx, text in enumerate(build_chunks(art, lang)):
                     texts_to_embed.append(text)
                     mapping.append((
                         art.canonical_id,
@@ -82,6 +83,7 @@ class HybridStore:
                         art.metadata.category,
                         json.dumps(art.metadata.disability_types),
                         art.metadata.embedding_model_version,
+                        idx,
                     ))
         return texts_to_embed, mapping
 
@@ -90,7 +92,7 @@ class HybridStore:
     ) -> List[Dict]:
         """Aligns embedding vectors with metadata mapping into vector store records."""
         records: List[Dict] = []
-        for (cid, lang, status, cat, dt, emv), vec in zip(mapping, embeddings):
+        for (cid, lang, status, cat, dt, emv, idx), vec in zip(mapping, embeddings):
             records.append({
                 "canonical_id": cid,
                 "vector": vec,
@@ -99,6 +101,7 @@ class HybridStore:
                 "category": cat,
                 "disability_types": dt,
                 "embedding_model_version": emv,
+                "chunk_index": idx,
             })
         return records
 

@@ -6,7 +6,8 @@ question about one paragraph of a 12 000-character article is not diluted by the
 Every chunk is prefixed with the act and article labels so that it stays interpretable on its own.
 """
 import re
-from typing import List
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
 
 from src.schema.canonical import CanonicalArticle
 
@@ -90,30 +91,54 @@ def _paragraphs(text: str) -> List[str]:
     return out
 
 
-def build_chunks(article: CanonicalArticle, language: str) -> List[str]:
-    """Texts to embed for one language of one article (never empty when the language has text)."""
+@dataclass
+class ChunkLayout:
+    """How one language of an article is cut into embedding chunks.
+
+    texts[i] is the text of chunk i (header included); spans[i] = (start, end) are the indices of the paragraphs
+    that chunk i adds (the overlap carried over from the previous chunk is not part of its span). The layout covers
+    the whole text; only the first MAX_CHUNKS_PER_ARTICLE chunks are embedded (build_chunks). The vector store keeps
+    i as chunk_index, so a vector hit can be traced back to its paragraphs.
+    """
+    paragraphs: List[str]
+    texts: List[str]
+    spans: List[Tuple[int, int]]
+
+
+def chunk_layout(article: CanonicalArticle, language: str) -> Optional[ChunkLayout]:
+    """Chunk texts and paragraph spans for one language of one article (None when the language has no text)."""
     body = (article.translations.get(language) or "").strip()
     if not body:
-        return []
+        return None
+    paragraphs = _paragraphs(body)
     header = _header(article, language)
     if body.startswith("Hujjat:"):          # legacy synthetic summaries: keep the old behaviour
-        return [body[:3200]]
+        return ChunkLayout(paragraphs, [body[:3200]], [(0, len(paragraphs))])
 
     if len(header) + len(body) + 2 <= MAX_CHARS:
-        return [f"{header}\n{body}"]
+        return ChunkLayout(paragraphs, [f"{header}\n{body}"], [(0, len(paragraphs))])
 
     chunks: List[str] = []
+    spans: List[Tuple[int, int]] = []
     current = ""
-    for para in _paragraphs(body):
+    start = 0
+    for i, para in enumerate(paragraphs):
         if current and len(header) + len(current) + len(para) + 2 > MAX_CHARS:
             chunks.append(current)
+            spans.append((start, i))
             tail = current[-OVERLAP_CHARS:]
             tail = tail[tail.find(" ") + 1:] if " " in tail else tail
             current = tail + "\n" + para
+            start = i
         else:
             current = f"{current}\n{para}" if current else para
-        if len(chunks) >= MAX_CHUNKS_PER_ARTICLE:
-            break
-    if current and len(chunks) < MAX_CHUNKS_PER_ARTICLE:
+    if current:
         chunks.append(current)
-    return [f"{header}\n{c}" for c in chunks]
+        spans.append((start, len(paragraphs)))
+    return ChunkLayout(paragraphs, [f"{header}\n{c}" for c in chunks], spans)
+
+
+def build_chunks(article: CanonicalArticle, language: str) -> List[str]:
+    """Texts to embed for one language of one article (never empty when the language has text)."""
+    layout = chunk_layout(article, language)
+    return layout.texts[:MAX_CHUNKS_PER_ARTICLE] if layout else []

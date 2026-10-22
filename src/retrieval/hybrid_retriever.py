@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 from pydantic import BaseModel
 from src.storage.hybrid_store import HybridStore
 from src.storage.sqlite_utils import connect as sqlite_connect
@@ -16,6 +16,7 @@ class ScoredArticle(BaseModel):
     vector_rank: Optional[int] = None
     bm25_score: Optional[float] = None
     vector_score: Optional[float] = None
+    vector_chunk: Optional[Tuple[str, int]] = None  # (language, chunk_index) of the best vector hit of the article
     source_tag: str = "primary"  # primary | expanded_ref | superseded_replacement
 
 
@@ -134,6 +135,7 @@ class HybridRetriever:
         vec_rrf_scores: Dict[str, float] = {}
         vec_best_ranks: Dict[str, int] = {}
         vec_best_scores: Dict[str, float] = {}
+        vec_best_chunks: Dict[str, Tuple[str, int]] = {}
 
         for v_idx, q_vec in enumerate(query_vectors):
             v_weight = 1.0 if v_idx == 0 else 0.80
@@ -153,6 +155,10 @@ class HybridRetriever:
                 if cid not in vec_best_ranks or rank < vec_best_ranks[cid]:
                     vec_best_ranks[cid] = rank
                     vec_best_scores[cid] = m["score"]
+                    if m.get("chunk_index") is not None and m.get("language"):
+                        vec_best_chunks[cid] = (m["language"], m["chunk_index"])
+                    else:
+                        vec_best_chunks.pop(cid, None)
 
         # 4. Global Fusion (Combined BM25 + Vector RRF across all aspects)
         all_ids = set(bm25_rrf_scores.keys()).union(set(vec_rrf_scores.keys()))
@@ -218,6 +224,7 @@ class HybridRetriever:
                 vector_rank=r_vec,
                 bm25_score=bm25_best_scores.get(cid),
                 vector_score=vec_best_scores.get(cid),
+                vector_chunk=vec_best_chunks.get(cid),
                 source_tag=source_tag,
             ))
 

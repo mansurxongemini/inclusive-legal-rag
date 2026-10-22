@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 
 from src.clients.openrouter import OpenRouterClient
 from src.config import settings
+from src.retrieval.passages import focused_text
 
 if TYPE_CHECKING:
     from src.retrieval.reranker import RetrievedArticleContext
@@ -61,7 +62,7 @@ class JevRanker:
             article_number = ctx.article.metadata.article_number
             annex_title = ctx.article.metadata.annex_title or ctx.article.metadata.chapter_number or ""
             annex_part = f" ({annex_title})" if annex_title else ""
-            passage_text = ctx.article.get_text("uz")[:settings.JEV_RERANK_CHARS]
+            passage_text = focused_text(ctx.article, "uz", getattr(ctx, "focus", None), settings.JEV_RERANK_CHARS)
             passages.append(f"[{n+1}] {law_title_uz} {article_number}{annex_part}. {passage_text}")
 
         state = f"QUESTION: {query}\n\nPASSAGES:\n" + "\n\n".join(passages)
