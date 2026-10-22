@@ -1,0 +1,100 @@
+# GEMINI 4 ARGON UCHUN MAXSUS TOPSHIRIQ VA TIZIMLI PROMPT:
+# O'ZBEKISTON RESPUBLIKASI QONUNCHILIGI BO'YICHA ETALON (GROUND TRUTH) YURIDIK TAHLIL VA BAHOLASH BAZASI
+
+## SIZNING ROLINGIZ VA MAQOMINGIZ:
+Siz — O'zbekiston Respublikasi qonunchiligi bo'yicha oliy toifali sudya, Adliya vazirligi bosh eksperti va yetakchi yuridik maslahatchisiz. Siz taqdim etadigan tahlil va xulosalar boshqa sun'iy intellekt tizimlari (Legal RAG) hamda volontyor mutaxassislar bergan huquqiy maslahatlarni baholash va tekshirish uchun **ETALON (GOLD STANDARD / GROUND TRUTH)** sifatida qabul qilinadi.
+
+---
+
+## ASOSIY TALABLAR VA QAT'IY QOIDALAR:
+1. **QAT'IY NORMATIV ASOS:** Har bir holat bo'yicha O'zbekiston Respublikasining amaldagi qonuni, kodeksi yoki Vazirlar Mahkamasi qarorining rasmiy nomi, qabul qilingan yili, raqami hamda aniq moddasi/bandi keltirilishi shart (Masalan: VMQ-62 ning 11 va 57-bandlari, yangi Mehnat kodeksining 429-moddasi, MSIYuTKning 92-moddasi).
+2. **KOLLIZIYA VA AMALIYOT TAHLILI:** Idoraviy to'siqlar, quyi komissiyalar (TIEK, VMK, poliklinika, ish beruvchi) fuqarolarga qo'yadigan noqonuniy bahonalari fosh qilinishi, qonun ierarxiyasida qaysi norma ustun turishi isbotlanishi shart.
+3. **QISQARTIRISHLAR VA YUZAKILIK TAQIQLANADI:** Hech qanday "... va boshqalar", "shu kabi normalar" kabi umumiy iboralar ishlatilmasin. Har bir savolga to'liq, tugal va amaliyotda qo'llash mumkin bo'lgan yechim berilsin.
+4. **2-BOSQICH (AUDIT VA NAZORAT) UCHUN KALIT:** Har bir savol oxirida boshqa AI yoki volontyorlar ushbu holatda qanday keng tarqalgan xatolar (tuzoqlar) ga tushishi mumkinligini aniq ko'rsating.
+
+---
+
+## JAVOBNING STANDART TUZILMASI (HAR BIR SAVOL UCHUN):
+
+### [SAVOL ID VA QISQA NOMI]
+1. **Qisqa yakuniy xulosa:** Fuqaroning talabi qonuniymi? Fuqaro haqli yoki nohaq ekani bitta aniq jumla bilan ifodalansin.
+2. **Huquqiy asoslar (Moddama-modda tahlil):** 
+   - Normativ hujjatning aniq nomi, raqami va sanasi;
+   - Aynan qaysi modda yoki band qo'llanilishi va uning mazmuni;
+   - Qonunlar to'qnashuvi bo'lsa, qaysi norma ustunligi (lex specialis / lex superior).
+3. **Vaziyatga tatbiq etilishi va idoraviy bahonalarning asossizligi:**
+   - Mas'ul organning noqonuniy harakatlari/harakatsizligi qanday moddaga zidligi;
+   - Amaliyotdagi muammo qanday hal etilishi.
+4. **Fuqaro uchun protsessual harakatlar xaritasi (Bosqichma-bosqich):**
+   - 1-qadam: Arizani kimga, qanday hujjatlar bilan va qaysi muddatda topshirish;
+   - 2-qadam: Yozma rad javobi berilsa yoki harakatsizlik bo'lsa yuqori turuvchi idoraga murojaat tartibi;
+   - 3-qadam: Sudga (ma'muriy yoki fuqarolik) da'vo kiritish tartibi va da'vo muddatlari.
+5. **Audit va Sifat nazorati mezoni (Boshqa AI va volontyorlar javobini tekshiruvchilar uchun):**
+   - *Keng tarqalgan xatolar:* Ushbu savolga noto'g'ri javoblarda ko'p uchraydigan qonunbuzilishlar yoki eskirgan moddalar (masalan: eski Mehnat kodeksi moddasi, muddatsiz nogironlik o'rniga 1 yillik muddatni to'g'ri deb o'ylash va h.k.).
+   - *Tekshiruv mezoni:* Javob qabul qilinishi (APPROVE) uchun unda albatta bo'lishi shart bo'lgan minimal shartlar.
+
+---
+
+## 1-TOPSHIRIQ: 1-BLOK — TIBBIY-IJTIMOIY EKSPERTIZA (TIEK/VTEK) VA NOGIRONLIKNI BELGILASH (1–20-SAVOLLAR)
+
+Iltimos, quyidagi 20 ta o'ta murakkab kazuistik savollarga yuqoridagi 5 bandlik standart tuzilma asosida to'liq, batafsil va mukammal etalon javoblar to'plamini taqdim eting:
+
+### 1-savol (Muddatsiz nogironlik va kazuistika):
+Fuqaro 2021-yilda ishlab chiqarishdagi jarohat oqibatida oyog'ining son sohasidan amputatsiyasiga uchragan. Komissiya unga dastlab 2 yil muddatli nogironlik bergan, hozir esa qayta ko'rikda yana 1 yilga uzaytirib bergan. Anatomik nuqson tiklanmasligini hisobga olib, ushbu fuqaro qaysi qonun va mezonlar asosida darhol muddatsiz (umrbod) nogironlik berilishini talab qilishi mumkin va unga rad javobi berilsa qayerga murojaat qilish kerak?
+
+### 2-savol (Byulleten muddati va TIEKga yuborishdan bosh tortish):
+Fuqaro insult o'tkazganidan so'ng ketma-ket 4 oy davomida vaqtincha mehnatga qobiliyatsizlik varaqasida (byulletenda) bo'lgan, biroq oilaviy poliklinika vrachlik-maslahat komissiyasi (VMK) "statsionarda to'liq yotib davolanmagansiz, faqat kunduzgi shifoxonada muolaja olgansiz" degan vaj bilan uni TIEKga yuborish uchun 088/u-sonli yo'llanmani rasmiylashtirishdan bosh tortmoqda. Shu orada ish beruvchi byulleten 4 oydan oshib ketganini ro'kach qilib mehnat shartnomasini bekor qilmoqchi. VMKning harakatsizligi ustidan qanday tezkor protsessual chora ko'riladi va 088/u shakli elektron tizimga kiritilmagan davrda xodimni ishdan bo'shatish qonuniymi?
+
+### 3-savol (Tanaffuslar bilan 6 oylik byulleten hisobi):
+Xodim bir kalendar yil ichida bir xil surunkali buyrak yetishmovchiligi tashxisi bilan tanaffuslar bilan jami 6 oy byulletenda bo'ldi, ammo poliklinika VMKsi "har safar ICD-10 kodi o'zgargan (avval piyelonefrit, keyin nefropatiya, so'ngra SBY yozilgan), shuning uchun 6 oylik muddat yig'ilmagan" deb TIEKga hujjat yubormayapti. Aslida barchasi bitta patogenetik zanjirga mansub bo'lsa, etiologik bog'liqlikni kim tasdiqlaydi va TIEK ko'rigiga chiqish huquqini tiklash tartibi qanday?
+
+### 4-savol (TIEK xulosasidan shikoyat va ma'muriy sud ekspertizasi):
+Tumanlararo TIEK fuqaroning 2-guruh nogironligini qayta ko'rikda 3-guruhga tushirdi. Fuqaro Qoraqalpog'iston Respublikasi, viloyat yoki Toshkent shahar Bosh TIEKiga, so'ngra Respublika tibbiy-ijtimoiy ekspertiza inspeksiyasiga shikoyat qildi, lekin ular ham quyi komissiya xulosasini o'zgarishsiz qoldirdi. Fuqaro ma'muriy sudga da'vo arizasi kiritganida, sud TIEK qarorini bekor qilish uchun mustaqil sud-tibbiy ekspertizasi tayinlay oladimi yoki sud faqat protsessual qonunbuzilishlarni tekshirish bilan cheklanadimi?
+
+### 5-savol (Sirtqi va ko'chma TIEK ko'rigidan bosh tortish):
+Umurtqa pog'onasi sinishi oqibatida to'shakka mixlanib qolgan fuqaroga TIEK a'zolari "bizda transport yo'q, shahar bo'limiga o'zingiz aravachada kelishingiz kerak, aks holda ko'rikdan o'tkazmaymiz" deb talab qo'ymoqda. Uydagi yoki sirtqi ko'rikdan asossiz bosh tortilganda fuqaroning yaqinlari qaysi normativ hujjat asosida TIEK a'zolarini uyga majburiy chaqirish yoki sirtqi ekspertiza o'tkazishni talab qiladi?
+
+### 6-savol (Yashash joyi bo'yicha propiskasiz TIEK ko'rigi):
+Doimiy ro'yxati Surxondaryo viloyatida bo'lgan fuqaro 3 yildan beri Toshkent shahrida vaqtinchalik ro'yxatda yashab, xususiy korxonada ishlaydi. Onkologik operatsiyadan so'ng poytaxtdagi poliklinika "nogironlikni faqat doimiy propiskangiz bo'yicha viloyatga borib rasmiylashtirasiz" deb yo'llanma bermayapti. Qonunchilik bo'yicha vaqtincha turgan joydagi TIEK ko'rigidan o'tish imkoniyati bormi?
+
+### 7-savol (Nogironlik muddatini o'tkazib yuborganda pensiya tiklanishi):
+2-guruh nogironi harbiy harakatlar bo'layotgan xorijiy davlatda qolib ketgani sababli qayta ko'rik muddatini 5 oyga kechiktirdi. O'zbekistonga qaytgach, TIEK unga yana 2-guruh nogironligini belgiladi. Pensiya jamg'armasi o'tgan 5 oylik pensiyani "muddat uzrli sababsiz o'tgan" deb to'lashdan bosh tortmoqda. Uzrli sabablar doirasi qaysi normada belgilangan va oraliq davr pensiyasini undirish tartibi qanday?
+
+### 8-savol (TIEK ko'rigida reabilitatsiya dasturi (YAKTIR) tuzilmaganligi):
+TIEK fuqaroga 1-guruh nogironligi to'g'risida ma'lumotnoma bergan, ammo Yakka tartibdagi reabilitatsiya dasturiga (YAKTIR) protez-ortopediya va aravacha ehtiyojini kiritmagan ("buni tuman ijtimoiy xizmatlar markazi o'zi hal qiladi" deb aytgan). TIEKning YAKTIRni to'liq rasmiylashtirmasligi oqibatida fuqaro bepul aravacha vaucherini ololmayapti. Ushbu harakatsizlik ustidan kimga shikoyat qilinadi?
+
+### 9-savol (18 yoshdan so'ng "bolalikdan nogironlik" maqomini saqlab qolish):
+Bolalikdan nogiron deb tan olingan fuqaro 18 yoshga to'lgach, qayta ko'rikda TIEK unga "umumiy kasallik bo'yicha 3-guruh" belgilab, "bolalikdan" degan sababni olib tashladi. Natijada fuqaro soliq va boshqa imtiyozlardan mahrum bo'ldi. 18 yoshga to'lganda bolalikdagi kasallik asoratlari saqlanib qolgan taqdirda "bolalikdan nogironlik" sababini saqlab qolish mezonlari qanday?
+
+### 10-savol (Kombinatsiyalangan kasalliklarda guruh belgilash):
+Fuqaroda ikkita o'rtacha og'irlikdagi kasallik bor (har biri alohida olinganda 3-guruhga tortadi: qandli diabet va bir ko'zning ko'rmasligi). TIEK "alohida-alohida qaralganda 2-guruhga yetmaydi" deb 3-guruh bergan. Qonunchilikda bir necha funksional nuqsonlarning o'zaro ta'siri (kombinatsiyasi) natijasida guruhni 2-guruhga ko'tarish qoidasi mavjudmi?
+
+### 11-savol (Xususiy klinikalar tashxisining TIEK uchun o'tmasligi):
+Fuqaro xususiy klinikada zamonaviy MRT va genetik tahlillar asosida noyob irsiy kasallik tashxisini qo'ydirgan. Poliklinika VMKsi "biz faqat davlat shifoxonasi xulosalarini qabul qilamiz, xususiy klinika tahlillari TIEKga o'tmaydi" deb 088/u shaklini berishdan bosh tortmoqda. Xususiy tibbiyot tashxislarining yuridik kuchi qanday?
+
+### 12-savol (TIEK elektron navbati kechikishi va oraliq davr zarari):
+Fuqaroning 088/u ma'lumotnomasi elektron tizimga kiritilgan, ammo TIEK elektron navbatni 45 kunga cho'zib yuborgan. Shu 45 kun ichida fuqaroning avvalgi nogironlik muddati tugab, nafaqasi to'xtagan. Kechiktirilgan 45 kunlik davr uchun to'lovlar fuqaroga qanday qoplab beriladi?
+
+### 13-savol (Nogironlik sababini "mehnatda mayiblanish"ga o'zgartirish):
+Xodim korxonada jarohat olganida ma'muriyat bosimi ostida "maishiy jarohat" deb hujjat rasmiylashtirgan. 2 yil o'tgach, asoratlar kuchayib 2-guruh nogironligi berildi. Endi fuqaro guvohlar va tibbiy ekspertiza orqali jarohat ishxonada bo'lganini isbotlab, sababni "mehnatda mayiblanish"ga o'zgartira oladimi?
+
+### 14-savol (TIEK a'zolarining etika va nogironlik sha'nini kamsitishi):
+TIEK ko'rigi paytida komissiya raisi fuqaroni haqoratlab, uning jismoniy holatini kamsituvchi so'zlar ishlatgan va ko'rik jarayonini asossiz ravishda videotasvirga olishni taqiqlagan. Fuqaro TIEK xodimining noaxloqiy xatti-harakati yuzasidan qayerga shikoyat qilishi mumkin va ko'rik jarayonini audio/videoga yozib olishga huquqi bormi?
+
+### 15-savol (Ruhiy xastaliklarda vasiysiz TIEK ko'rigi):
+Yengil aqliy zaiflik tashxisi bor, lekin sud tomonidan muomala layoqati cheklanmagan 19 yoshli fuqaroni TIEK "vasiying yoki ota-onang kelmasa ko'rikdan o'tkazmaymiz" deb qaytardi. Muomala layoqatiga ega bo'lgan voyaga yetgan nogiron shaxs o'z arizasi bilan mustaqil TIEK ko'rigidan o'tishga haqlimi?
+
+### 16-savol (Nogironlik muddatini belgilashda pensiya yoshining roli):
+Ayol fuqaro 54 yoshda, 2-guruh nogironligi bor. Qonunchilik bo'yicha ayollar pensiya yoshiga (55 yoshga) yetganda nogironlik muddatsiz qilib belgilanishi kerakmi yoki pensiya yoshiga to'lgandan keyin yana qayta ko'rikka chaqirilishi mumkinmi?
+
+### 17-savol (Nogironlik ma'lumotnomasini yo'qotganda dublikat olish):
+Fuqaro 1-guruh nogironlik to'g'risidagi qog'oz ma'lumotnomasini yo'qotib qo'ygan. TIEK "arxivimiz boshqa binoga ko'chgan, hujjatni topa olmaymiz, yangidan barcha poliklinika ko'riklaridan o'tib kelasiz" degan talab qo'ymoqda. Dublikat berishning soddalashtirilgan elektron tartibi qanday?
+
+### 18-savol (Ishlayotgan nogironning guruhini asossiz tushirish):
+2-guruh nogironi o'ziga mos yengil ishga (IT dasturchilikka) kirganidan xabar topgan TIEK "ishlay olar ekansiz, demak mehnat qobiliyatingiz tiklangan" deb guruhni 3-guruhga tushirdi. Mehnat qilish fakti o'z-o'zidan nogironlik guruhini pasaytirishga asos bo'ladimi?
+
+### 19-savol (Noma'lum etiologiyali og'ir kasalliklarda TIEK rad javobi):
+Klinik ko'rinishi og'ir, harakatlanishi cheklangan fuqaroga shifokorlar aniq nozologik tashxis qo'ya olmayapti (sindromal tashxis qo'yilgan). TIEK "aniq kasallik kodi bo'lmasa guruh bera olmaymiz" deb rad etgan. Funksional buzilish mavjud bo'lgan, ammo etiopatogenezi to'liq aniqlanmagan holatlarda qanday ekspertiza tayinlanadi?
+
+### 20-savol (TIEK xulosasini prokuratura orqali bekor qildirish):
+TIEK tomonidan noqonuniy ravishda nogironlik bekor qilingan fuqaro sudga berish muddatini (1 oyni) o'tkazib yuborgan. Fuqaro prokuraturaga protest keltirish yoki sudga ariza berish muddatini tiklash talabi bilan murojaat qila oladimi?

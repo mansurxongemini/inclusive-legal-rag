@@ -23,8 +23,60 @@ class OpenRouterClient:
         self.primary_model = settings.GENERATION_MODEL_PRIMARY
         self.fallback_model = settings.GENERATION_MODEL_FALLBACK
         self.embedding_model = settings.EMBEDDING_MODEL
+        self.embedding_base_url = self._api_root(settings.EMBEDDING_BASE_URL or settings.OPENROUTER_BASE_URL)
+        self.embedding_api_key = settings.EMBEDDING_API_KEY or settings.OPENROUTER_API_KEY
+        self.jev_base_url = self._api_root(
+            settings.JEV_BASE_URL or settings.EMBEDDING_BASE_URL or settings.OPENROUTER_BASE_URL)
+        self.jev_api_key = settings.JEV_API_KEY or settings.EMBEDDING_API_KEY or settings.OPENROUTER_API_KEY
         self.is_mock = settings.is_mock_mode
         self._http_client: Optional[httpx.AsyncClient] = None
+        self._embedding_http_client: Optional[httpx.AsyncClient] = None
+        self._jev_http_client: Optional[httpx.AsyncClient] = None
+
+    @staticmethod
+    def _api_root(url: str) -> str:
+        """Base URL without a trailing endpoint path (".../chat/completions" pasted into the setting by mistake)."""
+        url = url.strip().rstrip("/")
+        for suffix in ("/chat/completions", "/embeddings"):
+            if url.endswith(suffix):
+                url = url[: -len(suffix)]
+        return url
+
+    @property
+    def embedding_is_mock(self) -> bool:
+        return settings.MOCK_EXTERNAL_APIS or not bool(self.embedding_api_key)
+
+    async def get_jev_client(self) -> httpx.AsyncClient:
+        """HTTP client for Jev decisions (its own key, see JEV_API_KEY)."""
+        if self.jev_api_key == self.api_key:
+            return await self.get_client()
+        if self.jev_api_key == self.embedding_api_key:
+            return await self.get_embedding_client()
+        if self._jev_http_client is None or self._jev_http_client.is_closed:
+            self._jev_http_client = httpx.AsyncClient(
+                timeout=httpx.Timeout(120.0, connect=15.0),
+                headers={
+                    "Authorization": f"Bearer {self.jev_api_key or ''}",
+                    "HTTP-Referer": "https://legal-rag.uz",
+                    "X-Title": "Uzbekistan Legal RAG",
+                }
+            )
+        return self._jev_http_client
+
+    async def get_embedding_client(self) -> httpx.AsyncClient:
+        """HTTP client for the embedding endpoint (its own key and base URL, see EMBEDDING_BASE_URL)."""
+        if self.embedding_base_url == self.base_url and self.embedding_api_key == self.api_key:
+            return await self.get_client()
+        if self._embedding_http_client is None or self._embedding_http_client.is_closed:
+            self._embedding_http_client = httpx.AsyncClient(
+                timeout=httpx.Timeout(120.0, connect=15.0),
+                headers={
+                    "Authorization": f"Bearer {self.embedding_api_key or ''}",
+                    "HTTP-Referer": "https://legal-rag.uz",
+                    "X-Title": "Uzbekistan Legal RAG",
+                }
+            )
+        return self._embedding_http_client
 
     async def get_client(self) -> httpx.AsyncClient:
         if self._http_client is None or self._http_client.is_closed:
@@ -41,6 +93,10 @@ class OpenRouterClient:
     async def close(self):
         if self._http_client and not self._http_client.is_closed:
             await self._http_client.aclose()
+        if self._embedding_http_client and not self._embedding_http_client.is_closed:
+            await self._embedding_http_client.aclose()
+        if self._jev_http_client and not self._jev_http_client.is_closed:
+            await self._jev_http_client.aclose()
 
     def provider_preferences(self) -> Optional[Dict]:
         """Builds OpenRouter provider routing and quantization preferences from settings."""
@@ -89,7 +145,7 @@ class OpenRouterClient:
         """
         Fetches embeddings from OpenRouter or returns deterministic mock embeddings if in mock mode.
         """
-        if self.is_mock:
+        if self.embedding_is_mock:
             return [self._deterministic_mock_embedding(t, settings.EMBEDDING_DIMENSION) for t in texts]
 
         if len(texts) > self.EMBEDDING_BATCH:
@@ -99,7 +155,7 @@ class OpenRouterClient:
             return vectors
 
         target_model = model or self.embedding_model
-        client = await self.get_client()
+        client = await self.get_embedding_client()
 
         max_retries = 5
         delay = 1.0
@@ -107,7 +163,7 @@ class OpenRouterClient:
         for attempt in range(max_retries):
             try:
                 response = await client.post(
-                    f"{self.base_url}/embeddings",
+                    f"{self.embedding_base_url}/embeddings",
                     json={
                         "model": target_model,
                         "input": texts,
@@ -126,8 +182,11 @@ class OpenRouterClient:
                     logger.warning(f"OpenRouter 429 Rate Limit. Sleeping {retry_after:.1f}s before retry {attempt+1}/{max_retries}...")
                     await asyncio.sleep(retry_after)
                     continue
-                
-                logger.warning(f"OpenRouter embedding error HTTP {response.status_code}: {response.text}")
+                elif response.status_code in (400, 401, 403, 404, 405):
+                    logger.warning(f"Embedding endpoint returned non-retryable HTTP {response.status_code}: {response.text[:100]}. Skipping retries.")
+                    break
+                else:
+                    logger.warning(f"OpenRouter embedding error HTTP {response.status_code}: {response.text}")
             except Exception as e:
                 logger.warning(f"OpenRouter embedding attempt {attempt+1} failed: {e}")
 
@@ -209,11 +268,15 @@ class OpenRouterClient:
         for cur_model in models_to_try:
             for attempt in range(2):
                 try:
+                    eff_max_tokens = max_tokens
+                    if any(m in (cur_model or "").lower() for m in ["muse", "nemotron", "r1", "deepseek-r1"]):
+                        eff_max_tokens = max(max_tokens, 8192)
+
                     payload: Dict = {
                         "model": cur_model,
                         "messages": messages,
                         "temperature": temperature,
-                        "max_tokens": max_tokens,
+                        "max_tokens": eff_max_tokens,
                     }
                     if prefs is not None and "openrouter.ai" in self.base_url:
                         payload["provider"] = prefs
@@ -471,10 +534,10 @@ class OpenRouterClient:
         if self.is_mock:
             return {"answers": self._mock_decision(state, questions), "usage": {}}
 
-        if not self.api_key or "openrouter.ai" not in self.base_url:
+        if not self.jev_api_key or "openrouter.ai" not in self.jev_base_url:
             return None
 
-        client = await self.get_client()
+        client = await self.get_jev_client()
         url = "https://openrouter.ai/api/alpha/decisions"
         payload = {
             "model": model or settings.JEV_MODEL,

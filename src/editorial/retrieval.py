@@ -26,7 +26,7 @@ def curated_relevance_threshold(rerank_provider: str) -> float:
     definition of a pick.
     """
     if rerank_provider == "jev":
-        return settings.RERANK_PICK_MIN
+        return settings.CURATED_MIN_JEV_SCORE
     return settings.GATE_MIN_RERANK_SCORE
 
 

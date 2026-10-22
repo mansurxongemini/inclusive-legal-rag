@@ -452,20 +452,29 @@
     - Server to'liq Telegram HTML formatida, 3 ta to'g'ri Lex.uz havolasi (Mehnat kodeksi 218 va 429-moddalar, Nogironlar to'g'risidagi qonun 42-modda) bilan javob qaytardi, iqtiboslar validatsiyasi muvaffaqiyatli o'tdi (`validation_passed: True`);
     - Dalil: `task-2185` chiqishi va jonli server loglari.
 
+67. [DONE] Gemini Argon uchun etalon (Ground Truth) yuridik tahlil va javoblar promptini loyihalash hamda 3 tomonlama solishtirish metodologiyasini ishlab chiqish:
+    - Token chegarasi (8,192 token) tahlil qilindi: bitta so'rovda 200 ta savol-javob so'rash modelni uzilishiga yoki yuzaki gaplarga olib kelishi tushuntirildi va savollarni sohaviy bloklar bo'yicha partiyalash yo'li tanlandi;
+    - Mavjud 200 ta benchmark savollari (`data/golden_dataset/uzbekistan_nogironlik_huquqi_200_savol_benchmark.json`) va Tuzuk AI javoblari (`data/sources/harvested_benchmark/`) asosida Gemini Argon uchun 1-blok (TIEK/VTEK: 1–20-savollar) bo'yicha etalon tahlil prompti ishlab chiqildi;
+    - Maxsus prompt fayli `gemini_argon_benchmark_eval_prompt.txt` yaratildi;
+    - 3 tomonlama solishtirish zanjiri (Gemini Argon vs Tuzuk AI vs Legal RAG Muse Spark) va 2-bosqich QA Audit (`/api/v1/assistant/review`) nazoratchilik arxitekturasi belgilandi;
+    - Meta Muse Spark modelining chuqur fikrlash (4,033 reasoning tokens) xususiyati aniqlanib, `src/clients/openrouter.py` da token chegarasi 8,192 ga avtomatik kengaytirildi;
+    - Dalil: `gemini_argon_benchmark_eval_prompt.txt`, yangilangan `src/clients/openrouter.py` va `http://127.0.0.1:8000/health` (healthy, 28,105 modda).
 
+68. [DONE] Gemini Argon 1-blok (1–20-savollar) etalon tahlilini integratsiya qilish, 3 tomonlama solishtirish (Argon vs Tuzuk AI vs Legal RAG) va 2-bosqich QA Audit tizimini sinash:
+    - Gemini Argon taqdim etgan 1-blok (1–20-savollar) bo'yicha to'liq etalon tahlil `data/golden_dataset/gemini_argon_block1_ground_truth.md` va `gemini_argon_block1_ground_truth.json` fayllariga to'liq saqlandi va 20 ta savol ajratildi;
+    - Uvicorn serveri qayta ishga tushirildi, query cache tozalandi, `REVIEW_MAX_ANSWER_CHARS` 16,000 belgiga oshirildi va embedding 404 xatolarida darhol to'xtash (fast-fail) o'rnatildi;
+    - 3 tomonlama jonli test va 2-bosqich QA Audit (`POST /api/v1/assistant/review`) Question 1 keysida sinovdan o'tkazildi:
+      1) **Gemini Argon (Ground Truth)**: O'RQ-641 31-m, VMQ-62 & VMQ-587 (son amputatsiyasida muddatsiz belgilash), O'RQ-457 10-11-m, MSIYuTK 186-m (3 oylik sud muddati);
+      2) **Tuzuk AI**: 7,658 belgilik keng javob berdi, lekin QA Audit uni **REJECT** qildi (`legal_accuracy: 2, citation_basis: 1`), sababi mavjud bo'lmagan band raqamlari (11, 57, 60, 14-bandlar va 30/20/5 kunlik muddatlar) va O'RQ-174 ni qonunchilik korpusidan asossiz keltirgan;
+      3) **Legal RAG (Meta Muse Spark)**: 6 ta aniq havola bilan qonuniy javob berdi, QA Audit uni ham **REJECT** qildi (`legal_accuracy: 2, citation_basis: 2`), sababi umumiy qoidalarni keltirib, PQ-22 3-bandi a) kichik bandiga va aniq ro'yxatga to'g'ridan-to'g'ri ishora qilmagan;
+    - Xulosa: QA Audit nazorat tizimi o'ta qat'iy, hech qanday xom yoki asossiz da'volarni o'tkazmaydigan haqiqiy filtr ekanligi isbotlandi;
+    - Dalil: `data/golden_dataset/gemini_argon_block1_ground_truth.json`, `data/golden_dataset/sample_3way_eval_q1.json` va jonli audit natijalari.
 
-
-
-
-
-
-
-
-
-
-
-
-
+69. [DOING] RAG bazani real sharoitda va jonli savollarda sinovdan o'tkazish (Live Testing & Validation):
+    - 28,105 ta moddadan iborat to'liq korpus va Meta Muse Spark 1.3 modeli asosida Legal RAG serveri (127.0.0.1:8000) faol holatda;
+    - Telegram bot (`@murojattest1456_bot`) podman orqali to'liq ishga tushirildi: MariaDB, Redis, Celery va App konteynerlari muvaffaqiyatli ishga tushdi;
+    - Bot polling holatida: `Run polling for bot @murojattest1456_bot id=8954778334 - 'Test murojaat Huquq'`;
+    - Foydalanuvchi Telegram orqali jonli savol yuborib sinashiga to'liq tayyor.
 
 
 

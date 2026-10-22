@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     # OpenRouter API
     OPENROUTER_API_KEY: Optional[str] = Field(default=None)
     OPENROUTER_BASE_URL: str = Field(default="https://openrouter.ai/api/v1")
+    # Embeddings may live on another endpoint than the LLM (e.g. LLM on Meta AI, embeddings on OpenRouter).
+    # Empty = use OPENROUTER_BASE_URL / OPENROUTER_API_KEY.
+    EMBEDDING_BASE_URL: str = Field(default="")
+    EMBEDDING_API_KEY: Optional[str] = Field(default=None)
     
     # Models
     EMBEDDING_MODEL: str = Field(default="baai/bge-m3")
@@ -22,8 +26,12 @@ class Settings(BaseSettings):
     GENERATION_MODEL_FALLBACK: str = Field(default="meta-llama/llama-3.3-70b-instruct")
     # Must be a dedicated rerank model served by OpenRouter's /rerank endpoint (a chat model is rejected there).
     RERANK_MODEL: str = Field(default="cohere/rerank-v3.5")
-    RERANK_PROVIDER: str = Field(default="jev")                     # "jev" (Cohere used as fallback) or "cohere"
+    RERANK_PROVIDER: str = Field(default="jev")                     # "jev" (Cohere used as fallback), "cohere", or "rrf"/"none" (no model reranking)
+    CURATED_MIN_JEV_SCORE: float = Field(default=0.05)              # Jev score a curated/Huquq+ item needs to be moved ahead of statutory norms
     RERANK_PICK_MIN: float = Field(default=0.05)                    # a unit Jev scored at least this is its pick and stays ahead of rule-added legal bases
+    # Jev (reranking + scope/answerability gate) runs on OpenRouter only. Empty = EMBEDDING_* then OPENROUTER_*.
+    JEV_BASE_URL: str = Field(default="")
+    JEV_API_KEY: Optional[str] = Field(default=None)
     JEV_MODEL: str = Field(default="typesafe/jev-1.13")
     JEV_RERANK_UNITS: int = Field(default=30)                       # candidates sent to Jev
     JEV_RERANK_CHARS: int = Field(default=1500)                     # characters of each unit shown to Jev
@@ -41,8 +49,8 @@ class Settings(BaseSettings):
     REVIEW_MIN_CONFIDENCE: float = Field(default=0.5)
     REVIEW_TOP_K: int = Field(default=6)                            # retrieved norms given to the reviewer LLM
     REVIEW_RUBRIC_VERSION: str = Field(default="1.0")
-    REVIEW_MAX_QUESTION_CHARS: int = Field(default=4000)
-    REVIEW_MAX_ANSWER_CHARS: int = Field(default=6000)
+    REVIEW_MAX_QUESTION_CHARS: int = Field(default=6000)
+    REVIEW_MAX_ANSWER_CHARS: int = Field(default=16000)
     # /health budget for a SERVING process: idle is ~175 MB (tests/test_memory_budget.py keeps it < 350),
     # retrieval warms LanceDB/FTS caches to a ~300-550 MB plateau (measured 2026-10-18), not a leak.
     MEMORY_BUDGET_MB: float = Field(default=700.0)

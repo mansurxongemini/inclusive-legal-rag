@@ -449,7 +449,7 @@ async def test_curated_relevance_threshold_follows_the_reranker_scale(store, edi
     from src.editorial.retrieval import curated_relevance_threshold, ensure_curated_contexts
     from src.retrieval.reranker import RetrievedArticleContext
 
-    assert curated_relevance_threshold("jev") == settings.RERANK_PICK_MIN
+    assert curated_relevance_threshold("jev") == settings.CURATED_MIN_JEV_SCORE
     assert curated_relevance_threshold("cohere") == settings.GATE_MIN_RERANK_SCORE
     assert curated_relevance_threshold("rrf") == settings.GATE_MIN_RERANK_SCORE
 

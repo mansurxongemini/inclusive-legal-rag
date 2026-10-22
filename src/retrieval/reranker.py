@@ -148,6 +148,10 @@ class Reranker:
                     superseded_by=art.metadata.superseded_by,
                 ))
 
+        # RERANK_PROVIDER "rrf" / "none": no model reranking at all, fused (RRF) order is the final order
+        if settings.RERANK_PROVIDER in ("rrf", "none"):
+            use_model = False
+
         if len(article_contexts) <= top_n or not use_model:
             self.last_provider = "rrf"
             article_contexts.sort(key=lambda x: x.final_score, reverse=True)
