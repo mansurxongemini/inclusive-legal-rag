@@ -101,6 +101,24 @@ async def _run_assistant_maintenance_scheduler():
             await asyncio.sleep(3600)
 
 
+async def _run_provider_limit_poll():
+    """Reads the remaining USD of the OpenRouter key every 15 minutes (a free call) so that the budget guard knows the
+    key's own limit and not only what this service has spent."""
+    from src.clients.spend import ledger
+    while True:
+        try:
+            if not get_client().embedding_is_mock:
+                remaining = await ledger.refresh_provider_limit(get_client())
+                if remaining is not None and remaining < 1.0:
+                    logger.warning(f"The OpenRouter key has ${remaining:.2f} left")
+            await asyncio.sleep(900)
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.warning(f"Provider limit poll failed: {e}")
+            await asyncio.sleep(900)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: ensure directories & seed pilot dataset if empty
@@ -130,6 +148,7 @@ async def lifespan(app: FastAPI):
 
     # Daily assistant maintenance (answers/turns/feedback purge)
     purge_task = asyncio.create_task(_run_assistant_maintenance_scheduler())
+    limit_task = asyncio.create_task(_run_provider_limit_poll())
 
     yield
 
@@ -141,6 +160,7 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
+    limit_task.cancel()
     if purge_task:
         purge_task.cancel()
         try:

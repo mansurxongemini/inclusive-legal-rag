@@ -692,3 +692,17 @@ async def test_rrf_provider_never_calls_a_rerank_model(monkeypatch, provider):
     out = await reranker.rerank("savol", "uz", cands, store, top_n=5, use_model=True)
     assert [c.article.canonical_id for c in out] == [f"id{i}" for i in range(5)]
     assert reranker.last_provider == "rrf"
+
+
+def test_a_unit_that_leads_one_list_is_lifted_into_the_reranker_window():
+    from src.retrieval.hybrid_retriever import ScoredArticle, lift_leaders
+
+    scored = [ScoredArticle(canonical_id=f"u{i}", rrf_score=1.0 - i * 0.01) for i in range(40)]
+    lift_leaders(scored, {"u35", "u2"}, anchor_position=12)
+    order = [s.canonical_id for s in scored]
+    assert order.index("u35") <= 13                       # lifted from the 36th place to the anchor
+    assert order[:11] == [f"u{i}" for i in range(11)]     # the strong head is untouched
+    assert order.index("u2") == 2                         # a leader that is already high stays where it was
+    scored2 = [ScoredArticle(canonical_id=f"v{i}", rrf_score=1.0 - i * 0.01) for i in range(5)]
+    lift_leaders(scored2, {"v4"}, anchor_position=12)     # a pool smaller than the anchor is left alone
+    assert [s.canonical_id for s in scored2] == [f"v{i}" for i in range(5)]

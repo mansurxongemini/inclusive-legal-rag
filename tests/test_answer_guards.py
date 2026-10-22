@@ -174,3 +174,19 @@ def test_markers_after_the_full_stop_belong_to_their_sentence():
               "- Ariza o'ttiz kun ichida ko'rib chiqiladi va qaror chiqariladi. [2]\n"
               "- Uchinchi gap hech qanday manbaga tayanmaydi va shuning uchun belgisizdir.")
     assert uncited_ratio(answer) == pytest.approx(1 / 3, abs=0.01)
+
+
+@pytest.mark.asyncio
+async def test_a_hung_generation_is_cut_off_and_the_norms_are_shown(monkeypatch):
+    import asyncio
+    from src.gateway import service
+
+    async def hang(self, *a, **k):
+        await asyncio.sleep(30)
+
+    monkeypatch.setattr(AnswerGenerator, "generate_answer", hang)
+    monkeypatch.setattr(settings, "ANSWER_TIMEOUT_S", 0.2)
+    from tests.test_security_and_regressions import local_client      # in-process app with the mock store
+    async with local_client() as c:
+        res = await c.post("/api/v1/query", json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?", "language": "uz"})
+    assert res.status_code == 200 and res.json()["degraded"] is True and res.json()["citations"]

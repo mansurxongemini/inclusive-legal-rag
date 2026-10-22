@@ -93,3 +93,21 @@ async def test_embeddings_and_jev_pause_when_the_budget_is_used_up(monkeypatch):
     with pytest.raises(RuntimeError, match="budget"):
         await c.get_embeddings(["savol"])
     assert await c.decide("state", {"q": {"type": "choice", "instructions": "x", "criteria": {"a": "b"}}}) is None
+
+
+def test_a_provider_refusal_pauses_openrouter_calls_for_a_while(tmp_path, monkeypatch):
+    from src.clients.spend import is_limit_error
+    assert is_limit_error(403, '{"error":{"message":"Key limit exceeded (total limit)."}}')
+    assert is_limit_error(402, "Payment required") and not is_limit_error(403, "forbidden") and not is_limit_error(500, "limit")
+    led = _ledger(tmp_path)
+    assert led.state() == "ok"
+    led.trip("test")
+    assert led.state() == "exhausted"
+    led._tripped_until = 0.0
+    led.provider_remaining = 0.0
+    assert led.state() == "exhausted"                         # the key itself has nothing left
+    led.provider_remaining = 0.5
+    monkeypatch.setattr(settings, "OPENROUTER_MONTHLY_BUDGET_USD", 15.0)
+    assert led.state() == "soft"                              # less than 20% of the budget is left on the key
+    led.provider_remaining = 9.0
+    assert led.state() == "ok"

@@ -100,11 +100,15 @@ class Settings(BaseSettings):
     QUERY_SUBQUESTIONS_MIN_WORDS: int = Field(default=25)
     # Full-text query: drop question/function words and cut words to their search stem, because the wildcard only
     # extends the query word ("nogironligidan"* never matched a unit's "nogironlik")
-    RETRIEVAL_THREADS: bool = Field(default=True)     # blocking store calls run in worker threads
-    VECTOR_WINDOW_FACTOR: int = Field(default=8)      # nearest chunk rows read per wanted unit (rows of one long unit repeat)
-    VECTOR_DEDUP_QUERIES: bool = Field(default=True)   # embed/search each distinct sub-query text once
-    FTS_STOPWORDS: bool = Field(default=True)
-    FTS_STEM_PREFIX: int = Field(default=1)            # 0 = whole words (stemming off), 1 = on
+    RETRIEVAL_THREADS: bool = Field(default=True)     # blocking store calls run in worker threads (neutral for ranking; keeps the event loop free under load)
+    VECTOR_WINDOW_FACTOR: int = Field(default=4)      # nearest chunk rows read per wanted unit (8 measured no better: hit@1 -2.9 on the stress set, within noise)
+    VECTOR_DEDUP_QUERIES: bool = Field(default=False) # embed each distinct sub-query text once (off: the repeated domain sub-query is part of the measured ranking; on measured hit@1 -3.5, within noise)
+    FTS_CHUNK_MIN_CHARS: int = Field(default=6000)    # a unit longer than this also gets one full-text row per chunk (0 = off)
+    LIST_LEADERS: int = Field(default=0)               # units in the top N of any single list are lifted to LEADER_ANCHOR_POSITION in the pool (0 = off)
+    LEADER_ANCHOR_POSITION: int = Field(default=12)
+    FTS_STEM_EXTRA_WEIGHT: float = Field(default=0.0) # weight of an extra full-text list on search stems added to the fusion (0 = off)
+    FTS_STOPWORDS: bool = Field(default=False)         # measured on the stress set (+stems): hit@1 68-70 vs 72.7 without; kept as an option
+    FTS_STEM_PREFIX: int = Field(default=0)            # 0 = whole words (default), 1 = search stems (nlp/stemming.py)
     GATE_JEV_MIN_IN_SCOPE: float = Field(default=0.2)               # refuse when P(in_scope) is below this (calibrated on the stress set and the held-out set: 100% / 95% of the out-of-scope questions, 1-4% of the in-scope ones)
     GATE_JEV_ANSWERABLE_CEILING: float = Field(default=1.01)        # a high P(answerable) no longer excuses a low scope: the Traffic/Criminal codes in the corpus answer their questions (0.89-0.96) just like the Convention questions that Jev misjudges. 0.8 = the old exemption
     GATE_JEV_MIN_ANSWERABLE: float = Field(default=0.0)             # refuse any question whose P(answerable) is below this (0 = off)
@@ -121,6 +125,7 @@ class Settings(BaseSettings):
     # Reverse proxies in front of the app that append to X-Forwarded-For (0 = none: the header is ignored).
     TRUSTED_PROXIES: int = Field(default=0)
     MAX_PUBLIC_BODY_BYTES: int = Field(default=262144)       # 0 = no limit; applies to the public question endpoints
+    ANSWER_TIMEOUT_S: float = Field(default=100.0)           # whole generation step of one request; then the matching norms are shown
     PUBLIC_DAILY_GENERATIONS: int = Field(default=3000)      # answers generated per day (cache hits are free); 0 = no cap
     CACHE_TTL_SECONDS: int = Field(default=86400)
     MOCK_EXTERNAL_APIS: bool = Field(default=False)

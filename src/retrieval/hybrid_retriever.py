@@ -22,6 +22,21 @@ class ScoredArticle(BaseModel):
     source_tag: str = "primary"  # primary | expanded_ref | superseded_replacement
 
 
+def lift_leaders(scored: List["ScoredArticle"], leaders: set, anchor_position: int) -> None:
+    """
+    Rank fusion drowns a unit that one list puts first and the other lists do not know (a Tax Code paragraph found by
+    words only). Such a unit is lifted to the anchor position, inside the window that Jev reads, and left to Jev to judge.
+    `scored` must be sorted by rrf_score; it is re-sorted in place.
+    """
+    if len(scored) <= anchor_position:
+        return
+    anchor = scored[anchor_position - 1].rrf_score
+    for sa in scored[anchor_position:]:
+        if sa.canonical_id in leaders:
+            sa.rrf_score = anchor - 1e-6
+    scored.sort(key=lambda x: x.rrf_score, reverse=True)
+
+
 class HybridRetriever:
     """
     Hybrid retriever merging BM25 and dense vector similarity using Reciprocal Rank Fusion (RRF).
@@ -109,6 +124,7 @@ class HybridRetriever:
         bm25_rrf_scores: Dict[str, float] = {}
         bm25_best_ranks: Dict[str, int] = {}
         bm25_best_scores: Dict[str, float] = {}
+        leaders: set = set()          # units at the very top of any single list (see LIST_LEADERS)
 
         # SQLite and LanceDB calls block: run them in worker threads so that one slow search does not stall every other
         # request served by the event loop, and let the sub-queries search in parallel.
@@ -116,10 +132,25 @@ class HybridRetriever:
             self._call(self.store.fts_store.bm25_search, query=sq.enriched_query, language=language, top_k=top_k)
             for sq in subqueries
         ))
+        if settings.FTS_STEM_EXTRA_WEIGHT > 0 and subqueries:
+            # A second full-text list on search stems (soliqdan -> soliq, ozodmi -> ozod): the whole-word list is what the
+            # ranking was tuned on and stays as it is; the stem list only adds units whose inflected words it would miss.
+            stem_matches = await self._call(self.store.fts_store.bm25_search, query=subqueries[0].enriched_query,
+                                            language=language, top_k=top_k, stemmed=True)
+            for rank, m in enumerate(stem_matches, start=1):
+                cid = m["canonical_id"]
+                bm25_rrf_scores[cid] = bm25_rrf_scores.get(cid, 0.0) + settings.FTS_STEM_EXTRA_WEIGHT / (rrf_k + rank)
+                if rank <= settings.LIST_LEADERS:
+                    leaders.add(cid)
+                if cid not in bm25_best_ranks or rank < bm25_best_ranks[cid]:
+                    bm25_best_ranks[cid] = rank
+                    bm25_best_scores[cid] = m["score"]
         for sq_idx, matches in enumerate(bm25_matches):
             sq_weight = 1.0 if sq_idx == 0 else 0.85
             for rank, m in enumerate(matches, start=1):
                 cid = m["canonical_id"]
+                if rank <= settings.LIST_LEADERS:
+                    leaders.add(cid)
                 score_contrib = sq_weight * (1.0 / (rrf_k + rank))
                 bm25_rrf_scores[cid] = bm25_rrf_scores.get(cid, 0.0) + score_contrib
                 if cid not in bm25_best_ranks or rank < bm25_best_ranks[cid]:
@@ -162,6 +193,8 @@ class HybridRetriever:
                 continue
             for rank, m in enumerate(matches, start=1):
                 cid = m["canonical_id"]
+                if rank <= settings.LIST_LEADERS:
+                    leaders.add(cid)
                 score_contrib = v_weight * (1.0 / (rrf_k + rank))
                 vec_rrf_scores[cid] = vec_rrf_scores.get(cid, 0.0) + score_contrib
                 if cid not in vec_best_ranks or rank < vec_best_ranks[cid]:
@@ -242,4 +275,6 @@ class HybridRetriever:
 
         # Sort descending by RRF score
         scored_articles.sort(key=lambda x: x.rrf_score, reverse=True)
+        if leaders and settings.LIST_LEADERS > 0:
+            lift_leaders(scored_articles, leaders, settings.LEADER_ANCHOR_POSITION)
         return scored_articles[:top_k]

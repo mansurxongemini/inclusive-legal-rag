@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from typing import AsyncGenerator, List, Optional
@@ -232,13 +233,20 @@ async def answer_question(
     # Generation
     generator = AnswerGenerator(client=client)
     try:
-        gen_result = await generator.generate_answer(
-            query=cleaned_query,
-            contexts=final_contexts,
-            language=target_language,
-            mode=mode,
-            **asker,
-        )
+        try:
+            gen_result = await asyncio.wait_for(
+                generator.generate_answer(
+                    query=cleaned_query,
+                    contexts=final_contexts,
+                    language=target_language,
+                    mode=mode,
+                    **asker,
+                ),
+                timeout=settings.ANSWER_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError:      # a hung provider must not hold the request: the matching norms are shown
+            logger.error(f"Answer generation exceeded {settings.ANSWER_TIMEOUT_S}s; serving the matching norms only")
+            gen_result = generator._degraded_answer(final_contexts, target_language, mode, cleaned_query)
     except RuntimeError as e:
         logger.error(f"Answer generation unavailable: {e}")
         raise HTTPException(

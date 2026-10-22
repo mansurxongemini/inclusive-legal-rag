@@ -9,7 +9,7 @@ import httpx
 import numpy as np
 
 from src.config import settings
-from src.clients.spend import cost_of, ledger
+from src.clients.spend import cost_of, is_limit_error, ledger
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +197,8 @@ class OpenRouterClient:
                 logger.warning(f"Utility model {target} returned an empty reply")
             else:
                 logger.warning(f"Utility model {target} failed with HTTP {response.status_code}: {_error_body(response)}")
+                if is_limit_error(response.status_code, response.text):
+                    ledger.trip("light model: " + _error_body(response)[:80])
         except Exception as e:
             logger.warning(f"Utility model {target} call failed: {type(e).__name__}: {e}")
         if not breaker:
@@ -332,6 +334,8 @@ class OpenRouterClient:
                     await asyncio.sleep(retry_after)
                     continue
                 elif response.status_code in (400, 401, 403, 404, 405):
+                    if is_limit_error(response.status_code, response.text):
+                        ledger.trip("embeddings: " + response.text[:80])
                     logger.warning(f"Embedding endpoint returned non-retryable HTTP {response.status_code}: {response.text[:100]}. Skipping retries.")
                     break
                 else:
@@ -756,7 +760,9 @@ class OpenRouterClient:
                 body = response.json()
                 ledger.add("jev", cost_of(body.get("usage")))
                 return body
-            logger.warning(f"OpenRouter decisions API returned HTTP {response.status_code}: {response.text}")
+            logger.warning(f"OpenRouter decisions API returned HTTP {response.status_code}: {response.text[:200]}")
+            if is_limit_error(response.status_code, response.text):
+                ledger.trip("Jev: " + response.text[:80])
             return None
         except Exception as e:
             logger.warning(f"OpenRouter decisions call failed: {e}")

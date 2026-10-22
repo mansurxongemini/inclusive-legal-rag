@@ -35,6 +35,9 @@ class SpendLedger:
         self._month_cache: Optional[float] = None
         self._cache_at = 0.0
         self._init_failed = False
+        self._tripped_until = 0.0              # the provider itself refused (key limit / credit used up) until then
+        self._trip_reason = ""
+        self.provider_remaining: Optional[float] = None      # USD left on the key, when the provider tells (see refresh_provider_limit)
         try:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             with self._connect() as conn:
@@ -92,10 +95,36 @@ class SpendLedger:
         except Exception:
             return {}
 
+    def trip(self, reason: str, minutes: float = 15.0) -> None:
+        """The provider answered 'key limit exceeded' / 'insufficient credit': stop calling it for a while."""
+        if time.monotonic() >= self._tripped_until:
+            logger.error(f"OpenRouter refused the key ({reason}); its calls are paused for {minutes:.0f} min")
+        self._tripped_until = time.monotonic() + minutes * 60
+        self._trip_reason = reason
+
+    async def refresh_provider_limit(self, client) -> Optional[float]:
+        """Reads the remaining USD of the key from OpenRouter (GET /key, free of charge); None when it has no limit."""
+        try:
+            http = await client.get_embedding_client()
+            r = await http.get(f"{client.embedding_base_url}/key", timeout=15)
+            if r.status_code == 200:
+                data = r.json().get("data", {})
+                remaining = data.get("limit_remaining")
+                self.provider_remaining = float(remaining) if remaining is not None else None
+        except Exception as e:
+            logger.info(f"Could not read the OpenRouter key limit: {e}")
+        return self.provider_remaining
+
     def state(self) -> str:
+        if time.monotonic() < self._tripped_until:
+            return "exhausted"
+        if self.provider_remaining is not None and self.provider_remaining <= 0.01:
+            return "exhausted"
         budget = settings.OPENROUTER_MONTHLY_BUDGET_USD
         if budget <= 0 or self.scope != "service":
             return "ok"
+        if self.provider_remaining is not None and self.provider_remaining < budget * (1 - settings.OPENROUTER_BUDGET_SOFT_RATIO):
+            return "soft"
         total = self.month_total()
         if total >= budget:
             return "exhausted"
@@ -105,10 +134,17 @@ class SpendLedger:
 
     def summary(self) -> Dict:
         return {"scope": self.scope, "month_usd": round(self.month_total(), 4),
-                "budget_usd": settings.OPENROUTER_MONTHLY_BUDGET_USD, "state": self.state(), "by_kind": self.by_kind()}
+                "budget_usd": settings.OPENROUTER_MONTHLY_BUDGET_USD, "state": self.state(), "by_kind": self.by_kind(),
+                "key_remaining_usd": self.provider_remaining, "paused_because": self._trip_reason or None}
 
 
 ledger = SpendLedger()
+
+
+def is_limit_error(status: int, body: str) -> bool:
+    """True for the provider's 'this key / account can not spend more' answers (402, or 403 with a limit message)."""
+    text = (body or "").lower()
+    return status == 402 or (status == 403 and any(w in text for w in ("limit", "credit", "insufficient", "quota")))
 
 
 def cost_of(usage: Optional[dict]) -> float:
