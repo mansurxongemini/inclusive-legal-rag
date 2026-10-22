@@ -26,6 +26,7 @@ def output_token_budget(model: Optional[str], max_tokens: int) -> int:
     return max_tokens
 
 
+NO_REASONING = {"enabled": False}          # never mutated
 META_REASONING_EFFORTS = ("minimal", "low", "medium", "high", "xhigh", "max")
 
 
@@ -163,17 +164,19 @@ class OpenRouterClient:
         timeout: Optional[float] = None,
         response_format: Optional[Dict] = None,
         breaker: bool = True,
+        reasoning: Optional[Dict] = NO_REASONING,
     ) -> Optional[str]:
         """
         One non-reasoning completion on the utility endpoint. Returns None on any failure (the caller falls back to
         the generation model). After 3 failures in a row the endpoint is skipped for 60 s instead of making every
         request wait for its timeout (breaker=False: evaluation judges neither trip nor honour the breaker).
+        reasoning=None leaves the model's own default (some models, e.g. Claude Sonnet, cannot run without reasoning).
         """
         target = model or settings.UTILITY_MODEL
         if not target or not self.utility_enabled or (breaker and time.monotonic() < self._utility_open_until):
             return None
         payload: Dict = {"model": target, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
-        payload.update(reasoning_fields(self.utility_base_url, {"enabled": False}))
+        payload.update(reasoning_fields(self.utility_base_url, reasoning))
         if response_format is not None:
             payload["response_format"] = response_format
         try:

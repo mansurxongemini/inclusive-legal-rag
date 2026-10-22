@@ -1,4 +1,4 @@
-from src.evaluation.answer_checks import (
+from src.generation.answer_checks import (
     banned_phrases, check_answer, leaked_ids, numbers_in, script_ok, uncited_ratio, ungrounded_numbers,
 )
 

@@ -6,7 +6,9 @@ from pydantic import BaseModel, Field
 
 from src.nlp.query_analyzer import QueryAnalyzer
 from src.retrieval.pipeline import retrieve_contexts
+from src.config import settings
 from src.generation.generator import AnswerGenerator
+from src.generation.prompts import ANSWER_VERSION
 from src.generation.validator import CitationItem
 from src.api.middleware.security import sanitize_user_input
 
@@ -96,6 +98,16 @@ class AnswerResult(BaseModel):
     cache_type: Optional[str] = None
     semantic_similarity: Optional[float] = None
     retrieval_confidence: Optional[float] = None
+    warnings: List[str] = Field(default_factory=list)
+    degraded: bool = False
+
+
+def cache_keys(analysis, mode: str) -> tuple:
+    """(language, mode) parts of the cache key. The script is part of the language part: the canonical query of a
+    Cyrillic question equals its Latin transliteration, but their answers are written in different scripts. The
+    answer version and the model are part of the mode part: a cached answer of an older pipeline is not served."""
+    return (f"{analysis.detected_language}:{analysis.detected_script}",
+            f"{mode}|{ANSWER_VERSION}|{settings.GENERATION_MODEL_PRIMARY}")
 
 
 async def answer_question(
@@ -135,11 +147,13 @@ async def answer_question(
         if disability_group not in analysis.extracted_disability_types:
             analysis.extracted_disability_types.append(disability_group)
     groups_key = sorted(analysis.extracted_disability_types)
+    asker = {"asker_group": disability_group} if disability_group not in ("all", "general") else {}
     has_filters = disability_group != "all" or category != "all"
     cache_text = f"{cleaned_query} [{disability_group}|{category}]" if has_filters else cleaned_query
 
     # Exact cache check
-    cached_resp = cache.get(cache_text, target_language, mode)
+    cache_lang, cache_mode = cache_keys(analysis, mode)
+    cached_resp = cache.get(cache_text, cache_lang, cache_mode)
     if cached_resp:
         return AnswerResult(
             answer=cached_resp.get("clean_answer") or cached_resp.get("answer", ""),
@@ -168,8 +182,8 @@ async def answer_question(
                 query_vector = q_vectors[0]
                 sem_cached = cache.get_semantic(
                     query_vector,
-                    target_language,
-                    mode,
+                    cache_lang,
+                    cache_mode,
                     threshold=0.95,
                     accept=lambda d: d.get("_groups") == groups_key and not has_filters and not d.get("_filtered"),
                 )
@@ -217,6 +231,7 @@ async def answer_question(
             contexts=final_contexts,
             language=target_language,
             mode=mode,
+            **asker,
         )
     except RuntimeError as e:
         logger.error(f"Answer generation unavailable: {e}")
@@ -239,18 +254,21 @@ async def answer_question(
         status_warnings=status_warnings,
         cached=False,
         retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
+        warnings=gen_result.warnings,
+        degraded=gen_result.degraded,
     )
 
-    # Caching rules: verified, substantive, non-refusal
+    # Caching rules: verified, substantive, non-refusal, really generated
     if (
         result.validation_passed
         and not result.is_refusal
+        and not result.degraded
         and len((result.clean_answer or result.answer).strip()) > 80
     ):
         cached_data = result.model_dump()
         cached_data["_groups"] = groups_key
         cached_data["_filtered"] = has_filters
-        cache.set(cache_text, target_language, mode, cached_data, vector=query_vector)
+        cache.set(cache_text, cache_lang, cache_mode, cached_data, vector=query_vector)
 
     return result
 
@@ -311,11 +329,13 @@ async def answer_question_stream(
         if disability_group not in analysis.extracted_disability_types:
             analysis.extracted_disability_types.append(disability_group)
     groups_key = sorted(analysis.extracted_disability_types)
+    asker = {"asker_group": disability_group} if disability_group not in ("all", "general") else {}
     has_filters = disability_group != "all" or category != "all"
     cache_text = f"{cleaned_query} [{disability_group}|{category}]" if has_filters else cleaned_query
 
     # Same two cache layers as answer_question; a hit is replayed as one token event plus the final event
-    cached = cache.get(cache_text, target_language, mode)
+    cache_lang, cache_mode = cache_keys(analysis, mode)
+    cached = cache.get(cache_text, cache_lang, cache_mode)
     cache_type = "exact"
     query_vector = None
     embedding_available = True
@@ -327,8 +347,8 @@ async def answer_question_stream(
                 if not cached:
                     cached = cache.get_semantic(
                         query_vector,
-                        target_language,
-                        mode,
+                        cache_lang,
+                        cache_mode,
                         threshold=0.95,
                         accept=lambda d: d.get("_groups") == groups_key and not has_filters and not d.get("_filtered"),
                     )
@@ -347,7 +367,7 @@ async def answer_question_stream(
             "validation_passed": cached.get("validation_passed", True),
             "clean_answer": text,
             "telegram_formatted": cached.get("telegram_formatted") or text,
-            "warnings": [],
+            "warnings": cached.get("warnings", []),
             "status_warnings": cached.get("status_warnings", []),
             "language": target_language,
             "mode": mode,
@@ -379,6 +399,7 @@ async def answer_question_stream(
         language=target_language,
         mode=mode,
         status_warnings=status_warnings,
+        **asker,
     ):
         yield sse_chunk
         trimmed = sse_chunk.strip()
@@ -393,7 +414,8 @@ async def answer_question_stream(
     # Caching rules: verified, substantive, non-refusal (as in answer_question)
     if final_event:
         text = (final_event.get("clean_answer") or "").strip()
-        if final_event.get("validation_passed") and not final_event.get("is_refusal") and len(text) > 80:
+        if (final_event.get("validation_passed") and not final_event.get("is_refusal")
+                and not final_event.get("degraded") and len(text) > 80):
             try:
                 result = AnswerResult(
                     answer=text,
@@ -408,10 +430,11 @@ async def answer_question_stream(
                     status_warnings=final_event.get("status_warnings", []),
                     cached=False,
                     retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
+                    warnings=final_event.get("warnings", []),
                 )
                 data = result.model_dump()
                 data["_groups"] = groups_key
                 data["_filtered"] = has_filters
-                cache.set(cache_text, target_language, mode, data, vector=query_vector)
+                cache.set(cache_text, cache_lang, cache_mode, data, vector=query_vector)
             except Exception:
                 logger.warning("Could not cache a streamed answer", exc_info=True)

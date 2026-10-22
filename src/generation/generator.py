@@ -7,13 +7,15 @@ from src.retrieval.reranker import RetrievedArticleContext
 from src.clients.openrouter import OpenRouterClient
 from src.generation.prompts import (
     build_system_prompt,
+    build_user_content,
     format_context_for_llm,
     CURATED_INSTRUCTION,
-    ANSWER_LANGUAGE_REMINDER,
-    DISCLAIMERS,
-    REFUSAL_MESSAGES,
+    disclaimer_for,
+    refusal_for,
     ResponseMode,
 )
+from src.generation.degraded import sources_only_text
+from src.generation.guards import guard_answer
 
 
 def _has_curated_context(contexts) -> bool:
@@ -58,6 +60,7 @@ class GeneratedAnswer(BaseModel):
     language: str
     mode: str
     warnings: List[str] = []
+    degraded: bool = False          # no generation model was reachable: the text is a quotation of the matching norms
 
 
 # An answer is 120-230 words; this bound only stops a model that loops (one run repeated a sentence 108 times).
@@ -92,16 +95,74 @@ class AnswerGenerator:
     def __init__(self, client: Optional[OpenRouterClient] = None):
         self.client = client or OpenRouterClient()
 
+    def _messages(self, query, contexts, language, mode, asker_group: str = ""):
+        system_prompt = build_system_prompt(language=language, mode=mode)
+        if _has_curated_context(contexts):
+            system_prompt = system_prompt + "\n\n" + CURATED_INSTRUCTION
+        formatted_context = format_context_for_llm(contexts, language=language)
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": build_user_content(query, formatted_context, language, asker_group)},
+        ]
+
+    async def _post_process(self, messages, raw: str, query: str, contexts, language: str, reasoning) -> Tuple[str, List[str]]:
+        """Support check (when enabled), then the deterministic guards with one repair round. Never raises."""
+        warnings: List[str] = []
+        text = raw
+        if settings.SUPPORT_CHECK_ENABLED:
+            text, support_warnings = await run_support_check(
+                raw_answer=text, question=query, contexts=contexts, client=self.client,
+                original_messages=messages, language=language, reasoning=reasoning,
+            )
+            warnings += support_warnings
+        try:
+            text, guard_warnings = await guard_answer(
+                self.client, messages, text, query, contexts, language, reasoning=reasoning,
+                max_tokens=_max_answer_tokens(),
+            )
+            warnings += guard_warnings
+        except Exception as e:  # a guard must never cost the user the answer
+            logger.warning(f"answer guards failed: {type(e).__name__}: {e}")
+        return text, warnings
+
+    def _finish(self, raw: str, contexts, language: str, mode, warnings: List[str], query: str = "", degraded: bool = False):
+        """Validation, disclaimer and the response record for a finished answer text."""
+        val_result: ValidationResult = CitationValidator.validate_and_sanitize(
+            answer_text=raw, retrieved_contexts=contexts, language=language,
+        )
+        disclaimer = disclaimer_for(language, query)
+        answer_text, clean_text, telegram_text = attach_disclaimer(
+            val_result, disclaimer, already_present=disclaimer.strip() in raw,
+        )
+        return val_result, GeneratedAnswer(
+            answer=answer_text,
+            clean_answer=clean_text,
+            telegram_formatted=telegram_text,
+            citations=val_result.resolved_citations,
+            is_refusal=val_result.is_refusal,
+            validation_passed=val_result.is_valid,
+            language=language,
+            mode=mode,
+            warnings=list(val_result.warnings) + warnings,
+            degraded=degraded,
+        )
+
+    def _degraded_answer(self, contexts, language: str, mode, query: str = "") -> GeneratedAnswer:
+        _, result = self._finish(sources_only_text(contexts, language, query=query), contexts, language, mode,
+                                 ["llm_unavailable: sources only, no generated text"], query, degraded=True)
+        return result
+
     async def generate_answer(
         self,
         query: str,
         contexts: List[RetrievedArticleContext],
         language: str = "uz",
         mode: ResponseMode = "plain",
+        asker_group: str = "",
     ) -> GeneratedAnswer:
         # If no relevant articles retrieved, refuse safely
         if not contexts:
-            refusal_text = REFUSAL_MESSAGES.get(language, REFUSAL_MESSAGES["uz"])
+            refusal_text = refusal_for(language, query)
             return GeneratedAnswer(
                 answer=refusal_text,
                 citations=[],
@@ -111,81 +172,39 @@ class AnswerGenerator:
                 mode=mode,
             )
 
-        system_prompt = build_system_prompt(language=language, mode=mode)
-        if _has_curated_context(contexts):
-            system_prompt = system_prompt + "\n\n" + CURATED_INSTRUCTION
-        formatted_context = format_context_for_llm(contexts, language=language)
-
-        user_content = (f"User Question: {query}\n\nRetrieved Legal Context:\n{formatted_context}\n\n"
-                        f"{ANSWER_LANGUAGE_REMINDER.get(language, ANSWER_LANGUAGE_REMINDER['uz'])}")
-
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content},
-        ]
-
+        messages = self._messages(query, contexts, language, mode, asker_group)
         reasoning = _reasoning_options()
 
-        raw_llm_response = await self.client.chat_completion(
-            messages=messages,
-            temperature=0.0,
-            max_tokens=_max_answer_tokens(),
-            reasoning=reasoning,
-        )
-        raw_llm_response = (raw_llm_response or "").strip()
-
-        if not raw_llm_response or len(raw_llm_response) < 50:
-            logger.warning("AnswerGenerator: primary LLM response was empty or too short. Attempting fallback model...")
-            try:
-                raw_llm_response = await self.client.chat_completion(
-                    messages=messages,
-                    model=self.client.fallback_model,
-                    temperature=0.0,
-                    max_tokens=_max_answer_tokens(),
-                    reasoning=reasoning,
-                )
-                raw_llm_response = (raw_llm_response or "").strip()
-            except Exception as e:
-                logger.error(f"Fallback generation also failed: {e}")
-
-        # Citation support check (manbaga solishtirish va tozalash) - disclaimer va validatsiyadan OLDIN
-        support_warnings: List[str] = []
-        if settings.SUPPORT_CHECK_ENABLED:
-            raw_llm_response, support_warnings = await run_support_check(
-                raw_answer=raw_llm_response,
-                question=query,
-                contexts=contexts,
-                client=self.client,
-                original_messages=messages,
-                language=language,
+        try:
+            raw_llm_response = await self.client.chat_completion(
+                messages=messages,
+                temperature=0.0,
+                max_tokens=_max_answer_tokens(),
                 reasoning=reasoning,
             )
+            raw_llm_response = (raw_llm_response or "").strip()
 
-        # Validation pass (on the answer itself: the disclaimer is attached afterwards)
-        val_result: ValidationResult = CitationValidator.validate_and_sanitize(
-            answer_text=raw_llm_response,
-            retrieved_contexts=contexts,
-            language=language,
-        )
+            if not raw_llm_response or len(raw_llm_response) < 50:
+                logger.warning("AnswerGenerator: primary LLM response was empty or too short. Attempting fallback model...")
+                try:
+                    raw_llm_response = await self.client.chat_completion(
+                        messages=messages,
+                        model=self.client.fallback_model,
+                        temperature=0.0,
+                        max_tokens=_max_answer_tokens(),
+                        reasoning=reasoning,
+                    )
+                    raw_llm_response = (raw_llm_response or "").strip()
+                except Exception as e:
+                    logger.error(f"Fallback generation also failed: {e}")
+        except RuntimeError as e:
+            logger.error(f"AnswerGenerator: no generation model available, serving the matching norms only: {e}")
+            return self._degraded_answer(contexts, language, mode, query)
 
-        all_warnings = list(val_result.warnings) + support_warnings
-
-        disclaimer = DISCLAIMERS.get(language, DISCLAIMERS["uz"])
-        answer_text, clean_text, telegram_text = attach_disclaimer(
-            val_result, disclaimer, already_present=disclaimer.strip() in raw_llm_response,
-        )
-
-        return GeneratedAnswer(
-            answer=answer_text,
-            clean_answer=clean_text,
-            telegram_formatted=telegram_text,
-            citations=val_result.resolved_citations,
-            is_refusal=val_result.is_refusal,
-            validation_passed=val_result.is_valid,
-            language=language,
-            mode=mode,
-            warnings=all_warnings,
-        )
+        raw_llm_response, post_warnings = await self._post_process(
+            messages, raw_llm_response, query, contexts, language, reasoning)
+        _, result = self._finish(raw_llm_response, contexts, language, mode, post_warnings, query)
+        return result
 
     async def generate_answer_stream(
         self,
@@ -194,31 +213,21 @@ class AnswerGenerator:
         language: str = "uz",
         mode: ResponseMode = "plain",
         status_warnings: Optional[List[dict]] = None,
+        asker_group: str = "",
     ) -> AsyncGenerator[str, None]:
         """
-        Streams generated text via SSE tokens, followed by a final JSON metadata event containing validated citations.
-
-        NOTE: Support check (citation verification and regeneration) is intentionally NOT run in the streaming path
-        because response tokens are already sent to the client in real time.
+        Streams generated text as SSE `token` events, then verifies the finished answer (support check, script, numbers
+        and wording guards) and sends one `done` event whose `clean_answer` is the verified text with the numbered
+        citations. Clients must show `clean_answer` as the answer: the streamed tokens are the raw model output (they
+        may still contain internal ids, and a repaired answer replaces them).
         """
         if not contexts:
-            refusal = REFUSAL_MESSAGES.get(language, REFUSAL_MESSAGES["uz"])
+            refusal = refusal_for(language, query)
             yield f"data: {json.dumps({'type': 'token', 'text': refusal})}\n\n"
             yield f"data: {json.dumps({'type': 'done', 'citations': [], 'is_refusal': True})}\n\n"
             return
 
-        system_prompt = build_system_prompt(language=language, mode=mode)
-        if _has_curated_context(contexts):
-            system_prompt = system_prompt + "\n\n" + CURATED_INSTRUCTION
-        formatted_context = format_context_for_llm(contexts, language=language)
-        user_content = (f"User Question: {query}\n\nRetrieved Legal Context:\n{formatted_context}\n\n"
-                        f"{ANSWER_LANGUAGE_REMINDER.get(language, ANSWER_LANGUAGE_REMINDER['uz'])}")
-
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content},
-        ]
-
+        messages = self._messages(query, contexts, language, mode, asker_group)
         reasoning = _reasoning_options()
 
         accumulated_chunks = []
@@ -233,42 +242,41 @@ class AnswerGenerator:
                 yield f"data: {json.dumps({'type': 'token', 'text': chunk})}\n\n"
         except RuntimeError as e:
             logger.error(f"AnswerGenerator stream failed: {e}")
-            error_payload = {
-                "type": "error",
-                "message": STREAM_ERROR_MESSAGES.get(language, STREAM_ERROR_MESSAGES["uz"]),
-            }
-            yield f"data: {json.dumps(error_payload)}\n\n"
+            if accumulated_chunks:      # tokens already reached the client: no second answer can follow
+                error_payload = {
+                    "type": "error",
+                    "message": STREAM_ERROR_MESSAGES.get(language, STREAM_ERROR_MESSAGES["uz"]),
+                }
+                yield f"data: {json.dumps(error_payload)}\n\n"
+                return
+            degraded = self._degraded_answer(contexts, language, mode, query)
+            yield f"data: {json.dumps({'type': 'token', 'text': degraded.clean_answer})}\n\n"
+            yield f"data: {json.dumps(self._done_payload(degraded, status_warnings))}\n\n"
             return
 
         full_raw_text = "".join(accumulated_chunks)
-        disclaimer = DISCLAIMERS.get(language, DISCLAIMERS["uz"])
-        disclaimer_present = disclaimer.strip() in full_raw_text
-        if not disclaimer_present:
+        yield f"data: {json.dumps({'type': 'status', 'stage': 'verifying'})}\n\n"
+        verified_text, post_warnings = await self._post_process(
+            messages, full_raw_text, query, contexts, language, reasoning)
+        disclaimer = disclaimer_for(language, query)
+        if disclaimer.strip() not in verified_text:
             yield f"data: {json.dumps({'type': 'token', 'text': disclaimer})}\n\n"
 
-        # Run validation on the answer itself; the disclaimer is attached to the final payload afterwards
-        val_result = CitationValidator.validate_and_sanitize(
-            answer_text=full_raw_text,
-            retrieved_contexts=contexts,
-            language=language,
-        )
+        _, result = self._finish(verified_text, contexts, language, mode, post_warnings, query)
+        yield f"data: {json.dumps(self._done_payload(result, status_warnings))}\n\n"
 
-        stream_answer, stream_clean, stream_telegram = attach_disclaimer(
-            val_result, disclaimer, already_present=disclaimer_present,
-        )
-
-        # Emit final structured payload. The streamed tokens are the raw model output (they may still contain
-        # internal IDs), so the sanitized text is repeated here for clients that render the final answer.
-        final_payload = {
+    @staticmethod
+    def _done_payload(result: GeneratedAnswer, status_warnings: Optional[List[dict]]) -> dict:
+        return {
             "type": "done",
-            "citations": [c.model_dump() for c in val_result.resolved_citations],
-            "is_refusal": val_result.is_refusal,
-            "validation_passed": val_result.is_valid,
-            "clean_answer": stream_clean or stream_answer,
-            "telegram_formatted": stream_telegram,
-            "warnings": val_result.warnings,
+            "citations": [c.model_dump() for c in result.citations],
+            "is_refusal": result.is_refusal,
+            "validation_passed": result.validation_passed,
+            "clean_answer": result.clean_answer or result.answer,
+            "telegram_formatted": result.telegram_formatted,
+            "warnings": result.warnings,
+            "degraded": result.degraded,
             "status_warnings": status_warnings or [],
-            "language": language,
-            "mode": mode,
+            "language": result.language,
+            "mode": result.mode,
         }
-        yield f"data: {json.dumps(final_payload)}\n\n"

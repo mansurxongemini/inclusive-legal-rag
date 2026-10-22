@@ -457,22 +457,25 @@ async def test_answers_failing_validation_are_not_cached(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_llm_outage_returns_503_instead_of_a_stack_trace(monkeypatch):
+async def test_llm_outage_serves_the_matching_norms_not_an_error_page(monkeypatch):
     async def down(self, *args, **kwargs):
         raise RuntimeError("All configured LLM models failed on OpenRouter.")
 
     monkeypatch.setattr(OpenRouterClient, "chat_completion", down)
+    question = "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?"
     async with local_client() as c:
-        res = await c.post(
-            "/api/v1/query",
-            json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?", "language": "uz"},
-        )
-    assert res.status_code == 503
-    assert "OpenRouter" not in res.text
+        res = await c.post("/api/v1/query", json={"question": question, "language": "uz"})
+        again = await c.post("/api/v1/query", json={"question": question, "language": "uz"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["degraded"] is True and body["citations"]
+    assert any(w.startswith("llm_unavailable") for w in body["warnings"])
+    assert "ishlamayapti" in body["answer"] and "OpenRouter" not in res.text
+    assert again.json()["cached"] is False            # a sources-only answer is never cached
 
 
 @pytest.mark.asyncio
-async def test_stream_failure_is_a_structured_error_not_answer_text(monkeypatch):
+async def test_stream_failure_before_any_token_serves_the_matching_norms(monkeypatch):
     async def broken_stream(self, *args, **kwargs):
         raise RuntimeError("All configured LLM models failed to stream (HTTP 401).")
         yield  # pragma: no cover  (makes this an async generator)
@@ -484,9 +487,25 @@ async def test_stream_failure_is_a_structured_error_not_answer_text(monkeypatch)
             json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?", "language": "uz"},
         )
     events = [json.loads(line[6:]) for line in res.text.splitlines() if line.startswith("data: ")]
+    assert events[-1]["type"] == "done" and events[-1]["degraded"] is True and events[-1]["citations"]
+    assert "HTTP 401" not in res.text
+
+
+@pytest.mark.asyncio
+async def test_stream_interrupted_after_tokens_is_a_structured_error(monkeypatch):
+    async def half_stream(self, *args, **kwargs):
+        yield "Javobning boshi "
+        raise RuntimeError("LLM stream was interrupted.")
+
+    monkeypatch.setattr(OpenRouterClient, "chat_completion_stream", half_stream)
+    async with local_client() as c:
+        res = await c.post(
+            "/api/v1/query?stream=true",
+            json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?", "language": "uz"},
+        )
+    events = [json.loads(line[6:]) for line in res.text.splitlines() if line.startswith("data: ")]
     assert events[-1]["type"] == "error"
     assert not any(e.get("type") == "done" for e in events)
-    assert "HTTP 401" not in res.text
 
 
 @pytest.mark.asyncio

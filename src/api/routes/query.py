@@ -56,6 +56,8 @@ class QueryResponse(BaseModel):
     cache_type: Optional[str] = None
     semantic_similarity: Optional[float] = None
     retrieval_confidence: Optional[float] = None
+    warnings: List[str] = []
+    degraded: bool = False
 
 
 @router.post("/query", response_model=QueryResponse)

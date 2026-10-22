@@ -105,6 +105,8 @@ class InclusiveQueryResponse(BaseModel):
     response_time_ms: float = 0.0
     retrieval_confidence: Optional[float] = None
     status_warnings: List[dict] = []
+    warnings: List[str] = []
+    degraded: bool = False
 
 
 class ApiKeyCreateRequest(BaseModel):
@@ -222,6 +224,8 @@ async def query_inclusive_rag(
         response_time_ms=round((time.time() - start_time) * 1000, 2),
         retrieval_confidence=result.retrieval_confidence,
         status_warnings=result.status_warnings,
+        warnings=result.warnings,
+        degraded=result.degraded,
     )
 
 

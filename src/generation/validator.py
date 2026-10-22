@@ -50,7 +50,12 @@ class CitationValidator:
     ]
     # A bare "topilmadi" is only a refusal for a short answer that cites nothing: substantive answers often say
     # that one detail (a deadline, a form) was "not found" while still citing the governing norms.
-    WEAK_REFUSAL_TRIGGERS = ["topilmadi"]
+    # The refusal sentence the prompt prescribes ("cannot give an exact answer") is weak as well: a substantive answer may
+    # say it about one detail of the question and still cite the governing norms.
+    WEAK_REFUSAL_TRIGGERS = [
+        "topilmadi", "aniq javob bera olmayman", "aniq javob bera olmaymiz", "aniq javob berib bo'lmaydi",
+        "не могу дать точный ответ", "cannot give an exact answer", "can't give an exact answer",
+    ]
     SUBSTANTIVE_ANSWER_MIN_CHARS = 400
 
     # Canonical IDs always contain underscores (law_x_art_5, pf_115_unit_3_1). Plain bracketed words such as
@@ -168,7 +173,7 @@ class CitationValidator:
 
     @classmethod
     def _detect_refusal(cls, answer_text: str, retrieved_ids: Set[str]) -> bool:
-        lowered = answer_text.lower()
+        lowered = answer_text.lower().replace("ʻ", "'").replace("ʼ", "'").replace("‘", "'").replace("’", "'")
         if any(trigger in lowered for trigger in cls.REFUSAL_TRIGGERS):
             return True
         if not any(trigger in lowered for trigger in cls.WEAK_REFUSAL_TRIGGERS):

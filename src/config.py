@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     LLM_PROVIDER_ORDER: str = Field(default="deepinfra")            # comma-separated OpenRouter provider slugs tried first; "" = OpenRouter default routing
     LLM_PROVIDER_QUANTIZATIONS: str = Field(default="fp8,fp16,bf16,fp32,unknown")  # allowed quantizations (excludes fp4/int4); "" = no filter
     GENERATION_REASONING_EFFORT: str = Field(default="none")        # "", "none", "low", "high" or "max"; "" = model default, "none" = reasoning off
+    # Deterministic guards on every answer (script of the question, forbidden wording, numbers absent from the sources):
+    # one repair regeneration, then warnings (src/generation/guards.py)
+    ANSWER_GUARDS_ENABLED: bool = Field(default=True)
+    ANSWER_REPAIR_TIMEOUT_S: float = Field(default=90.0)
     SUPPORT_CHECK_ENABLED: bool = Field(default=False)              # off until reviewed and measured (scripts/faithfulness_eval.py)
     SUPPORT_CHECK_MODEL: str = Field(default="")                    # "" = GENERATION_MODEL_PRIMARY
     SUPPORT_CHECK_TIMEOUT_S: float = Field(default=15.0)

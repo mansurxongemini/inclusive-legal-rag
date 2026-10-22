@@ -28,7 +28,8 @@ from fastapi import HTTPException  # noqa: E402
 
 from src.api.middleware.security import sanitize_user_input  # noqa: E402
 from src.clients.openrouter import OpenRouterClient  # noqa: E402
-from src.evaluation.answer_checks import check_answer  # noqa: E402
+from src.generation.answer_checks import check_answer  # noqa: E402
+from src.generation.guards import source_texts  # noqa: E402
 from src.generation.generator import AnswerGenerator  # noqa: E402
 from src.nlp.query_analyzer import QueryAnalyzer  # noqa: E402
 from src.retrieval.pipeline import retrieve_contexts  # noqa: E402
@@ -106,8 +107,8 @@ async def judge_answer(item, out, store, client, judge_model: str = "") -> dict:
     messages = [{"role": "system", "content": sys_p}, {"role": "user", "content": user}]
     try:
         if judge_model:     # a judge other than the generator: the generator grading itself is not independent
-            raw = await client.utility_chat(messages, model=judge_model, temperature=0.0, max_tokens=2000,
-                                            timeout=120, breaker=False)
+            raw = await client.utility_chat(messages, model=judge_model, temperature=0.0, max_tokens=6000,
+                                            timeout=180, breaker=False, reasoning=None)
             if raw is None:
                 return {"verdict": "judge_error", "reason": f"judge model {judge_model} unavailable"}
         else:
@@ -169,8 +170,7 @@ async def run_item(item, store, client, args, sem) -> dict:
                 query=query, contexts=res.contexts, language=lang, mode="plain")
             cited = [c.canonical_id for c in gen.citations]
             answer_text = gen.clean_answer or gen.answer
-            out["checks"] = check_answer(
-                query, answer_text, [c.article.get_text(lang) for c in res.contexts], ctx_ids, lang)
+            out["checks"] = check_answer(query, answer_text, source_texts(res.contexts, lang), ctx_ids, lang)
             out.update({
                 "answer": answer_text, "cited_ids": cited,
                 "cited_expected": any(c in expected for c in cited),
@@ -290,7 +290,7 @@ async def main() -> int:
     ap.add_argument("--store-dir", default=str(ROOT / "data" / "store"))
     ap.add_argument("--report", default=str(ROOT / "data" / "golden_dataset" / "stress_report.json"))
     ap.add_argument("--limit", type=int, default=0)
-    ap.add_argument("--only", default="", help="comma-separated item ids")
+    ap.add_argument("--only", default="", help="comma-separated item ids, or @file.json with a \"dev\" list of ids")
     ap.add_argument("--concurrency", type=int, default=4)
     ap.add_argument("--retrieval-only", action="store_true")
     ap.add_argument("--no-judge", dest="judge", action="store_false")
@@ -310,7 +310,11 @@ async def main() -> int:
 
     items = json.loads(Path(args.dataset).read_text(encoding="utf-8"))
     if args.only:
-        wanted = {x.strip() for x in args.only.split(",") if x.strip()}
+        if args.only.startswith("@"):       # @file.json: {"dev": [ids]} or a list of ids
+            loaded = json.loads(Path(args.only[1:]).read_text(encoding="utf-8"))
+            wanted = set(loaded["dev"] if isinstance(loaded, dict) else loaded)
+        else:
+            wanted = {x.strip() for x in args.only.split(",") if x.strip()}
         items = [i for i in items if i["id"] in wanted]
     if args.limit:
         items = items[: args.limit]
