@@ -54,8 +54,8 @@ class Settings(BaseSettings):
     ANSWER_GUARDS_ENABLED: bool = Field(default=True)
     ANSWER_REPAIR_TIMEOUT_S: float = Field(default=90.0)
     SUPPORT_CHECK_ENABLED: bool = Field(default=False)              # off until reviewed and measured (scripts/faithfulness_eval.py)
-    SUPPORT_CHECK_MODEL: str = Field(default="")                    # "" = GENERATION_MODEL_PRIMARY
-    SUPPORT_CHECK_TIMEOUT_S: float = Field(default=15.0)
+    SUPPORT_CHECK_MODEL: str = Field(default="")                    # "" = UTILITY_MODEL (fast, non-reasoning)
+    SUPPORT_CHECK_TIMEOUT_S: float = Field(default=25.0)
     # Volunteer-answer review (POST /api/v1/assistant/review, TASKS.md 14.1-14.2)
     REVIEW_MODEL: str = Field(default="")                           # "" = GENERATION_MODEL_PRIMARY
     REVIEW_TIMEOUT_S: float = Field(default=60.0)
@@ -98,7 +98,13 @@ class Settings(BaseSettings):
     ADMIN_API_KEY: Optional[str] = Field(default=None)
     # A direct local connection may administer without the key (the dashboard on the server itself). Switch it off
     # behind a reverse proxy that does not forward X-Forwarded-For / X-Real-IP: every visitor then looks local.
-    ADMIN_LOOPBACK_ENABLED: bool = Field(default=True)
+    # None = on when no ADMIN_API_KEY is configured (a developer's machine), off when one is (a deployment: the key
+    # is then the only way in). Set it explicitly to override.
+    ADMIN_LOOPBACK_ENABLED: Optional[bool] = Field(default=None)
+    # Reverse proxies in front of the app that append to X-Forwarded-For (0 = none: the header is ignored).
+    TRUSTED_PROXIES: int = Field(default=0)
+    MAX_PUBLIC_BODY_BYTES: int = Field(default=262144)       # 0 = no limit; applies to the public question endpoints
+    PUBLIC_DAILY_GENERATIONS: int = Field(default=3000)      # answers generated per day (cache hits are free); 0 = no cap
     CACHE_TTL_SECONDS: int = Field(default=86400)
     MOCK_EXTERNAL_APIS: bool = Field(default=False)
     # Editorial module: a published curated answer with a fresh open notification is suspended from search.
@@ -112,6 +118,12 @@ class Settings(BaseSettings):
     INTEGRATION_HASH_SECRET: str = Field(default="")
     # Assistant log retention period in days (answers, turns, feedback)
     ASSISTANT_LOG_RETENTION_DAYS: int = Field(default=90)
+
+    @property
+    def admin_loopback_enabled(self) -> bool:
+        if self.ADMIN_LOOPBACK_ENABLED is not None:
+            return self.ADMIN_LOOPBACK_ENABLED
+        return not bool(self.ADMIN_API_KEY)
 
     @property
     def is_mock_mode(self) -> bool:

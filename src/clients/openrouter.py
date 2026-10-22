@@ -395,8 +395,8 @@ class OpenRouterClient:
             return self._mock_grounded_response(messages)
 
         if light:
-            text = await self.utility_chat(messages, temperature=temperature, max_tokens=max_tokens,
-                                            min_chars=min_chars, response_format=response_format)
+            text = await self.utility_chat(messages, model=model, temperature=temperature, max_tokens=max_tokens,
+                                           min_chars=min_chars, response_format=response_format)
             if text:
                 return text
             reasoning = reasoning or {"enabled": False}

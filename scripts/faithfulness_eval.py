@@ -35,6 +35,7 @@ from src.clients.openrouter import OpenRouterClient  # noqa: E402
 from src.config import settings  # noqa: E402
 from src.generation.generator import AnswerGenerator  # noqa: E402
 from src.nlp.query_analyzer import QueryAnalyzer  # noqa: E402
+from src.retrieval.passages import focused_text  # noqa: E402
 from src.retrieval.pipeline import retrieve_contexts  # noqa: E402
 from src.storage.hybrid_store import HybridStore  # noqa: E402
 
@@ -123,10 +124,12 @@ async def judge_claims(question, claims, contexts, citations, client, judge_mode
     """BITTA judge chaqiruvi: butun javob uchun JSON massiv. Xato bo'lsa None."""
     by_index = {c.index: c for c in citations}
     ctx_map = {}
+    focus_map = {}
     for c in contexts:
         art = getattr(c, "article", None)
         if art is not None and getattr(art, "canonical_id", None):
             ctx_map[art.canonical_id] = art
+            focus_map[art.canonical_id] = getattr(c, "focus", None)
     blocks = []
     for cl in claims:
         parts = []
@@ -140,25 +143,22 @@ async def judge_claims(question, claims, contexts, citations, client, judge_mode
             art = ctx_map.get(cid)
             body = ""
             if art is not None and hasattr(art, "get_text"):
-                try:
-                    body = art.get_text("uz") or ""
-                except TypeError:
-                    body = art.get_text() or ""
+                body = focused_text(art, "uz", focus_map.get(cid), 6000)       # the part the answer was given
             if art is None or not body:
                 parts.append(f"  - [{n}] canonical_id={cid} (Diqqat: manbalar orasida TOPILMADI)")
             else:
-                parts.append(f"  - [{n}] canonical_id={cid}\n    Matn: {body[:2500]}")
+                parts.append(f"  - [{n}] canonical_id={cid}\n    Matn: {body}")
         blocks.append(f"DA'VO #{cl.index} (turi: {cl.kind}):\nDa'vo matni: \"{cl.text}\"\n"
                       f"U iqtibos qilgan bandlar:\n" + "\n".join(parts))
     user = f"SAVOL: {question}\n\nDA'VOLAR:\n" + "\n\n".join(blocks)
-    try:
-        raw = await client.chat_completion(
-            messages=[{"role": "system", "content": JUDGE_PROMPT}, {"role": "user", "content": user}],
-            model=judge_model,
-            temperature=0.0,
-            max_tokens=2048,
+    try:       # the judge runs on the OpenRouter side (the generator may be on another provider), reasoning left on
+        raw = await client.utility_chat(
+            [{"role": "system", "content": JUDGE_PROMPT}, {"role": "user", "content": user}],
+            model=judge_model, temperature=0.0, max_tokens=8000, timeout=180, breaker=False, reasoning=None,
         )
     except Exception:
+        return None
+    if raw is None:
         return None
     items = _judge_json(raw)
     if items is None:

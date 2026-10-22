@@ -10,8 +10,11 @@ from src.schema.canonical import CanonicalArticle
 from src.retrieval.reranker import RetrievedArticleContext
 from src.generation.validator import CitationValidator
 from src.clients.openrouter import OpenRouterClient
+from src.retrieval.passages import focused_text
 
 logger = logging.getLogger(__name__)
+
+SUPPORT_TEXT_CHARS = 6000      # characters of each cited unit shown to the checker (generation sees up to 7000)
 
 BULLET_PATTERN = re.compile(r"^\s*([-*•])\s+(.*)$")
 STEP_PATTERN = re.compile(r"^\s*(\d{1,2})\.\s+(.*)$")   # 1-2 digits: a year ("2024. yilda") is not a step
@@ -174,10 +177,12 @@ async def check_support(
         return []
 
     ctx_map: Dict[str, CanonicalArticle] = {}
+    focus_map: Dict[str, Optional[Dict[str, int]]] = {}
     for c in contexts:
         art = getattr(c, "article", None)
         if art and getattr(art, "canonical_id", None):
             ctx_map[art.canonical_id] = art
+            focus_map[art.canonical_id] = getattr(c, "focus", None)
 
     claims_blocks: List[str] = []
     for c in claims:
@@ -193,7 +198,8 @@ async def check_support(
 
                 text_body = ""
                 if hasattr(art, "get_text"):
-                    text_body = art.get_text("uz") or art.get_text() or ""
+                    # the part of a long unit the answer was written from (beginning + matched chunk), not its first characters
+                    text_body = focused_text(art, "uz", focus_map.get(cid), SUPPORT_TEXT_CHARS)
 
                 info = [
                     f"  - Canonical ID: [{cid}]",
@@ -204,7 +210,7 @@ async def check_support(
                     info.append(f"    Ilova/Ro'yxat sarlavhasi: {annex_title}")
                 if chapter_num:
                     info.append(f"    Bob: {chapter_num}")
-                info.append(f"    Matn: {text_body[:3000]}")
+                info.append(f"    Matn: {text_body}")
                 norms_info.append("\n".join(info))
             else:
                 norms_info.append(f"  - Canonical ID: [{cid}] (Diqqat: Ushbu band qidiruv manbalari orasida TOPILMADI)")
@@ -216,7 +222,8 @@ async def check_support(
         )
 
     formatted_claims = "\n\n".join(claims_blocks)
-    target_model = model or settings.SUPPORT_CHECK_MODEL or getattr(client, "primary_model", None) or settings.GENERATION_MODEL_PRIMARY
+    # a checker that does not reason at length: the utility model unless SUPPORT_CHECK_MODEL names another one
+    target_model = model or settings.SUPPORT_CHECK_MODEL or None
 
     messages = [
         {"role": "system", "content": SUPPORT_CHECK_SYSTEM_PROMPT},
@@ -230,6 +237,8 @@ async def check_support(
                 model=target_model,
                 temperature=0.0,
                 max_tokens=2048,
+                reasoning={"enabled": False},
+                light=True,
             ),
             timeout=timeout,
         )

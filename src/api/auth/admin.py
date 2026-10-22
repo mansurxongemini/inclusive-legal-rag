@@ -13,8 +13,9 @@ Every route that mutates the legal corpus, manages API keys or reads user data m
 Everything else is rejected, so a deployment without `ADMIN_API_KEY` is closed to remote administration.
 
 A reverse proxy that forwards no `X-Forwarded-For` / `X-Real-IP` makes every remote caller look like a direct
-loopback connection and cannot be told apart by the checks above: behind such a proxy set
-`ADMIN_LOOPBACK_ENABLED=false`, which makes the key the only way in.
+loopback connection and cannot be told apart by the checks above. That is why the loopback access is off by default
+as soon as ADMIN_API_KEY is configured (a deployment): the key is then the only way in. Without a key (a developer's
+machine) it stays on; ADMIN_LOOPBACK_ENABLED overrides either default.
 """
 import hmac
 from typing import Optional
@@ -81,7 +82,7 @@ async def require_admin(
 
     if configured and token and hmac.compare_digest(token.encode("utf-8"), configured.encode("utf-8")):
         return
-    if settings.ADMIN_LOOPBACK_ENABLED and is_direct_loopback(request):
+    if settings.admin_loopback_enabled and is_direct_loopback(request):
         return
 
     if token:

@@ -12,6 +12,7 @@ from src.api.cache import QueryCache
 from src.clients.openrouter import OpenRouterClient
 from src.api.routes import query, article, feedback, health, admin, inclusive_api, webhooks, huquqplus_admin, corpus_admin
 from src.editorial.router import router as editorial_router
+from src.api.middleware.hardening import BodyLimitMiddleware, SecurityHeadersMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,7 @@ async def lifespan(app: FastAPI):
             "OPENROUTER_API_KEY is not set: running in MOCK mode. Answers are deterministic placeholders, "
             "not real legal analysis. Configure the key (or set MOCK_EXTERNAL_APIS=true to silence this)."
         )
-    if settings.ADMIN_LOOPBACK_ENABLED and settings.HOST not in ("127.0.0.1", "::1", "localhost"):
+    if settings.admin_loopback_enabled and settings.HOST not in ("127.0.0.1", "::1", "localhost"):
         logger.warning(
             "Administration is open to direct local connections without a key. Behind a reverse proxy that does not "
             "forward X-Forwarded-For/X-Real-IP every visitor looks local: set ADMIN_LOOPBACK_ENABLED=false and ADMIN_API_KEY."
@@ -153,6 +154,10 @@ def create_app() -> FastAPI:
         version="1.0.0",
         lifespan=lifespan,
     )
+
+    # Outermost first: headers on every response, then the body limit, then CORS
+    app.add_middleware(BodyLimitMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware)
 
     # Enable CORS (no cookies are used, so credentialed cross-origin requests are not needed)
     app.add_middleware(
@@ -224,6 +229,13 @@ def create_app() -> FastAPI:
             response = super().file_response(*args, **kwargs)
             response.headers["Cache-Control"] = "no-cache"
             return response
+
+        async def get_response(self, path, scope):
+            # developer scripts (browser checks) live next to the pages but are not part of the product
+            if path.replace("\\", "/").lstrip("/").startswith("scratch/"):
+                from starlette.exceptions import HTTPException as StarletteHTTPException
+                raise StarletteHTTPException(status_code=404)
+            return await super().get_response(path, scope)
 
     static_dir = Path(__file__).resolve().parent.parent / "admin" / "static"
     if static_dir.exists():

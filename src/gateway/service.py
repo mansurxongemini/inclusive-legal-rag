@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from src.nlp.query_analyzer import QueryAnalyzer
 from src.retrieval.pipeline import retrieve_contexts
 from src.config import settings
+from src.api.middleware.hardening import generation_budget
 from src.generation.generator import AnswerGenerator
 from src.generation.prompts import ANSWER_VERSION
 from src.generation.validator import CitationItem
@@ -100,6 +101,8 @@ class AnswerResult(BaseModel):
     retrieval_confidence: Optional[float] = None
     warnings: List[str] = Field(default_factory=list)
     degraded: bool = False
+
+DAILY_LIMIT_MESSAGE = "Bugungi javoblar chegarasi tugadi. Iltimos, ertaga qayta urinib ko'ring yoki vakolatli organga murojaat qiling."
 
 
 def cache_keys(analysis, mode: str) -> tuple:
@@ -207,6 +210,9 @@ async def answer_question(
         except Exception as e:
             embedding_available = False
             logger.warning(f"Error computing query vector for semantic cache: {e}")
+
+    if not generation_budget.consume():
+        raise HTTPException(status_code=429, detail=DAILY_LIMIT_MESSAGE)
 
     # Retrieval
     retrieval = await retrieve_contexts(
@@ -375,6 +381,10 @@ async def answer_question_stream(
             "cache_type": cached.get("cache_type", cache_type),
         }
         yield f"data: {json.dumps(done)}\n\n"
+        return
+
+    if not generation_budget.consume():
+        yield f"data: {json.dumps({'type': 'error', 'message': DAILY_LIMIT_MESSAGE})}\n\n"
         return
 
     retrieval = await retrieve_contexts(
