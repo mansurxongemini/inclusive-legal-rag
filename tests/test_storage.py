@@ -304,3 +304,25 @@ async def test_russian_texts_are_stored_but_not_embedded_by_default(tmp_path):
     assert {r["language"] for r in rows if r["canonical_id"] == "ru_skip_art_1"} == {"uz"}
     assert "Устанавливаются" in store.get_article("ru_skip_art_1").get_text("ru")      # the text itself is kept
     assert store.fts_store.bm25_search("льготы инвалидностью", language="ru", top_k=5) == []   # and is not searched
+
+
+def test_old_versions_of_the_vector_table_are_pruned(tmp_path):
+    from datetime import timedelta
+    from src.config import settings
+    from src.storage.vector_store import LanceVectorStore
+
+    store = LanceVectorStore(str(tmp_path))
+    vec = [0.01] * settings.EMBEDDING_DIMENSION
+
+    def rec(cid):
+        return {"canonical_id": cid, "vector": vec, "language": "uz", "status": "active", "category": "c",
+                "disability_types": "[]", "embedding_model_version": "v", "chunk_index": 0}
+
+    for i in range(6):                                   # every upsert is a new version of the table
+        store.upsert_vectors([rec(f"a_{i}"), rec("same")])
+    folder = tmp_path / "lancedb" / (LanceVectorStore.TABLE_NAME + ".lance")
+    count = lambda: sum(1 for _ in (folder / "_versions").iterdir())            # noqa: E731
+    before = count()
+    assert before > 3
+    store.optimize(timedelta(seconds=0))
+    assert count() < before and len(store.table) == 7

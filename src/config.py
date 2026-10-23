@@ -121,6 +121,7 @@ class Settings(BaseSettings):
     # their vectors, 86% without vectors and full-text rows; Uzbek questions did not get worse (dev split hit@6 91% -> 92-94%).
     VECTOR_EXCLUDE_LANGUAGES: str = Field(default="ru")
     FTS_EXCLUDE_LANGUAGES: str = Field(default="ru")
+    VECTOR_KEEP_VERSIONS_HOURS: int = Field(default=6)  # old versions of the vector table are pruned daily, keeping this many hours
     RETRIEVAL_THREADS: bool = Field(default=True)     # blocking store calls run in worker threads (neutral for ranking; keeps the event loop free under load)
     VECTOR_WINDOW_FACTOR: int = Field(default=4)      # nearest chunk rows read per wanted unit (8 measured no better: hit@1 -2.9 on the stress set, within noise)
     VECTOR_DEDUP_QUERIES: bool = Field(default=False) # embed each distinct sub-query text once (off: the repeated domain sub-query is part of the measured ranking; on measured hit@1 -3.5, within noise)
