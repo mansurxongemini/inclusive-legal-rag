@@ -115,6 +115,12 @@ class Settings(BaseSettings):
     QUERY_SUBQUESTIONS_MIN_WORDS: int = Field(default=25)
     # Full-text query: drop question/function words and cut words to their search stem, because the wildcard only
     # extends the query word ("nogironligidan"* never matched a unit's "nogironlik")
+    # Languages whose texts are not searched (comma list): their vector rows / full-text rows are skipped, new units are not embedded in
+    # them, but the texts stay in the store and are shown to the model and the user. Russian questions are translated to Uzbek and
+    # searched there anyway; measured on 22 Russian questions (2 runs each) hit@6 77% with the Russian texts searched, 82% without
+    # their vectors, 86% without vectors and full-text rows; Uzbek questions did not get worse (dev split hit@6 91% -> 92-94%).
+    VECTOR_EXCLUDE_LANGUAGES: str = Field(default="ru")
+    FTS_EXCLUDE_LANGUAGES: str = Field(default="ru")
     RETRIEVAL_THREADS: bool = Field(default=True)     # blocking store calls run in worker threads (neutral for ranking; keeps the event loop free under load)
     VECTOR_WINDOW_FACTOR: int = Field(default=4)      # nearest chunk rows read per wanted unit (8 measured no better: hit@1 -2.9 on the stress set, within noise)
     VECTOR_DEDUP_QUERIES: bool = Field(default=False) # embed each distinct sub-query text once (off: the repeated domain sub-query is part of the measured ranking; on measured hit@1 -3.5, within noise)

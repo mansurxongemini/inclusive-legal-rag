@@ -101,10 +101,21 @@ class LanceVectorStore:
         # enough for top_k distinct units even when one long unit fills many of the nearest rows.
         window = top_k * settings.VECTOR_WINDOW_FACTOR
         columns = ["canonical_id", "language", "status", "category"] + (["chunk_index"] if self.has_chunk_index else [])
+        excluded = [l.strip() for l in settings.VECTOR_EXCLUDE_LANGUAGES.split(",") if l.strip()]
+        where = " AND ".join(f"language != {_sql_quote(l)}" for l in excluded)
+
+        def query(select: bool):
+            q = self.table.search(query_vector).metric("cosine")
+            if where:
+                q = q.where(where)
+            if select:
+                q = q.select(columns)
+            return q.limit(window).to_list()
+
         try:   # the 1024-number vectors of the matched rows are not needed
-            results = self.table.search(query_vector).metric("cosine").select(columns).limit(window).to_list()
+            results = query(True)
         except Exception:
-            results = self.table.search(query_vector).metric("cosine").limit(window).to_list()
+            results = query(False)
         
         # Deduplicate by canonical_id, boosting same language if available
         seen_cids = {}

@@ -7,10 +7,16 @@ from src.schema.canonical import CanonicalArticle
 from src.storage.vector_store import LanceVectorStore
 from src.storage.fts_store import SqliteFtsStore
 from src.storage.chunking import build_chunks
+
 from src.clients.openrouter import OpenRouterClient
 from src.config import settings
 
 logger = logging.getLogger(__name__)
+
+def excluded_languages() -> List[str]:
+    """Languages that are not embedded (VECTOR_EXCLUDE_LANGUAGES): their texts are kept, only the vector rows are not made."""
+    from src.config import settings as _settings
+    return [l.strip() for l in _settings.VECTOR_EXCLUDE_LANGUAGES.split(",") if l.strip()]
 
 
 class HybridStore:
@@ -43,6 +49,8 @@ class HybridStore:
         texts_to_embed: List[str] = []
         langs: List[str] = []
         for lang in article.translations:
+            if lang in excluded_languages():
+                continue
             for idx, chunk in enumerate(build_chunks(article, lang)):
                 texts_to_embed.append(chunk)
                 langs.append((lang, idx))
@@ -74,6 +82,8 @@ class HybridStore:
         mapping: List[tuple] = []
         for art in articles:
             for lang in ("uz", "ru"):
+                if lang in excluded_languages():
+                    continue
                 for idx, text in enumerate(build_chunks(art, lang)):
                     texts_to_embed.append(text)
                     mapping.append((

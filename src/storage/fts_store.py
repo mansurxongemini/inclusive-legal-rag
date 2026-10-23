@@ -201,6 +201,8 @@ class SqliteFtsStore:
         Executes BM25 search on FTS5 virtual table.
         Returns list of {canonical_id, score, rank}.
         """
+        if language in [l.strip() for l in settings.FTS_EXCLUDE_LANGUAGES.split(",") if l.strip()]:
+            return []
         clean_terms = build_fts_terms(query, stemmed)
         if not clean_terms:
             return []
@@ -330,6 +332,29 @@ class SqliteFtsStore:
                         logger.warning(f"Error parsing canonical article {row['canonical_id']}: {e}")
         return result
 
+
+    def iter_link_metadata(self):
+        """
+        Yields {canonical_id, law_id, source_type, source_url, ru_document_id, source_element_id, source_element_ids,
+        ru_element_ids} of every unit WITHOUT loading its texts (json_extract in SQLite). Building the Huquq+ link index from
+        list_articles() parsed all 28 000 units with their full texts and left the server 600 MB heavier for good.
+        """
+        fields = ("law_id", "source_type", "source_url", "ru_document_id", "source_element_id", "source_element_ids", "ru_element_ids")
+        select = ", ".join(f"json_extract(json_data, '$.metadata.{f}')" for f in fields)
+        conn = self._get_connection()
+        try:
+            for row in conn.execute(f"SELECT canonical_id, {select} FROM articles_metadata"):
+                rec = {"canonical_id": row[0]}
+                for name, value in zip(fields, row[1:]):
+                    if name in ("source_element_ids", "ru_element_ids") and isinstance(value, str):
+                        try:
+                            value = json.loads(value)
+                        except json.JSONDecodeError:
+                            value = []
+                    rec[name] = value
+                yield rec
+        finally:
+            conn.close()
 
     def list_articles(self, limit: int = 100, offset: int = 0) -> List[CanonicalArticle]:
         with self._get_connection() as conn:

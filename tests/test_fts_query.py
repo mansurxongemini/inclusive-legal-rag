@@ -89,3 +89,17 @@ def test_short_units_get_no_chunk_rows():
     from src.storage.fts_store import fts_rows
     assert len(fts_rows(_article("t_s", "Qisqa matn."))) == 1
     assert len(fts_rows(_long_article("t_l"))) > 3
+
+
+def test_link_metadata_comes_from_sqlite_without_loading_the_texts(tmp_path):
+    art = _article("t_meta", "Matn " * 50)
+    art.metadata.source_element_ids = ["e1", "e2"]
+    art.metadata.ru_document_id = "-77"
+    store = SqliteFtsStore(str(tmp_path / "m.db"))
+    store.upsert_article(art)
+    recs = list(store.iter_link_metadata())
+    assert len(recs) == 1
+    r = recs[0]
+    assert r["canonical_id"] == "t_meta" and r["law_id"] == "t" and r["ru_document_id"] == "-77"
+    assert r["source_element_ids"] == ["e1", "e2"] and r["source_url"] == "https://lex.uz/docs/1"
+    assert "translations" not in r

@@ -48,9 +48,24 @@ in-scope ones refused wrongly, on the held-out set 95% / 7.3% (Jev: 100% / 1.2% 
 
 ## Memory
 
-Idle about 180 MB; a vector search reads the whole 56 000 x 1024 table. glibc's default allocator kept those buffers
-and the resident memory grew to 900+ MB. `src/runtime_tuning.py` (called when the app starts) and the environment in
-`legal-rag.service` / the Dockerfile (`MALLOC_ARENA_MAX=2`, `MALLOC_MMAP_THRESHOLD_=65536`) keep it near 200 MB.
+Idle about 180 MB, about 230 MB after a day of questions. Two things used to push the process to 900-1300 MB:
+
+1. A vector search reads the whole table in large Arrow buffers; glibc's default allocator kept them. `src/runtime_tuning.py` (called when the
+   app starts) and the environment in `legal-rag.service` / the Dockerfile (`MALLOC_ARENA_MAX=2`, `MALLOC_MMAP_THRESHOLD_=65536`) return them.
+2. **The hourly Huquq+ sync** built its link index by parsing all 28 000 units with their full texts (`list_articles(limit=100000)`) and left the
+   process 600 MB heavier for good (152 -> 777 MB measured). It now reads only the metadata fields it needs with SQLite `json_extract`
+   (`SqliteFtsStore.iter_link_metadata`; 152 -> 223 MB, the index is identical).
+
+Do not call `list_articles()` with a large limit in a serving process.
+
+## Russian texts
+
+The Russian texts of 15 504 units are kept in the store and shown to the model and the user for Russian questions, but they are **not searched**
+(`VECTOR_EXCLUDE_LANGUAGES=ru`, `FTS_EXCLUDE_LANGUAGES=ru`): a Russian question is translated to Uzbek and searched there. Measured on 22 Russian
+questions, two runs per arm, hit@6: 77% with the Russian texts searched, 82% without their vectors, 86% without vectors and full-text rows; on the
+59-question dev split (Uzbek and Russian) 91% -> 92-94%. The Russian vector rows (20 402) and full-text rows (17 018) were deleted on 2026-10-23, which
+shrank the vector table to 37 464 rows (148 MB on disk after cleaning old versions; it had grown to 1.8 GB of versions). To search Russian again,
+clear both settings and run `scripts/embed_missing.py --extend-chunks` style re-embedding (about 10 M tokens, about $0.10).
 
 ## Backup and restore
 

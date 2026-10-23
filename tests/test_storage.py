@@ -73,7 +73,9 @@ from scripts.reembed_context import main as reembed_main
 
 
 @pytest.mark.asyncio
-async def test_reembed_articles(tmp_path):
+async def test_reembed_articles(tmp_path, monkeypatch):
+    from src.config import settings
+    monkeypatch.setattr(settings, "VECTOR_EXCLUDE_LANGUAGES", "")          # this test is about both languages
     store_dir = tmp_path / "test_reembed_store"
     store = HybridStore(str(store_dir))
     client = OpenRouterClient()
@@ -283,3 +285,22 @@ async def test_reembed_script_dry_run(tmp_path, capsys):
     assert "Total chunks:" in captured.out
     assert "Estimated tokens:" in captured.out
 
+
+
+@pytest.mark.asyncio
+async def test_russian_texts_are_stored_but_not_embedded_by_default(tmp_path):
+    store = HybridStore(str(tmp_path / "ru_store"))
+    art = CanonicalArticle(
+        canonical_id="ru_skip_art_1",
+        metadata=ArticleMetadata(
+            law_id="law_3", law_title={"uz": "Qonun 3", "ru": "Закон 3"}, law_number="O'RQ-3", article_number="1-modda",
+            article_title={"uz": "Modda", "ru": "Статья"}, source_url="https://lex.uz/docs/3", effective_date="2022-01-01",
+            last_verified_date="2022-01-01", source_hash="sha256:ru", category="social_protection",
+        ),
+        translations={"uz": "Nogironligi bo'lgan shaxslar uchun imtiyozlar belgilanadi.", "ru": "Устанавливаются льготы для лиц с инвалидностью."},
+    )
+    await store.index_article(art, client=OpenRouterClient())
+    rows = store.vector_store.table.search().select(["canonical_id", "language"]).limit(10).to_arrow().to_pylist()
+    assert {r["language"] for r in rows if r["canonical_id"] == "ru_skip_art_1"} == {"uz"}
+    assert "Устанавливаются" in store.get_article("ru_skip_art_1").get_text("ru")      # the text itself is kept
+    assert store.fts_store.bm25_search("льготы инвалидностью", language="ru", top_k=5) == []   # and is not searched

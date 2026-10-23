@@ -190,22 +190,21 @@ def get_lex_index(store: HybridStore) -> _LexIndex:
 
     idx = _LexIndex()
     idx.built_at = _time.monotonic()
-    for art in store.list_articles(limit=100000):
-        meta = art.metadata
-        if getattr(meta, "source_type", "lex") != "lex":
+    for rec in store.fts_store.iter_link_metadata():
+        if (rec.get("source_type") or "lex") != "lex":
             continue
         # document ids of the Uzbek edition (source_url) and of the Russian edition, which has its own ids
-        m = re.search(r"/docs/(-?\d+)", meta.source_url or "")
+        m = re.search(r"/docs/(-?\d+)", rec.get("source_url") or "")
         doc_ids = [m.group(1)] if m else []
-        if getattr(meta, "ru_document_id", None):
-            doc_ids.append(meta.ru_document_id)
-        _index_ids(idx.doc_to_law_id, doc_ids, meta.law_id)
+        if rec.get("ru_document_id"):
+            doc_ids.append(rec["ru_document_id"])
+        _index_ids(idx.doc_to_law_id, doc_ids, rec.get("law_id"))
         # every element of the unit (inner paragraphs and points included), in both editions
-        element_ids = list(getattr(meta, "source_element_ids", []) or [])
-        if meta.source_element_id:
-            element_ids.append(meta.source_element_id)
-        element_ids += list(getattr(meta, "ru_element_ids", []) or [])
-        _index_ids(idx.element_to_canonical, element_ids, art.canonical_id)
+        element_ids = list(rec.get("source_element_ids") or [])
+        if rec.get("source_element_id"):
+            element_ids.append(rec["source_element_id"])
+        element_ids += list(rec.get("ru_element_ids") or [])
+        _index_ids(idx.element_to_canonical, element_ids, rec["canonical_id"])
 
     _cached_lex_index = idx
     return idx
