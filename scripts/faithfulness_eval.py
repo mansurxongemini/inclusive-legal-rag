@@ -153,14 +153,12 @@ async def judge_claims(question, claims, contexts, citations, client, judge_mode
         blocks.append(f"DA'VO #{cl.index} (turi: {cl.kind}):\nDa'vo matni: \"{cl.text}\"\n"
                       f"U iqtibos qilgan bandlar:\n" + "\n".join(parts))
     user = f"SAVOL: {question}\n\nDA'VOLAR:\n" + "\n\n".join(blocks)
-    try:       # the judge runs on the OpenRouter side (the generator may be on another provider), reasoning left on
-        raw = await client.utility_chat(
+    try:       # the judge is another model of the generation provider (the generator must not grade itself)
+        raw = await client.chat_completion(
             [{"role": "system", "content": JUDGE_PROMPT}, {"role": "user", "content": user}],
-            model=judge_model, temperature=0.0, max_tokens=8000, timeout=180, breaker=False, reasoning=None,
+            model=judge_model, temperature=0.0, max_tokens=8000, min_chars=2, reasoning={"effort": "low"},
         )
     except Exception:
-        return None
-    if raw is None:
         return None
     items = _judge_json(raw)
     if items is None:

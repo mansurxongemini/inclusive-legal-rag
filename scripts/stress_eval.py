@@ -108,11 +108,9 @@ async def judge_answer(item, out, store, client, judge_model: str = "") -> dict:
                 f"ASSISTANT ANSWER:\n{out['answer'][:4000]}")
     messages = [{"role": "system", "content": sys_p}, {"role": "user", "content": user}]
     try:
-        if judge_model:     # a judge other than the generator: the generator grading itself is not independent
-            raw = await client.utility_chat(messages, model=judge_model, temperature=0.0, max_tokens=6000,
-                                            timeout=180, breaker=False, reasoning=None)
-            if raw is None:
-                return {"verdict": "judge_error", "reason": f"judge model {judge_model} unavailable"}
+        if judge_model:     # a judge other than the generator (another Meta model): the generator grading itself is not independent
+            raw = await client.chat_completion(messages=messages, model=judge_model, temperature=0.0, max_tokens=6000,
+                                               min_chars=2, reasoning={"effort": "low"})
         else:
             raw = await client.chat_completion(messages=messages, temperature=0.0, max_tokens=2000)
         return _json_obj(raw) or {"verdict": "unparsed", "raw": (raw or "")[:300]}
@@ -296,7 +294,7 @@ async def main() -> int:
     ap.add_argument("--concurrency", type=int, default=4)
     ap.add_argument("--retrieval-only", action="store_true")
     ap.add_argument("--no-judge", dest="judge", action="store_false")
-    ap.add_argument("--judge-model", default="", help="OpenRouter model that grades the answers (not the generator). Iterations: anthropic/claude-haiku-5.5 ($0.1/$0.5 per M tokens); milestones only: anthropic/claude-sonnet-5.5 ($2/$10)")
+    ap.add_argument("--judge-model", default="", help="model of the generation provider that grades the answers (not the generator), e.g. muse-spark-1.2")
     ap.add_argument("--profile", choices=["inclusive", "prod"], default="inclusive",
                     help="retrieval sizes: inclusive = 25/6/6 (stress history), prod = 40/8/8 (gateway)")
     ap.add_argument("--top-k", type=int, default=0)

@@ -40,18 +40,19 @@ class Settings(BaseSettings):
     JEV_RERANK_CHARS: int = Field(default=1500)                     # characters of each unit shown to Jev
     PASSAGE_FOCUS: bool = Field(default=True)                       # long units: show Jev/LLM the matched chunk, not only the head
     JEV_TIMEOUT_S: float = Field(default=20.0)
-    # Monthly OpenRouter budget (embeddings + Jev + the one light chat model). Above SOFT_RATIO the light calls move to the
+    # Monthly OpenRouter budget (embeddings + Jev only: every chat call goes to the generation provider, Meta AI). Above SOFT_RATIO the light calls move to the
     # free generation provider; at 100% embeddings and Jev pause too and retrieval degrades to full-text + RRF. 0 = no guard.
     OPENROUTER_MONTHLY_BUDGET_USD: float = Field(default=15.0)
     OPENROUTER_BUDGET_SOFT_RATIO: float = Field(default=0.8)
-    # Light LLM calls (query rewriting and translation, history condensing) run on a fast non-reasoning model over
-    # OpenRouter instead of the always-reasoning generation model: ~1 s instead of 7-10 s. Empty model = off.
-    UTILITY_MODEL: str = Field(default="anthropic/claude-haiku-5.5")
+    # Optional fast chat model on another endpoint for the light calls (query rewriting, translation, history condensing).
+    # Empty (the default, as the owner decided): OpenRouter serves only embeddings and Jev, and the light calls run on the
+    # generation provider (Meta AI) at minimal reasoning effort (about 1-2 s).
+    UTILITY_MODEL: str = Field(default="")
     UTILITY_BASE_URL: str = Field(default="")                       # empty = EMBEDDING_BASE_URL, then OPENROUTER_BASE_URL
     UTILITY_API_KEY: Optional[str] = Field(default=None)            # empty = EMBEDDING_API_KEY, then OPENROUTER_API_KEY
     UTILITY_TIMEOUT_S: float = Field(default=8.0)
     # Tried on the utility endpoint when every generation model failed, so that a Meta outage is not an answer outage.
-    GENERATION_MODEL_BACKUP: str = Field(default="anthropic/claude-haiku-5.5")   # empty = no backup
+    GENERATION_MODEL_BACKUP: str = Field(default="")   # empty = no backup (the owner: OpenRouter only for embeddings and Jev)
     GENERATION_BACKUP_TIMEOUT_S: float = Field(default=60.0)
     LLM_PROVIDER_ORDER: str = Field(default="deepinfra")            # comma-separated OpenRouter provider slugs tried first; "" = OpenRouter default routing
     LLM_PROVIDER_QUANTIZATIONS: str = Field(default="fp8,fp16,bf16,fp32,unknown")  # allowed quantizations (excludes fp4/int4); "" = no filter
@@ -61,7 +62,7 @@ class Settings(BaseSettings):
     ANSWER_GUARDS_ENABLED: bool = Field(default=True)
     ANSWER_REPAIR_TIMEOUT_S: float = Field(default=90.0)
     SUPPORT_CHECK_ENABLED: bool = Field(default=False)              # off until reviewed and measured (scripts/faithfulness_eval.py)
-    SUPPORT_CHECK_MODEL: str = Field(default="")                    # "" = UTILITY_MODEL (fast, non-reasoning)
+    SUPPORT_CHECK_MODEL: str = Field(default="")                    # "" = the generation provider at minimal reasoning
     SUPPORT_CHECK_TIMEOUT_S: float = Field(default=25.0)
     # Volunteer-answer review (POST /api/v1/assistant/review, TASKS.md 14.1-14.2)
     REVIEW_MODEL: str = Field(default="")                           # "" = GENERATION_MODEL_PRIMARY
