@@ -105,7 +105,7 @@ class Settings(BaseSettings):
     VECTOR_WINDOW_FACTOR: int = Field(default=4)      # nearest chunk rows read per wanted unit (8 measured no better: hit@1 -2.9 on the stress set, within noise)
     VECTOR_DEDUP_QUERIES: bool = Field(default=False) # embed each distinct sub-query text once (off: the repeated domain sub-query is part of the measured ranking; on measured hit@1 -3.5, within noise)
     FTS_CHUNK_MIN_CHARS: int = Field(default=6000)    # a unit longer than this also gets one full-text row per chunk (0 = off)
-    LIST_LEADERS: int = Field(default=0)               # units in the top N of any single list are lifted to LEADER_ANCHOR_POSITION in the pool (0 = off)
+    LIST_LEADERS: int = Field(default=2)               # units in the top N of any single list are lifted to LEADER_ANCHOR_POSITION in the pool (0 = off)
     LEADER_ANCHOR_POSITION: int = Field(default=12)
     FTS_STEM_EXTRA_WEIGHT: float = Field(default=0.0) # weight of an extra full-text list on search stems added to the fusion (0 = off)
     FTS_STOPWORDS: bool = Field(default=False)         # measured on the stress set (+stems): hit@1 68-70 vs 72.7 without; kept as an option
