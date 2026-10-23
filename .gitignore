@@ -23,3 +23,6 @@ src/admin/static/scratch/
 *.db
 *.db-shm
 *.db-wal
+
+# local agent/IDE state and scratch files
+.claude/
