@@ -159,7 +159,7 @@ MAX_CONTEXT_CHARS_PER_ARTICLE = 7000
 
 # Changes whenever the prompt, the answer pipeline or the generation model changes what an answer looks like; it is part
 # of the answer-cache key so that a cached answer of an older pipeline is not served.
-ANSWER_VERSION = "2026-10-22.2"
+ANSWER_VERSION = "2026-10-23.1"
 
 
 def build_user_content(query: str, formatted_context: str, language: str, asker_group: str = "") -> str:
