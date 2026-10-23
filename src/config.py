@@ -38,11 +38,25 @@ class Settings(BaseSettings):
     JEV_RERANK_UNITS: int = Field(default=30)                       # candidates sent to Jev
     JEV_RERANK_UNITS_PER_SUBQUESTION: int = Field(default=5)        # ... plus this many for each legal sub-question of a long question
     JEV_RERANK_CHARS: int = Field(default=1500)                     # characters of each unit shown to Jev
+    # When Jev is unavailable (OpenRouter paused or out of balance) the generation provider reranks and checks the scope
+    # Jev is the better ranker (dev split: hit@1 81% vs 70%) but the only real OpenRouter cost (~$0.0006 per question). False = never
+    # call it: OpenRouter then serves embeddings only (practically free) and Meta ranks and checks the scope.
+    JEV_ENABLED: bool = Field(default=False)
+    LLM_RANK_FALLBACK: bool = Field(default=True)
+    # The Meta scope judge is decisive (0.0 for out-of-scope questions, 0.08+ for borderline in-scope ones) where Jev's probabilities
+    # are graded; its value is multiplied by this so that the gate threshold calibrated for Jev (0.2) acts at 0.2 / scale.
+    LLM_SCOPE_SCALE: float = Field(default=1.0)
+    LLM_RANK_UNITS: int = Field(default=30)                         # candidates shown to the fallback ranker (20 x 700: hit@1 51%, 30 x 1200: 70%)
+    LLM_RANK_CHARS: int = Field(default=1200)                       # characters of each unit shown to it
     PASSAGE_FOCUS: bool = Field(default=True)                       # long units: show Jev/LLM the matched chunk, not only the head
     JEV_TIMEOUT_S: float = Field(default=20.0)
     # Monthly OpenRouter budget (embeddings + Jev only: every chat call goes to the generation provider, Meta AI). Above SOFT_RATIO the light calls move to the
     # free generation provider; at 100% embeddings and Jev pause too and retrieval degrades to full-text + RRF. 0 = no guard.
     OPENROUTER_MONTHLY_BUDGET_USD: float = Field(default=15.0)
+    # OpenRouter is paused (no call at all: full-text search, free reranking) when this switch is on, or when the balance read from
+    # the provider every 15 minutes is at or below the reserve.
+    OPENROUTER_PAUSED: bool = Field(default=False)
+    OPENROUTER_RESERVE_USD: float = Field(default=0.05)
     OPENROUTER_BUDGET_SOFT_RATIO: float = Field(default=0.8)
     # Optional fast chat model on another endpoint for the light calls (query rewriting, translation, history condensing).
     # Empty (the default, as the owner decided): OpenRouter serves only embeddings and Jev, and the light calls run on the

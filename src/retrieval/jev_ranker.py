@@ -39,9 +39,10 @@ class JevRanker:
         self.client = client or OpenRouterClient()
 
     async def scope(self, question: str) -> Optional[float]:
-        decision = await self.client.decide(state=question, questions={"scope": SCOPE_QUESTION})
+        decision = (await self.client.decide(state=question, questions={"scope": SCOPE_QUESTION})
+                    if settings.JEV_ENABLED else None)
         if not decision:
-            return None
+            return await self._fallback_scope(question)
         try:
             answers = decision.get("answers", {})
             probs = answers.get("scope", {}).get("probabilities", {})
@@ -51,6 +52,22 @@ class JevRanker:
         except Exception as e:
             logger.warning(f"Failed to parse Jev scope probability: {e}")
         return None
+
+    def _fallback_enabled(self) -> bool:
+        return settings.LLM_RANK_FALLBACK and not getattr(self.client, "is_mock", False)
+
+    async def _fallback_scope(self, question: str) -> Optional[float]:
+        """Jev is unavailable (paused, out of balance, down): the generation provider judges the scope."""
+        if not self._fallback_enabled():
+            return None
+        from src.retrieval.llm_ranker import LlmRanker
+        return await LlmRanker(self.client).scope(question)
+
+    async def _fallback_rank(self, query, contexts, subquestions) -> Optional["JevRankResult"]:
+        if not self._fallback_enabled():
+            return None
+        from src.retrieval.llm_ranker import LlmRanker
+        return await LlmRanker(self.client).rank(query, contexts, subquestions)
 
     async def rank(
         self, query: str, contexts: List[RetrievedArticleContext], subquestions: Optional[List[str]] = None,
@@ -98,9 +115,9 @@ class JevRanker:
                 "criteria": criteria,
             }
 
-        decision = await self.client.decide(state=state, questions=questions)
+        decision = await self.client.decide(state=state, questions=questions) if settings.JEV_ENABLED else None
         if not decision:
-            return None
+            return await self._fallback_rank(query, contexts, subquestions)
 
         answers = decision.get("answers", {})
         if not answers or not isinstance(answers, dict):

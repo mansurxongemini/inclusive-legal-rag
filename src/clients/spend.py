@@ -65,6 +65,8 @@ class SpendLedger:
                     (self._today(), kind, usd))
             if self._month_cache is not None:
                 self._month_cache += usd
+            if self.provider_remaining is not None:      # keep the balance current between two reads of the provider
+                self.provider_remaining -= usd
         except Exception as e:
             logger.warning(f"Spend ledger write failed: {e}")
 
@@ -103,22 +105,32 @@ class SpendLedger:
         self._trip_reason = reason
 
     async def refresh_provider_limit(self, client) -> Optional[float]:
-        """Reads the remaining USD of the key from OpenRouter (GET /key, free of charge); None when it has no limit."""
+        """
+        Remaining USD at the provider (free calls): the smaller of the key's own limit (GET /key) and the account
+        balance (GET /credits: total_credits - total_usage). None when neither is known.
+        """
         try:
             http = await client.get_embedding_client()
+            known = []
             r = await http.get(f"{client.embedding_base_url}/key", timeout=15)
-            if r.status_code == 200:
-                data = r.json().get("data", {})
-                remaining = data.get("limit_remaining")
-                self.provider_remaining = float(remaining) if remaining is not None else None
+            if r.status_code == 200 and r.json().get("data", {}).get("limit_remaining") is not None:
+                known.append(float(r.json()["data"]["limit_remaining"]))
+            c = await http.get(f"{client.embedding_base_url}/credits", timeout=15)
+            if c.status_code == 200:
+                data = c.json().get("data", {})
+                if data.get("total_credits") is not None:
+                    known.append(float(data["total_credits"]) - float(data.get("total_usage") or 0.0))
+            self.provider_remaining = min(known) if known else None
         except Exception as e:
-            logger.info(f"Could not read the OpenRouter key limit: {e}")
+            logger.info(f"Could not read the OpenRouter balance: {e}")
         return self.provider_remaining
 
     def state(self) -> str:
+        if settings.OPENROUTER_PAUSED:                    # the owner's switch: no OpenRouter call at all
+            return "exhausted"
         if time.monotonic() < self._tripped_until:
             return "exhausted"
-        if self.provider_remaining is not None and self.provider_remaining <= 0.01:
+        if self.provider_remaining is not None and self.provider_remaining <= settings.OPENROUTER_RESERVE_USD:
             return "exhausted"
         budget = settings.OPENROUTER_MONTHLY_BUDGET_USD
         if budget <= 0 or self.scope != "service":
@@ -135,7 +147,8 @@ class SpendLedger:
     def summary(self) -> Dict:
         return {"scope": self.scope, "month_usd": round(self.month_total(), 4),
                 "budget_usd": settings.OPENROUTER_MONTHLY_BUDGET_USD, "state": self.state(), "by_kind": self.by_kind(),
-                "key_remaining_usd": self.provider_remaining, "paused_because": self._trip_reason or None}
+                "remaining_usd": self.provider_remaining,
+                "paused_because": ("switch OPENROUTER_PAUSED" if settings.OPENROUTER_PAUSED else (self._trip_reason or None))}
 
 
 ledger = SpendLedger()

@@ -38,6 +38,8 @@ def seeded_default_store():
 def force_mock_for_tests(monkeypatch):
     """Enforce offline deterministic mock for automated pytest suite so tests run in ~4s and don't spend API tokens."""
     monkeypatch.setattr(settings, "MOCK_EXTERNAL_APIS", True)
+    # the Jev tests exercise Jev; the default of the product is JEV_ENABLED=False (see src/config.py)
+    monkeypatch.setattr(settings, "JEV_ENABLED", True)
 
 
 @pytest.fixture(autouse=True)
