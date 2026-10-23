@@ -90,3 +90,19 @@ muhitda interaktiv rebase ishlamaydi, shuning uchun yuqoridagi `filter-branch` t
 - Kalit skriptga qattiq yozilgan edi; endi `GATEWAY_API_KEY` muhit o'zgaruvchisidan olinadi (`.env.example` da bor).
 - Bu ish davomida agentlarga `.env` ni `cat`/`grep` qilishni taqiqlash va kalit nomlarini faqat maskalangan ko'rsatish qoidasi kerak
   (bir marta maskalash xato ketib, Meta kaliti jurnalga tushdi).
+
+## 5. Bajarilgan (2026-10-23)
+
+- Sizib chiqqan gateway kaliti (`key_0b43ba545ae6b2b8`) bekor qilindi; botning o'z kaliti (`.env` dagi `RAG_API_KEY`, `key_db051…`) boshqa kalit edi va
+  ishlashda qoladi (tekshirildi: eskisi "qabul qilinmaydi", botniki "valid"). Shu sabab bot kaliti almashtirilmadi.
+- Push qilinmagan 15 commit zaxira (`~/rag-before-clean.bundle`, repodan tashqarida, ichida eski kalit bor — kalit bekor qilingani uchun xavfi kam,
+  baribir tekshiruvdan keyin o'chiring) olingach, alohida klonda `filter-branch` bilan tozalandi va qaytarildi. Natija: `feat/editorial-qa-huquqplus`,
+  `main`, `feat/official-lexuz-disability-corpus` va ularning `origin/*` nusxalarida kalit **0** commitda; oxirgi daraxt (tree) avvalgisi bilan bir xil;
+  asos commit `34c65e5` o'zgarmagan, shuning uchun keyin oddiy `git push` yetadi.
+- `origin` URL tokensiz qilindi (eski GitHub PAT `.git/config` dan ketdi); yangi token hech qayerda saqlanmadi. Push bloki (`pushurl=DISABLED`, `pre-push`) hali yoqilgan.
+- `.claude/` `.gitignore` ga qo'shildi.
+
+**Qolgan:** (1) Tuzuk JWT va eski GitHub PAT ni o'zingiz bekor qiling; (2) `claude/busy-snyder-a00c9a` filiali (boshqa sessiyaning to'xtatilgan worktree'si)
+hali eski commitlarni ushlab turibdi — ichidagi ishlar allaqachon asosiy filialda; sessiyani arxivlagach
+`git worktree remove --force .claude/worktrees/busy-snyder-a00c9a && git branch -D claude/busy-snyder-a00c9a` bilan o'chiring (hech qachon `git push --all` qilmang);
+(3) push'ni faqat siz buyurganingizda, tokenni vaqtincha muhit o'zgaruvchisi orqali berib bajaraman.
