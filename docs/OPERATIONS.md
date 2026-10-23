@@ -84,3 +84,14 @@ key first (`GET /api/v1/key`, field `limit_remaining`): a retrieval-only benchma
   daily cap on generated answers, security headers and a CSP.
 - Rotate any key that was ever printed in logs or committed: the gateway key in commit `13001dc` (scripts/eval_3way_sample.py,
   not pushed), the GitHub token inside the `origin` URL, and the Tuzuk JWT in the public history (`ea3093c`).
+
+## Claim check (SUPPORT_CHECK_ENABLED): measured, left off
+
+`scripts/replay_answers.py` regenerates the answers of an earlier report on the same frozen contexts (no retrieval, no OpenRouter) and judges them:
+53 stress dev questions, generator `muse-spark-1.3`, judge `muse-spark-1.2`. Without the check 98.1% correct / 1.9% wrong; with it 96.2% / 1.9%,
+and it changed none of the 53 answers while adding 1.7 s (2.7 s -> 4.4 s). The earlier end-to-end run counted 3 "wrong" answers among 59 on the same
+contexts, so the 2-6% of answers that add a plausible condition is generation noise the check does not catch. Left off.
+
+```bash
+.venv/bin/python scripts/replay_answers.py --contexts <stress report with context_ids> --arms off,on --report replay.json
+```
