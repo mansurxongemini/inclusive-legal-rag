@@ -69,8 +69,9 @@ class LegalQueryDecomposer:
         ),
         (
             "tibbiyot",
-            r"\b(tibbiy\w*|dori\w*|davolan\w*|shifoxona\w*|poliklinika\w*|retsept\w*|медицинск\w*|лекарств\w*|лечени\w*)\b",
-            "tibbiy yordam dori vositalari bilan ta'minlash bepul tibbiy xizmat nogironligi bo'lgan shaxslar",
+            r"\b(tibbiy\w*|dori\w*|davolan\w*|shifoxona\w*|kasalxona\w*|poliklinika\w*|retsept\w*|operatsiya\w*|aperatsiya\w*|jarroh\w*|order\w*|buyrak\w*|"
+            r"медицинск\w*|лекарств\w*|лечени\w*|операци\w*|хирург\w*|ордер\w*)\b",
+            "ixtisoslashtirilgan tibbiy yordam jarrohlik amaliyoti operatsiya imtiyozli yo'llanma order dori vositalari bepul tibbiy xizmat",
         ),
         (
             "himoya_shikoyat",
@@ -152,8 +153,8 @@ class LegalQueryDecomposer:
             domain=primary_dom
         ))
 
-        # 2. Multi-domain cross-cutting query handling:
-        if len(detected_domains) >= 2:
+        # 2. Domain-enriched subquery handling:
+        if len(detected_domains) >= 1:
             for dom_key, dom_enrichment in detected_domains:
                 focused_query = f"{cleaned[:300]} ({dom_enrichment})"
                 subqueries.append(LegalSubQuery(

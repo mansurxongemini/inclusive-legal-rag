@@ -1,0 +1,952 @@
+[
+  {
+    "id": "v001",
+    "question": "Assalomu alaykum. Otam vafot etdi, vasiyatnoma qoldirib hamma uy-joyini ikkinchi turmush o'rtog'iga meros qilib yozibdi. Men bolalikdan 2-guruh nogironiman, sog'lig'im sababli ishlolmayman. Vasiyatnomada ismim bo'lmasa ham qonun bo'yicha majburiy meros ulushim bormi va u qancha bo'ladi, qaysi notariusga ariza berishim shart?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-180552"
+    ],
+    "category": "inheritance",
+    "out_of_scope": false,
+    "note": "Fuqarolik kodeksi (ikkinchi qism, vorislik boblari) (vasiyatnomaning mazmunidan qat'i nazar mehnatga layoqatsiz vorisning majburiy ulush olish huquqi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v002",
+    "question": "Здравствуйте. Отец составил завещание на всё своё имущество в пользу третьего лица. Я являюсь инвалидом 1 группы с детства и состою на иждивении. Положена ли мне обязательная доля в наследстве, сколько она составляет от законной доли и в какой срок со дня смерти нужно заявить о своих правах нотариусу?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-180552"
+    ],
+    "category": "inheritance",
+    "out_of_scope": false,
+    "note": "Fuqarolik kodeksi (ikkinchi qism, vorislik boblari) (vasiyatnomadan qat'i nazar majburiy meros ulushini talab qilish huquqi va notarial tartib)",
+    "in_corpus": true
+  },
+  {
+    "id": "v003",
+    "question": "Saylov kuni ko'zi ojiz fuqarolar ovoz berishi uchun saylov uchastkasida qanday sharoit yaratilishi kerak? Byulletenlar Brayl alifbosida tayyorlanadimi yoki yordamchi bilan birga kirish mumkinmi, agar sharoit bo'lmasa qayerga shikoyat qilamiz?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-4386848"
+    ],
+    "category": "electoral_rights",
+    "out_of_scope": false,
+    "note": "Saylov kodeksi (ko'rish qobiliyati cheklangan va nogironligi bo'lgan saylovchilar uchun ovoz berish tartibi va Brayl trafaretlari)",
+    "in_corpus": true
+  },
+  {
+    "id": "v004",
+    "question": "Ассалому алайкум. Мен 1-гуруҳ ногирониман, аравачада ҳаракатланаман, уйдан чиқиб мактабдаги сайлов участкасига бора олмайман. Участка сайлов комиссияси аъзолари кўчма сайлов қутисини уйимга олиб келиши шартми ва бунинг учун қачон ариза беришим керак?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-4386848"
+    ],
+    "category": "electoral_rights",
+    "out_of_scope": false,
+    "note": "Saylov kodeksi (sog'lig'i tufayli saylov binosiga kela olmaydigan saylovchilarning turgan joyida ovoz berish tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v005",
+    "question": "Bozor va savdo majmualari oldidagi nogironlar transporti uchun belgilangan to'xtash joylariga boshqa haydovchilar mashinasini qo'yib ketishyapti. Buning uchun qonunda qanday ma'muriy jarima belgilangan va YPX xodimlari jarima yoza oladimi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "",
+      "VMQ-183"
+    ],
+    "expected_lex_ids": [
+      "-97664",
+      "-3588626"
+    ],
+    "category": "administrative_liability",
+    "out_of_scope": false,
+    "note": "Ma'muriy javobgarlik to'g'risidagi kodeks va Hukumat qarori (nogironligi bo'lgan shaxslarning to'xtash joylarini noqonuniy egallaganlik uchun jarima)",
+    "in_corpus": true
+  },
+  {
+    "id": "v006",
+    "question": "Здравствуйте. Возле торгового центра на специально выделенных парковочных местах со знаком 'Инвалид' постоянно паркуются посторонние автомобили. Какая статья КоАО предусматривает штраф за данное нарушение, каков размер штрафа и как привлечь нарушителей к ответственности?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "",
+      "REG-3048"
+    ],
+    "expected_lex_ids": [
+      "-97664",
+      "-3854805"
+    ],
+    "category": "administrative_liability",
+    "out_of_scope": false,
+    "note": "Ma'muriy javobgarlik to'g'risidagi kodeks va to'xtab turish joylari to'g'risidagi nizom (nogironlar transport vositalari to'xtash joylarini egallaganlik uchun javobgarlik)",
+    "in_corpus": true
+  },
+  {
+    "id": "v007",
+    "question": "Mahallamizdagi yangi qurilgan dorixona va oziq-ovqat do'koniga pandus o'rnatilmagan, aravachada kirishning umuman iloji yo'q. Quruvchi va bino egasiga to'siqsiz muhit yaratmaganlik uchun qanday ma'muriy jarima qo'llanadi va kimga shikoyat qilish kerak?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "",
+      "O'RQ-641"
+    ],
+    "expected_lex_ids": [
+      "-97664",
+      "-5049511"
+    ],
+    "category": "accessibility",
+    "out_of_scope": false,
+    "note": "Ma'muriy javobgarlik to'g'risidagi kodeks va Nogironligi bo'lgan shaxslarning huquqlari to'g'risidagi qonun (ijtimoiy infratuzilma obyektlariga to'siqsiz kirishni ta'minlamaganlik uchun javobgarlik)",
+    "in_corpus": true
+  },
+  {
+    "id": "v008",
+    "question": "Предусмотрена ли административная ответственность и штрафы для собственников коммерческих и общественных зданий (аптеки, банки, магазины) за несоблюдение требований доступной среды и отсутствие пандусов для инвалидов? Куда направлять жалобу?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "",
+      "O'RQ-641"
+    ],
+    "expected_lex_ids": [
+      "-97664",
+      "-5049511"
+    ],
+    "category": "accessibility",
+    "out_of_scope": false,
+    "note": "Ma'muriy javobgarlik to'g'risidagi kodeks va qonun (nogironligi bo'lgan shaxslarga to'siqsiz muhit yaratmagan mansabdor shaxslarga ma'muriy jazo)",
+    "in_corpus": true
+  },
+  {
+    "id": "v009",
+    "question": "Uyimizda 1-guruh ko'rish bo'yicha nogiron yashaydi. Tabiiy gaz, elektr energiyasi, sovuq va issiq suv to'lovlarida qanday kompensatsiya yoki imtiyoz beriladi, bu pul shaklida nafaqa ustiga qo'shib beriladimi yoki kommunal tashkilotidan chegiriladimi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "PQ-410"
+    ],
+    "expected_lex_ids": [
+      "-6725077"
+    ],
+    "category": "utilities",
+    "out_of_scope": false,
+    "note": "PQ-410 6-band (uy-joy kommunal xizmatlari haqini to'lash bo'yicha kompensatsiya) — VMQ-194 umumiy hisob-kitob qoidalari, imtiyoz yo'q [belgi Claude tomonidan tuzatildi]",
+    "in_corpus": true
+  },
+  {
+    "id": "v010",
+    "question": "Ассалому алайкум. Мен 2-гуруҳ ёлғиз ногирониман. Ҳозир электр ва иссиқлик таъминоти нархлари ошди. Бизга коммунал тўловлар харажатларини қоплаш учун ойлик компенсация тўланадими, миқдори қанча ва қайси ташкилотга мурожаат қилай?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "PQ-410"
+    ],
+    "expected_lex_ids": [
+      "-6725077"
+    ],
+    "category": "utilities",
+    "out_of_scope": false,
+    "note": "PQ-410 6-band (kommunal kompensatsiya kimga beriladi/berilmaydi) — VMQ-194 da imtiyoz yo'q [belgi Claude tomonidan tuzatildi]",
+    "in_corpus": true
+  },
+  {
+    "id": "v011",
+    "question": "Oilamizda bolalikdan 1-guruh nogironi bor, uyimiz juda tor va eski. Yakka tartibda uy-joy qurish uchun yer uchastkasi olishda nogironi bor oilalarga yer qonunchiligida qanday imtiyozlar belgilangan va ariza kimga topshiriladi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-641"
+    ],
+    "expected_lex_ids": [
+      "-5049511"
+    ],
+    "category": "housing_land",
+    "out_of_scope": false,
+    "note": "Nogironlar huquqlari qonuni 22-modda (auksionda yer uchastkasi xarajatlari qoplanadi) — Yer kodeksida imtiyoz yo'q [belgi Claude tomonidan tuzatildi]",
+    "in_corpus": true
+  },
+  {
+    "id": "v012",
+    "question": "Здравствуйте. Предусмотрено ли земельным законодательством право на льготное или внеочередное получение земельного участка под индивидуальное жилищное строительство для семей, имеющих в составе ребенка-инвалида или инвалида 1 группы? Каков порядок обращения в хокимият?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-641"
+    ],
+    "expected_lex_ids": [
+      "-5049511"
+    ],
+    "category": "housing_land",
+    "out_of_scope": false,
+    "note": "Nogironlar huquqlari qonuni 22-modda (yer uchastkasi xarajatlarini qoplash) — Yer kodeksida imtiyoz yo'q [belgi Claude tomonidan tuzatildi]",
+    "in_corpus": true
+  },
+  {
+    "id": "v013",
+    "question": "Nogironligi bor fuqaro yangi qurilgan ko'p qavatli uydan ipoteka kreditiga xonadon sotib olmoqchi. Boshlang'ich badal va foizlarni to'lash uchun davlat subsidiyasi qanday ajratiladi, arizani my.gov.uz orqali topshirsa bo'ladimi va qanday talablar bor?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "PF-70",
+      "VMQ-182"
+    ],
+    "expected_lex_ids": [
+      "-6906830",
+      "-4774086"
+    ],
+    "category": "housing",
+    "out_of_scope": false,
+    "note": "Prezident farmoni va Hukumat qarori (bozor tamoyillariga asoslangan ipoteka kreditlari bo'yicha subsidiya to'lash tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v014",
+    "question": "Салом. «Маҳалла еттилиги» тавсияси асосида оғир шароитдаги ногирон оилага уй-жой шароитини яхшилаш ёки ипотека субсидияси ажратиш тартиби қандай, маҳалла раиси ёки ҳоким ёрдамчисига қандай ҳужжатлар берилади?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-691"
+    ],
+    "expected_lex_ids": [
+      "-7170688"
+    ],
+    "category": "housing",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (Mahalla yettiligi tavsiyasi asosida kambag'allikdan chiqarish va uy-joy sharoitini yaxshilash tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v015",
+    "question": "Toshkentdan Buxoroga poyezdda bormoqchiman, 1-guruh nogironiman, aravachada yuraman. Poyezd chiptasini xarid qilayotganda menga va meni kuzatib borayotgan hamrohimga qanday chegirma beriladi, temir yo'l kassasida qanday ma'lumotnoma talab qilinadi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-109"
+    ],
+    "expected_lex_ids": [
+      "-2001187"
+    ],
+    "category": "transport",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (temir yo'l transportida yo'lovchilarni tashish qoidalari va nogironligi bo'lgan shaxslarga chipta imtiyozlari)",
+    "in_corpus": true
+  },
+  {
+    "id": "v016",
+    "question": "Подскажите, пожалуйста, какие льготы и скидки на проезд в пассажирских поездах дальнего следования 'Узбекистон темир йуллари' установлены для инвалидов 1 и 2 группы, а также для лица, сопровождающего инвалида 1 группы? Какие документы предъявляются в кассе?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-109"
+    ],
+    "expected_lex_ids": [
+      "-2001187"
+    ],
+    "category": "transport",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (temir yo'l transportida yo'lovchilarni tashishda nogironligi bo'lgan shaxslarga beriladigan imtiyozlar)",
+    "in_corpus": true
+  },
+  {
+    "id": "v017",
+    "question": "Ёлғиз яшовчи 1-гуруҳ ногирони бўлган кекса фуқаролар учун темир йўл ва шаҳарлараро транспортда бепул юриш ҳуқуқи борми, бундай йўлкира имтиёзи учун Инсон марказидан қандай йўлланма ёки талон олинади?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-733"
+    ],
+    "expected_lex_ids": [
+      "-7191475"
+    ],
+    "category": "transport",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (o'zgalar parvarishiga muhtoj yolg'iz keksalar va nogironlarga temir yo'lda bepul yurish huquqini berish tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v018",
+    "question": "Harakatlanishi cheklangan 1-guruh nogironi samolyotda uchganda uning nogironlar aravachasi yukxonada bepul tashiladimi va aeroportda maxsus lift (ambulift) bilan samolyot bortiga chiqarish bepul ta'minlanadimi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "REG-2238"
+    ],
+    "expected_lex_ids": [
+      "-1824288"
+    ],
+    "category": "transport",
+    "out_of_scope": false,
+    "note": "Fuqaro aviatsiyasi qoidalari (havo transportida harakati cheklangan yo'lovchilarga xizmat ko'rsatish va aravachalarni bepul tashish)",
+    "in_corpus": true
+  },
+  {
+    "id": "v019",
+    "question": "Здравствуйте. Каковы правила авиаперевозки пассажиров из числа лиц с инвалидностью на внутренних рейсах Узбекистана? Обязан ли авиаперевозчик бесплатно перевозить инвалидную коляску сверх нормы багажа и обеспечить бесплатную помощь при посадке и высадке?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "REG-2238"
+    ],
+    "expected_lex_ids": [
+      "-1824288"
+    ],
+    "category": "transport",
+    "out_of_scope": false,
+    "note": "Fuqaro aviatsiyasi qoidalari (havo transportida nogironligi bo'lgan yo'lovchilarni tashish va xizmat ko'rsatish talablari)",
+    "in_corpus": true
+  },
+  {
+    "id": "v020",
+    "question": "Oyoqlari harakatlanmaydigan 1-guruh nogironiman. Shaxsiy avtomobilimni qo'lda boshqarish moslamasiga (ruchnoy upravlenie) moslashtirmoqchiman. Buning uchun davlat qancha subsidiya to'lab beradi va 'Inson' ijtimoiy xizmatlar markaziga qanday hujjatlar topshiriladi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-377"
+    ],
+    "expected_lex_ids": [
+      "-7580715"
+    ],
+    "category": "transport",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (avtotransport vositalarini nogironligi bo'lgan shaxslar ehtiyojlariga moslashtirish xarajatlarini qoplash tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v021",
+    "question": "Каков порядок получения государственной субсидии на переоборудование личного автомобиля на ручное управление для водителя с инвалидностью? Каков максимальный размер возмещения расходов и в какие сроки выплачивается компенсация?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-377"
+    ],
+    "expected_lex_ids": [
+      "-7580715"
+    ],
+    "category": "transport",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (avtotransportni nogironlar ehtiyojiga qayta jihozlash xarajatlarini qoplash shartlari)",
+    "in_corpus": true
+  },
+  {
+    "id": "v022",
+    "question": "Katta korxonamizda 60 nafar ishchi bor. Qonunchilikka ko'ra nogironligi bor shaxslarni ish bilan ta'minlash uchun qancha minimal ish o'rni kvotasi belgilanishi shart va agar korxona bu kvotani bajarmasa qanday jarima qo'llaniladi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-642",
+      ""
+    ],
+    "expected_lex_ids": [
+      "-5055690",
+      "-97664"
+    ],
+    "category": "labor",
+    "out_of_scope": false,
+    "note": "Aholi bandligi to'g'risidagi qonun va MJtK (nogironlar uchun majburiy ish o'rinlari kvotasi va uni bajarmaganlik uchun jarima)",
+    "in_corpus": true
+  },
+  {
+    "id": "v023",
+    "question": "Каков установленный законом процент обязательной квоты для трудоустройства лиц с инвалидностью на предприятиях с численностью работников свыше 20 человек? Какая административная ответственность предусмотрена статьей 50 КоАО за невыполнение решения хокимията по бронированию рабочих мест?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-642",
+      ""
+    ],
+    "expected_lex_ids": [
+      "-5055690",
+      "-97664"
+    ],
+    "category": "labor",
+    "out_of_scope": false,
+    "note": "Aholi bandligi to'g'risidagi qonun va MJtK (nogironlar uchun ish o'rinlari zaxirasini yaratish talabi va ma'muriy jarima)",
+    "in_corpus": true
+  },
+  {
+    "id": "v024",
+    "question": "Uyda o'tirib o'zimni o'zim band qilmoqchiman, 2-guruh nogironiman. Soliq organidan o'zini o'zi band qilgan shaxs guvohnomasini olsam, nogironlik pensiyam to'xtatilib qoladimi yoki to'liq saqlanadimi va pensiya staji uchun ijtimoiy soliq to'lashim shartmi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-806"
+    ],
+    "expected_lex_ids": [
+      "-5182451"
+    ],
+    "category": "employment",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (o'zini o'zi band qilgan shaxs sifatida faoliyat yuritish tartibi va nogironlik pensiyasi saqlanishi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v025",
+    "question": "Ассалому алайкум. Мен 3-гуруҳ ногирониман, уйда тикувчилик қилиб ўзимни ўзи банд қилган шахс сифатида рўйхатдан ўтмоқчиман. my.gov.uz орқали қандай маълумотнома олинади ва қандай солиқ имтиёзлари бор?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-806"
+    ],
+    "expected_lex_ids": [
+      "-5182451"
+    ],
+    "category": "employment",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (o'zini o'zi band qilgan shaxslar faoliyatini ro'yxatga olish va soliq tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v026",
+    "question": "Ishlaydigan 2-guruh nogironiman. Sog'lig'im yomonlashib shifoxonada 25 kun davolansam, vaqtincha mehnatga layoqatsizlik varaqasi (kasallik varaqasi) bo'yicha nafaqa qanday hisoblanadi va uning maksimal muddati bormi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "",
+      "REG-2667"
+    ],
+    "expected_lex_ids": [
+      "-6257288",
+      "-2625878"
+    ],
+    "category": "social_security",
+    "out_of_scope": false,
+    "note": "Mehnat kodeksi va Mehnatga layoqatsizlik varaqalarini berish yo'riqnomasi (kasallik varaqasi bo'yicha nafaqa tayinlash va to'lash tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v027",
+    "question": "Здравствуйте. На какой максимальный непрерывный срок поликлиника или стационар могут выдать листок нетрудоспособности работающему сотруднику до направления на медико-социальную экспертизу (МСЭК) для установления или изменения группы инвалидности?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "REG-2667",
+      ""
+    ],
+    "expected_lex_ids": [
+      "-2625878",
+      "-6257288"
+    ],
+    "category": "social_security",
+    "out_of_scope": false,
+    "note": "Mehnatga layoqatsizlik varaqalarini berish yo'riqnomasi va Mehnat kodeksi (kasallik varaqasi muddatlari va TIEKga yo'llash tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v028",
+    "question": "Ишлаб чиқариш корхонасида бахтсиз ҳодиса рўй бериб, ходим меҳнат вазифасини бажараётганда жароҳатланди ва 2-гуруҳ ногирони бўлиб қолди. Корхона ходимга бир йўла тўланадиган товон пули ва ҳар ойлик зарар тўловини қандай миқдорда тўлаши шарт?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-6257288"
+    ],
+    "category": "labor",
+    "out_of_scope": false,
+    "note": "Mehnat kodeksi (xodim mehnat vazifalarini bajarayotganda yetkazilgan zararni qoplash va tovon to'lash bo'yicha ish beruvchining majburiyati)",
+    "in_corpus": true
+  },
+  {
+    "id": "v029",
+    "question": "Работник получил профессиональное заболевание на вредном производстве, признан инвалидом 2 группы с утратой 70% профессиональной трудоспособности. Какие выплаты (единовременное пособие, возмещение утраченного заработка и дополнительных расходов) обязан выплачивать работодатель?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-6257288"
+    ],
+    "category": "labor",
+    "out_of_scope": false,
+    "note": "Mehnat kodeksi (kasb kasalligi tufayli nogironlik belgilanganda xodimga yetkazilgan zararni ish beruvchi tomonidan qoplash tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v030",
+    "question": "TIEK tomonidan tuziladigan Yakka tartibdagi reabilitatsiya dasturi (YRD) nima uchun kerak va unga kiritilgan protez-ortopediya moslamalari hamda sanatoriy yo'llanmasini bepul olish uchun qayerga murojaat qilish kerak?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-62",
+      "PQ-22"
+    ],
+    "expected_lex_ids": [
+      "-5852486",
+      "-5745300"
+    ],
+    "category": "rehabilitation",
+    "out_of_scope": false,
+    "note": "Tibbiy-ijtimoiy ekspertiza xizmati to'g'risidagi qarorlar (Yakka tartibdagi reabilitatsiya dasturini tuzish, tasdiqlash va ijro etish tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v031",
+    "question": "Салом. ТИЭК ногиронлик белгилаганда тузиб берадиган Якка тартибдаги реабилитация дастури (ЯРД) бўйича эшитиш аппарати, ҳасса ёки юриш мосламасини навбатсиз олиш учун «Инсон» ижтимоий хизматлар марказига қандай ҳужжатлар берилади?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-62",
+      "PQ-3787"
+    ],
+    "expected_lex_ids": [
+      "-5852486",
+      "-3789646"
+    ],
+    "category": "rehabilitation",
+    "out_of_scope": false,
+    "note": "Tibbiy-ijtimoiy ekspertiza qarori va reabilitatsiya vositalari qarori (reabilitatsiya texnik vositalarini YRD asosida berish)",
+    "in_corpus": true
+  },
+  {
+    "id": "v032",
+    "question": "Eshitishida va nutqida nuqsoni bo'lgan karlar davlat idoralariga yoki sudga borganida ularga professional imo-ishora tili tarjimoni xizmati bepul ko'rsatiladimi va buning uchun oldindan qayerga ariza berish kerak?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "PQ-407"
+    ],
+    "expected_lex_ids": [
+      "-6248467"
+    ],
+    "category": "accessibility",
+    "out_of_scope": false,
+    "note": "Prezident qarori (o'zbek imo-ishora tili va Brayl alifbosini rivojlantirish hamda surdotarjimon xizmatlarini tashkil etish)",
+    "in_corpus": true
+  },
+  {
+    "id": "v033",
+    "question": "Eshitish qobiliyati buzilgan shaxslar sud majlislarida yoki notariusga borganida ularga bepul surdotarjimon (imo-ishora tili tarjimoni) berilishi qonun bo'yicha kafolatlanganmi va buning uchun qayerga murojaat qilinadi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "PQ-407"
+    ],
+    "expected_lex_ids": [
+      "-6248467"
+    ],
+    "category": "accessibility",
+    "out_of_scope": false,
+    "note": "Prezident qarori (imo-ishora tili tarjimoni xizmatidan foydalanish huquqi va davlat kafolatlari)",
+    "in_corpus": true
+  },
+  {
+    "id": "v034",
+    "question": "Ko'zi ojiz 1-guruh nogironining maxsus o'rgatilgan yo'lboshchi iti (sobaka-povodyr) bor. Uni shahar jamoat transportiga, metroga, do'kon va shifoxonaga it bilan birga kiritishdan bosh tortishlari qonuniymi va qonun bu borada nima deydi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-641"
+    ],
+    "expected_lex_ids": [
+      "-5049511"
+    ],
+    "category": "accessibility",
+    "out_of_scope": false,
+    "note": "Nogironligi bo'lgan shaxslarning huquqlari to'g'risidagi qonun (yo'lboshchi itlar hamrohligida jamoat transporti va obyektlarga to'siqsiz kirish huquqi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v035",
+    "question": "Farzandim 5 yoshda, nogironligi bor. Davlat bog'chasiga (maktabgacha ta'lim tashkilotiga) navbatga qo'ymoqchimiz. my.gov.uz orqali ariza topshirganda nogironligi bor bolalarga imtiyozli navbatsiz qabul qilish huquqi beriladimi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-244"
+    ],
+    "expected_lex_ids": [
+      "-3603405"
+    ],
+    "category": "education",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (bolalarni davlat maktabgacha ta'lim tashkilotlariga qabul qilish bo'yicha imtiyozli ro'yxat va davlat xizmati reglamenti)",
+    "in_corpus": true
+  },
+  {
+    "id": "v036",
+    "question": "Имеет ли ребенок с инвалидностью первоочередное или внеочередное право при приеме в государственную дошкольную образовательную организацию? Каков порядок подтверждения льготного статуса через ЕПИГУ?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-244"
+    ],
+    "expected_lex_ids": [
+      "-3603405"
+    ],
+    "category": "education",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (maktabgacha ta'lim muassasalariga qabul qilishda imtiyozli toifadagi bolalarning huquqlari)",
+    "in_corpus": true
+  },
+  {
+    "id": "v037",
+    "question": "Alohida ta'lim ehtiyojlari bo'lgan bolalar uchun ixtisoslashtirilgan maktabga qatnaydigan o'quvchilarga bepul transport (avtobus) xizmati qanday tashkil etiladi va bolani uyidan maktabga olib borib-keltirish kimning zimmasida?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-46"
+    ],
+    "expected_lex_ids": [
+      "-6779571"
+    ],
+    "category": "education",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (alohida ta'lim ehtiyojlari bo'lgan bolalarni maktabga tashish va ta'lim olishini tashkil etish tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v038",
+    "question": "Умумий ўрта таълим мактабларида инклюзив таълим синфлари ташкил этилганда ногиронлиги бўлган ўқувчига ёрдам бериш учун махсус педагог-ассистент штати қандай меъёрда ажратилади ва унга ким тайинланади?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "REG-3765",
+      "VMQ-638"
+    ],
+    "expected_lex_ids": [
+      "-8023655",
+      "-5679836"
+    ],
+    "category": "education",
+    "out_of_scope": false,
+    "note": "Adliya ro'yxatidagi nizom (maktabgacha va umumiy o'rta ta'lim tashkilotlarida pedagogik stavkalar va inklyuziv sinflar me'yorlari) | muqobil: VMQ-638 26-band (inklyuziv sinf uchun maxsus pedagog shtati)",
+    "in_corpus": true
+  },
+  {
+    "id": "v039",
+    "question": "Oliy ta'lim muassasalariga kirishda nogironligi bo'lgan shaxslar uchun qo'shimcha davlat granti asosidagi 2 foizlik qabul ko'rsatkichlari qanday taqsimlanadi va o'qishga kirish uchun abituriyent to'plashi kerak bo'lgan eng kam o'tish bali qancha?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-417"
+    ],
+    "expected_lex_ids": [
+      "-3765153"
+    ],
+    "category": "education",
+    "out_of_scope": false,
+    "note": "VMQ-417 (nogironligi bo'lgan shaxslarni qo'shimcha grant kvotasi asosida qabul qilish) — VMQ-402 xotin-qizlar haqida [belgi Claude tomonidan tuzatildi]",
+    "in_corpus": true
+  },
+  {
+    "id": "v040",
+    "question": "Здравствуйте. Выплачивается ли студентам государственных высших образовательных учреждений, имеющим 1 или 2 группу инвалидности, академическая стипендия в повышенном размере независимо от результатов экзаменационной сессии? Каким актом это установлено?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-59"
+    ],
+    "expected_lex_ids": [
+      "-4725554"
+    ],
+    "category": "education",
+    "out_of_scope": false,
+    "note": "Hukumat qarori (oliy ta'lim muassasalari talabalariga stipendiyalar to'lash tartibi va nogiron talabalar uchun kafolatlangan stipendiya)",
+    "in_corpus": true
+  },
+  {
+    "id": "v041",
+    "question": "Og'ir va davolab bo'lmaydigan xastaligi bor 1-guruh nogironiga uyida mobil brigada orqali palliativ tibbiy yordam ko'rsatish va og'riqsizlantiruvchi dori vositalari bilan bepul ta'minlash qanday tartibga solinadi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "PQ-239"
+    ],
+    "expected_lex_ids": [
+      "-8288607"
+    ],
+    "category": "healthcare",
+    "out_of_scope": false,
+    "note": "Prezident qarori (aholiga palliativ tibbiy xizmatlar ko'rsatishni takomillashtirish va dori ta'minoti)",
+    "in_corpus": true
+  },
+  {
+    "id": "v042",
+    "question": "Каков порядок бесплатного обеспечения жизненно необходимыми лекарственными средствами и специальным питанием детей, страдающих редкими (орфанными) и другими наследственно-генетическими заболеваниями? Кто включает ребенка в специальный реестр?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "PQ-331"
+    ],
+    "expected_lex_ids": [
+      "-7813468"
+    ],
+    "category": "healthcare",
+    "out_of_scope": false,
+    "note": "Prezident qarori (kam uchraydigan orfan kasalliklarga chalingan bolalarga tibbiy-ijtimoiy yordam ko'rsatish tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v043",
+    "question": "Руҳий ҳолати бузилган фуқарони унинг ўз розилигисиз ёки васийси розилигисиз психиатрия стационарига ғайриихтиёрий (мажбурий) ётқизиш қайси ҳолларда ва қанча муддат ичида суд орқали ҳал қилинади, беморнинг ҳуқуқлари қандай ҳимоя қилинади?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-690"
+    ],
+    "expected_lex_ids": [
+      "-5422209"
+    ],
+    "category": "healthcare",
+    "out_of_scope": false,
+    "note": "Psixiatriya yordami to'g'risidagi qonun (fuqaroni shifoxonaga g'ayriixtiyoriy yotqizishning qonuniy asoslari va sud qarori tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "v044",
+    "question": "Какие права гарантируются пациентам при оказании психиатрической помощи, в каких случаях допускается применение мер физического стеснения и в каком порядке пациент или его представитель могут обжаловать незаконное удержание в психиатрическом стационаре?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-690"
+    ],
+    "expected_lex_ids": [
+      "-5422209"
+    ],
+    "category": "healthcare",
+    "out_of_scope": false,
+    "note": "Psixiatriya yordami to'g'risidagi qonun (psixiatriya muassasalarida bemorlarning huquqlari va shikoyat qilish mexanizmlari)",
+    "in_corpus": true
+  },
+  {
+    "id": "v045",
+    "question": "Muomalaga layoqatsiz deb topilgan 1-guruh nogironining vasiysi unga tegishli bo'lgan uy-joyni vasiylik va homiylik organi ruxsatisiz sotishi yoki garovga qo'yishi mumkinmi va agar ruxsatsiz sotsa ushbu bitim sud tomonidan bekor qilinadimi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-364",
+      ""
+    ],
+    "expected_lex_ids": [
+      "-2307826",
+      "-111189"
+    ],
+    "category": "guardianship",
+    "out_of_scope": false,
+    "note": "Vasiylik va homiylik to'g'risidagi qonun hamda Fuqarolik kodeksi (vasiylikdagi shaxsning mol-mulkini begonalashtirish cheklovlari)",
+    "in_corpus": true
+  },
+  {
+    "id": "v046",
+    "question": "Mehribonlik uylaridan nogironligi bo'lgan bolani farzandlikka olishni xohlagan oilalarga qonunchilikda qanday alohida talablar va imtiyozlar belgilangan, qaysi kasallikka chalingan fuqarolarga farzandlikka olish qat'iyan taqiqlanadi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-723",
+      ""
+    ],
+    "expected_lex_ids": [
+      "-5689715",
+      "-104720"
+    ],
+    "category": "family",
+    "out_of_scope": false,
+    "note": "Farzandlikka olish tartibining huquqiy asoslari to'g'risidagi qonun (bolalarni farzandlikka olish tartibi va cheklovlar) | muqobil: Oila kodeksi (farzandlikka olish bobi; O'RQ-723 o'zgartirishlari shu kodeksga kiritilgan)",
+    "in_corpus": true
+  },
+  {
+    "id": "v047",
+    "question": "Oilada nogironligi bor ayol erining muttasil tazyiq va jismoniy zo'ravonligiga uchramoqda. Profilaktika inspektoridan himoya orderi talab qilinganda order necha kunga beriladi, qanday taqiqlar belgilanadi va muddati qanday uzaytiriladi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-561"
+    ],
+    "expected_lex_ids": [
+      "-4494709"
+    ],
+    "category": "protection_order",
+    "out_of_scope": false,
+    "note": "Xotin-qizlarni tazyiq va zo'ravonlikdan himoya qilish to'g'risidagi qonun (himoya orderi berish asoslari, muddatlari va huquqiy cheklovlar)",
+    "in_corpus": true
+  },
+  {
+    "id": "v048",
+    "question": "Женщина с инвалидностью подвергается домашнему насилию со стороны родственников. Каков порядок выдачи охранного ордера органами внутренних дел, какие ограничения налагаются на насильника и какая ответственность предусмотрена за нарушение требований охранного ордера?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-561"
+    ],
+    "expected_lex_ids": [
+      "-4494709"
+    ],
+    "category": "protection_order",
+    "out_of_scope": false,
+    "note": "Xotin-qizlarni tazyiq va zo'ravonlikdan himoya qilish to'g'risidagi qonun (himoya orderini rasmiylashtirish tartibi va zo'ravonlikdan himoya)",
+    "in_corpus": true
+  },
+  {
+    "id": "v049",
+    "question": "Ruhiyatida doimiy va chuqur o'zgarishlar bo'lgan 1-guruh nogironini davlat ta'minotidagi 'Muruvvat' internat uyiga qabul qilish uchun qaysi tibbiy xulosa kerak va ariza qaysi organga topshiriladi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "REG-2785"
+    ],
+    "expected_lex_ids": [
+      "-2953855"
+    ],
+    "category": "social_care",
+    "out_of_scope": false,
+    "note": "Adliya ro'yxatidagi nizom (ruhiyatida nuqsoni bo'lgan shaxslarni 'Muruvvat' internat uylariga qabul qilish tartibi va shartlari)",
+    "in_corpus": true
+  },
+  {
+    "id": "v050",
+    "question": "Қаровчиси бўлмаган ёлғиз 1-гуруҳ ногиронини 'Саховат' интернат уйига тўлиқ давлат таъминотига жойлаштириш учун қаерга ариза берилади ва унга тўланадиган пенсиянинг қанча қисми ўз қўлига берилади?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "REG-2785-1",
+      "REG-2785"
+    ],
+    "expected_lex_ids": [
+      "-3061137",
+      "-2953855"
+    ],
+    "category": "social_care",
+    "out_of_scope": false,
+    "note": "Adliya ro'yxatidagi nizom (yolg'iz keksalar va nogironlarni 'Saxovat' internat uylariga qabul qilish tartibi va moddiy ta'minoti) | muqobil: asosiy buyruq REG-2785",
+    "in_corpus": true
+  },
+  {
+    "id": "v051",
+    "question": "Men 2-guruh nogironiman, yangi MChJ ochib savdo-sotiq bilan shug'ullanmoqchiman. Korxonamiz uchun QQS (qo'shilgan qiymat solig'i) stavkasi qancha bo'ladi va qanday shartlarda QQS to'lovchisi hisoblanamiz?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [],
+    "expected_lex_ids": [],
+    "category": "commercial_tax",
+    "out_of_scope": true,
+    "note": "Doiradan tashqari: tijorat faoliyati va qo'shilgan qiymat solig'i stavkasi",
+    "in_corpus": false
+  },
+  {
+    "id": "v052",
+    "question": "Nogironligim bor, o'zimga tegishli ikkilamchi bozordagi ko'chmas mulkni (kvartirani) boshqa fuqaroga notarial oldi-sotdi shartnomasi orqali sotmoqchiman. Notariusda davlat boji va oldi-sotdidan olinadigan daromad solig'i qancha to'lanadi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [],
+    "expected_lex_ids": [],
+    "category": "property_transactions",
+    "out_of_scope": true,
+    "note": "Doiradan tashqari: ko'chmas mulk oldi-sotdisi va notarial bitimlar soliqlari",
+    "in_corpus": false
+  },
+  {
+    "id": "v053",
+    "question": "Здравствуйте. Я гражданин с инвалидностью 3 группы, хочу инвестировать свободные средства в криптовалюту (Bitcoin) через лицензированный крипто-магазин в Ташкенте. Облагаются ли доходы от купли-продажи крипто-активов налогами и легален ли майнинг?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [],
+    "expected_lex_ids": [],
+    "category": "crypto_investments",
+    "out_of_scope": true,
+    "note": "Doiradan tashqari: kripto-aktivlar, investitsiyalar va mayning faoliyati",
+    "in_corpus": false
+  },
+  {
+    "id": "v054",
+    "question": "Салом, ўғлим 18 ёшга тўлди, кўзида озгина кўриш нуқсони бор. Ўзбекистонда муддатли ҳарбий хизматга чақирув қачон бошланади ва муддатли ҳарбий хизматнинг давомийлиги неча ой қилиб белгиланган?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [],
+    "expected_lex_ids": [],
+    "category": "military_service",
+    "out_of_scope": true,
+    "note": "Doiradan tashqari: muddatli harbiy xizmatga chaqiruv va harbiy majburiyat",
+    "in_corpus": false
+  },
+  {
+    "id": "v055",
+    "question": "Xitoydan tijorat maqsadida 500 dona kiyim-kechak partiyasini olib kirmoqchiman. Bojxona to'lovlari (bojxona boji va rasmiylashtiruv yig'imi) qanday hisoblanadi va yuk deklaratsiyasini rasmiylashtirish uchun qaysi portalga murojaat qilinadi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [],
+    "expected_lex_ids": [],
+    "category": "customs",
+    "out_of_scope": true,
+    "note": "Doiradan tashqari: tovarlar importi va bojxona to'lovlari rasmiylashtiruvi",
+    "in_corpus": false
+  },
+  {
+    "id": "v056",
+    "question": "Какой порядок оформления деловой бизнес-визы (Business Visa) для иностранного партнера из Германии для участия в коммерческих переговорах в Ташкенте? Какие документы подаются в Министерство иностранных дел?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [],
+    "expected_lex_ids": [],
+    "category": "visa",
+    "out_of_scope": true,
+    "note": "Doiradan tashqari: xorijiy fuqarolarga viza berish va TIV tartib-taomillari",
+    "in_corpus": false
+  },
+  {
+    "id": "v057",
+    "question": "Avtomashinamda shahar ichida 70 km/soat ruxsat etilgan joyda 93 km/soat tezlikda harakatlanib radarga tushdim. Yo'l harakati qoidalariga ko'ra jarima miqdori qancha bo'ladi va 15 kun ichida to'lasam 50 foiz chegirma beriladimi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [],
+    "expected_lex_ids": [],
+    "category": "traffic_violations",
+    "out_of_scope": true,
+    "note": "Doiradan tashqari: umumiy yo'l harakati qoidalari va tezlik uchun ma'muriy jarimalar",
+    "in_corpus": false
+  },
+  {
+    "id": "v058",
+    "question": "Какая уголовная ответственность и наказание предусмотрены статьей 168 Уголовного кодекса Республики Узбекистан за мошенничество в крупном размере и допускается ли освобождение от ответственности в связи с примирением сторон?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [],
+    "expected_lex_ids": [],
+    "category": "criminal_law",
+    "out_of_scope": true,
+    "note": "Doiradan tashqari: umumiy jinoyat huquqi va firibgarlik uchun jazo",
+    "in_corpus": false
+  },
+  {
+    "id": "v059",
+    "question": "Ногиронлиги бор фуқаро чет элдан шахсий фойдаланиш учун электромобиль олиб кирса, божхонада утилизация йиғими ва акциз тўланадими ёки умумий тартибдаги божхона тўловлари қўлланиладими?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [],
+    "expected_lex_ids": [],
+    "category": "customs",
+    "out_of_scope": true,
+    "note": "Doiradan tashqari: avtotransport vositalari importi va bojxona to'lovlari",
+    "in_corpus": false
+  },
+  {
+    "id": "v060",
+    "question": "Как физическому лицу открыть брокерский счет для покупки корпоративных акций и облигаций на Республиканской фондовой бирже 'Тошкент'? Каков размер комиссионного вознаграждения брокера и депозитария?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [],
+    "expected_lex_ids": [],
+    "category": "securities_market",
+    "out_of_scope": true,
+    "note": "Doiradan tashqari: qimmatli qog'ozlar bozori va fond birjasi savdolari",
+    "in_corpus": false
+  }
+]

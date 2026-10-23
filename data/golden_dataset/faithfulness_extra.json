@@ -1,0 +1,12 @@
+[
+  {
+    "id": "f001",
+    "question": "Salom mani xoʻjaynim 2guruh nogironi biz yaqinda buyragida toshi bor aperatsiya qildirmoqchimiz qanaqa yordam bor",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_lex_ids": ["-2898879"],
+    "out_of_scope": false,
+    "category": "health",
+    "note": "Real bot question (2026-10-13). VMQ-31 2-ilova (list of patients exempt from paying for meals in inpatient facilities) item 1: I and II group. PF-74 annex is a list of diseases of children under 18 - must not be offered to an adult."
+  }
+]

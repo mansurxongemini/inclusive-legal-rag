@@ -11,8 +11,10 @@ export function createSlideOver({
   content = null,
   footer = null,
   onClose = null,
-  maxWidth = '600px'
+  maxWidth = '',
+  size = 'md'
 }) {
+  maxWidth = maxWidth || ({ sm: '440px', md: '600px', lg: '820px' }[size] || '600px');
   let lastActiveElement = null;
 
   const titleEl = h('h3', { className: 'text-sm font-bold text-main line-clamp-1' }, title);
@@ -83,6 +85,7 @@ export function createSlideOver({
     element: backdrop,
     open: () => {
       lastActiveElement = document.activeElement;
+      if (!backdrop.isConnected) document.body.appendChild(backdrop);   // callers may forget to mount it
       backdrop.classList.remove('hidden');
       setTimeout(() => {
         backdrop.style.opacity = '1';

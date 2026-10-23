@@ -129,28 +129,4 @@ async def test_get_document_norms():
         assert "text_uz" in first_norm
 
 
-@pytest.mark.asyncio
-async def test_update_and_revectorize_norm():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        # 1. Fetch a norm
-        res = await ac.get("/api/v1/inclusive/norms?limit=1")
-        assert res.status_code == 200
-        norms = res.json()["norms"]
-        assert len(norms) > 0
-        cid = norms[0]["canonical_id"]
-
-        # 2. Update and revectorize
-        payload = {
-            "title": "Yangilangan test sarlavhasi",
-            "text_uz": "I guruh nogironligi bo'lgan xodimlar uchun ish vaqti haftasiga 36 soatdan oshmaydi va bu qat'iy kafolatlanadi.",
-            "text_ru": "Для работников с инвалидностью I группы рабочее время не превышает 36 часов в неделю.",
-            "category": "labor_rights"
-        }
-        res_update = await ac.put(f"/api/v1/inclusive/norms/{cid}", json=payload)
-        assert res_update.status_code == 200
-        data = res_update.json()
-        assert data["success"] is True
-        assert data["canonical_id"] == cid
-        assert "BGE-M3" in data["message"]
 

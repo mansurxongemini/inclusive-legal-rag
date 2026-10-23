@@ -14,6 +14,7 @@ class CitationItem(BaseModel):
     article_title: str = ""
     source_url: str
     status: str = "active"
+    source_type: str = "lex"
     normative_tier: str = "Qonun"
     normative_rank: int = 3
     quote_snippet: str = ""
@@ -49,7 +50,12 @@ class CitationValidator:
     ]
     # A bare "topilmadi" is only a refusal for a short answer that cites nothing: substantive answers often say
     # that one detail (a deadline, a form) was "not found" while still citing the governing norms.
-    WEAK_REFUSAL_TRIGGERS = ["topilmadi"]
+    # The refusal sentence the prompt prescribes ("cannot give an exact answer") is weak as well: a substantive answer may
+    # say it about one detail of the question and still cite the governing norms.
+    WEAK_REFUSAL_TRIGGERS = [
+        "topilmadi", "aniq javob bera olmayman", "aniq javob bera olmaymiz", "aniq javob berib bo'lmaydi",
+        "не могу дать точный ответ", "cannot give an exact answer", "can't give an exact answer",
+    ]
     SUBSTANTIVE_ANSWER_MIN_CHARS = 400
 
     # Canonical IDs always contain underscores (law_x_art_5, pf_115_unit_3_1). Plain bracketed words such as
@@ -104,6 +110,11 @@ class CitationValidator:
             return "Xalqaro shartnoma", 8
         elif cat == "commentary" or "advice" in cid or "norma" in cid:
             return "Huquqiy sharh", 9
+        source_type = (getattr(article.metadata, "source_type", "lex") or "lex").lower()
+        if source_type == "curated" or cid.startswith("qa_"):
+            return "Huquq+ javobi", 9
+        if source_type == "huquqplus" or cid.startswith("hp_"):
+            return "Huquq+ sharhi", 9
         return "Qonunchilik hujjati", 3
 
     @classmethod
@@ -162,7 +173,7 @@ class CitationValidator:
 
     @classmethod
     def _detect_refusal(cls, answer_text: str, retrieved_ids: Set[str]) -> bool:
-        lowered = answer_text.lower()
+        lowered = answer_text.lower().replace("ʻ", "'").replace("ʼ", "'").replace("‘", "'").replace("’", "'")
         if any(trigger in lowered for trigger in cls.REFUSAL_TRIGGERS):
             return True
         if not any(trigger in lowered for trigger in cls.WEAK_REFUSAL_TRIGGERS):
@@ -209,28 +220,18 @@ class CitationValidator:
         warnings = []
 
         no_explicit_citation = False
-        if cited_in_text:
-            sanitized_answer = answer_text
-        else:
-            if retrieved_contexts:
-                # The model cited nothing: attach the top-ranked norm as a reference for the reader, but do not
-                # present it as verification - the answer is flagged as not passing validation.
-                top_art = retrieved_contexts[0].article
-                sanitized_answer = f"{answer_text}\n\n[{top_art.canonical_id}]"
-                resolved_cids_in_answer.add(top_art.canonical_id)
-                no_explicit_citation = True
-                warnings.append("no_explicit_citation: answer did not cite any retrieved norm")
-            else:
-                sanitized_answer = answer_text
+        sanitized_answer = answer_text
+        if not cited_in_text and retrieved_contexts:
+            # The model cited nothing. No norm is attached on its behalf (that would present a source the model never
+            # relied on as if it were verified): the answer simply carries no citations and fails validation.
+            no_explicit_citation = True
+            warnings.append("no_explicit_citation: answer did not cite any retrieved norm")
 
         # Build ordered unique citations matching appearance
         citations: List[CitationItem] = []
         cid_to_index: Dict[str, int] = {}
         ordered_cids: List[str] = []
         for cid in cited_in_text:
-            if cid not in ordered_cids and cid in retrieved_map:
-                ordered_cids.append(cid)
-        for cid in resolved_cids_in_answer:
             if cid not in ordered_cids and cid in retrieved_map:
                 ordered_cids.append(cid)
 
@@ -249,6 +250,7 @@ class CitationValidator:
                     article_title=art.get_title(language),
                     source_url=art.metadata.source_url,
                     status=art.metadata.status.value,
+                    source_type=getattr(art.metadata, "source_type", "lex") or "lex",
                     normative_tier=tier_name,
                     normative_rank=tier_rank,
                     quote_snippet=quote_snip,
@@ -281,11 +283,24 @@ class CitationValidator:
         bot_footer_lines = ["\n\n---\n*Asoslangan qonuniy manbalar va iqtiboslar:*"]
         for c in citations:
             tier_badge = f"[{c.normative_tier}]"
-            quote_line = f"\n   *Qonundan iqtibos:* «{c.quote_snippet}»" if c.quote_snippet else ""
+            source_type = getattr(c, "source_type", "lex")
+            if source_type == "curated":
+                # editorial answer: no statutory quote, and its admin-panel URL is not for citizens
+                bot_footer_lines.append(f"[{c.index}] {tier_badge} {c.law_title}")
+                continue
+            quote_label = "Qonundan iqtibos" if source_type == "lex" else "Maqoladan"
+            quote_line = f"\n   *{quote_label}:* «{c.quote_snippet}»" if c.quote_snippet else ""
+            url_label = "Rasmiy manba" if source_type == "lex" else "Maqola"
             bot_footer_lines.append(
-                f"[{c.index}] {tier_badge} {c.article_number} — {c.law_title} ({c.law_number}){quote_line}\n   Rasmiy manba: {c.source_url}"
+                f"[{c.index}] {tier_badge} {c.article_number} — {c.law_title} ({c.law_number}){quote_line}\n   {url_label}: {c.source_url}"
             )
         telegram_formatted = clean_answer + "\n".join(bot_footer_lines)
+
+        has_lex_basis = any(getattr(c, "source_type", "lex") == "lex" for c in citations)
+        if citations and not has_lex_basis:
+            warnings.append("curated_without_lex_basis: answer cites only curated/huquqplus sources, no lex norm")
+        if any(getattr(c, "source_type", "lex") == "huquqplus" for c in citations):
+            warnings.append("huquqplus_is_commentary: huquqplus sources are commentary, not statutory basis")
 
         is_valid = (len(unresolved) == 0) and (len(citations) > 0 or is_refusal) and not no_explicit_citation
 

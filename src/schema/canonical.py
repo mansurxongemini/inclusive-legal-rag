@@ -41,6 +41,7 @@ class ArticleMetadata(BaseModel):
     chapter_number: Optional[str] = Field(default=None, description="Chapter/Bob/Глава")
     article_number: str = Field(..., description="Article number (e.g. 15-modda)")
     article_title: Dict[str, str] = Field(..., description="Article title in uz, ru, en")
+    annex_title: Optional[str] = Field(default=None, description="Title of the annex/list this unit is an item of (ilova/ro'yxat sarlavhasi)")
     source_url: str = Field(..., description="Official source URL on lex.uz")
     effective_date: str = Field(..., description="Effective date (YYYY-MM-DD)")
     last_verified_date: str = Field(..., description="Last verification date (YYYY-MM-DD)")
@@ -54,11 +55,22 @@ class ArticleMetadata(BaseModel):
     beneficiary_type: List[str] = Field(default_factory=lambda: ["individual"], description="Beneficiary roles")
     cross_references: List[CrossReference] = Field(default_factory=list, description="Cross references to other articles/laws")
     embedding_model_version: str = Field(default="bge-m3-2025-11-18", description="Embedding model version used")
+    # Source type: "lex" = official Lex.uz norm, "curated" = editorial curated answer projection,
+    # "huquqplus" = Huquq+ portal commentary (never a substitute for statutory text).
+    source_type: str = Field(default="lex", description='Source type: "lex" | "curated" | "huquqplus"')
+    published_url: Optional[str] = Field(default=None, description="Public URL of the curated answer, if any")
     # Provenance (optional: older records do not carry them)
     promulgation_date: Optional[str] = Field(default=None, description="Adoption date of the act (YYYY-MM-DD)")
     document_type: Optional[str] = Field(default=None, description="Qonun | Kodeks | Farmon | PQ | VMQ | Buyruq | ...")
     issuing_body: Optional[str] = Field(default=None, description="Adopting authority as printed by Lex.uz")
     source_element_id: Optional[str] = Field(default=None, description="Lex.uz element id for deep links (#id)")
+    source_element_ids: List[str] = Field(
+        default_factory=list,
+        description="All Lex.uz element ids of the unit (paragraphs, points) - resolves deep links to inner parts",
+    )
+    # Lex.uz publishes the Russian edition under its own document and element ids; external sites often link there
+    ru_document_id: Optional[str] = Field(default=None, description="Lex.uz id of the Russian edition of the act")
+    ru_element_ids: List[str] = Field(default_factory=list, description="Element ids of the aligned Russian unit")
 
 
 class ArticlePoint(BaseModel):
@@ -131,5 +143,8 @@ class CanonicalArticle(BaseModel):
         law_title = self.get_law_title(language)
         body = self.get_text(language)
         points_text = " ".join([pt.text.get(language, "") for pt in self.points])
-        
-        return f"{self.metadata.law_number} {self.metadata.article_number} {title} {law_title} {body} {points_text}".strip()
+        annex = self.metadata.annex_title or ""
+        chapter = self.metadata.chapter_number or ""
+        extra = f"{annex} {chapter}".strip() if chapter not in annex else annex
+
+        return f"{self.metadata.law_number} {self.metadata.article_number} {title} {law_title} {extra} {body} {points_text}".strip()

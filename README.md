@@ -42,7 +42,7 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
   - Built-in rule-based phonetic and statutory transliteration engine (`src/nlp/transliteration.py`).
 - **🪶 Ultra-Lightweight Resource Footprint**:
   - Engineered for resource-constrained non-profit infrastructure: runs on a basic **2 vCPU, 4GB RAM VPS**.
-  - **Idle RAM: ~235 MB** (well below the 350 MB ceiling).
+  - **Resident memory: ~180-200 MB** while serving (glibc allocator tuned in `src/runtime_tuning.py`; without it a vector search inflated the process to 900+ MB).
   - Zero heavy local machine learning dependencies (`torch`, `transformers`, `onnxruntime` are excluded from the runtime image in favor of clean asynchronous API client layers).
 - **🌐 Production-Ready REST API**:
   - Built with FastAPI with Server-Sent Events (SSE) streaming, SQLite query caching, token-bucket rate limiting, and prompt-injection defenses.
@@ -111,8 +111,9 @@ deep link to the exact paragraph on lex.uz.
 | ingest | `... ingest --replace-all` | embeddings + FTS index in `data/store` |
 | report | `... report` | `data/sources/REGISTRY.md` - exactly what is in the base |
 
-Current build: **238 acts, 3 843 articles/clauses** (Uzbek; 1 686 with the official Russian text), 99% of the
-text is clean of portal markup, amendment history is kept per unit (`metadata.amendment_history`).
+Current build: **518 Lex.uz acts, 27 530 articles/clauses** (Uzbek; 15 247 with the official Russian text) plus **201 Huquq+ posts (581 units)**
+= 28 111 units, 57 866 embedded chunks. Units longer than 6 000 characters are also indexed chunk by chunk, so a paragraph deep inside a
+code article (the Tax Code day-care exemption, art. 483) is found. Amendment history is kept per unit (`metadata.amendment_history`).
 Re-run the stages to refresh the base when Lex.uz publishes new acts. HTML pages are cached in `data/raw_lex/`
 and requests are throttled (1 request/second).
 
@@ -169,7 +170,7 @@ cp .env.example .env
 pytest -v
 
 # 5. Start development server
-uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
+.venv/bin/python -m uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ---
@@ -179,9 +180,12 @@ uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
 Every route that changes the corpus, manages API keys or exports user feedback (`/api/v1/admin/*`,
 `/api/v1/inclusive/admin/*`, `PUT /api/v1/inclusive/norms/{id}`, `GET /api/v1/feedback`) is administrator-only:
 
-- A **direct local connection** (the dashboard opened on the server itself) needs no key.
+- A **direct local connection** (the dashboard opened on the server itself) needs no key **while `ADMIN_API_KEY` is empty**; as soon as a key is configured the loopback shortcut is off by default (`ADMIN_LOOPBACK_ENABLED` overrides).
 - Anything else must send `X-Admin-Key: <ADMIN_API_KEY>` (or `Authorization: Bearer ...`). Set `ADMIN_API_KEY` in `.env`;
-  with it empty, remote administration is disabled. Requests that carry proxy headers (`X-Forwarded-For`, ...) count as remote.
+  with it empty, remote administration is disabled. Requests that carry proxy headers (`X-Forwarded-For`, ...) count as remote,
+  and so do local requests driven by another web page (foreign `Host`, `Origin` or `Sec-Fetch-Site: cross-site`).
+- **Behind a reverse proxy** that does not forward `X-Forwarded-For` / `X-Real-IP` (nginx does not by default) every visitor
+  looks like a direct local connection. Set `ADMIN_LOOPBACK_ENABLED=false` there: the key is then the only way in.
 - The dashboard asks for the key once per browser session when the server answers 401.
 - Third-party bots use regular API keys (`X-API-Key`) for `POST /api/v1/inclusive/query`; each key's `rate_limit_per_min` is enforced.
 
@@ -193,29 +197,56 @@ Processes a citizen legal inquiry and generates a grounded response with canonic
 ```bash
 curl -X POST http://localhost:8000/api/v1/query \
   -H "Content-Type: application/json" \
-  -d '{
-    "query": "1-guruh nogironligi bo'lgan shaxs uchun ish vaqti qisqartiriladimi?",
-    "style": "plain",
-    "language": "uz"
-  }'
+  -d @- <<'JSON'
+{
+  "question": "1-guruh nogironligi bo'lgan shaxs uchun ish vaqti qisqartiriladimi?",
+  "language": "uz",
+  "mode": "plain"
+}
+JSON
 ```
 
-**Response Format**:
+| Field | Required | Values |
+| :--- | :--- | :--- |
+| `question` | yes | 1-4000 characters |
+| `language` | no | `auto` (default), `uz`, `ru`, `en` |
+| `mode` | no | `plain` (default), `legal_text`, `easy_read`, `subsumption` |
+| `disability_group` | no | `all` (default) or an id from `GET /api/v1/inclusive/categories` |
+| `category` | no | `all` (default) or an id from `GET /api/v1/inclusive/categories` |
+| `conversation_id` | no | optional trace id echoed back in the response |
+
+Add `?stream=true` for a Server-Sent Events stream of tokens. The partner endpoint `POST /api/v1/inclusive/query`
+(`X-API-Key`) takes the same body (without `subsumption` and `conversation_id`) and runs the same pipeline.
+
+**Response Format** (abridged):
 ```json
 {
-  "answer": "O'zbekiston Respublikasi Mehnat kodeksining 427-moddasiga muvofiq, I va II guruh nogironligi bo'lgan xodimlar uchun ish vaqtining haftasiga 36 soatdan oshmaydigan qisqartirilgan davomiyligi belgilanadi...",
+  "answer": "Qisqartirilgan ish vaqti haftasiga 36 soatdan oshmaydi [1]...",
+  "clean_answer": "...",
+  "telegram_formatted": "...",
   "citations": [
     {
+      "index": 1,
       "canonical_id": "uz_mk_art_427",
       "law_title": "O'zbekiston Respublikasi Mehnat kodeksi",
       "article_number": "427-modda",
-      "source_url": "https://lex.uz/docs/6257288#6258932"
+      "source_url": "https://lex.uz/docs/6257288#6258932",
+      "quote_snippet": "..."
     }
   ],
-  "disability_category_detected": "first_degree_workplace_protection",
-  "processing_time_ms": 420.5
+  "detected_language": "uz",
+  "detected_script": "latn",
+  "mode": "plain",
+  "is_refusal": false,
+  "validation_passed": true,
+  "status_warnings": [],
+  "cached": false,
+  "cache_type": null,
+  "semantic_similarity": null,
+  "retrieval_confidence": 0.93
 }
 ```
+(Each citation also carries `law_number`, `article_title`, `status`, `source_type`, `normative_tier`, `normative_rank` and `confidence`.)
 
 ### 2. Direct Article Lookup (`GET /api/v1/article/{canonical_id}`)
 Fetches full bilingual canonical text and active amendment status for a specific legal article.
@@ -233,21 +264,33 @@ Returns live server metrics, memory RSS, vector store status, and connection hea
 
 This project is a dedicated submission candidate for the **OpenAI Codex for Open Source Software Grant**:
 - **Why it matters**: Bridges statutory jurisprudence and accessible AI for an underserved population of 1M+ individuals in Central Asia.
-- **OpenAI Integration**: Incorporates OpenAI GPT-4o / Codex models for automated legal text simplification, structured schema synthesis, and pro-bono consultation workflows.
+- **Providers**: answers and every chat call run on Meta AI (`muse-spark-1.3`); OpenRouter is used only for embeddings (`baai/bge-m3`) and the Jev reranker/scope gate. See `docs/OPERATIONS.md` for cost, degradation order, backup and the evaluation commands.
 - **Institutional Commitment**: Backed by HuquqPlus NGO and university legal researchers from Tashkent State University of Law (TSUL).
 
 ---
 
 ## 📊 Evaluation & Benchmarking
 
-The platform is continuously audited against a **25-question golden dataset** (`data/golden_dataset/`) containing both in-scope disability rights questions and out-of-scope adversarial tests:
+Measured on 2026-10-23 (commands and cost notes in `docs/OPERATIONS.md`). Retrieval = the production pipeline (BM25 + vectors + RRF + Jev);
+the judge is `muse-spark-1.2`, the generator `muse-spark-1.3`.
 
-```bash
-python scripts/run_eval.py
-```
-
-| Metric | Target | Achieved | Status |
+| Set | Questions | What is measured | Result |
 | :--- | :--- | :--- | :--- |
+| Stress set (`data/golden_dataset/stress_eval_200.json`, used while tuning) | 172 in-scope + 23 out-of-scope | expected unit first / in top 3 / in top 6 | **70% / 84% / 88%** (pool of 25: 92%) |
+| Same set | out-of-scope | refused by the scope gate / in-scope refused wrongly | **100% / 0.6%** |
+| Held-out set (`heldout_v1.json`, never tuned on) | 55 in-scope + 37 out-of-scope | expected unit first / top 3 / top 6 | **62% / 67% / 80%** |
+| Held-out set | out-of-scope | refused / in-scope refused wrongly | **95% / 3.6%** |
+| End to end, stress dev split (59 questions) | answers judged against the provision | correct / partial / wrong | **91% / 4% / 6%** (3 answers added a condition the provision does not state) |
+| Deterministic answer checks (same 59 answers) | script of the question, leaked ids, forbidden wording, numbers absent from the sources | failures | **0% / 0% / 0% / 1.7%** |
+| Latency | retrieval only / full answer | median | **3.3 s / 5.9 s** |
+| Resident memory while serving | | | **~180-200 MB** |
+
+The held-out figures are the honest ones: the stress set was used to tune the system and its labels were revised along the way, the
+held-out questions were written from units no other set uses. Known weak classes: a paragraph reachable only through words the question
+inflects differently (Cyrillic questions with typos), questions that need several units at once, and answers that add a plausible but
+unstated condition.
+
+--- | :--- | :--- | :--- |
 | **Idle RAM Footprint** | < 350 MB | **~235 MB** | ✅ PASSED |
 | **Refusal Accuracy on Out-of-Scope** | 100% | **100%** | ✅ PASSED |
 | **Citation Precision (Grounding)** | > 95% | **98.2%** | ✅ PASSED |

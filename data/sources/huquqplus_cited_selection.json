@@ -1,0 +1,683 @@
+{
+  "generated": "2026-10-13",
+  "added": [
+    {
+      "lex_id": "-2270351",
+      "law_id": "",
+      "number": "REG-2522",
+      "number_override": "",
+      "title": "Ambulatoriyada davolanishda imtiyozli taʼminlash uchun moʻljallangan dori vositalarining roʻyxatini tasdiqlash toʻgʻrisida",
+      "doc_type": "Qaror",
+      "adopted": "2013-11-13",
+      "effective": "2013-11-18",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 3,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 4,
+      "cited_citations": 6,
+      "cited_ids": [
+        "-2270351",
+        "2270349"
+      ],
+      "_kept_units": 3
+    },
+    {
+      "lex_id": "-6906830",
+      "law_id": "",
+      "number": "PF-70",
+      "number_override": "",
+      "title": "2024-yilda ipoteka kreditlarini ajratish mexanizmlarini takomillashtirish va aholining uy-joy sharoitlarini yaxshilashga oid qoʻshimcha chora-tadbirlar toʻgʻrisida",
+      "doc_type": "Farmon",
+      "adopted": "2024-04-30",
+      "effective": "2024-05-02",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 27,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 4,
+      "cited_citations": 6,
+      "cited_ids": [
+        "-6906830",
+        "6906825"
+      ],
+      "_kept_units": 27
+    },
+    {
+      "lex_id": "-7283088",
+      "law_id": "",
+      "number": "PF-229",
+      "number_override": "",
+      "title": "Tadbirkorlar uchun teng sharoitlar va adolatli raqobat muhitini taʼminlash boʻyicha navbatdagi chora-tadbirlar toʻgʻrisida",
+      "doc_type": "Farmon",
+      "adopted": "2024-12-27",
+      "effective": "2024-12-28",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 26,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 4,
+      "cited_ids": [
+        "-7283088",
+        "7283092"
+      ],
+      "_kept_units": 26
+    },
+    {
+      "lex_id": "-6116203",
+      "law_id": "",
+      "number": "PQ-323",
+      "number_override": "",
+      "title": "Oliy va professional taʼlim tashkilotlarida xotin-qizlarning taʼlim olishlarini qoʻllab-quvvatlashga doir chora-tadbirlar toʻgʻrisida",
+      "doc_type": "PQ",
+      "adopted": "2022-07-18",
+      "effective": "2022-07-19",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 11,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 4,
+      "cited_ids": [
+        "-6116203",
+        "6116212"
+      ],
+      "_kept_units": 11
+    },
+    {
+      "lex_id": "-7170688",
+      "law_id": "",
+      "number": "VMQ-691",
+      "number_override": "",
+      "title": "“Mahalla yettiligi” tavsiyasi asosida kambagʻallikdan chiqarish dasturiga kiritilgan va uy-joy sharoitini yaxshilashga muhtoj boʻlgan shaxslarga ipoteka kreditini ajratish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
+      "doc_type": "VMQ",
+      "adopted": "2024-10-21",
+      "effective": "2024-10-24",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 40,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 4,
+      "cited_ids": [
+        "-7170688",
+        "7171310"
+      ],
+      "_kept_units": 40
+    },
+    {
+      "lex_id": "-7759309",
+      "law_id": "",
+      "number": "VMQ-632",
+      "number_override": "",
+      "title": "Yoshlarning oʻquv markazlarida xorijiy tillarni oʻqish xarajatlari uchun subsidiya ajratish hamda oʻquv markazlarini ragʻbatlantirish chora-tadbirlari toʻgʻrisida",
+      "doc_type": "VMQ",
+      "adopted": "2025-10-08",
+      "effective": "2025-10-09",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 43,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 4,
+      "cited_ids": [
+        "-7759309",
+        "7764593"
+      ],
+      "_kept_units": 43
+    },
+    {
+      "lex_id": "-3920037",
+      "law_id": "",
+      "number": "PF-5545",
+      "number_override": "",
+      "title": "Oʻzbekiston Respublikasi Vazirlar Mahkamasi huzuridagi Mutaxassislarni xorijda tayyorlash va vatandoshlar bilan muloqot qilish boʻyicha “El-yurt umidi” jamgʻarmasi faoliyatini tashkil etish toʻgʻrisida",
+      "doc_type": "Farmon",
+      "adopted": "2018-09-25",
+      "effective": "2018-09-26",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 4,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 3,
+      "cited_ids": [
+        "3920035",
+        "-3920037"
+      ],
+      "_kept_units": 4
+    },
+    {
+      "lex_id": "-5688101",
+      "law_id": "",
+      "number": "VMQ-654",
+      "number_override": "",
+      "title": "Aholini ijtimoiy himoya qilish tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
+      "doc_type": "VMQ",
+      "adopted": "2021-10-21",
+      "effective": "2021-10-21",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 4,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 2,
+      "cited_ids": [
+        "-5688101",
+        "5688115"
+      ],
+      "_kept_units": 4
+    },
+    {
+      "lex_id": "-5524039",
+      "law_id": "",
+      "number": "0239-07/3",
+      "number_override": "",
+      "title": "Oʻzbekiston Respublikasida yuqumli kasalliklar immunoprofilaktikasi",
+      "doc_type": "Boshqa",
+      "adopted": "2017-07-25",
+      "effective": "2017-07-25",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 15,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 2,
+      "cited_ids": [
+        "5524039",
+        "5524044"
+      ],
+      "_kept_units": 15
+    },
+    {
+      "lex_id": "-5676240",
+      "law_id": "",
+      "number": "VMQ-637",
+      "number_override": "",
+      "title": "“Temir daftar” va “Ayollar daftari”ga kiritilgan oilalarning farzandlari hamda “Yoshlar daftari”ga kiritilgan yangi turmush qurgan yoshlarning yakka tartibdagi xonadonida qoʻshimcha uy-joy qurish uchun garovsiz kredit ajratish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
+      "doc_type": "VMQ",
+      "adopted": "2021-10-12",
+      "effective": "2021-10-13",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 50,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 2,
+      "cited_ids": [
+        "-5676240",
+        "5676245"
+      ],
+      "_kept_units": 50
+    },
+    {
+      "lex_id": "-6433775",
+      "law_id": "",
+      "number": "PF-51",
+      "number_override": "",
+      "title": "2023-yilda bozor tamoyillariga asoslangan ipoteka kreditlari orqali aholini uy-joy bilan taʼminlash dasturini amalga oshirish chora-tadbirlari toʻgʻrisida",
+      "doc_type": "Farmon",
+      "adopted": "2023-04-13",
+      "effective": "2023-04-14",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 6,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 2,
+      "cited_ids": [
+        "-6433775",
+        "6433780"
+      ],
+      "_kept_units": 6
+    },
+    {
+      "lex_id": "-6450094",
+      "law_id": "",
+      "number": "PQ-140",
+      "number_override": "",
+      "title": "Sogʻliqni saqlash tizimini raqamlashtirishga doir qoʻshimcha chora-tadbirlar toʻgʻrisida",
+      "doc_type": "PQ",
+      "adopted": "2023-05-01",
+      "effective": "2023-05-02",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 11,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 2,
+      "cited_ids": [
+        "-6450094",
+        "6450186"
+      ],
+      "_kept_units": 11
+    },
+    {
+      "lex_id": "-5286354",
+      "law_id": "",
+      "number": "PF-6168",
+      "number_override": "",
+      "title": "Davlat xizmatchilari va mutaxassislarni xorijda tayyorlash hamda ularning salohiyatini yanada oshirish tizimini tubdan takomillashtirish chora-tadbirlari toʻgʻrisida",
+      "doc_type": "Farmon",
+      "adopted": "2021-02-11",
+      "effective": "2021-02-12",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 73,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 2,
+      "cited_ids": [
+        "-5286354",
+        "5286356"
+      ],
+      "_kept_units": 73
+    },
+    {
+      "lex_id": "-3130072",
+      "law_id": "",
+      "number": "VMQ-128",
+      "number_override": "",
+      "title": "Toshkent metropolitenida pensionerlarni bepul tashish toʻgʻrisida",
+      "doc_type": "VMQ",
+      "adopted": "2017-03-09",
+      "effective": "2017-03-13",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 17,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 2,
+      "cited_ids": [
+        "-3130072",
+        "3130070"
+      ],
+      "_kept_units": 17
+    },
+    {
+      "lex_id": "-6407934",
+      "law_id": "",
+      "number": "PQ-94",
+      "number_override": "",
+      "title": "Toshkent metropolitenidan foydalanishda pensiya oluvchilarga qoʻshimcha qulayliklar yaratish toʻgʻrisida",
+      "doc_type": "PQ",
+      "adopted": "2023-03-15",
+      "effective": "2023-03-15",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 5,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 1,
+      "cited_citations": 1,
+      "cited_ids": [
+        "-6407934"
+      ],
+      "_kept_units": 5
+    },
+    {
+      "lex_id": "-5793272",
+      "law_id": "",
+      "number": "PQ-62",
+      "number_override": "",
+      "title": "Iqtisodiy taraqqiyot va kambagʻallikni qisqartirish vazirligi huzuridagi Mahallabay ishlash va tadbirkorlikni rivojlantirish agentligi faoliyatini tashkil etish chora-tadbirlari toʻgʻrisida",
+      "doc_type": "PQ",
+      "adopted": "2021-12-24",
+      "effective": "2021-12-25",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 15,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 2,
+      "cited_ids": [
+        "-5793272",
+        "5793280"
+      ],
+      "_kept_units": 15
+    },
+    {
+      "lex_id": "-5045889",
+      "law_id": "",
+      "number": "PQ-4862",
+      "number_override": "",
+      "title": "Aholini tadbirkorlikka jalb qilish tizimini takomillashtirish va tadbirkorlikni rivojlantirishga doir qoʻshimcha chora-tadbirlar toʻgʻrisida",
+      "doc_type": "PQ",
+      "adopted": "2020-10-13",
+      "effective": "2020-10-14",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 16,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 2,
+      "cited_ids": [
+        "-5045889",
+        "5045895"
+      ],
+      "_kept_units": 16
+    },
+    {
+      "lex_id": "-7433397",
+      "law_id": "",
+      "number": "PQ-103",
+      "number_override": "",
+      "title": "Oila va xotin-qizlarni qoʻllab-quvvatlash tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
+      "doc_type": "PQ",
+      "adopted": "2025-03-14",
+      "effective": "2025-03-17",
+      "tier": 2,
+      "include": "all",
+      "category": null,
+      "nodes": [],
+      "relevance_title": 0,
+      "relevance_text": 0,
+      "units": 20,
+      "verified_at": "2026-10-13",
+      "source": "huquqplus_cited",
+      "cited_posts": 2,
+      "cited_citations": 2,
+      "cited_ids": [
+        "-7433397",
+        "7433422"
+      ],
+      "_kept_units": 20
+    }
+  ],
+  "rejected": [
+    {
+      "lex_id": "-4138215",
+      "cited_ids": [
+        "-4138215"
+      ],
+      "posts": 2,
+      "citations": 6,
+      "number": "REG-3113",
+      "title": "Notariuslar tomonidan notarial harakatlarni amalga oshirish tartibi toʻgʻrisida yoʻriqnomani tasdiqlash haqida",
+      "doc_type": "Buyruq",
+      "reason": "not_about_disability(rel=0)",
+      "units": 178
+    },
+    {
+      "lex_id": "-7162393",
+      "cited_ids": [
+        "-7162393",
+        "7162396"
+      ],
+      "posts": 6,
+      "citations": 8,
+      "number": "O'RQ-977",
+      "title": "Ijtimoiy xizmatlar va yordam koʻrsatish tizimi takomillashtirilishi munosabati bilan Oʻzbekiston Respublikasining ayrim qonun hujjatlariga oʻzgartirish va qoʻshimchalar kiritish toʻgʻrisida",
+      "doc_type": "Qonun",
+      "reason": "amending_act",
+      "amends": "amends_several_acts"
+    },
+    {
+      "lex_id": "-1865473",
+      "cited_ids": [
+        "-1865473",
+        "1865475"
+      ],
+      "posts": 3,
+      "citations": 5,
+      "number": "VMQ-252",
+      "title": "Davlat pensiyalarini tayinlash va toʻlash tartibini yanada takomillashtirishga yoʻnaltirilgan normativ-huquqiy hujjatlarni tasdiqlash toʻgʻrisida",
+      "doc_type": "VMQ",
+      "reason": "repealed",
+      "repealed_date": "2023-09-20"
+    },
+    {
+      "lex_id": "-648034",
+      "cited_ids": [
+        "-648034"
+      ],
+      "posts": 2,
+      "citations": 3,
+      "reason": "not_available"
+    },
+    {
+      "lex_id": "-7730821",
+      "cited_ids": [
+        "-7730821"
+      ],
+      "posts": 2,
+      "citations": 2,
+      "number": "VMQ-587",
+      "title": "Nogironlikni belgilash tizimi raqamlashtirilishi munosabati bilan Oʻzbekiston Respublikasi Hukumatining ayrim qarorlariga oʻzgartirish va qoʻshimchalar kiritish toʻgʻrisida",
+      "doc_type": "VMQ",
+      "reason": "amending_act",
+      "amends": "amends_several_acts"
+    },
+    {
+      "lex_id": "-6311402",
+      "cited_ids": [
+        "-6311402"
+      ],
+      "posts": 2,
+      "citations": 2,
+      "number": "185",
+      "title": "SHNQ 2.07.02-22 “Qurilish obyektlarini nogironligi boʻlgan shaxslar hamda keksalar ehtiyojini inobatga olgan holda loyihalashtirish” shaharsozlik normalari va qoidalarini tasdiqlash toʻgʻrisida",
+      "doc_type": "Buyruq",
+      "reason": "repealed",
+      "repealed_date": "2025-01-27"
+    },
+    {
+      "lex_id": "-1899953",
+      "cited_ids": [
+        "-1899953",
+        "1899957"
+      ],
+      "posts": 3,
+      "citations": 3,
+      "number": "REG-2175-1",
+      "title": "Uy-joy-kommunal xizmatlar haqini toʻlash boʻyicha kompensatsiya pul toʻlovlarining mexanizmi toʻgʻrisidagi nizomga oʻzgartirish kiritish haqida",
+      "doc_type": "Buyruq",
+      "reason": "repealed",
+      "repealed_date": "2026-01-20"
+    },
+    {
+      "lex_id": "-7487706",
+      "cited_ids": [
+        "-7487706",
+        "7491047"
+      ],
+      "posts": 2,
+      "citations": 4,
+      "number": "VMQ-252",
+      "title": "Oʻzbekiston Respublikasi fuqarolarini xorijda tashkillashtirilgan tartibda ishga joylashtirish tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
+      "doc_type": "VMQ",
+      "reason": "not_about_disability(rel=0)",
+      "units": 204
+    },
+    {
+      "lex_id": "-5398681",
+      "cited_ids": [
+        "5399496",
+        "-5398681"
+      ],
+      "posts": 3,
+      "citations": 3,
+      "number": "VMQ-250",
+      "title": "Moddiy yordam va koʻmakka muhtoj oilalarni, xotin-qizlar va yoshlarni ijtimoiy qoʻllab-quvvatlash boʻyicha qoʻshimcha chora-tadbirlar toʻgʻrisida",
+      "doc_type": "VMQ",
+      "reason": "repealed",
+      "repealed_date": "2024-06-19"
+    },
+    {
+      "lex_id": "-7059431",
+      "cited_ids": [
+        "7059452"
+      ],
+      "posts": 2,
+      "citations": 2,
+      "reason": "excluded",
+      "note": "PF-108 (13.08.2024): pensiya va nafaqalar miqdorini oshirish; barcha miqdorlar PF-115 (2026) bilan yangilangan, eski miqdorlar qidiruvda amaldagi farmonni siqib chiqaradi"
+    },
+    {
+      "lex_id": "-4358964",
+      "cited_ids": [
+        "-4358964",
+        "4358973"
+      ],
+      "posts": 2,
+      "citations": 2,
+      "number": "REG-3163",
+      "title": "Oʻzbekiston Respublikasi Bandlikka koʻmaklashish davlat jamgʻarmasi mablagʻlari hisobidan subsidiya va grantlar ajratish tartibi toʻgʻrisida nizomni tasdiqlash haqida",
+      "doc_type": "Buyruq",
+      "reason": "repealed",
+      "repealed_date": "2026-08-09"
+    },
+    {
+      "lex_id": "-5429899",
+      "cited_ids": [
+        "-5429899",
+        "5431027"
+      ],
+      "posts": 2,
+      "citations": 2,
+      "number": "VMQ-319",
+      "title": "Vazirlar Mahkamasining “Bolalarni davlat maktabgacha taʼlim muassasalariga qabul qilish boʻyicha davlat xizmatlari koʻrsatishning maʼmuriy reglamentini tasdiqlash toʻgʻrisida” 2018-yil 28-martdagi 244-son qaroriga oʻzgartirishlar kiritish haqida",
+      "doc_type": "VMQ",
+      "reason": "amending_act",
+      "amends": "-3603405"
+    },
+    {
+      "lex_id": "-1380972",
+      "cited_ids": [
+        "-1380972",
+        "1380970"
+      ],
+      "posts": 2,
+      "citations": 2,
+      "number": "VMQ-175",
+      "title": "Tibbiy-mehnat ekspertiza xizmati boshqarish tuzilmasini va faoliyatini tashkil etishni takomillashtirish chora-tadbirlari toʻgʻrisida",
+      "doc_type": "VMQ",
+      "reason": "repealed",
+      "repealed_date": "2022-02-08"
+    },
+    {
+      "lex_id": "-3213410",
+      "cited_ids": [
+        "3213407"
+      ],
+      "posts": 1,
+      "citations": 1,
+      "number": "VMQ-304",
+      "title": "Oliy taʼlimdan keyingi taʼlim tizimini yanada takomillashtirish chora-tadbirlari toʻgʻrisida",
+      "doc_type": "VMQ",
+      "reason": "not_about_disability(rel=0)",
+      "units": 49
+    },
+    {
+      "lex_id": "-478843",
+      "cited_ids": [
+        "478841"
+      ],
+      "posts": 1,
+      "citations": 1,
+      "number": "VMQ-328",
+      "title": "Oʻzbekiston Respublikasida nogironlarni ijtimoiy himoya qilish masalalari",
+      "doc_type": "VMQ",
+      "reason": "repealed",
+      "repealed_date": "2024-09-01"
+    }
+  ],
+  "already_in_registry": [
+    {
+      "lex_id": "-3603405",
+      "cited_ids": [
+        "-5429899",
+        "5431027"
+      ],
+      "posts": 2,
+      "citations": 2,
+      "via_amending_act": "-5429899"
+    }
+  ],
+  "unresolved": []
+}

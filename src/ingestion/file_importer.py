@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Tuple
 from bs4 import BeautifulSoup
 from pydantic import BaseModel, Field
 
+from src.ingestion.localized import localized, provenance_for
 from src.nlp.transliteration import cyrillic_to_latin, detect_script, normalize_apostrophes
 from src.schema.canonical import (
     ArticleMetadata,
@@ -267,10 +268,10 @@ class LocalFileImporter:
                     pid = pm.group(1)
                     pt_text = pm.group(2)
                     pt_uz = cyrillic_to_latin(pt_text) if b_script == "cyrillic" else normalize_apostrophes(pt_text)
-                    points.append(ArticlePoint(point_id=pid, text={"uz": pt_uz, "ru": pt_text, "en": pt_uz}))
+                    points.append(ArticlePoint(point_id=pid, text=localized(pt_uz, pt_text)))
 
             if not points:
-                points.append(ArticlePoint(point_id="1", text={"uz": body_uz, "ru": body_str, "en": body_uz}))
+                points.append(ArticlePoint(point_id="1", text=localized(body_uz, body_str)))
 
             hasher = hashlib.sha256()
             hasher.update(body_uz.encode("utf-8"))
@@ -282,11 +283,11 @@ class LocalFileImporter:
                 schema_version="1.1",
                 metadata=ArticleMetadata(
                     law_id=law_slug,
-                    law_title={"uz": law_title_uz, "ru": law_title, "en": law_title_uz},
+                    law_title=localized(law_title_uz, law_title),
                     law_number=law_number,
                     chapter_number="",
                     article_number=f"{current_art_num}-modda",
-                    article_title={"uz": title_uz or f"{current_art_num}-modda", "ru": current_art_title, "en": title_uz},
+                    article_title=localized(title_uz or f"{current_art_num}-modda", current_art_title),
                     source_url=f"local://{Path(source_location).name}",
                     effective_date=today,
                     last_verified_date=today,
@@ -299,12 +300,8 @@ class LocalFileImporter:
                     embedding_model_version="baai/bge-m3",
                 ),
                 points=points,
-                translations={"uz": body_uz, "ru": body_str, "en": body_uz},
-                translation_provenance={
-                    "uz": TranslationProvenanceType.OFFICIAL,
-                    "ru": TranslationProvenanceType.OFFICIAL,
-                    "en": TranslationProvenanceType.MACHINE_TRANSLATED_UNREVIEWED,
-                }
+                translations=localized(body_uz, body_str),
+                translation_provenance=provenance_for(localized(body_uz, body_str))
             )
             articles.append(art)
             current_art_num = None

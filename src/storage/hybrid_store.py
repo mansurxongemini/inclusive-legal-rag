@@ -1,7 +1,8 @@
+import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from src.schema.canonical import CanonicalArticle
 from src.storage.vector_store import LanceVectorStore
 from src.storage.fts_store import SqliteFtsStore
@@ -42,13 +43,13 @@ class HybridStore:
         texts_to_embed: List[str] = []
         langs: List[str] = []
         for lang in article.translations:
-            for chunk in build_chunks(article, lang):
+            for idx, chunk in enumerate(build_chunks(article, lang)):
                 texts_to_embed.append(chunk)
-                langs.append(lang)
+                langs.append((lang, idx))
 
         if texts_to_embed:
             embeddings = await client.get_embeddings(texts_to_embed)
-            for lang, vector in zip(langs, embeddings):
+            for (lang, idx), vector in zip(langs, embeddings):
                 vector_records.append({
                     "canonical_id": article.canonical_id,
                     "vector": vector,
@@ -57,12 +58,52 @@ class HybridStore:
                     "category": article.metadata.category,
                     "disability_types": json.dumps(article.metadata.disability_types),
                     "embedding_model_version": article.metadata.embedding_model_version,
+                    "chunk_index": idx,
                 })
 
         # 2. Persist metadata + full-text search, then vectors
         self.fts_store.upsert_article(article)
         if vector_records:
             self.vector_store.upsert_vectors(vector_records)
+
+    def _prepare_article_chunks(
+        self, articles: List[CanonicalArticle]
+    ) -> Tuple[List[str], List[tuple]]:
+        """Prepares text chunks and metadata mapping for embedding articles in uz and ru."""
+        texts_to_embed: List[str] = []
+        mapping: List[tuple] = []
+        for art in articles:
+            for lang in ("uz", "ru"):
+                for idx, text in enumerate(build_chunks(art, lang)):
+                    texts_to_embed.append(text)
+                    mapping.append((
+                        art.canonical_id,
+                        lang,
+                        art.metadata.status.value,
+                        art.metadata.category,
+                        json.dumps(art.metadata.disability_types),
+                        art.metadata.embedding_model_version,
+                        idx,
+                    ))
+        return texts_to_embed, mapping
+
+    def _build_vector_records(
+        self, mapping: List[tuple], embeddings: List[List[float]]
+    ) -> List[Dict]:
+        """Aligns embedding vectors with metadata mapping into vector store records."""
+        records: List[Dict] = []
+        for (cid, lang, status, cat, dt, emv, idx), vec in zip(mapping, embeddings):
+            records.append({
+                "canonical_id": cid,
+                "vector": vec,
+                "language": lang,
+                "status": status,
+                "category": cat,
+                "disability_types": dt,
+                "embedding_model_version": emv,
+                "chunk_index": idx,
+            })
+        return records
 
     async def index_articles_batch(
         self,
@@ -83,36 +124,12 @@ class HybridStore:
         total_indexed = 0
         for i in range(0, len(articles), batch_size):
             chunk = articles[i : i + batch_size]
-            texts_to_embed = []
-            mapping = []
-
-            # Embed every chunk of the Uzbek and Russian text (other languages carry no extra signal)
-            for art in chunk:
-                for lang in ("uz", "ru"):
-                    for text in build_chunks(art, lang):
-                        texts_to_embed.append(text)
-                        mapping.append((
-                            art.canonical_id,
-                            lang,
-                            art.metadata.status.value,
-                            art.metadata.category,
-                            json.dumps(art.metadata.disability_types),
-                            art.metadata.embedding_model_version,
-                        ))
+            texts_to_embed, mapping = self._prepare_article_chunks(chunk)
 
             vector_records = []
             if texts_to_embed:
                 embeddings = await client.get_embeddings(texts_to_embed)
-                for (cid, lang, status, cat, dt, emv), vec in zip(mapping, embeddings):
-                    vector_records.append({
-                        "canonical_id": cid,
-                        "vector": vec,
-                        "language": lang,
-                        "status": status,
-                        "category": cat,
-                        "disability_types": dt,
-                        "embedding_model_version": emv,
-                    })
+                vector_records = self._build_vector_records(mapping, embeddings)
 
             for art in chunk:
                 self.fts_store.upsert_article(art)
@@ -120,7 +137,59 @@ class HybridStore:
                 self.vector_store.upsert_vectors(vector_records)
             total_indexed += len(chunk)
 
+        if total_indexed > 0:
+            try:
+                self.vector_store.optimize()
+            except Exception as e:
+                logger.warning(f"Error optimizing vector store after batch indexing: {e}")
+
         return total_indexed
+
+    async def reembed_articles(
+        self,
+        articles: List[CanonicalArticle],
+        client: Optional[OpenRouterClient] = None,
+        batch_size: int = 15,
+        concurrency: int = 3,
+        on_batch: Optional[Any] = None,
+    ) -> int:
+        """Vector-only re-indexing of already stored articles for languages 'uz' and 'ru'.
+
+        Does NOT touch the FTS index. Embedding requests run concurrently bounded by
+        concurrency; writes to LanceDB are serialized with an asyncio.Lock.
+        Per batch: embeds first, then upsert_vectors, so a failing embedding call leaves
+        that batch's old vectors intact.
+        Awaits on_batch(done_cids) after each written batch.
+        """
+        if not articles:
+            return 0
+
+        client = self._resolve_client(client)
+        batches = [articles[i : i + batch_size] for i in range(0, len(articles), batch_size)]
+
+        sem = asyncio.Semaphore(concurrency)
+        write_lock = asyncio.Lock()
+
+        async def _process_batch(batch: List[CanonicalArticle]) -> None:
+            texts_to_embed, mapping = self._prepare_article_chunks(batch)
+            batch_cids = [art.canonical_id for art in batch]
+
+            vector_records = []
+            if texts_to_embed:
+                async with sem:
+                    embeddings = await client.get_embeddings(texts_to_embed)
+                vector_records = self._build_vector_records(mapping, embeddings)
+
+            async with write_lock:
+                if vector_records:
+                    self.vector_store.upsert_vectors(vector_records)
+                if on_batch is not None:
+                    res = on_batch(batch_cids)
+                    if asyncio.iscoroutine(res):
+                        await res
+
+        await asyncio.gather(*[_process_batch(b) for b in batches])
+        return len(articles)
 
     def get_article(self, canonical_id: str) -> Optional[CanonicalArticle]:
         return self.fts_store.get_article(canonical_id)

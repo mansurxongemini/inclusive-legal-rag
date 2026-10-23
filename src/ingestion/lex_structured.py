@@ -303,13 +303,22 @@ def _parse_header(soup: BeautifulSoup, doc: LexDocument) -> None:
         low = lab.lower()
         if re.search(r"kuchga kirish sanasi|кучга кириш санаси|дата вступления в силу", low) and i + 1 < len(labels):
             doc.effective_date = parse_dmy(labels[i + 1]) or doc.effective_date
-    rm = re.search(
-        r"(?:hujjat\s+)?kuchini\s+yo[ʻ'`’‘ʼ]qotgan|кучини\s+йўқотган|утратил[аи]?\s+силу",
-        header_text, re.IGNORECASE,
-    )
-    if rm:
-        doc.status = "repealed"
-        doc.repealed_date = parse_dmy(header_text[rm.end():rm.end() + 40])
+    # Lex.uz marks a whole act that lost force (or was re-adopted in a new edition) in a warning banner above the
+    # text ("Hujjat kuchini yo‘qotgan 20.01.2026"), not in the header
+    warn_el = soup.select_one("div.act_warning")
+    warn_text = _norm(warn_el.get_text(" ", strip=True)) if warn_el is not None else ""
+    for source in (header_text, warn_text):
+        rm = re.search(
+            r"(?:hujjat\s+)?kuchini\s+yo[ʻ'`’‘ʼ]qotgan|кучини\s+йўқотган|утратил[аи]?\s+силу",
+            source, re.IGNORECASE,
+        )
+        if rm:
+            doc.status = "repealed"
+            doc.repealed_date = parse_dmy(source[rm.end():rm.end() + 40])
+            break
+    else:
+        if re.search(r"yangi\s+tahrirda\s+qabul|янги\s+таҳрирда\s+қабул|в\s+новой\s+редакции", warn_text, re.IGNORECASE):
+            doc.status = "repealed"            # superseded: the new edition is a separate Lex.uz document
 
     # <title>: "O‘RQ-641-сон 15.10.2020. Nogironligi ..."  or  "440-сон 13.08.2026. 1941-1945..."
     tm = re.match(r"^\s*(?P<num>[^\s]+?)\s*[-–—]?\s*(?:сон|son)\s+(?P<d>\d{1,2})\.(?P<m>\d{1,2})\.(?P<y>\d{4})\.?\s*(?P<t>.*)$",
@@ -494,10 +503,12 @@ class LexDocumentParser:
             if not article_mode:
                 cm = _CLAUSE_RE.match(first_line)
                 if cm:
-                    n = int(cm.group(1).split("^")[0])
+                    parts = re.split(r"[\^-]", cm.group(1))
+                    n = int(parts[0])
+                    inserted = len(parts) > 1          # "2-1." / "2^1.": clause 2¹ inserted by a later amendment
                     is_new_context = last_clause_no == 0
-                    if is_new_context or n == last_clause_no + 1 or (n == 1 and annex_no is not None and cur is not None
-                                                                     and cur.annex_number != annex_no):
+                    if is_new_context or n == last_clause_no + 1 or (inserted and n == last_clause_no) or (
+                            n == 1 and annex_no is not None and cur is not None and cur.annex_number != annex_no):
                         flush()
                         last_clause_no = n
                         cur = LexUnit(

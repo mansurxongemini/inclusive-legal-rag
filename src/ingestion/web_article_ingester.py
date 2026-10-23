@@ -287,7 +287,7 @@ class WebArticleIngester:
                 cross_refs.append(CrossReference(
                     target_law_id="",
                     target_article=ref,
-                    ref_type=RefType.EXPLICIT,
+                    ref_type=RefType.REFERS_TO,
                     context_snippet=f"{meta['domain']} tahlili: {ref}",
                 ))
 

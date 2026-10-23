@@ -16,17 +16,13 @@ from pydantic import BaseModel, Field, field_validator
 from src.domain.disability_taxonomy import CATEGORIES, CATEGORY_IDS, DISABILITY_GROUPS
 
 
-from src.nlp.query_analyzer import QueryAnalyzer
-from src.retrieval.pipeline import retrieve_contexts
-from src.generation.generator import AnswerGenerator
+from src.gateway.service import answer_question, answer_question_stream
 from src.generation.validator import CitationItem
 from src.api.middleware.security import sanitize_user_input
 from src.api.middleware.rate_limiter import rate_limiter
 from src.api.auth.admin import is_direct_loopback, require_admin
 from src.api.auth.api_keys import api_key_manager, ApiKeyRecord
-from src.ingestion.url_importer import LexUrlImporter, UrlImportRequest, UrlImportResponse
 from src.ingestion.file_importer import LocalFileImporter, BatchFileImportReport
-from src.ingestion.manual_importer import ManualImporter, ManualArticleInput, ManualImportResult
 from src.ingestion.document_inspector import DocumentInspector, DocumentInspectionReport
 from src.clients.openrouter import OpenRouterClient
 
@@ -98,14 +94,19 @@ class InclusiveQueryResponse(BaseModel):
     citations: List[CitationItem]
     detected_language: str
     detected_script: str
+    mode: str = "plain"
     category: str
     disability_group: str
     validation_passed: bool
     is_refusal: bool
     cached: bool = False
+    cache_type: Optional[str] = None
+    semantic_similarity: Optional[float] = None
     response_time_ms: float = 0.0
     retrieval_confidence: Optional[float] = None
     status_warnings: List[dict] = []
+    warnings: List[str] = []
+    degraded: bool = False
 
 
 class ApiKeyCreateRequest(BaseModel):
@@ -126,12 +127,6 @@ class TestJevRequest(BaseModel):
     law_title: Optional[str] = Field(default=None, description="Optional parent law title")
 
 
-class NormUpdateRequest(BaseModel):
-    title: Optional[str] = Field(default=None, description="Modda yoki band sarlavhasi")
-    text_uz: str = Field(..., min_length=1, description="Normaning o'zbek tilidagi rasmiy matni")
-    text_ru: Optional[str] = Field(default=None, description="Normaning rus tilidagi rasmiy matni")
-    category: Optional[str] = Field(default=None, description="Huquqiy soha identifikatori")
-    disability_types: Optional[List[str]] = Field(default=None, description="Tegishli nogironlik toifalari")
 
 
 
@@ -190,102 +185,48 @@ async def query_inclusive_rag(
     if not cleaned_query:
         raise HTTPException(status_code=422, detail="Savol matni bo'sh bo'lishi mumkin emas.")
 
-    from src.api.app import get_store, get_cache, get_client
-    store = get_store()
-    cache = get_cache()
-    client = get_client()
-
-    user_lang = None if payload.language == "auto" else payload.language
-    analysis = QueryAnalyzer.analyze(cleaned_query, user_language=user_lang)
-    target_language = analysis.detected_language
-
-    # Inject explicit disability group if selected by client
-    if payload.disability_group != "all":
-        if payload.disability_group not in analysis.extracted_disability_types:
-            analysis.extracted_disability_types.append(payload.disability_group)
-
-    # 1. Dual-layer caching check
-    cache_key = f"{cleaned_query}_{payload.disability_group}_{payload.category}"
-    if not stream:
-        cached_resp = cache.get(cache_key, target_language, payload.mode)
-        if cached_resp:
-            cached_resp["cached"] = True
-            cached_resp["response_time_ms"] = round((time.time() - start_time) * 1000, 2)
-            return cached_resp
-
-    # 2-4. Hybrid retrieval, category focus, cross-references, status filter, rerank, relevance gate
-    retrieval = await retrieve_contexts(
-        analysis=analysis,
-        store=store,
-        client=client,
-        top_k=25,
-        max_extra=6,
-        rerank_top_n=6,
-        category=payload.category,
-    )
-    final_contexts = retrieval.contexts
-
-    # 4. Generation
-    generator = AnswerGenerator(client=client)
-
+    # Same answering pipeline as /api/v1/query: one retrieval depth, exact + semantic cache, one generation path.
     if stream:
         return StreamingResponse(
-            generator.generate_answer_stream(
-                query=cleaned_query,
-                contexts=final_contexts,
-                language=target_language,
+            answer_question_stream(
+                cleaned_query,
+                language=payload.language,
                 mode=payload.mode,
+                disability_group=payload.disability_group,
+                category=payload.category,
             ),
-            media_type="text/event-stream"
+            media_type="text/event-stream",
         )
 
-    try:
-        gen_result = await generator.generate_answer(
-            query=cleaned_query,
-            contexts=final_contexts,
-            language=target_language,
-            mode=payload.mode,
-        )
-    except RuntimeError as e:
-        logger.error(f"Answer generation unavailable: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="Javob yaratish xizmati vaqtincha mavjud emas. Iltimos, birozdan so'ng qayta urinib ko'ring.",
-        )
-
-    elapsed_ms = round((time.time() - start_time) * 1000, 2)
-
-    response_payload = InclusiveQueryResponse(
-        answer=gen_result.clean_answer or gen_result.answer,
-        clean_answer=gen_result.clean_answer or gen_result.answer,
-        telegram_formatted=gen_result.telegram_formatted or gen_result.answer,
-        citations=gen_result.citations,
-        detected_language=target_language,
-        detected_script=analysis.detected_script,
-        category=payload.category,
+    result = await answer_question(
+        cleaned_query,
+        language=payload.language,
+        mode=payload.mode,
         disability_group=payload.disability_group,
-        validation_passed=gen_result.validation_passed,
-        is_refusal=gen_result.is_refusal,
-        cached=False,
-        response_time_ms=elapsed_ms,
-        retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
-        status_warnings=retrieval.status_warnings,
+        category=payload.category,
     )
 
-    # Cache only verified, substantive answers
-    if (
-        response_payload.validation_passed
-        and not response_payload.is_refusal
-        and len((response_payload.clean_answer or response_payload.answer).strip()) > 80
-    ):
-        cache.set(
-            cache_key,
-            target_language,
-            payload.mode,
-            response_payload.model_dump()
-        )
-
-    return response_payload
+    return InclusiveQueryResponse(
+        answer=result.clean_answer or result.answer,
+        clean_answer=result.clean_answer or result.answer,
+        telegram_formatted=result.telegram_formatted or result.answer,
+        citations=result.citations,
+        detected_language=result.detected_language,
+        detected_script=result.detected_script,
+        mode=result.mode,
+        category=payload.category,
+        disability_group=payload.disability_group,
+        validation_passed=result.validation_passed,
+        is_refusal=result.is_refusal,
+        cached=result.cached,
+        cache_type=result.cache_type,
+        semantic_similarity=result.semantic_similarity,
+        response_time_ms=round((time.time() - start_time) * 1000, 2),
+        retrieval_confidence=result.retrieval_confidence,
+        status_warnings=result.status_warnings,
+        warnings=result.warnings,
+        degraded=result.degraded,
+    )
 
 
 # --- Public Norms and Categories Metadata ---
@@ -436,60 +377,6 @@ async def get_document_norms(law_identifier: str):
     }
 
 
-@router.put("/norms/{canonical_id}", dependencies=_ADMIN)
-async def update_and_revectorize_norm(canonical_id: str, payload: NormUpdateRequest):
-    """
-    Updates statutory norm content, category, or title, and immediately re-computes its
-    BGE-M3 embedding (1024-dim), updating both SQLite and LanceDB in real-time.
-    Embeddings are computed before anything is written, so a failure leaves the stored norm untouched.
-    """
-    from datetime import datetime, timezone
-    from src.api.app import get_store, get_client
-    store = get_store()
-    client = get_client()
-
-    existing = store.get_article(canonical_id)
-    if not existing:
-        raise HTTPException(status_code=404, detail="Bunday identifikatorga ega norma topilmadi.")
-
-    # Work on a copy: the store hands out its cached instance and an edit that fails must not leak into it.
-    article = existing.model_copy(deep=True)
-
-    # 1. Update text translations
-    article.translations["uz"] = payload.text_uz.strip()
-    if payload.text_ru is not None:
-        article.translations["ru"] = payload.text_ru.strip()
-
-    # 2. Update metadata
-    if payload.title is not None and payload.title.strip():
-        article.metadata.article_title["uz"] = payload.title.strip()
-
-    if payload.category is not None and payload.category.strip():
-        article.metadata.category = payload.category.strip()
-
-    if payload.disability_types is not None:
-        article.metadata.disability_types = payload.disability_types
-
-    article.metadata.last_verified_date = datetime.now(timezone.utc).date().isoformat()
-
-    # 3. Re-index in SQLite FTS5 and LanceDB Vector Store
-    try:
-        await store.index_article(article, client=client)
-    except Exception as e:
-        logger.error(f"Error re-vectorizing article {canonical_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=502, detail="Normani qayta vektorlashda xatolik yuz berdi. Norma o'zgarmadi.")
-
-    _invalidate_answer_cache()
-
-    return {
-        "success": True,
-        "message": "Norma muvaffaqiyatli saqlandi va BGE-M3 modeli orqali qayta vektorlandi.",
-        "canonical_id": canonical_id,
-        "article_number": article.metadata.article_number,
-        "law_number": article.metadata.law_number,
-        "category": article.metadata.category,
-        "last_verified_date": article.metadata.last_verified_date,
-    }
 
 
 
@@ -500,10 +387,25 @@ async def get_system_stats():
     store = get_store()
     with store.fts_store._get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM articles_metadata")
-        total_norms = c.fetchone()[0]
+        c.execute("""
+            SELECT 
+                COUNT(*), 
+                COUNT(DISTINCT json_extract(json_data, '$.metadata.law_id')) 
+            FROM articles_metadata
+            WHERE (json_extract(json_data, '$.metadata.source_type') = 'lex' OR json_extract(json_data, '$.metadata.source_type') IS NULL)
+              AND canonical_id NOT LIKE 'hp_%' AND canonical_id NOT LIKE 'qa_%'
+        """)
+        row = c.fetchone()
+        total_norms = row[0] if row else 0
+        total_docs = row[1] if row else 0
 
-        c.execute("SELECT json_extract(json_data, '$.metadata.category'), COUNT(*) FROM articles_metadata GROUP BY 1")
+        c.execute("""
+            SELECT json_extract(json_data, '$.metadata.category'), COUNT(*) 
+            FROM articles_metadata 
+            WHERE (json_extract(json_data, '$.metadata.source_type') = 'lex' OR json_extract(json_data, '$.metadata.source_type') IS NULL)
+              AND canonical_id NOT LIKE 'hp_%' AND canonical_id NOT LIKE 'qa_%'
+            GROUP BY 1
+        """)
         cat_distribution = {row[0]: row[1] for row in c.fetchall() if row[0]}
 
     api_keys = api_key_manager.list_keys()
@@ -512,6 +414,7 @@ async def get_system_stats():
     return {
         "status": "healthy",
         "total_statutory_norms": total_norms,
+        "total_documents": total_docs,
         "database_storage": "Clean Inclusive SQLite + FTS5 + LanceDB",
         "category_distribution": cat_distribution,
         "active_api_keys": len([k for k in api_keys if k.is_active]),
@@ -522,31 +425,6 @@ async def get_system_stats():
 
 # --- Administration: Ingestion (URL & Local Folder) & Manual Upload ---
 
-@router.post("/admin/import-url", dependencies=_ADMIN, response_model=UrlImportResponse)
-async def import_from_lex_url(payload: UrlImportRequest):
-    """Directly fetches and indexes a legal document from an official Lex.uz URL."""
-    from src.api.app import get_store
-    importer = LexUrlImporter(store=get_store())
-    try:
-        result = await importer.import_from_url(payload)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error importing Lex.uz URL {payload.url}: {e}", exc_info=True)
-        raise HTTPException(status_code=502, detail="Lex.uz dan hujjatni yuklab bo'lmadi. Keyinroq qayta urinib ko'ring.")
-    _invalidate_answer_cache()
-    return result
-
-
-@router.post("/admin/import-folder", dependencies=_ADMIN, response_model=BatchFileImportReport)
-async def import_from_local_folder(directory_path: str = "data/qonunlar"):
-    """Scans data/qonunlar (or a sub-folder of data/) for Word (.docx, .doc), PDF, and text files."""
-    from src.api.app import get_store
-    target = _resolve_import_dir(directory_path)
-    importer = LocalFileImporter(store=get_store())
-    report = await importer.scan_and_import_directory(str(target))
-    _invalidate_answer_cache()
-    return report
 
 
 @router.post("/admin/inspect-document", dependencies=_ADMIN, response_model=DocumentInspectionReport)
@@ -610,24 +488,6 @@ async def legacy_sync_alias():
     }
 
 
-@router.post("/admin/upload-json", dependencies=_ADMIN, response_model=ManualImportResult)
-async def upload_json_norms(payload: List[dict]):
-    """Uploads pre-structured CanonicalArticle JSON records."""
-    from src.api.app import get_store
-    importer = ManualImporter(store=get_store())
-    result = await importer.import_json_data(payload)
-    _invalidate_answer_cache()
-    return result
-
-
-@router.post("/admin/upload-article", dependencies=_ADMIN, response_model=ManualImportResult)
-async def upload_single_article(payload: ManualArticleInput):
-    """Creates and indexes a single article from manual form input."""
-    from src.api.app import get_store
-    importer = ManualImporter(store=get_store())
-    result = await importer.import_single_article(payload)
-    _invalidate_answer_cache()
-    return result
 
 
 # --- Administration: API Keys Management ---

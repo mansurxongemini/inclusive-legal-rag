@@ -1158,7 +1158,7 @@
   "note": "Yo'q, nol stavka emas: 3 foizlik me'yordan ortiq ishga joylashtirilgan nogironligi bo'lgan shaxslarning har bir foiziga foyda solig'i stavkasi 1 foizga kamaytiriladi."
  },
  {
-  "id": "s089",
+  "id": "s089", "scope": "ambiguous",
   "question": "Er-xotin o'zaro rozilik bilan ajrashganda, voyaga yetmagan ikki nafar bola uchun oylik daromaddan qancha miqdorda aliment undiriladi?",
   "language": "uz",
   "expected_ids": [],
@@ -1180,7 +1180,7 @@
   "note": "Yo'l harakati qoidalarini buzganlik uchun jarimalar nogironlik korpusiga tegishli emas."
  },
  {
-  "id": "s091",
+  "id": "s091", "scope": "ambiguous",
   "question": "Ayol xodimaga homiladorlik va tug'ish ta'tili jami necha kalendar kun muddatga rasmiylashtiriladi va nafaqa qanday to'lanadi?",
   "language": "uz",
   "expected_ids": [],
@@ -2399,7 +2399,7 @@
   "note": "Mahalliy hokimlik organlari nogironlarni ishga joylashtirish uchun korxonalarga ish o'rinlarining eng kam sonini belgilaydi."
  },
  {
-  "id": "s185",
+  "id": "s185", "scope": "ambiguous",
   "question": "Er-xotin ajrashganda voyaga yetmagan bir nafar farzand uchun ota daromadining qancha qismi miqdorida aliment undiriladi?",
   "language": "uz",
   "expected_ids": [],
@@ -2421,7 +2421,7 @@
   "note": "Mast holda mashina boshqarish jarimasi umumiy yo'l harakati qoidalariga oid bo'lib, korpusga kirmaydi."
  },
  {
-  "id": "s187",
+  "id": "s187", "scope": "ambiguous",
   "question": "Каков стандартный срок оплачиваемого отпуска по беременности и родам для работающих женщин согласно Трудовому кодексу Узбекистана?",
   "language": "ru",
   "expected_ids": [],
@@ -2465,7 +2465,7 @@
   "note": "Ko'chmas mulk oldi-sotdisida notarial boj to'lash masalasi davlat boji to'g'risidagi qonunchilikka oid."
  },
  {
-  "id": "s191",
+  "id": "s191", "scope": "ambiguous",
   "question": "Ko'p qavatli uyda xonadonlar egalari shirkat umumiy yig'ilishida qanday kvorum bilan boshqaruvchini saylaydi?",
   "language": "uz",
   "expected_ids": [],

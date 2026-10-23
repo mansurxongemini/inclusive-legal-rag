@@ -24,7 +24,8 @@ RUN addgroup --system --gid 1001 appgroup && \
 COPY --from=builder /root/.local /home/appuser/.local
 COPY --chown=appuser:appgroup . .
 
-ENV PATH=/home/appuser/.local/bin:$PATH \
+ENV MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=65536 \
+    PATH=/home/appuser/.local/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     STORAGE_DIR=/app/data/store \

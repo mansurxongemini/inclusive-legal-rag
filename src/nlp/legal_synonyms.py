@@ -45,7 +45,8 @@ LEGAL_SYNONYM_DICTIONARY: Dict[str, List[str]] = {
     "parvarish": ["parvarishlash", "qarovchi", "o'zgalar parvarishiga muhtoj", "parvarish nafaqasi"],
     "moddiy yordam": ["ijtimoiy yordam", "yagona ijtimoiy reyestr", "moddiy yordam to'lovi"],
     "kompensatsiya": ["kompensatsiya to'lovlari", "pul kompensatsiyasi"],
-    "reyestr": ["yagona ijtimoiy reyestr", "ijtimoiy himoya yagona reyestri"],
+    "reyestr": ["Ijtimoiy reyestr", "yagona ijtimoiy reyestr", "ijtimoiy himoya yagona reyestri"],
+    "reestr": ["Ijtimoiy reyestr", "yagona ijtimoiy reyestr", "ijtimoiy himoya yagona reyestri"],
     "to'lov": ["to'lovlar", "nafaqa", "kompensatsiya"],
 
     # --- work ------------------------------------------------------------------------------------------
@@ -66,7 +67,14 @@ LEGAL_SYNONYM_DICTIONARY: Dict[str, List[str]] = {
     "reabilitatsiya": ["reabilitatsiya dasturi", "tibbiy reabilitatsiya", "ijtimoiy reabilitatsiya"],
     "texnik vosita": ["reabilitatsiyaning texnik vositalari", "protez-ortopediya buyumlari"],
     "sanatoriy": ["sanatoriy-kurort davolanishi", "sanatoriyga yo'llanma", "reabilitatsiya"],
-    "yo'llanma": ["sanatoriyga yo'llanma", "bepul yo'llanma"],
+    "yo'llanma": ["sanatoriyga yo'llanma", "bepul yo'llanma", "imtiyozli yo'llanma", "order"],
+    "operatsiya": ["jarrohlik amaliyoti", "ixtisoslashtirilgan tibbiy yordam", "imtiyozli yo'llanma", "order"],
+    "aperatsiya": ["jarrohlik amaliyoti", "operatsiya", "ixtisoslashtirilgan tibbiy yordam", "imtiyozli yo'llanma", "order"],
+    "jarroh": ["jarrohlik amaliyoti", "operatsiya", "ixtisoslashtirilgan tibbiy yordam", "imtiyozli yo'llanma"],
+    "order": ["imtiyozli yo'llanma", "tibbiy yordam olish huquqini beruvchi order", "ixtisoslashtirilgan tibbiy yordam"],
+    "davolan": ["tibbiy yordam", "ixtisoslashtirilgan tibbiy yordam", "statsionar davolanish", "imtiyozli yo'llanma"],
+    "shifoxona": ["tibbiyot muassasasi", "statsionar davolanish", "ixtisoslashtirilgan tibbiy yordam"],
+    "kasalxona": ["tibbiyot muassasasi", "statsionar davolanish", "ixtisoslashtirilgan tibbiy yordam"],
 
     # --- access ----------------------------------------------------------------------------------------
     "pandus": ["to'siqsiz muhit", "qulay muhit", "nogironligi bo'lgan shaxslar uchun qulaylik"],

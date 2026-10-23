@@ -2,12 +2,13 @@ import json
 import logging
 import re
 from typing import Dict, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from src.schema.canonical import CanonicalArticle
 from src.storage.hybrid_store import HybridStore
 from src.clients.openrouter import OpenRouterClient
 from src.retrieval.hybrid_retriever import ScoredArticle
 from src.retrieval.jev_ranker import JevRanker
+from src.retrieval.passages import focus_chunks
 from src.config import settings
 
 logger = logging.getLogger(__name__)
@@ -105,6 +106,8 @@ class RetrievedArticleContext(BaseModel):
     is_superseded: bool = False
     superseded_by: Optional[str] = None
     rerank_score: Optional[float] = None     # cross-encoder relevance (0..1) when a reranker model scored it
+    # {text language: chunk index} of the part of a long unit that matches the question (see retrieval.passages)
+    focus: Dict[str, int] = Field(default_factory=dict)
 
 
 class Reranker:
@@ -125,7 +128,9 @@ class Reranker:
         store: HybridStore,
         top_n: int = 5,
         use_model: bool = True,
+        subquestions: Optional[List[str]] = None,
     ) -> List[RetrievedArticleContext]:
+        """subquestions: the legal sub-questions of a long question; Jev picks the best passage for each of them too."""
         self.last_provider = "none"
         self.last_answerable = None
 
@@ -146,7 +151,12 @@ class Reranker:
                     source_tag=c.source_tag,
                     is_superseded=(art.metadata.status.value in ("repealed", "amended")),
                     superseded_by=art.metadata.superseded_by,
+                    focus=focus_chunks(art, query, ("uz", language), c.vector_chunk) if settings.PASSAGE_FOCUS else {},
                 ))
+
+        # RERANK_PROVIDER "rrf" / "none": no model reranking at all, fused (RRF) order is the final order
+        if settings.RERANK_PROVIDER in ("rrf", "none"):
+            use_model = False
 
         if len(article_contexts) <= top_n or not use_model:
             self.last_provider = "rrf"
@@ -155,9 +165,11 @@ class Reranker:
 
         # Jev reranker path
         if settings.RERANK_PROVIDER == "jev" and not getattr(self.client, "is_mock", False):
-            subset = article_contexts[:settings.JEV_RERANK_UNITS]
+            # (Capping the units one act may send here was tried: it lowered MRR on both eval sets, so RRF order is kept.)
+            units = settings.JEV_RERANK_UNITS + settings.JEV_RERANK_UNITS_PER_SUBQUESTION * len(subquestions or [])
+            subset = article_contexts[:units]
             try:
-                result = await JevRanker(self.client).rank(query, subset)
+                result = await JevRanker(self.client).rank(query, subset, subquestions=subquestions)
             except Exception as e:  # an unexpected response must not fail the request: Cohere takes over
                 logger.warning(f"Jev rerank failed: {e}")
                 result = None
@@ -172,8 +184,15 @@ class Reranker:
                 self.last_provider = "jev"
                 self.last_answerable = result.answerable
                 return ranked[:top_n]
-            else:
+            elif "openrouter.ai" in getattr(self.client, "base_url", "openrouter.ai"):
                 logger.warning("Jev rerank unavailable, falling back to Cohere")
+            else:
+                # Jev is down or paused (monthly budget) and the generation provider has no /rerank endpoint: the RRF
+                # order serves the request instead of an endpoint that cannot answer.
+                logger.warning("Jev rerank unavailable, serving the RRF order")
+                self.last_provider = "rrf"
+                article_contexts.sort(key=lambda x: x.final_score, reverse=True)
+                return article_contexts[:top_n]
 
         # Use OpenRouter dedicated /rerank endpoint
         try:
@@ -186,7 +205,9 @@ class Reranker:
                 law_t = ctx.article.metadata.law_title.get(language, "") or ctx.article.metadata.law_title.get("uz", "")
                 art_num = ctx.article.metadata.article_number
                 art_title = ctx.article.get_title(language)
-                header = f"{law_t} {art_num} {art_title}."
+                annex_or_chap = ctx.article.metadata.annex_title or ctx.article.metadata.chapter_number or ""
+                annex_part = f" ({annex_or_chap})" if annex_or_chap else ""
+                header = f"{law_t} {art_num}{annex_part} {art_title}."
                 unit_headers.append(header)
 
                 body = ctx.article.get_text(language)

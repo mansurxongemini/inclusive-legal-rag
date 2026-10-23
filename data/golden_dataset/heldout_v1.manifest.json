@@ -1,0 +1,184 @@
+{
+ "file": "heldout_v1.json",
+ "sha256": "50a7cebc07e7f9593a3f39002f7dd0c350b429e0ab3fb8d87ba9ebdd4eaec96d",
+ "in_scope": 55,
+ "out_of_scope": 40,
+ "rejected": [
+  {
+   "index": 2,
+   "id": "pq_4653_2020_a10_p_4",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 3,
+   "id": "pq_103_2025_p_11",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 6,
+   "id": "pq_230_2022_preamble",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 9,
+   "id": "vmq_56_2008_p_1",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 13,
+   "id": "pq_175_2024_p_1",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 14,
+   "id": "reg_2238_4_2023_preamble",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 16,
+   "id": "pq_5215_2021_p_10",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 18,
+   "id": "ozbekiston_respublikasining_budjet_kodek_2013_art_175",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 19,
+   "id": "doc_sq_407_iv_2021_preamble",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 21,
+   "id": "pq_5216_2021_p_16",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 29,
+   "id": "vmq_764_2018_preamble",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 30,
+   "id": "pq_4860_2020_a1_p_6",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 34,
+   "id": "reg_2785_4_2024_p_1",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 40,
+   "id": "pq_3909_2018_p_15",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 44,
+   "id": "pq_266_2024_p_19",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 45,
+   "id": "vmq_68_2013_preamble",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 50,
+   "id": "pq_3925_2018_preamble",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 51,
+   "id": "pq_244_2022_preamble",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 54,
+   "id": "vmq_769_2021_p_3",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 55,
+   "id": "pq_4190_2019_p_2",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 56,
+   "id": "reg_3360_2_2025_p_1",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 60,
+   "id": "vmq_48_2008_a1_p_7",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 63,
+   "id": "vmq_183_2018_p_4",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 64,
+   "id": "vmq_806_2020_a2_p_1",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 70,
+   "id": "pq_4242_2019_preamble",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 71,
+   "id": "reg_2785_1_2016_p_1",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 72,
+   "id": "vmq_185_2012_p_1",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 75,
+   "id": "pq_92_2023_p_7",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 76,
+   "id": "vmq_440_2025_a2_p_5",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 77,
+   "id": "vmq_294_2025_p_6",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 80,
+   "id": "pq_4804_2020_a7_p_1",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 83,
+   "id": "vmq_741_2024_a1_p_3",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 86,
+   "id": "vmq_40_2026_a1_p_2",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 87,
+   "id": "vmq_175_2025_p_3",
+   "why": "skipped by the writer"
+  },
+  {
+   "index": 89,
+   "id": "pq_20_2026_preamble",
+   "why": "skipped by the writer"
+  }
+ ],
+ "rule": "never used to tune; read at the start and at the end of the work"
+}

@@ -55,20 +55,6 @@ def test_url_importer_html_parsing():
     assert articles[0].metadata.source_url == "https://lex.uz/uz/docs/-888"
 
 
-@pytest.mark.asyncio
-async def test_admin_import_endpoints():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        # Test folder import endpoint
-        res = await ac.post("/api/v1/inclusive/admin/import-folder")
-        assert res.status_code == 200
-        data = res.json()
-        assert "total_files_scanned" in data
-        assert data["success"] is True
-
-        # Test invalid url validation
-        bad_res = await ac.post("/api/v1/inclusive/admin/import-url", json={"url": "https://google.com"})
-        assert bad_res.status_code == 400
 
 
 def test_document_inspector_with_table():

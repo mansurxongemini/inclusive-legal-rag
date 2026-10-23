@@ -2,6 +2,7 @@ import re
 from typing import List, Literal, Optional
 from pydantic import BaseModel
 from .transliteration import (
+    RUSSIAN_LEGAL_MARKERS,
     UZBEK_CYRILLIC_COMMON_WORDS,
     cyrillic_to_latin,
     detect_script,
@@ -9,6 +10,8 @@ from .transliteration import (
 )
 
 SupportedLanguage = Literal["uz", "ru", "en"]
+
+_UZ_CYR_FOLD = str.maketrans("ўғқҳ", "угкх")
 
 
 class QueryAnalysis(BaseModel):
@@ -27,7 +30,41 @@ class QueryAnalyzer:
     """Heuristic and regex-based fast multilingual query analyzer."""
 
     UZBEK_SPECIFIC_CHARS = set("ўғқҳЎҒҚҲ")
-    RUSSIAN_SPECIFIC_CHARS = set("ыэёъьЫЭЁЪЬ")
+    # Letters Russian has and Uzbek Cyrillic does not (э, ё and ъ are used in Uzbek too: эмас, ёрдам, маъно).
+    RUSSIAN_SPECIFIC_CHARS = set("ыщьЫЩЬ")
+
+    # Cyrillic evidence below is matched on the "folded" alphabet (ў ғ қ ҳ -> у г к х), because many users type
+    # Uzbek Cyrillic without those four letters ("килиш", "узбекистон", "хужжат").
+    UZBEK_CYR_FUNCTION_WORDS = {
+        "ва", "ёки", "эмас", "юк", "керак", "лозим", "шарт", "мумкин", "нима", "нега", "кандай", "канча", "неча",
+        "нечта", "каерда", "каердан", "каерга", "качон", "кимлар", "борми", "юкми", "мумкинми", "керакми",
+        "хакида", "тугрисида", "буйича", "оид", "каби", "кейин", "олдин", "ичида", "булади", "булиши", "килиш",
+        "олиш", "бериш", "олинади", "берилади", "килинади", "учун", "билан", "хам", "мен", "биз", "сиз",
+    }
+    # word starts (len >= 4) of Uzbek vocabulary that Russian does not share
+    UZBEK_CYR_STEMS = (
+        "ногирон", "нафака", "имтиез", "ердам", "мехнат", "таълим", "ижтимоий", "тиббий", "хукук", "конун",
+        "бола", "аравача", "йулланма", "навбат", "ариза", "кафолат", "муддат", "тартиб", "хужжат", "ташкилот",
+        "фукаро", "давлат", "шахс", "мурожаат", "тулов", "туланади", "олинади", "берилади", "ишлатиш",
+    )
+    # word endings that occur in Uzbek but (almost) never in Russian text; measured on the corpus
+    UZBEK_CYR_SUFFIXES = (
+        "нинг", "ларни", "ларга", "ларда", "лардан", "лари", "лар", "ини", "ининг", "идан", "нидан", "идаги",
+        "даги", "лган", "нган", "лади", "нади", "тади", "кади", "ича", "шга", "шни", "шда", "иши", "лиги",
+        "лик", "мга", "мда", "мдан", "ман", "миз", "имиз", "ингиз", "сиз", "мас", "мади", "япти",
+    )
+    # function words that never occur in Uzbek Cyrillic
+    RUSSIAN_FUNCTION_WORDS = {
+        "и", "в", "во", "на", "по", "при", "об", "о", "от", "из", "за", "не", "ни", "что", "это", "или", "если",
+        "его", "её", "их", "все", "всё", "также", "со", "до", "без", "над", "под", "между", "через", "только",
+        "может", "могут", "должен", "должна", "должны", "будет", "были", "быть", "который", "которая", "которые",
+        "где", "когда", "какой", "какая", "какие", "какое", "чтобы", "ли", "бы", "же", "уже", "нужно", "надо",
+    }
+    # word endings that are Russian grammar and not Uzbek (loan endings shared by both, such as -ия/-ция, are left out)
+    RUSSIAN_ENDINGS = (
+        "ого", "его", "ому", "ыми", "ется", "ются", "ться", "ать", "ять", "ить", "еть", "ает", "яет", "ают", "яют",
+        "ешь", "ая", "яя", "ое", "ые", "ых", "ой", "ей", "ость", "ости", "ство", "ства", "ами", "ями",
+    )
 
     UZBEK_KEYWORDS = {
         "nogiron", "nogironlik", "huquq", "huquqlari", "qonun", "modda", "qism", "band",
@@ -81,22 +118,47 @@ class QueryAnalyzer:
             return "uz"
         
         if script == "cyrillic":
-            # Can be Uzbek Cyrillic or Russian. UZBEK_KEYWORDS are Latin, so Cyrillic words must be
-            # transliterated before matching (otherwise every Cyrillic query without ў/ғ/қ/ҳ became "ru").
-            cyr_words = set(re.findall(r"[а-яёўғқҳ]+", text.lower()))
-            latin_words = set(re.findall(r"\w+", normalize_apostrophes(cyrillic_to_latin(" ".join(cyr_words)))))
-            uz_cyr_hits = len(cyr_words.intersection(UZBEK_CYRILLIC_COMMON_WORDS)) + len(
-                latin_words.intersection(cls.UZBEK_KEYWORDS)
-            )
-            if uz_cyr_hits > ru_matches:
-                return "uz"
-            return "ru"
-        
+            return cls._detect_cyrillic_language(text)
+
         # In Latin script
         if en_matches > uz_matches and en_matches > 0:
             return "en"
         
         return "uz"
+
+    @classmethod
+    def _detect_cyrillic_language(cls, text: str) -> SupportedLanguage:
+        """
+        Uzbek (Cyrillic) vs Russian for a Cyrillic query. Uzbek is agglutinative ("ногиронман", "боламга"), so
+        words are matched by their start or ending, not only as whole dictionary words, and ў/ғ/қ/ҳ are folded
+        away because users often type without them. Russian is recognised by its own letters (ы щ ь), keywords
+        and grammatical endings. With no evidence either way the product's main language, Uzbek, wins.
+        """
+        lowered = text.lower()
+        words = set(re.findall(r"[а-яёўғқҳ]+", lowered))
+        folded_common = {w.translate(_UZ_CYR_FOLD) for w in UZBEK_CYRILLIC_COMMON_WORDS}
+
+        uz_hits = ru_hits = 0
+        for w in words:
+            fw = w.translate(_UZ_CYR_FOLD)
+            latin = normalize_apostrophes(cyrillic_to_latin(w))
+            if (
+                fw in folded_common
+                or fw in cls.UZBEK_CYR_FUNCTION_WORDS
+                or latin in cls.UZBEK_KEYWORDS
+                or any(fw.startswith(stem) for stem in cls.UZBEK_CYR_STEMS)
+                or (len(fw) >= 5 and fw.endswith(cls.UZBEK_CYR_SUFFIXES))
+            ):
+                uz_hits += 1
+            if (
+                w in cls.RUSSIAN_KEYWORDS
+                or w in cls.RUSSIAN_FUNCTION_WORDS
+                or w in RUSSIAN_LEGAL_MARKERS
+                or any(ch in cls.RUSSIAN_SPECIFIC_CHARS for ch in w)
+                or (len(w) >= 5 and w.endswith(cls.RUSSIAN_ENDINGS))
+            ):
+                ru_hits += 1
+        return "ru" if ru_hits > uz_hits else "uz"
 
     @classmethod
     def extract_article_number(cls, text: str) -> Optional[str]:

@@ -57,10 +57,10 @@ ADMIN_CALLS = [
     ("get", "/api/v1/inclusive/admin/api-keys", None),
     ("post", "/api/v1/inclusive/admin/api-keys", {"name": "x"}),
     ("delete", "/api/v1/inclusive/admin/api-keys/key_abc", None),
-    ("put", "/api/v1/inclusive/norms/law_disability_2020_art_15", {"text_uz": "tampered"}),
-    ("post", "/api/v1/inclusive/admin/upload-json", []),
-    ("post", "/api/v1/inclusive/admin/import-folder", None),
-    ("post", "/api/v1/inclusive/admin/import-url", {"url": "https://lex.uz/uz/docs/-1"}),
+    ("post", "/api/v1/admin/corpus/preview", {"source": "-1"}),
+    ("post", "/api/v1/admin/corpus/add", {"lex_id": "-1", "include": "all"}),
+    ("post", "/api/v1/admin/corpus/refresh", {"lex_id": "-1"}),
+    ("get", "/api/v1/admin/corpus/jobs/job_abc", None),
     ("delete", "/api/v1/admin/article/law_disability_2020_art_15", None),
     ("put", "/api/v1/admin/article/law_disability_2020_art_15",
      {"title_uz": "t", "text_uz": "tampered", "revectorize": False}),
@@ -106,6 +106,50 @@ async def test_direct_loopback_keeps_dashboard_working():
     assert "api_keys" in res.json()
 
 
+LOCAL_PEER = ("127.0.0.1", 40000)
+ADMIN_PATH = "/api/v1/inclusive/admin/api-keys"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("headers", [
+    {"Host": "evil.example"},                                                  # DNS rebinding to 127.0.0.1
+    {"Host": "evil.example:8000"},
+    {"Origin": "http://evil.example"},                                         # another site driving the browser
+    {"Origin": "null"},
+    {"Origin": "http://localhost:3000"},                                       # same host, other port = other site
+    {"Sec-Fetch-Site": "cross-site"},
+])
+async def test_loopback_trust_ignores_requests_driven_by_other_web_pages(headers):
+    async with local_client() as c:
+        res = await c.get(ADMIN_PATH, headers=headers)
+    assert res.status_code == 401, headers
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("base_url,headers", [
+    ("http://localhost:8000", {"Origin": "http://localhost:8000", "Sec-Fetch-Site": "same-origin"}),
+    ("http://127.0.0.1:8000", {"Origin": "http://127.0.0.1:8000"}),
+    ("http://[::1]:8000", {}),
+    ("http://localhost", {"Sec-Fetch-Site": "none"}),
+])
+async def test_loopback_trust_keeps_the_dashboard_working(base_url, headers):
+    async with AsyncClient(transport=ASGITransport(app=app, client=LOCAL_PEER), base_url=base_url) as c:
+        res = await c.get(ADMIN_PATH, headers=headers)
+    assert res.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_loopback_trust_can_be_switched_off_behind_a_proxy(monkeypatch):
+    # nginx without X-Forwarded-For: the caller is indistinguishable from a local one, so only the key may count
+    monkeypatch.setattr(settings, "ADMIN_LOOPBACK_ENABLED", False)
+    async with local_client() as c:
+        assert (await c.get(ADMIN_PATH)).status_code == 401
+        monkeypatch.setattr(settings, "ADMIN_API_KEY", "s3cret-admin-key")
+        assert (await c.get(ADMIN_PATH)).status_code == 401
+        assert (await c.get(ADMIN_PATH, headers={"X-Admin-Key": "s3cret-admin-key"})).status_code == 200
+        assert (await c.get(ADMIN_PATH, headers={"X-Admin-Key": "nope"})).status_code == 403
+
+
 @pytest.mark.asyncio
 async def test_admin_key_grants_remote_access(monkeypatch):
     monkeypatch.setattr(settings, "ADMIN_API_KEY", "s3cret-admin-key")
@@ -130,14 +174,6 @@ async def test_valid_api_key_works_remotely_and_is_rate_limited_per_key():
     assert codes[2] == 429
 
 
-@pytest.mark.asyncio
-async def test_import_folder_is_confined_to_data_directory():
-    async with local_client() as c:
-        for bad in ("/etc", "../..", "data/../..", "/home"):
-            res = await c.post("/api/v1/inclusive/admin/import-folder", params={"directory_path": bad})
-            assert res.status_code == 400, bad
-        ok = await c.post("/api/v1/inclusive/admin/import-folder", params={"directory_path": "data/qonunlar"})
-        assert ok.status_code == 200
 
 
 @pytest.mark.asyncio
@@ -184,11 +220,6 @@ def test_internal_and_non_http_urls_are_blocked(url):
         assert_public_http_url(url)
 
 
-@pytest.mark.asyncio
-async def test_import_url_rejects_lookalike_host():
-    async with local_client() as c:
-        res = await c.post("/api/v1/inclusive/admin/import-url", json={"url": "https://lex.uz.evil.example/uz/docs/-1"})
-    assert res.status_code == 400
 
 
 @pytest.mark.asyncio
@@ -384,7 +415,7 @@ async def test_failed_edit_does_not_leak_into_the_shared_cached_article(monkeypa
 
     monkeypatch.setattr(HybridStore, "index_article", boom)
     async with local_client() as c:
-        res = await c.put("/api/v1/inclusive/norms/law_disability_2020_art_15", json={"text_uz": "DRAFT TEXT"})
+        res = await c.put("/api/v1/admin/article/law_disability_2020_art_15", json={"title_uz": "Modda", "text_uz": "DRAFT TEXT"})
     assert res.status_code == 502
     assert store.get_article("law_disability_2020_art_15").get_text("uz") == before
 
@@ -426,22 +457,25 @@ async def test_answers_failing_validation_are_not_cached(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_llm_outage_returns_503_instead_of_a_stack_trace(monkeypatch):
+async def test_llm_outage_serves_the_matching_norms_not_an_error_page(monkeypatch):
     async def down(self, *args, **kwargs):
         raise RuntimeError("All configured LLM models failed on OpenRouter.")
 
     monkeypatch.setattr(OpenRouterClient, "chat_completion", down)
+    question = "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?"
     async with local_client() as c:
-        res = await c.post(
-            "/api/v1/query",
-            json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?", "language": "uz"},
-        )
-    assert res.status_code == 503
-    assert "OpenRouter" not in res.text
+        res = await c.post("/api/v1/query", json={"question": question, "language": "uz"})
+        again = await c.post("/api/v1/query", json={"question": question, "language": "uz"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["degraded"] is True and body["citations"]
+    assert any(w.startswith("llm_unavailable") for w in body["warnings"])
+    assert "ishlamayapti" in body["answer"] and "OpenRouter" not in res.text
+    assert again.json()["cached"] is False            # a sources-only answer is never cached
 
 
 @pytest.mark.asyncio
-async def test_stream_failure_is_a_structured_error_not_answer_text(monkeypatch):
+async def test_stream_failure_before_any_token_serves_the_matching_norms(monkeypatch):
     async def broken_stream(self, *args, **kwargs):
         raise RuntimeError("All configured LLM models failed to stream (HTTP 401).")
         yield  # pragma: no cover  (makes this an async generator)
@@ -453,9 +487,25 @@ async def test_stream_failure_is_a_structured_error_not_answer_text(monkeypatch)
             json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?", "language": "uz"},
         )
     events = [json.loads(line[6:]) for line in res.text.splitlines() if line.startswith("data: ")]
+    assert events[-1]["type"] == "done" and events[-1]["degraded"] is True and events[-1]["citations"]
+    assert "HTTP 401" not in res.text
+
+
+@pytest.mark.asyncio
+async def test_stream_interrupted_after_tokens_is_a_structured_error(monkeypatch):
+    async def half_stream(self, *args, **kwargs):
+        yield "Javobning boshi "
+        raise RuntimeError("LLM stream was interrupted.")
+
+    monkeypatch.setattr(OpenRouterClient, "chat_completion_stream", half_stream)
+    async with local_client() as c:
+        res = await c.post(
+            "/api/v1/query?stream=true",
+            json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?", "language": "uz"},
+        )
+    events = [json.loads(line[6:]) for line in res.text.splitlines() if line.startswith("data: ")]
     assert events[-1]["type"] == "error"
     assert not any(e.get("type") == "done" for e in events)
-    assert "HTTP 401" not in res.text
 
 
 @pytest.mark.asyncio
@@ -527,8 +577,8 @@ async def test_corpus_changes_invalidate_cached_answers():
     async with local_client() as c:
         art = get_store().get_article("law_disability_2020_art_15")
         res = await c.put(
-            "/api/v1/inclusive/norms/law_disability_2020_art_15",
-            json={"text_uz": art.get_text("uz")},  # same text, still a write
+            "/api/v1/admin/article/law_disability_2020_art_15",
+            json={"title_uz": "15-modda", "text_uz": art.get_text("uz")},  # same text, still a write
         )
     assert res.status_code == 200
     assert cache.get("invalidate me", "uz", "plain") is None

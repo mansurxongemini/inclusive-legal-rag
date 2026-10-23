@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 from pydantic import BaseModel, Field
 
 from src.ingestion.url_safety import is_lex_uz_url
+from src.ingestion.localized import localized, provenance_for
 from src.nlp.transliteration import cyrillic_to_latin, detect_script, normalize_apostrophes
 
 logger = logging.getLogger(__name__)
@@ -493,11 +494,11 @@ class DocumentInspector:
                 schema_version="1.1",
                 metadata=ArticleMetadata(
                     law_id=law_slug,
-                    law_title={"uz": report.law_title, "ru": report.law_title, "en": report.law_title},
+                    law_title=localized(report.law_title, report.law_title),
                     law_number=report.law_number,
                     chapter_number="",
                     article_number=unit.unit_num or unit.title,
-                    article_title={"uz": unit.title, "ru": unit.title, "en": unit.title},
+                    article_title=localized(unit.title, unit.title),
                     source_url=report.url,
                     effective_date=today,
                     last_verified_date=today,
@@ -509,13 +510,9 @@ class DocumentInspector:
                     cross_references=[],
                     embedding_model_version="baai/bge-m3",
                 ),
-                points=[ArticlePoint(point_id="1", text={"uz": unit.exact_bge_prompt, "ru": unit.exact_bge_prompt, "en": unit.exact_bge_prompt})],
-                translations={"uz": unit.exact_bge_prompt, "ru": unit.exact_bge_prompt, "en": unit.exact_bge_prompt},
-                translation_provenance={
-                    "uz": TranslationProvenanceType.OFFICIAL,
-                    "ru": TranslationProvenanceType.OFFICIAL,
-                    "en": TranslationProvenanceType.MACHINE_TRANSLATED_UNREVIEWED,
-                }
+                points=[ArticlePoint(point_id="1", text=localized(unit.exact_bge_prompt, unit.exact_bge_prompt))],
+                translations=localized(unit.exact_bge_prompt, unit.exact_bge_prompt),
+                translation_provenance=provenance_for(localized(unit.exact_bge_prompt, unit.exact_bge_prompt))
             )
             articles.append(art)
         return articles

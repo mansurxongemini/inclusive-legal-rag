@@ -53,6 +53,11 @@ async def main() -> int:
         for f in rep.failures[:25]:
             print(f"  {f['id']}: {f['question'][:70]!r}\n      expected={f['expected'][:3]} returned={f['returned'][:3]} refused={f['refused']} ({f['gate']}, vec={f['vector']})")
 
+    if rep.coverage_gaps:
+        print(f"\n{len(rep.coverage_gaps)} coverage gap(s) (none of the expected acts is in the store):")
+        for g in rep.coverage_gaps[:25]:
+            print(f"  {g['id']}: {g['question'][:70]!r}\n      expected_law_numbers={g['expected_law_numbers']} lex_ids={g['expected_lex_ids']}")
+
     if args.calibrate:
         for label, key in (("dense similarity", "best_vector_score"), ("reranker score", "top_rerank_score")):
             ins = sorted(getattr(r, key) for r in rep.items if not r.out_of_scope and getattr(r, key) is not None)

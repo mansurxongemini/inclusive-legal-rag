@@ -127,6 +127,7 @@
 
         <div class="actions">
           <button type="submit" class="primary" id="submit">Javob olish</button>
+          <button type="button" id="stop" hidden>To'xtatish</button>
           <button type="button" id="mic" aria-pressed="false">Ovoz bilan yozish</button>
           <button type="reset" id="reset">Tozalash</button>
         </div>
@@ -156,7 +157,7 @@
       <p><strong>Muhim:</strong> bu xizmat axborot berish uchun mo'ljallangan va davlat organi qarori, sud hujjati yoki advokat maslahati o'rnini bosmaydi.
       Shaxsiy vaziyatingiz bo'yicha qaror tibbiy-ijtimoiy ekspert komissiyasi, Ijtimoiy himoya milliy agentligi yoki sud tomonidan qabul qilinadi.
       Javob noaniq bo'lsa, manbadagi rasmiy matnni tekshiring.</p>
-      <p>Savollar saqlanmaydi; baholash tugmasi bosilsa savol va javob sifatni yaxshilash uchun yuboriladi.</p>
+      <p>Savolingiz javobni tezlashtirish uchun 24 soatgacha vaqtincha saqlanadi, shuning uchun ism, telefon yoki hujjat raqamini yozmang. Baholash tugmasi bosilsa, savol va javob sifatni yaxshilash uchun saqlanadi.</p>
     </footer>
   </div>
 
@@ -223,8 +224,10 @@
 
   /* ---- ask ----------------------------------------------------------------------------------------- */
   var last = { q: '', a: '', ids: [] };
+  var ctrl = null;                    // aborts the running request (the Stop button)
   function setBusy(b) {
     $('submit').disabled = b; $('answer-body').setAttribute('aria-busy', b ? 'true' : 'false');
+    $('stop').hidden = !b;
     $('submit').textContent = b ? 'Javob tayyorlanmoqda…' : 'Javob olish';
   }
   function announce(t) { $('status').textContent = t; }
@@ -238,12 +241,20 @@
     var ol = $('sources'); ol.innerHTML = ''; $('src-h').hidden = !cites.length;
     cites.forEach(function (c) {
       var li = document.createElement('li');
+      var isCurated = c.source_type === 'curated' || (c.canonical_id || '').indexOf('qa_') === 0;
+      var isHp = c.source_type === 'huquqplus' || (c.canonical_id || '').indexOf('hp_') === 0;
       var head = '<strong>' + esc((c.article_number || '') + ' — ' + (c.law_title || c.law_number || '')) + '</strong>';
       if (c.law_number) head += ' <span class="badge">' + esc(c.law_number) + '</span>';
+      if (isCurated) head += ' <span class="badge">Huquq+ huquqshunoslari javobi</span>';
+      else if (isHp) head += ' <span class="badge">Huquq+ sharhi (qonun o‘rnida emas)</span>';
       if (c.status && c.status !== 'active') head += ' <span class="badge bad">' + (c.status === 'repealed' ? "kuchini yo'qotgan" : "o'zgartirilgan") + '</span>';
       var html = head;
       if (c.quote_snippet) html += '<div class="quote">' + esc(c.quote_snippet) + '</div>';
-      if (c.source_url) html += '<a href="' + esc(c.source_url) + '" target="_blank" rel="noopener noreferrer">Rasmiy manba (Lex.uz) <span class="sr-only">— yangi oynada ochiladi</span></a>';
+      // curated answers point into the admin panel: citizens get no link for them
+      if (c.source_url && /^https?:\/\//i.test(c.source_url) && !isCurated) {
+        var label = isHp ? 'Maqolani o‘qish (huquqplus.uz)' : 'Rasmiy manba (Lex.uz)';
+        html += '<a href="' + esc(c.source_url) + '" target="_blank" rel="noopener noreferrer">' + label + ' <span class="sr-only">— yangi oynada ochiladi</span></a>';
+      }
       li.innerHTML = html; ol.appendChild(li);
     });
   }
@@ -255,7 +266,10 @@
     var note = $('check-note');
     if (data.is_refusal) {
       note.hidden = false;
-      note.textContent = "Taqdim etilgan hujjatlarda aniq javob topilmadi. Savolni boshqacha yozib ko'ring yoki vakolatli organga murojaat qiling.";
+      note.textContent = "Bu savolga aniq javob beradigan norma topilmadi. Savolni boshqacha yozib ko'ring yoki vakolatli organga murojaat qiling.";
+    } else if (data.degraded) {
+      note.hidden = false;
+      note.textContent = "Javob yaratish xizmati vaqtincha ishlamayapti: quyida savolingizga eng yaqin normalar matni keltirilgan. Bu tayyor javob emas; birozdan so'ng qayta urinib ko'ring.";
     } else if (data.validation_passed === false) {
       note.hidden = false;
       note.textContent = "Diqqat: javob avtomatik manba tekshiruvidan to'liq o'tmadi. Muhim qaror qabul qilishdan oldin quyidagi rasmiy manbalarni tekshiring.";
@@ -279,6 +293,11 @@
             acc += ev.text;
             // internal ids are hidden until the verified answer arrives
             $('answer-body').innerHTML = render(acc.replace(/\[[a-z0-9_\-]+(?:,[^\]]*)?\]/gi, ''));
+          } else if (ev.type === 'status') {
+            // the finished answer is compared with the sources before it is shown as final
+            $('check-note').hidden = false;
+            $('check-note').textContent = 'Javob manbalar bilan solishtirilmoqda…';
+            announce('Javob manbalar bilan solishtirilmoqda.');
           } else if (ev.type === 'done') { onDone(ev); }
           else if (ev.type === 'error') { showError(ev.message || 'Xizmat vaqtincha mavjud emas.'); }
         });
@@ -296,16 +315,21 @@
     $('answer-card').hidden = false; $('answer-body').innerHTML = '';
     $('check-note').hidden = true; $('sources').innerHTML = '';
     setBusy(true); announce('Javob tayyorlanmoqda.');
-    fetch('/api/v1/query?stream=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    ctrl = new AbortController();
+    fetch('/api/v1/query?stream=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal })
       .then(function (resp) {
         if (resp.status === 429) throw new Error("So'rovlar juda ko'p. Bir daqiqadan so'ng qayta urinib ko'ring.");
         if (resp.status === 400) throw new Error("So'rov qabul qilinmadi. Savolni qayta yozing.");
         if (!resp.ok) throw new Error('Xizmat vaqtincha mavjud emas. Birozdan so\'ng qayta urinib ko\'ring.');
         return readStream(resp, finish);
       })
-      .catch(function (err) { showError(err.message || 'Xatolik yuz berdi.'); })
-      .then(function () { setBusy(false); });
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') { showError("Javob to'xtatildi. Savolni qayta yuborishingiz mumkin."); announce("Javob to'xtatildi."); }
+        else showError((err && err.message) || 'Xatolik yuz berdi.');
+      })
+      .then(function () { ctrl = null; setBusy(false); });
   });
+  $('stop').addEventListener('click', function () { if (ctrl) ctrl.abort(); });
   $('ask-form').addEventListener('reset', function () {
     $('answer-card').hidden = true; window.speechSynthesis && window.speechSynthesis.cancel(); announce('Tozalandi.');
   });

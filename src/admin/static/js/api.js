@@ -1,6 +1,6 @@
 /**
  * Centralized API Client — Inclusive Legal RAG
- * Wraps all `/api/v1/inclusive/*` endpoints with unified error handling and timeouts.
+ * Wraps endpoints with unified error handling and timeouts.
  */
 
 async function request(url, options = {}, timeoutMs = 30000) {
@@ -35,7 +35,7 @@ async function request(url, options = {}, timeoutMs = 30000) {
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-      throw new Error(`So'rov vaqti tugadi (${Math.round(timeoutMs / 1000)}s). Server bilan aloqa kechikmoqda.`);
+      throw new Error(`So‘rov vaqti tugadi (${Math.round(timeoutMs / 1000)}s). Server bilan aloqa kechikmoqda.`);
     }
     throw err;
   }
@@ -58,78 +58,152 @@ export const api = {
   },
 
   // 3. Tanlangan hujjat normalari
-  fetchDocumentNorms: (lawNumber) => 
+  fetchDocumentNorms: (lawNumber) =>
     request(`/api/v1/inclusive/documents/${encodeURIComponent(lawNumber)}/norms`),
 
-  // 4. Normani tahrirlash va qayta vektorlash
-  updateNorm: (canonicalId, payload) => 
-    request(`/api/v1/inclusive/norms/${encodeURIComponent(canonicalId)}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload)
-    }),
-
-  // 5. Sinov so'rovi (Playground query)
-  sendQuery: (payload) => 
-    request('/api/v1/inclusive/query', {
+  // 4. Korpus boshqaruvi (Lex.uz preview, add, refresh, jobs)
+  corpusPreview: (source) =>
+    request('/api/v1/admin/corpus/preview', {
       method: 'POST',
-      body: JSON.stringify(payload)
-    }, 45000),
-
-  // 6. API kalitlar ro'yxati
-  fetchApiKeys: () => 
-    request('/api/v1/inclusive/admin/api-keys'),
-
-  // 7. Yangi API kalit yaratish
-  createApiKey: (payload) => 
-    request('/api/v1/inclusive/admin/api-keys', {
+      body: JSON.stringify({ source })
+    }),
+  corpusAdd: (payload) =>
+    request('/api/v1/admin/corpus/add', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
-
-  // 8. API kalitni bekor qilish
-  revokeApiKey: (keyId) => 
-    request(`/api/v1/inclusive/admin/api-keys/${encodeURIComponent(keyId)}`, {
-      method: 'DELETE'
-    }),
-
-  // 9. Yangi norma qo'shish (Manual upload)
-  uploadArticle: (payload) => 
-    request('/api/v1/inclusive/admin/upload-article', {
+  corpusRefresh: (payload) =>
+    request('/api/v1/admin/corpus/refresh', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
+  corpusJobStatus: (jobId) =>
+    request(`/api/v1/admin/corpus/jobs/${encodeURIComponent(jobId)}`),
 
-  // 10. Papkadan yangilash (data/qonunlar import)
-  importFolder: (directoryPath = 'data/qonunlar') => 
-    request('/api/v1/inclusive/admin/import-folder', {
-      method: 'POST'
-    }, 90000),
-
-  // 11. Lex.uz URL import
-  importUrl: (payload) => 
-    request('/api/v1/inclusive/admin/import-url', {
+  // 5. Sinov so'rovi (Playground bot query)
+  queryBot: (payload) =>
+    request('/api/v1/query', {
       method: 'POST',
       body: JSON.stringify(payload)
     }, 60000),
 
-  // 12. Vektorlash inspektori (Lex.uz parsing & visualization)
-  inspectDocument: (payload, timeoutMs = 30000) => 
-    request('/api/v1/inclusive/admin/inspect-document', {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    }, timeoutMs),
-
-  // 13. Vektor hisoblash (BGE-M3 test)
-  testVector: (payload) => 
-    request('/api/v1/inclusive/admin/test-vector', {
+  // 6. Tahririyat: savol-javoblar
+  editorialAnswers: ({ status, q, limit = 50, offset = 0 } = {}) => {
+    const params = new URLSearchParams();
+    if (status && status !== 'all') params.append('status', status);
+    if (q) params.append('q', q);
+    params.append('limit', String(limit));
+    params.append('offset', String(offset));
+    return request(`/api/v1/admin/editorial/answers?${params.toString()}`);
+  },
+  editorialAnswerCreate: (payload) =>
+    request('/api/v1/admin/editorial/answers', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
-
-  // 14. TypeSafe Jev 1.13 semantik tahlili
-  testJev: (payload) => 
-    request('/api/v1/inclusive/admin/test-jev', {
+  editorialAnswerGet: (id) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}`),
+  editorialAnswerUpdate: (id, payload) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    }),
+  editorialAnswerDelete: (id) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }),
+  editorialPublish: (id) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}/publish`, {
+      method: 'POST'
+    }),
+  editorialUnpublish: (id) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}/unpublish`, {
+      method: 'POST'
+    }),
+  editorialAddLink: (id, payload) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}/links`, {
       method: 'POST',
       body: JSON.stringify(payload)
+    }),
+  editorialRemoveLink: (id, canonicalId) =>
+    request(`/api/v1/admin/editorial/answers/${encodeURIComponent(id)}/links/${encodeURIComponent(canonicalId)}`, {
+      method: 'DELETE'
+    }),
+
+  // 7. Tahririyat: modda tanlash
+  editorialNormsSearch: ({ q, law_id, limit = 20 } = {}) => {
+    const params = new URLSearchParams();
+    if (q) params.append('q', q);
+    if (law_id) params.append('law_id', law_id);
+    params.append('limit', String(limit));
+    return request(`/api/v1/admin/editorial/norms/search?${params.toString()}`);
+  },
+  editorialLaws: () =>
+    request('/api/v1/admin/editorial/laws'),
+
+  // 8. Tahririyat: bildirishnomalar
+  editorialNotifications: ({ status = 'open', limit = 50, offset = 0 } = {}) => {
+    const params = new URLSearchParams();
+    params.append('status', status);
+    params.append('limit', String(limit));
+    params.append('offset', String(offset));
+    return request(`/api/v1/admin/editorial/notifications?${params.toString()}`);
+  },
+  editorialNotificationsCount: () =>
+    request('/api/v1/admin/editorial/notifications/count'),
+  editorialResolve: (id, payload) =>
+    request(`/api/v1/admin/editorial/notifications/${encodeURIComponent(id)}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  editorialCheckLinks: () =>
+    request('/api/v1/admin/editorial/check-links', {
+      method: 'POST'
+    }),
+
+  // 9. Huquq+ sinxronlash va maqolalar
+  huquqplusStatus: () =>
+    request('/api/v1/admin/huquqplus/status'),
+  huquqplusPosts: ({ lang, status, q, limit = 50, offset = 0 } = {}) => {
+    const params = new URLSearchParams();
+    if (lang && lang !== 'all') params.append('lang', lang);
+    if (status && status !== 'all') params.append('status', status);
+    if (q) params.append('q', q);
+    params.append('limit', String(limit));
+    params.append('offset', String(offset));
+    return request(`/api/v1/admin/huquqplus/posts?${params.toString()}`);
+  },
+  huquqplusSync: () =>
+    request('/api/v1/admin/huquqplus/sync', {
+      method: 'POST'
+    }),
+  huquqplusResyncPost: (lang, wpId) =>
+    request(`/api/v1/admin/huquqplus/posts/${encodeURIComponent(lang)}/${encodeURIComponent(wpId)}/resync`, {
+      method: 'POST'
+    }),
+
+  // 10. Integratsiyalar (Assistant API mijozlari va kalitlari)
+  fetchIntegrationClients: () =>
+    request('/api/v1/admin/integrations/clients'),
+  createIntegrationClient: (payload) =>
+    request('/api/v1/admin/integrations/clients', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  getIntegrationClient: (clientId, days = 30) =>
+    request(`/api/v1/admin/integrations/clients/${encodeURIComponent(clientId)}?usage_days=${days}`),
+  updateIntegrationClient: (clientId, payload) =>
+    request(`/api/v1/admin/integrations/clients/${encodeURIComponent(clientId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    }),
+  issueIntegrationKey: (clientId, payload = {}) =>
+    request(`/api/v1/admin/integrations/clients/${encodeURIComponent(clientId)}/keys`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  revokeIntegrationKey: (keyId) =>
+    request(`/api/v1/admin/integrations/keys/${encodeURIComponent(keyId)}`, {
+      method: 'DELETE'
     })
 };

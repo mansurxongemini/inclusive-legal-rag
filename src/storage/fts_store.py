@@ -9,6 +9,8 @@ from src.config import settings
 from src.schema.canonical import CanonicalArticle
 from src.storage.sqlite_utils import connect as _sqlite_connect
 from src.nlp.transliteration import normalize_apostrophes
+from src.nlp.stopwords import STOPWORDS
+from src.nlp.stemming import search_stem
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,66 @@ def fts_text(text: str) -> str:
     Both sides now use the apostrophe-free form: bo'lgan -> bolgan, to'siqsiz -> tosiqsiz, ta'lim -> talim.
     """
     return _INNER_APOSTROPHE.sub("", normalize_apostrophes(text or ""))
+
+
+def build_fts_terms(query: str, stemmed: Optional[bool] = None) -> List[str]:
+    """
+    FTS5 prefix terms of a question: `"stem"*`. Words without a topic are dropped (nlp/stopwords.py; when nothing else
+    is left the question keeps them), and a long word is cut to its search stem (nlp/stemming.py) because the wildcard only
+    extends the query word: the query form "nogironligidan" never matched the unit's "nogironlik". Numbers and codes
+    (483-modda, VMQ-62) are kept whole.
+    """
+    words = []
+    for word in fts_text(query).replace('"', '').replace("'", "").split():
+        clean = "".join(c for c in word if c.isalnum() or c in "-_")
+        if clean:
+            words.append(clean)
+    use_stopwords = settings.FTS_STOPWORDS if stemmed is None else stemmed
+    stem = settings.FTS_STEM_PREFIX if stemmed is None else int(stemmed)
+    content = [w for w in words if w.lower() not in STOPWORDS] if use_stopwords else words
+    terms: List[str] = []
+    for w in content or words:
+        if stem:
+            w = search_stem(w)
+        term = f'"{w}"*'
+        if term not in terms:
+            terms.append(term)
+    return terms
+
+
+def fts_rows(article: CanonicalArticle) -> List[tuple]:
+    """
+    Rows of the FTS index for one unit: one per language holding the whole text and, for a unit longer than
+    FTS_CHUNK_MIN_CHARS, one more row per chunk. BM25 normalises by document length, so a paragraph about day-care
+    tax exemption inside a 51 000-character Tax Code article was invisible next to short units; as its own row it
+    competes on equal terms. The search returns each unit once (bm25_search).
+    """
+    from src.storage.chunking import chunk_layout       # chunking imports the schema only; kept lazy for import order
+
+    rows = []
+    number, law_number = fts_text(article.metadata.article_number), fts_text(article.metadata.law_number)
+    for lang, body in article.translations.items():
+        if not body or not body.strip():
+            continue
+        title = fts_text(article.get_title(lang))
+        rows.append((article.canonical_id, lang, number, law_number, title, fts_text(article.to_fts_document(lang))))
+        if settings.FTS_CHUNK_MIN_CHARS and len(body) > settings.FTS_CHUNK_MIN_CHARS:
+            layout = chunk_layout(article, lang)
+            for chunk in (layout.texts if layout else []):
+                rows.append((article.canonical_id, lang, number, law_number, title, fts_text(chunk)))
+    return rows
+
+
+def _unique(rows, limit: int) -> list:
+    """First `limit` rows with distinct canonical_id, order kept."""
+    seen, out = set(), []
+    for r in rows:
+        if r["canonical_id"] not in seen:
+            seen.add(r["canonical_id"])
+            out.append(r)
+            if len(out) >= limit:
+                break
+    return out
 
 
 class SqliteFtsStore:
@@ -118,23 +180,11 @@ class SqliteFtsStore:
             # Delete old FTS records for this canonical_id
             cursor.execute("DELETE FROM articles_fts WHERE canonical_id = ?", (article.canonical_id,))
 
-            # Insert FTS records for each available non-empty translation (uz, uz_cyrl, ru, en)
-            for lang, body in article.translations.items():
-                if not body or not body.strip():
-                    continue
-                title = article.get_title(lang)
-                cursor.execute("""
-                    INSERT INTO articles_fts (
-                        canonical_id, language, article_number, law_number, title, body
-                    ) VALUES (?, ?, ?, ?, ?, ?)
-                """, (
-                    article.canonical_id,
-                    lang,
-                    fts_text(article.metadata.article_number),
-                    fts_text(article.metadata.law_number),
-                    fts_text(title),
-                    fts_text(article.to_fts_document(lang)),
-                ))
+            cursor.executemany("""
+                INSERT INTO articles_fts (
+                    canonical_id, language, article_number, law_number, title, body
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            """, fts_rows(article))
 
             conn.commit()
             if hasattr(self, "_article_cache"):
@@ -144,19 +194,14 @@ class SqliteFtsStore:
         self,
         query: str,
         language: str = "uz",
-        top_k: int = 20
+        top_k: int = 20,
+        stemmed: Optional[bool] = None,
     ) -> List[Dict]:
         """
         Executes BM25 search on FTS5 virtual table.
         Returns list of {canonical_id, score, rank}.
         """
-        # Clean query for FTS5 (escape special chars)
-        clean_terms = []
-        for word in fts_text(query).replace('"', '').replace("'", "").split():
-            clean = "".join(c for c in word if c.isalnum() or c in "-_")
-            if clean:
-                clean_terms.append(f'"{clean}"*')
-
+        clean_terms = build_fts_terms(query, stemmed)
         if not clean_terms:
             return []
 
@@ -174,8 +219,8 @@ class SqliteFtsStore:
                     WHERE articles_fts MATCH ? AND language = ?
                     ORDER BY bm25_score ASC
                     LIMIT ?
-                """, (and_query, language, top_k))
-                rows = list(cursor.fetchall())
+                """, (and_query, language, top_k * 4))
+                rows = _unique(cursor.fetchall(), top_k)
 
                 # 2. If fewer than top_k results, supplement with OR query
                 if len(rows) < top_k:
@@ -187,7 +232,7 @@ class SqliteFtsStore:
                         WHERE articles_fts MATCH ? AND language = ?
                         ORDER BY bm25_score ASC
                         LIMIT ?
-                    """, (or_query, language, top_k * 2))
+                    """, (or_query, language, top_k * 6))
                     for r in cursor.fetchall():
                         if r["canonical_id"] not in seen_ids:
                             rows.append(r)
@@ -204,8 +249,8 @@ class SqliteFtsStore:
                         WHERE articles_fts MATCH ?
                         ORDER BY bm25_score ASC
                         LIMIT ?
-                    """, (or_query, top_k))
-                    rows = list(cursor.fetchall())
+                    """, (or_query, top_k * 4))
+                    rows = _unique(cursor.fetchall(), top_k)
 
             except sqlite3.OperationalError as e:
                 logger.warning(f"FTS search error: {e}, falling back to empty results")
@@ -221,6 +266,12 @@ class SqliteFtsStore:
                     "score": norm_score,
                 })
             return results
+
+    def clear_article_cache(self) -> None:
+        """Drops the in-memory article objects. Needed after another process (the corpus build script) wrote to the
+        database: nothing else invalidates this cache, so a repealed or amended act would keep being served."""
+        if hasattr(self, "_article_cache"):
+            self._article_cache.clear()
 
     def get_article(self, canonical_id: str) -> Optional[CanonicalArticle]:
         if not hasattr(self, "_article_cache"):
@@ -310,15 +361,9 @@ class SqliteFtsStore:
             rows = cursor.execute("SELECT json_data FROM articles_metadata").fetchall()
             for row in rows:
                 art = CanonicalArticle.model_validate_json(row["json_data"])
-                for lang, body in art.translations.items():
-                    if not body or not body.strip():
-                        continue
-                    cursor.execute(
-                        "INSERT INTO articles_fts (canonical_id, language, article_number, law_number, title, body) "
-                        "VALUES (?, ?, ?, ?, ?, ?)",
-                        (art.canonical_id, lang, fts_text(art.metadata.article_number), fts_text(art.metadata.law_number),
-                         fts_text(art.get_title(lang)), fts_text(art.to_fts_document(lang))),
-                    )
+                cursor.executemany(
+                    "INSERT INTO articles_fts (canonical_id, language, article_number, law_number, title, body) "
+                    "VALUES (?, ?, ?, ?, ?, ?)", fts_rows(art))
                 n += 1
             conn.commit()
         return n
@@ -410,7 +455,9 @@ class SqliteFtsStore:
                     json_extract(json_data, '$.metadata.source_url') as source_url,
                     COUNT(*) as norm_count
                 FROM articles_metadata
-                GROUP BY law_num
+                WHERE (json_extract(json_data, '$.metadata.source_type') = 'lex' OR json_extract(json_data, '$.metadata.source_type') IS NULL)
+                  AND canonical_id NOT LIKE 'hp_%' AND canonical_id NOT LIKE 'qa_%'
+                GROUP BY json_extract(json_data, '$.metadata.law_id')
                 ORDER BY norm_count DESC
             """)
             rows = cursor.fetchall()

@@ -37,12 +37,27 @@ class LanceVectorStore:
             pa.field("category", pa.string()),
             pa.field("disability_types", pa.string()),
             pa.field("embedding_model_version", pa.string()),
+            pa.field("chunk_index", pa.int32()),          # position in chunking.build_chunks(article, language)
         ])
 
         try:
             return self.db.open_table(self.TABLE_NAME)
         except Exception:
             return self.db.create_table(self.TABLE_NAME, schema=schema)
+
+    @property
+    def has_chunk_index(self) -> bool:
+        return "chunk_index" in self.table.schema.names
+
+    def ensure_chunk_index_column(self) -> bool:
+        """Adds chunk_index (-1 = unknown) to a table created before it existed. Returns True when it was added.
+
+        Existing rows keep -1 until their article is embedded again (scripts/embed_missing.py --fill-chunk-index).
+        """
+        if self.has_chunk_index:
+            return False
+        self.table.add_columns({"chunk_index": "CAST(-1 AS INT)"})
+        return True
 
     def upsert_vectors(self, records: List[Dict]):
         """
@@ -62,6 +77,10 @@ class LanceVectorStore:
             except Exception as e:
                 logger.warning(f"Error during existing record deletion in LanceDB: {e}")
 
+        # A table created before chunk_index existed rejects the extra field
+        if not self.has_chunk_index and any("chunk_index" in r for r in records):
+            records = [{k: v for k, v in r.items() if k != "chunk_index"} for r in records]
+
         # Add new records
         self.table.add(records)
 
@@ -78,9 +97,14 @@ class LanceVectorStore:
         if len(self.table) == 0:
             return []
 
-        search_query = self.table.search(query_vector).metric("cosine").limit(top_k * 4)
-
-        results = search_query.to_list()
+        # Several chunk rows can belong to one unit (long units are embedded chunk by chunk), so the window is wide
+        # enough for top_k distinct units even when one long unit fills many of the nearest rows.
+        window = top_k * settings.VECTOR_WINDOW_FACTOR
+        columns = ["canonical_id", "language", "status", "category"] + (["chunk_index"] if self.has_chunk_index else [])
+        try:   # the 1024-number vectors of the matched rows are not needed
+            results = self.table.search(query_vector).metric("cosine").select(columns).limit(window).to_list()
+        except Exception:
+            results = self.table.search(query_vector).metric("cosine").limit(window).to_list()
         
         # Deduplicate by canonical_id, boosting same language if available
         seen_cids = {}
@@ -96,12 +120,15 @@ class LanceVectorStore:
                 score += 0.03
 
             if cid not in seen_cids or score > seen_cids[cid]["score"]:
+                chunk_index = r.get("chunk_index")
                 seen_cids[cid] = {
                     "canonical_id": cid,
                     "score": float(score),
                     "language": r.get("language"),
                     "status": r.get("status"),
                     "category": r.get("category"),
+                    # the best-matching chunk of the article (None when the row predates chunk_index)
+                    "chunk_index": chunk_index if chunk_index is not None and chunk_index >= 0 else None,
                 }
 
         # Sort descending by score
@@ -129,3 +156,26 @@ class LanceVectorStore:
 
     def count(self) -> int:
         return len(self.table)
+
+    def optimize(self, cleanup_older_than: Optional[timedelta] = None) -> dict:
+        """Compact fragments and prune old versions in the vector table.
+
+        Default keeps versions younger than 7 days; timedelta(seconds=0) prunes all.
+        Returns {'fragments_before': int, 'fragments_after': int} via table.stats().
+        Never raises: logs a warning and returns {} on error.
+        """
+        if cleanup_older_than is None:
+            cleanup_older_than = timedelta(days=7)
+        try:
+            stats_before = self.table.stats()
+            frag_before = stats_before.get("fragment_stats", {}).get("num_fragments", 0)
+            self.table.optimize(cleanup_older_than=cleanup_older_than)
+            stats_after = self.table.stats()
+            frag_after = stats_after.get("fragment_stats", {}).get("num_fragments", 0)
+            return {
+                "fragments_before": frag_before,
+                "fragments_after": frag_after,
+            }
+        except Exception as e:
+            logger.warning(f"Error optimizing LanceDB table {self.TABLE_NAME}: {e}")
+            return {}

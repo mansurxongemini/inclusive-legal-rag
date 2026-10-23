@@ -1,6 +1,8 @@
+import asyncio
 import logging
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 from pydantic import BaseModel
+from src.config import settings
 from src.storage.hybrid_store import HybridStore
 from src.storage.sqlite_utils import connect as sqlite_connect
 from src.clients.openrouter import OpenRouterClient
@@ -16,7 +18,23 @@ class ScoredArticle(BaseModel):
     vector_rank: Optional[int] = None
     bm25_score: Optional[float] = None
     vector_score: Optional[float] = None
+    vector_chunk: Optional[Tuple[str, int]] = None  # (language, chunk_index) of the best vector hit of the article
     source_tag: str = "primary"  # primary | expanded_ref | superseded_replacement
+
+
+def lift_leaders(scored: List["ScoredArticle"], leaders: set, anchor_position: int) -> None:
+    """
+    Rank fusion drowns a unit that one list puts first and the other lists do not know (a Tax Code paragraph found by
+    words only). Such a unit is lifted to the anchor position, inside the window that Jev reads, and left to Jev to judge.
+    `scored` must be sorted by rrf_score; it is re-sorted in place.
+    """
+    if len(scored) <= anchor_position:
+        return
+    anchor = scored[anchor_position - 1].rrf_score
+    for sa in scored[anchor_position:]:
+        if sa.canonical_id in leaders:
+            sa.rrf_score = anchor - 1e-6
+    scored.sort(key=lambda x: x.rrf_score, reverse=True)
 
 
 class HybridRetriever:
@@ -27,6 +45,13 @@ class HybridRetriever:
     def __init__(self, store: HybridStore, client: Optional[OpenRouterClient] = None):
         self.store = store
         self.client = client or OpenRouterClient()
+
+    @staticmethod
+    async def _call(fn, *args, **kwargs):
+        """Runs a blocking store call in a worker thread (RETRIEVAL_THREADS) so the event loop keeps serving requests."""
+        if settings.RETRIEVAL_THREADS:
+            return await asyncio.to_thread(fn, *args, **kwargs)
+        return fn(*args, **kwargs)
 
     def _lookup_direct_article(self, law_id: str, article_number: str) -> Optional[str]:
         """Resolves direct canonical ID for explicit law_id and article_number mention."""
@@ -99,16 +124,33 @@ class HybridRetriever:
         bm25_rrf_scores: Dict[str, float] = {}
         bm25_best_ranks: Dict[str, int] = {}
         bm25_best_scores: Dict[str, float] = {}
+        leaders: set = set()          # units at the very top of any single list (see LIST_LEADERS)
 
-        for sq_idx, sq in enumerate(subqueries):
+        # SQLite and LanceDB calls block: run them in worker threads so that one slow search does not stall every other
+        # request served by the event loop, and let the sub-queries search in parallel.
+        bm25_matches = await asyncio.gather(*(
+            self._call(self.store.fts_store.bm25_search, query=sq.enriched_query, language=language, top_k=top_k)
+            for sq in subqueries
+        ))
+        if settings.FTS_STEM_EXTRA_WEIGHT > 0 and subqueries:
+            # A second full-text list on search stems (soliqdan -> soliq, ozodmi -> ozod): the whole-word list is what the
+            # ranking was tuned on and stays as it is; the stem list only adds units whose inflected words it would miss.
+            stem_matches = await self._call(self.store.fts_store.bm25_search, query=subqueries[0].enriched_query,
+                                            language=language, top_k=top_k, stemmed=True)
+            for rank, m in enumerate(stem_matches, start=1):
+                cid = m["canonical_id"]
+                bm25_rrf_scores[cid] = bm25_rrf_scores.get(cid, 0.0) + settings.FTS_STEM_EXTRA_WEIGHT / (rrf_k + rank)
+                if rank <= settings.LIST_LEADERS:
+                    leaders.add(cid)
+                if cid not in bm25_best_ranks or rank < bm25_best_ranks[cid]:
+                    bm25_best_ranks[cid] = rank
+                    bm25_best_scores[cid] = m["score"]
+        for sq_idx, matches in enumerate(bm25_matches):
             sq_weight = 1.0 if sq_idx == 0 else 0.85
-            matches = self.store.fts_store.bm25_search(
-                query=sq.enriched_query,
-                language=language,
-                top_k=top_k
-            )
             for rank, m in enumerate(matches, start=1):
                 cid = m["canonical_id"]
+                if rank <= settings.LIST_LEADERS:
+                    leaders.add(cid)
                 score_contrib = sq_weight * (1.0 / (rrf_k + rank))
                 bm25_rrf_scores[cid] = bm25_rrf_scores.get(cid, 0.0) + score_contrib
                 if cid not in bm25_best_ranks or rank < bm25_best_ranks[cid]:
@@ -120,6 +162,10 @@ class HybridRetriever:
         query_vectors: List[List[float]] = []
         if use_vector:
             embed_texts = [sq.query_text for sq in subqueries[:2]]
+            if settings.VECTOR_DEDUP_QUERIES:
+                # the domain sub-query of a short question carries the very same text: embedding and searching it twice
+                # only counted the dense side 1.8 times against the full-text side
+                embed_texts = list(dict.fromkeys(embed_texts))
             if precomputed_query_vector is not None:
                 query_vectors = [precomputed_query_vector]
             try:
@@ -134,25 +180,30 @@ class HybridRetriever:
         vec_rrf_scores: Dict[str, float] = {}
         vec_best_ranks: Dict[str, int] = {}
         vec_best_scores: Dict[str, float] = {}
+        vec_best_chunks: Dict[str, Tuple[str, int]] = {}
 
-        for v_idx, q_vec in enumerate(query_vectors):
+        vector_results = await asyncio.gather(*(
+            self._call(self.store.vector_store.search_vector, query_vector=q_vec, top_k=top_k, language=language)
+            for q_vec in query_vectors
+        ), return_exceptions=True)
+        for v_idx, matches in enumerate(vector_results):
             v_weight = 1.0 if v_idx == 0 else 0.80
-            try:
-                matches = self.store.vector_store.search_vector(
-                    query_vector=q_vec,
-                    top_k=top_k,
-                    language=language
-                )
-            except Exception as e:
-                logger.warning(f"Vector search failed, skipping dense results: {e}")
+            if isinstance(matches, Exception):
+                logger.warning(f"Vector search failed, skipping dense results: {matches}")
                 continue
             for rank, m in enumerate(matches, start=1):
                 cid = m["canonical_id"]
+                if rank <= settings.LIST_LEADERS:
+                    leaders.add(cid)
                 score_contrib = v_weight * (1.0 / (rrf_k + rank))
                 vec_rrf_scores[cid] = vec_rrf_scores.get(cid, 0.0) + score_contrib
                 if cid not in vec_best_ranks or rank < vec_best_ranks[cid]:
                     vec_best_ranks[cid] = rank
                     vec_best_scores[cid] = m["score"]
+                    if m.get("chunk_index") is not None and m.get("language"):
+                        vec_best_chunks[cid] = (m["language"], m["chunk_index"])
+                    else:
+                        vec_best_chunks.pop(cid, None)
 
         # 4. Global Fusion (Combined BM25 + Vector RRF across all aspects)
         all_ids = set(bm25_rrf_scores.keys()).union(set(vec_rrf_scores.keys()))
@@ -160,7 +211,7 @@ class HybridRetriever:
             all_ids.add(direct_cid)
 
         # 5. Batch fetch articles for metadata matching and boosts
-        articles_map = self.store.get_articles_batch(list(all_ids))
+        articles_map = await self._call(self.store.get_articles_batch, list(all_ids))
 
         scored_articles: List[ScoredArticle] = []
 
@@ -218,9 +269,12 @@ class HybridRetriever:
                 vector_rank=r_vec,
                 bm25_score=bm25_best_scores.get(cid),
                 vector_score=vec_best_scores.get(cid),
+                vector_chunk=vec_best_chunks.get(cid),
                 source_tag=source_tag,
             ))
 
         # Sort descending by RRF score
         scored_articles.sort(key=lambda x: x.rrf_score, reverse=True)
+        if leaders and settings.LIST_LEADERS > 0:
+            lift_leaders(scored_articles, leaders, settings.LEADER_ANCHOR_POSITION)
         return scored_articles[:top_k]

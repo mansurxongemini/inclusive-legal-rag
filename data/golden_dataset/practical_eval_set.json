@@ -1,0 +1,670 @@
+[
+  {
+    "id": "p001",
+    "question": "Assalomu alaykum, men korxonada ishlayman, 2-guruhman. Rahbariyat meni ogohlantirmasdan 3 kunda ishdan bo'shatmoqchi. Qonun bo'yicha xodimni ishdan bo'shatishda necha kun oldin ogohlantirish kerak va qanday asoslar bo'lishi shart?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-6257288"
+    ],
+    "category": "labor",
+    "out_of_scope": false,
+    "note": "Mehnat kodeksi (mehnat shartnomasini ish beruvchi tashabbusi bilan bekor qilish va ogohlantirish muddatlari - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p002",
+    "question": "Salom, yangi ishga kirayotganda sinov muddati belgilanadimi? Qaysi toifadagi fuqarolarga dastlabki sinov muddati umuman qo'llanilmaydi va necha oy bo'lishi mumkin?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-6257288"
+    ],
+    "category": "labor",
+    "out_of_scope": false,
+    "note": "Mehnat kodeksi (dastlabki sinov muddati va uni qo'llash cheklovlari - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p003",
+    "question": "Iltimos aytingchi, sog'lig'im sababli haftasiga 40 soat ishlay olmayman. Xodim o'z xohishi bilan to'liqsiz ish vaqti talab qilsa, ish beruvchi rozi bo'lishga majburmi yoki rad qilishi mumkinmi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-6257288"
+    ],
+    "category": "labor",
+    "out_of_scope": false,
+    "note": "Mehnat kodeksi (to'liqsiz ish vaqti belgilash tartibi va majburiyligi - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p004",
+    "question": "Xodimlarga yillik mehnat ta'tili kamida necha kun berilishi shart? Ta'til pullari qachon to'lanishi kerak?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-6257288"
+    ],
+    "category": "labor",
+    "out_of_scope": false,
+    "note": "Mehnat kodeksi (yillik asosiy eng kam mehnat ta'tili va to'lov muddati - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p005",
+    "question": "Hokimiyatga yozma ariza bergandim, 20 kun bo'ldi javob yo'q. Qonun bo'yicha davlat idorasi arizaga necha kunda javob berishi kerak? Muddati cho'zilishi mumkinmi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-445"
+    ],
+    "expected_lex_ids": [
+      "-3336169"
+    ],
+    "category": "appeals",
+    "out_of_scope": false,
+    "note": "Murojaatlar to'g'risidagi qonun (murojaatlarni ko'rib chiqish muddatlari: 15 kun / 1 oy - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p006",
+    "question": "Davlat tashkiloti fuqaroning arizasini qaysi hollarda ko'rib chiqmasdan qaytarishi yoki rad etishi mumkin? Anonim murojaatlar o'rganiladimi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-445"
+    ],
+    "expected_lex_ids": [
+      "-3336169"
+    ],
+    "category": "appeals",
+    "out_of_scope": false,
+    "note": "Murojaatlar to'g'risidagi qonun (murojaatni ko'rmasdan qoldirish va anonim murojaatlar - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p007",
+    "question": "Pensiya jamg'armasining noqonuniy qarori ustidan yuqori organga shikoyat bermoqchiman. Ma'muriy hujjat ustidan shikoyat qilish muddati necha kun va tartibi qanday?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-457"
+    ],
+    "expected_lex_ids": [
+      "-3492199"
+    ],
+    "category": "administrative_procedure",
+    "out_of_scope": false,
+    "note": "Ma'muriy tartib-taomillar to'g'risidagi qonun (ma'muriy shikoyat berish muddati va tartibi - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p008",
+    "question": "Davlat organi fuqaroga nisbatan salbiy qaror qabul qilishdan oldin uni eshitishi, fikrini tinglashi shartmi? Tinglanish huquqi nima?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-457"
+    ],
+    "expected_lex_ids": [
+      "-3492199"
+    ],
+    "category": "administrative_procedure",
+    "out_of_scope": false,
+    "note": "Ma'muriy tartib-taomillar to'g'risidagi qonun (manfaatdor shaxsni eshitish / tinglanish huquqi - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p009",
+    "question": "Ajrashganmiz, bolamga aliment to'lamayapti. Sud orqali bitta bola uchun qancha miqdorda aliment undiriladi va qayerga ariza berish kerak?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-104720"
+    ],
+    "category": "family",
+    "out_of_scope": false,
+    "note": "Oila kodeksi (voyaga yetmagan bolalar uchun aliment miqdori - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p010",
+    "question": "Bola 18 yoshga to'lsa ham mehnatga layoqatsiz bo'lsa, ota-onadan unga ta'minot (aliment) undirish mumkinmi? Qaysi modda asosida?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-104720"
+    ],
+    "category": "family",
+    "out_of_scope": false,
+    "note": "Oila kodeksi (voyaga yetgan mehnatga layoqatsiz bolalarning ta'minoti - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p011",
+    "question": "Fuqarolik sudiga da'vo ariza bermoqchiman. Da'vo arizasida qanday ma'lumotlar ko'rsatilishi shart va unga qanday hujjatlar ilova qilinadi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-3517337"
+    ],
+    "category": "civil_procedure",
+    "out_of_scope": false,
+    "note": "Fuqarolik protsessual kodeksi (da'vo arizasining shakli, mazmuni va ilovalari - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p012",
+    "question": "Sudga da'vo bilan murojaat qilganda kimlar davlat bojidan butunlay ozod qilingan? Imtiyoz olish uchun qanday hujjat topshiriladi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-600"
+    ],
+    "expected_lex_ids": [
+      "-4680944"
+    ],
+    "category": "state_duty",
+    "out_of_scope": false,
+    "note": "Davlat boji to'g'risidagi qonun (sudlarda davlat bojidan ozod qilish bo'yicha imtiyozlar - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p013",
+    "question": "Moddiy ahvolim og'ir, advokat yollashga pulim yo'q. Davlat hisobidan bepul yuridik yordam (advokat) olish tartibi qanday va kimlarga beriladi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-848"
+    ],
+    "expected_lex_ids": [
+      "-6502543"
+    ],
+    "category": "legal_aid",
+    "out_of_scope": false,
+    "note": "Davlat hisobidan yuridik yordam ko'rsatish to'g'risidagi qonun (bepul yuridik yordam olish huquqiga ega shaxslar - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p014",
+    "question": "Yaqin qarindoshim ruhiy kasalligi sababli o'zini boshqara olmaydi. Uni sud orqali muomalaga layoqatsiz deb topish va vasiy tayinlash tartibi qanday?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-364"
+    ],
+    "expected_lex_ids": [
+      "-2307826",
+      "-3517337",
+      "-111189"
+    ],
+    "category": "guardianship",
+    "out_of_scope": false,
+    "note": "Vasiylik va homiylik to'g'risidagi qonun (vasiylik tayinlash tartibi va organlari - umumiy norma) | muqobil: Fuqarolik protsessual kodeksi, Fuqarolik kodeksi",
+    "in_corpus": true
+  },
+  {
+    "id": "p015",
+    "question": "Ota-onasi qaramog'idan mahrum bo'lgan yetim va boquvchisini yo'qotgan bolalarga davlat tomonidan qanday ijtimoiy kafolatlar beriladi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-139"
+    ],
+    "expected_lex_ids": [
+      "-1297315"
+    ],
+    "category": "child_rights",
+    "out_of_scope": false,
+    "note": "Bola huquqlarining kafolatlari to'g'risidagi qonun (ijtimoiy himoyaga muhtoj bolalar huquqlari kafolatlari - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p016",
+    "question": "Jismoniy shaxslarning mol-mulk solig'i bo'yicha qanday imtiyozlar mavjud? Kimlarning mulkidan soliq undirilmaydi va qayerga ma'lumot berish kerak?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-4674902"
+    ],
+    "category": "tax",
+    "out_of_scope": false,
+    "note": "Soliq kodeksi (mol-mulk solig'i bo'yicha imtiyozlar - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p017",
+    "question": "Yer solig'i bo'yicha jismoniy shaxslarga qanday imtiyozlar berilgan? Tomorqa yoki hovli yeri bo'yicha kimlar soliq to'lashdan ozod etiladi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-4674902"
+    ],
+    "category": "tax",
+    "out_of_scope": false,
+    "note": "Soliq kodeksi (jismoniy shaxslar yer solig'i bo'yicha imtiyozlar - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p018",
+    "question": "Davlat uy-joy fondidagi uylarda bepul yoki imtiyozli yashash, ijaraga olish navbati qanday yuritiladi? Kimlarga birinchi navbatda uy beriladi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      ""
+    ],
+    "expected_lex_ids": [
+      "-106136"
+    ],
+    "category": "housing",
+    "out_of_scope": false,
+    "note": "Uy-joy kodeksi (uy-joy bilan ta'minlash tartibi va navbatlilik - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p019",
+    "question": "Yangi qurilayotgan ko'p qavatli binolar, savdo markazlari va ko'chalarda jismoniy imkoniyati cheklanganlar uchun qulay muhit bo'lishi shartmi? Shaharsozlik talabi bormi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "",
+      "01/2-1"
+    ],
+    "expected_lex_ids": [
+      "-5307951",
+      "-7346244"
+    ],
+    "category": "accessibility",
+    "out_of_scope": false,
+    "note": "Shaharsozlik kodeksi (shaharsozlik faoliyatida qulay muhit yaratish talablari - umumiy norma) | muqobil: SHNQ 2.07.02-24",
+    "in_corpus": true
+  },
+  {
+    "id": "p020",
+    "question": "Tijorat banklarining filiallari, kassa va bankomatlarida nogironligi bo'lgan fuqarolarga xizmat ko'rsatish bo'yicha qanday talablar belgilangan? Pandus va ovozli xizmat bo'lishi shartmi?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "REG-3030"
+    ],
+    "expected_lex_ids": [
+      "-3804290"
+    ],
+    "category": "banking",
+    "out_of_scope": false,
+    "note": "Markaziy bankning 3030-sonli nizomi (bank xizmatlari iste'molchilariga qulaylik yaratish talablari)",
+    "in_corpus": true
+  },
+  {
+    "id": "p021",
+    "question": "Ассалому алейкум, биз камбагал оиламиз, озик овкатга ёрдам олиш учун Темир дафтарга кандай кирилади? Каерга ариза бериш керак ва кандай хужжат суралади?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-313",
+      "VMQ-462"
+    ],
+    "expected_lex_ids": [
+      "-6973951",
+      "-7645251"
+    ],
+    "category": "social_protection",
+    "out_of_scope": false,
+    "note": "VMQ-313 va VMQ-462 (Temir daftar va Saxovat va ko'mak jamg'armasi orqali yordam ko'rsatish tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "p022",
+    "question": "Салом, кам таминlangan оилаларга болалар нафакаси ва моддий ёрдам кимларга берилади? Ижтимоий химоя ягона реестри оркали тайинлаш тартиби кандай?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "PF-6277",
+      "VMQ-119"
+    ],
+    "expected_lex_ids": [
+      "-5572509",
+      "-6411319"
+    ],
+    "category": "social_protection",
+    "out_of_scope": false,
+    "note": "PF-6277 va VMQ-119 (Yagona reyestr orqali bolalar nafaqasi va moddiy yordam tayinlash tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "p023",
+    "question": "Илтимос айтингчи, 2 гурух ногиронлик пенсияси тайинланиши учун неча йил иш стажи керак? Агар иш стажи умуман булмаса нафака канча ва каердан берилади?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "938-XII",
+      "VMQ-592"
+    ],
+    "expected_lex_ids": [
+      "-112314",
+      "-6236060"
+    ],
+    "category": "pension",
+    "out_of_scope": false,
+    "note": "938-XII qonun va VMQ-592 (Nogironlik pensiyasi va staj talablari)",
+    "in_corpus": true
+  },
+  {
+    "id": "p024",
+    "question": "Пенсия тайинлаш учун Пенсия жамгармасига бориш шартми ёки проактив шаклда узи тайинланадими? Инсон агентилиги оркали кандай ишлайди?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-398",
+      "PQ-194"
+    ],
+    "expected_lex_ids": [
+      "-7605437",
+      "-7546356"
+    ],
+    "category": "pension",
+    "out_of_scope": false,
+    "note": "VMQ-398 va PQ-194 (Nogironlik pensiyalarini proaktiv tayinlash ma'muriy reglamenti)",
+    "in_corpus": true
+  },
+  {
+    "id": "p025",
+    "question": "18 ёшгача ногирон боласи бор оналарга парваришлаш нафакаси бериладими? Парвариш нафакаси канча ва каерга мурожаат килиш лозим?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-119",
+      "PQ-41"
+    ],
+    "expected_lex_ids": [
+      "-6411319",
+      "-7362704"
+    ],
+    "category": "social_protection",
+    "out_of_scope": false,
+    "note": "VMQ-119 va PQ-41 (Nogironligi bo'lgan bolani parvarishlayotgan shaxslarga nafaqa tayinlash)",
+    "in_corpus": true
+  },
+  {
+    "id": "p026",
+    "question": "ВТЭК (ТИЕК) курикдан утказиш муддати неча кун? Агар инсон узи бора олмаса уйига келиб курикдан утказиладими?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-62",
+      "PQ-22"
+    ],
+    "expected_lex_ids": [
+      "-5852486",
+      "-5745300"
+    ],
+    "category": "medical_social_expertise",
+    "out_of_scope": false,
+    "note": "VMQ-62 va PQ-22 (TIEK ko'rigi, muddatlari va uyda ko'rikdan o'tkazish tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "p027",
+    "question": "ТИЭК кароридан норози булсак кайерга ва неча кун ичида шикоят килиш мумкин? Кайта курикдан утиш тартиби кандай?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-62"
+    ],
+    "expected_lex_ids": [
+      "-5852486"
+    ],
+    "category": "medical_social_expertise",
+    "out_of_scope": false,
+    "note": "VMQ-62 (TIEK xulosasiga shikoyat qilish tartibi va muddatlari)",
+    "in_corpus": true
+  },
+  {
+    "id": "p028",
+    "question": "Ногиронлиги булган абитуриентларга ОТМга киришда кандай имтиёз бор? 2 фоизли кушимча давлат гранти квотаси буйича хужжат топшириш тартиби кандай?",
+    "language": "uz",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-417"
+    ],
+    "expected_lex_ids": [
+      "-3765153"
+    ],
+    "category": "education",
+    "out_of_scope": false,
+    "note": "VMQ-417 (OTMlarga nogironligi bo'lgan shaxslarni qo'shimcha 2% davlat granti kvotasi bo'yicha qabul qilish)",
+    "in_corpus": true
+  },
+  {
+    "id": "p029",
+    "question": "Здравствуйте! Подскажите, как организуется инклюзивное образование для детей с особыми образовательными потребностями в обычных школах? Какие документы нужны?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-46",
+      "PQ-4860"
+    ],
+    "expected_lex_ids": [
+      "-6779571",
+      "-5044711"
+    ],
+    "category": "education",
+    "out_of_scope": false,
+    "note": "VMQ-46 (Alohida ta'lim ehtiyojlari bo'lgan bolalarni inklyuziv ta'limga jalb qilish tartibi) | muqobil: PQ-4860",
+    "in_corpus": true
+  },
+  {
+    "id": "p030",
+    "question": "Имеет ли инвалид право на бесплатные лекарства в поликлинике? По какому списку и рецепту выдаются льготные медикаменты и куда обращаться при отказе?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-204"
+    ],
+    "expected_lex_ids": [
+      "-2211626"
+    ],
+    "category": "healthcare",
+    "out_of_scope": false,
+    "note": "VMQ-204 (Shaxslarning ayrim toifalarini imtiyozli asosda dori vositalari bilan ta'minlash tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "p031",
+    "question": "Как получить бесплатную путевку в санаторий для инвалида 1 или 2 группы? Какая очередь, какие медицинские справки требуются и сколько раз в год положено?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-693"
+    ],
+    "expected_lex_ids": [
+      "-5735396"
+    ],
+    "category": "healthcare",
+    "out_of_scope": false,
+    "note": "VMQ-693 (Aholiga sanatoriylarda davolanish uchun yo'llanmalar berish tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "p032",
+    "question": "Как сейчас получить инвалидную коляску или слуховой аппарат бесплатно? Правда ли, что ввели электронные сертификаты (ваучеры) и можно выбрать производителя?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-253",
+      "PQ-88"
+    ],
+    "expected_lex_ids": [
+      "-6905497",
+      "-6819215"
+    ],
+    "category": "prosthetics",
+    "out_of_scope": false,
+    "note": "VMQ-253 va PQ-88 (Protez-ortopediya moslamalari va aravachalar berish vaucher tizimi)",
+    "in_corpus": true
+  },
+  {
+    "id": "p033",
+    "question": "Может ли семья с ребенком-инвалидом получить субсидию на покупку жилья или ипотеку? Куда подавать заявление через my.gov.uz и какие условия?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-182"
+    ],
+    "expected_lex_ids": [
+      "-4774086"
+    ],
+    "category": "housing",
+    "out_of_scope": false,
+    "note": "VMQ-182 (Uy-joy sotib olish uchun fuqarolarga subsidiya to'lash tartibi)",
+    "in_corpus": true
+  },
+  {
+    "id": "p034",
+    "question": "Имеют ли инвалиды право на бесплатный проезд в городском общественном транспорте (автобус, метро)? Какое удостоверение или карту нужно оформить?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-507",
+      "278-I"
+    ],
+    "expected_lex_ids": [
+      "-6197967",
+      "-39646"
+    ],
+    "category": "transport",
+    "out_of_scope": false,
+    "note": "VMQ-507 va 278-I qonun (Shahar jamoat transportida bepul yurish huquqi va yagona guvohnoma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p035",
+    "question": "Где инвалидам разрешено бесплатно парковать автомобиль? Какие требования к знакам на парковках у торговых центров и больниц?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "REG-3048"
+    ],
+    "expected_lex_ids": [
+      "-3854805"
+    ],
+    "category": "transport",
+    "out_of_scope": false,
+    "note": "REG-3048 (Nogironligi bo'lgan shaxslar avtotransport vositalarining to'xtab turish joylari talablari)",
+    "in_corpus": true
+  },
+  {
+    "id": "p036",
+    "question": "Каковы строительные нормы по установке пандусов при входе в жилые дома и государственные учреждения (ШНК 2.07.02-24)? Какой угол наклона и ширина обязательны?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "01/2-1"
+    ],
+    "expected_lex_ids": [
+      "-7346244"
+    ],
+    "category": "accessibility",
+    "out_of_scope": false,
+    "note": "SHNQ 2.07.02-24 (Qurilish obyektlarini nogironligi bo'lgan shaxslar ehtiyojlariga moslashtirish me'yorlari)",
+    "in_corpus": true
+  },
+  {
+    "id": "p037",
+    "question": "Какие государственные гарантии действуют по созданию безбарьерной среды для лиц с инвалидностью в Узбекистане? Кто контролирует доступность объектов?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "PQ-266",
+      "O'RQ-641"
+    ],
+    "expected_lex_ids": [
+      "-7027440",
+      "-5049511"
+    ],
+    "category": "accessibility",
+    "out_of_scope": false,
+    "note": "PQ-266 va O'RQ-641 (Nogironligi bo'lgan shaxslarga qulay va to'siqlarsiz muhit yaratish choralari)",
+    "in_corpus": true
+  },
+  {
+    "id": "p038",
+    "question": "Как оформить социальное обслуживание на дому для одинокого инвалида, не способного к самообслуживанию? Какие услуги предоставляет социальный работник?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "VMQ-123",
+      "VMQ-316",
+      "REG-3240"
+    ],
+    "expected_lex_ids": [
+      "-6834968",
+      "-6946967",
+      "-4856349"
+    ],
+    "category": "social_care",
+    "out_of_scope": false,
+    "note": "VMQ-123 va VMQ-316 (O'zgalar parvarishiga muhtoj shaxslarga ijtimoiy xizmat ko'rsatish tartibi) | muqobil: REG-3240",
+    "in_corpus": true
+  },
+  {
+    "id": "p039",
+    "question": "Каковы общие сроки и порядок рассмотрения обращений граждан государственными органами по Закону об обращениях? В какой срок обязаны ответить на жалобу?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-445"
+    ],
+    "expected_lex_ids": [
+      "-3336169"
+    ],
+    "category": "appeals",
+    "out_of_scope": false,
+    "note": "Murojaatlar to'g'risidagi qonun (murojaatlarni ko'rib chiqish muddati: 15 kun / 1 oy - umumiy norma)",
+    "in_corpus": true
+  },
+  {
+    "id": "p040",
+    "question": "В какой срок гражданин имеет право подать жалобу на административное решение государственного органа в вышестоящую инстанцию по Закону об административных процедурах?",
+    "language": "ru",
+    "expected_ids": [],
+    "expected_law_numbers": [
+      "O'RQ-457"
+    ],
+    "expected_lex_ids": [
+      "-3492199"
+    ],
+    "category": "administrative_procedure",
+    "out_of_scope": false,
+    "note": "Ma'muriy tartib-taomillar to'g'risidagi qonun (ma'muriy shikoyat berishning 30 kunlik muddati - umumiy norma)",
+    "in_corpus": true
+  }
+]

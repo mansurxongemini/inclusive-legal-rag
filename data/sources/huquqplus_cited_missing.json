@@ -1,0 +1,295 @@
+{
+  "note": "Lex.uz documents cited by active Huquq+ posts and absent from the corpus (from hp_posts.unresolved_refs, 2026-10-13).",
+  "documents": [
+    {
+      "doc_id": "-4138215",
+      "citations": 6,
+      "posts": 2
+    },
+    {
+      "doc_id": "-2270351",
+      "citations": 5,
+      "posts": 3
+    },
+    {
+      "doc_id": "-7162393",
+      "citations": 4,
+      "posts": 3
+    },
+    {
+      "doc_id": "-1865473",
+      "citations": 4,
+      "posts": 2
+    },
+    {
+      "doc_id": "7162396",
+      "citations": 4,
+      "posts": 3
+    },
+    {
+      "doc_id": "-6906830",
+      "citations": 3,
+      "posts": 2
+    },
+    {
+      "doc_id": "-648034",
+      "citations": 3,
+      "posts": 2
+    },
+    {
+      "doc_id": "6906825",
+      "citations": 3,
+      "posts": 2
+    },
+    {
+      "doc_id": "-7730821",
+      "citations": 2,
+      "posts": 2
+    },
+    {
+      "doc_id": "-7283088",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "-6116203",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "-7170688",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "-7759309",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "-6311402",
+      "citations": 2,
+      "posts": 2
+    },
+    {
+      "doc_id": "-1899953",
+      "citations": 2,
+      "posts": 2
+    },
+    {
+      "doc_id": "-7487706",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "7283092",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "5399496",
+      "citations": 2,
+      "posts": 2
+    },
+    {
+      "doc_id": "6116212",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "7171310",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "7764593",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "7491047",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "7059452",
+      "citations": 2,
+      "posts": 2
+    },
+    {
+      "doc_id": "3920035",
+      "citations": 2,
+      "posts": 1
+    },
+    {
+      "doc_id": "-4358964",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5688101",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5524039",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5429899",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5676240",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5398681",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-6433775",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-6450094",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-3920037",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5286354",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-1380972",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-3130072",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-6407934",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5793272",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-5045889",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "-7433397",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5793280",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5045895",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "7433422",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "1865475",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "4358973",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5688115",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "3213407",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "1899957",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5524044",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5431027",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5676245",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "6433780",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "6450186",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "2270349",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "5286356",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "478841",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "1380970",
+      "citations": 1,
+      "posts": 1
+    },
+    {
+      "doc_id": "3130070",
+      "citations": 1,
+      "posts": 1
+    }
+  ]
+}

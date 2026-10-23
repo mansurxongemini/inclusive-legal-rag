@@ -3,6 +3,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 from fastapi import Request, HTTPException
 from src.config import settings
+from src.api.middleware.hardening import client_ip
 
 
 class TokenBucketRateLimiter:
@@ -23,7 +24,7 @@ class TokenBucketRateLimiter:
             del self.requests[k]
 
     def check(self, request: Request, key: Optional[str] = None, limit: Optional[int] = None):
-        ident = key or (request.client.host if request.client else "127.0.0.1")
+        ident = key or client_ip(request)
         max_requests = limit or self.limit
         now = time.time()
 

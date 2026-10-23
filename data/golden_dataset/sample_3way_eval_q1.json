@@ -1,0 +1,226 @@
+{
+  "question_id": 1,
+  "question": "Fuqaro 2021-yilda ishlab chiqarishdagi jarohat oqibatida oyog'ining son sohasidan amputatsiyasiga uchragan. Komissiya unga dastlab 2 yil muddatli nogironlik bergan, hozir esa qayta ko'rikda yana 1 yilga uzaytirib bergan. Anatomik nuqson tiklanmasligini hisobga olib, ushbu fuqaro qaysi qonun va mezonlar asosida darhol muddatsiz (umrbod) nogironlik berilishini talab qilishi mumkin va unga rad javobi berilsa qayerga murojaat qilish kerak?",
+  "gemini_argon_ground_truth": {
+    "id": 1,
+    "title": "Muddatsiz nogironlik va anatomik nuqsonlar kazuistikasi",
+    "conclusion": "Fuqaroning talabi to‘liq qonuniy; oyog‘ining son sohasidan amputatsiyasi tiklanmaydigan morfologik (anatomik) nuqson bo‘lganligi sababli, unga qayta ko‘rik muddati ko‘rsatilmasdan darhol muddatsiz (umrbod) nogironlik belgilanishi shart.",
+    "legal_basis": "[O‘zbekiston Respublikasining 2020-yil 15-oktabrdagi “Nogironligi bo‘lgan shaxslarning huquqlari to‘g‘risida”gi O‘RQ-641-son Qonuni](https://lex.uz/docs/-5049511) 31-moddasi: organizm funksiyalari barqaror, tiklanmaydigan darajada buzilganda nogironlik muddatsiz davrga belgilanishi qat’iy mustahkamlangan.\n[O‘zbekiston Respublikasi Vazirlar Mahkamasining 2022-yil 8-fevraldagi “Tibbiy-ijtimoiy ekspertiza xizmati tashkiliy tuzilmasini va faoliyatini tashkil etishga oid normativ-huquqiy hujjatlarni tasdiqlash to‘g‘risida”gi 62-son qarori](https://lex.uz/uz/docs/-5852486) (va unga [Vazirlar Mahkamasining 2025-yil 16-sentabrdagi 587-son qarori](https://lex.uz/uz/docs/-7730821) bilan kiritilgan o‘zgartirishlar) bilan tasdiqlangan “Fuqarolarni tibbiy-ijtimoiy ekspertizadan o‘tkazish tartibi to‘g‘risidagi Nizom” hamda uning ilovasidagi “Nogironlik qayta ko‘rikdan o‘tkazish muddati ko‘rsatilmasdan (muddatsiz) belgilanadigan anatomik nuqsonlar va kasalliklar ro‘yxati”: yirik bo‘g‘imlar va oyoq-qo‘llarning (jumladan, son yoki boldir sohasidan) amputatsiyasi (cho‘ltog‘i) reabilitatsiya choralari bilan tiklanmaydigan anatomik nuqson sifatida birlamchi ko‘rikdayoq muddatsiz nogironlik belgilash uchun asos hisoblanadi.",
+    "situation_analysis": "Tumanlararo TIEKning “protezlashdan keyingi moslashuvni ko‘rish kerak” degan og‘zaki bahonasi [VMning 62-son qaroriga](https://lex.uz/uz/docs/-5852486) mutlaqo ziddir. Protezlash fuqaroning harakatlanish imkoniyatini kompensatsiya qilsa-da, yo‘qotilgan a’zoni (anatomik defektni) tiklamaydi. Komissiya tomonidan dastlab 2 yil, so‘ngra yana 1 yil muddat berilishi [O‘zbekiston Respublikasining 2018-yil 8-yanvardagi “Ma’muriy tartib-taomillar to‘g‘risida”gi O‘RQ-457-son Qonuni](https://lex.uz/docs/-3492199) 10-moddasidagi (qonuniylik) va 11-moddasidagi (mutanosiblik) prinsiplarini qo‘pol ravishda buzish hamda byurokratik sansalorlik hisoblanadi.",
+    "procedural_roadmap": "1-qadam: Tumanlararo TIEK qarori ustidan 1 oy ichida [O‘zbekiston Respublikasi Prezidentining 2023-yil 1-iyundagi PF-82-son Farmoni](https://lex.uz/docs/-6480342) asosida tashkil etilgan Ijtimoiy himoya milliy agentligining Qoraqalpog‘iston Respublikasi, viloyatlar va Toshkent shahar boshqarmalari huzuridagi Bosh TIEKka (yoki Yagona interaktiv davlat xizmatlari portali — YIDXP orqali) apellyatsiya shikoyati kiritiladi.\n2-qadam: Bosh TIEK 15 kun ichida xulosani o‘zgartirmasa, Ijtimoiy himoya milliy agentligi huzuridagi Tibbiy-ijtimoiy ekspertiza inspeksiyasiga (Respublika darajasida) shikoyat yuboriladi.\n3-qadam: Yuqori turuvchi organ rad javobi bergan kundan (yoki javob berish muddati o‘tgandan) e’tiboran 3 oy ichida [O‘zbekiston Respublikasining Ma’muriy sud ishlarini yuritish to‘g‘risidagi kodeksi](https://lex.uz/docs/-3527353) (MSIYTK) 186-moddasiga asosan tumanlararo ma’muriy sudga TIEK qarorining muddatga oid qismini haqiqiy emas deb topish va muddatsiz nogironlik belgilash majburiyatini yuklash haqida ariza kiritiladi.",
+    "audit_rubric": "Keng tarqalgan xatolar: Eskirgan Vazirlar Mahkamasining 2008-yil 1-iyuldagi 146-son yoki 2011-yil 1-iyuldagi 195-son qarorlariga havola berish; “6 yil ketma-ket guruh olgandan keyingina muddatsiz beriladi” degan umumiy qoidani anatomik nuqsonlarga noto‘g‘ri tatbiq etish; TIEK hali ham Sog‘liqni saqlash vazirligi tizimida deb ko‘rsatish.\nTekshiruv mezoni (APPROVE talablari): Javobda [VMning 2022-yil 8-fevraldagi 62-son qarori](https://lex.uz/uz/docs/-5852486) (va [587-son qaror](https://lex.uz/uz/docs/-7730821)), [O‘RQ-641-son Qonun](https://lex.uz/docs/-5049511) 31-moddasi, anatomik nuqsonlarda muddat kutilmasligi hamda TIEKning Ijtimoiy himoya milliy agentligi bo‘ysunuvida ekanligi aniq ko‘rsatilgan bo‘lishi shart.",
+    "raw_text": "Qisqa yakuniy xulosa: Fuqaroning talabi to‘liq qonuniy; oyog‘ining son sohasidan amputatsiyasi tiklanmaydigan morfologik (anatomik) nuqson bo‘lganligi sababli, unga qayta ko‘rik muddati ko‘rsatilmasdan darhol muddatsiz (umrbod) nogironlik belgilanishi shart.\nHuquqiy asoslar (Moddama-modda tahlil):\n[O‘zbekiston Respublikasining 2020-yil 15-oktabrdagi “Nogironligi bo‘lgan shaxslarning huquqlari to‘g‘risida”gi O‘RQ-641-son Qonuni](https://lex.uz/docs/-5049511) 31-moddasi: organizm funksiyalari barqaror, tiklanmaydigan darajada buzilganda nogironlik muddatsiz davrga belgilanishi qat’iy mustahkamlangan.\n[O‘zbekiston Respublikasi Vazirlar Mahkamasining 2022-yil 8-fevraldagi “Tibbiy-ijtimoiy ekspertiza xizmati tashkiliy tuzilmasini va faoliyatini tashkil etishga oid normativ-huquqiy hujjatlarni tasdiqlash to‘g‘risida”gi 62-son qarori](https://lex.uz/uz/docs/-5852486) (va unga [Vazirlar Mahkamasining 2025-yil 16-sentabrdagi 587-son qarori](https://lex.uz/uz/docs/-7730821) bilan kiritilgan o‘zgartirishlar) bilan tasdiqlangan “Fuqarolarni tibbiy-ijtimoiy ekspertizadan o‘tkazish tartibi to‘g‘risidagi Nizom” hamda uning ilovasidagi “Nogironlik qayta ko‘rikdan o‘tkazish muddati ko‘rsatilmasdan (muddatsiz) belgilanadigan anatomik nuqsonlar va kasalliklar ro‘yxati”: yirik bo‘g‘imlar va oyoq-qo‘llarning (jumladan, son yoki boldir sohasidan) amputatsiyasi (cho‘ltog‘i) reabilitatsiya choralari bilan tiklanmaydigan anatomik nuqson sifatida birlamchi ko‘rikdayoq muddatsiz nogironlik belgilash uchun asos hisoblanadi.\nVaziyatga tatbiq etilishi va idoraviy bahonalarning asossizligi: Tumanlararo TIEKning “protezlashdan keyingi moslashuvni ko‘rish kerak” degan og‘zaki bahonasi [VMning 62-son qaroriga](https://lex.uz/uz/docs/-5852486) mutlaqo ziddir. Protezlash fuqaroning harakatlanish imkoniyatini kompensatsiya qilsa-da, yo‘qotilgan a’zoni (anatomik defektni) tiklamaydi. Komissiya tomonidan dastlab 2 yil, so‘ngra yana 1 yil muddat berilishi [O‘zbekiston Respublikasining 2018-yil 8-yanvardagi “Ma’muriy tartib-taomillar to‘g‘risida”gi O‘RQ-457-son Qonuni](https://lex.uz/docs/-3492199) 10-moddasidagi (qonuniylik) va 11-moddasidagi (mutanosiblik) prinsiplarini qo‘pol ravishda buzish hamda byurokratik sansalorlik hisoblanadi.\nFuqaro uchun protsessual harakatlar xaritasi:\n1-qadam: Tumanlararo TIEK qarori ustidan 1 oy ichida [O‘zbekiston Respublikasi Prezidentining 2023-yil 1-iyundagi PF-82-son Farmoni](https://lex.uz/docs/-6480342) asosida tashkil etilgan Ijtimoiy himoya milliy agentligining Qoraqalpog‘iston Respublikasi, viloyatlar va Toshkent shahar boshqarmalari huzuridagi Bosh TIEKka (yoki Yagona interaktiv davlat xizmatlari portali — YIDXP orqali) apellyatsiya shikoyati kiritiladi.\n2-qadam: Bosh TIEK 15 kun ichida xulosani o‘zgartirmasa, Ijtimoiy himoya milliy agentligi huzuridagi Tibbiy-ijtimoiy ekspertiza inspeksiyasiga (Respublika darajasida) shikoyat yuboriladi.\n3-qadam: Yuqori turuvchi organ rad javobi bergan kundan (yoki javob berish muddati o‘tgandan) e’tiboran 3 oy ichida [O‘zbekiston Respublikasining Ma’muriy sud ishlarini yuritish to‘g‘risidagi kodeksi](https://lex.uz/docs/-3527353) (MSIYTK) 186-moddasiga asosan tumanlararo ma’muriy sudga TIEK qarorining muddatga oid qismini haqiqiy emas deb topish va muddatsiz nogironlik belgilash majburiyatini yuklash haqida ariza kiritiladi.\nAudit va Sifat nazorati mezoni:\nKeng tarqalgan xatolar: Eskirgan Vazirlar Mahkamasining 2008-yil 1-iyuldagi 146-son yoki 2011-yil 1-iyuldagi 195-son qarorlariga havola berish; “6 yil ketma-ket guruh olgandan keyingina muddatsiz beriladi” degan umumiy qoidani anatomik nuqsonlarga noto‘g‘ri tatbiq etish; TIEK hali ham Sog‘liqni saqlash vazirligi tizimida deb ko‘rsatish.\nTekshiruv mezoni (APPROVE talablari): Javobda [VMning 2022-yil 8-fevraldagi 62-son qarori](https://lex.uz/uz/docs/-5852486) (va [587-son qaror](https://lex.uz/uz/docs/-7730821)), [O‘RQ-641-son Qonun](https://lex.uz/docs/-5049511) 31-moddasi, anatomik nuqsonlarda muddat kutilmasligi hamda TIEKning Ijtimoiy himoya milliy agentligi bo‘ysunuvida ekanligi aniq ko‘rsatilgan bo‘lishi shart."
+  },
+  "tuzuk_ai": {
+    "answer": "**Qisqa javob:** agar fuqaro 18 yoshdan katta bo‘lsa va amputatsiya aynan **son sohasidan** amalga oshirilganligi tibbiy hujjatlar bilan tasdiqlansa, amaldagi mezonlarga ko‘ra unga **II guruh nogironligi muddatsiz, ya’ni qayta ko‘rik muddati ko‘rsatilmagan holda** belgilanishi kerakligi haqida asosli talab qo‘yish mumkin. Ishlab chiqarishdagi jarohatning 2021-yilda yuz bergani bu huquqni istisno qilmaydi; biroq jarohatning ishlab chiqarish bilan bog‘liqligi alohida hujjatlar, jumladan N-1 shakldagi dalolatnoma bilan tasdiqlanishi lozim.\n\n## Huquqiy asoslar\n\n### 1. O‘zbekiston Respublikasi Vazirlar Mahkamasining 2022-yil 8-fevraldagi 62-son qarori\n\nUshbu qaror bilan tasdiqlangan **“Fuqarolarni tibbiy-ijtimoiy ekspert komissiyalarida ko‘rikdan o‘tkazish tartibi to‘g‘risida”gi nizom**ga ko‘ra:\n\n- **11-band**: aniq ko‘rinib turgan anatomik nuqsonlar ro‘yxatiga kiradigan holatlarda fuqaro qo‘shimcha klinik-funksional tekshiruvlardan o‘tkazilmasdan TIEKga yuboriladi va bunday holat tasdiqlansa, nogironlik **muddatsiz belgilanadi**.\n- Mazkur ro‘yxatda travmatik amputatsiyalar, jumladan **chanoq-son bo‘g‘imi, son, boldir, boldir-oshiq bo‘g‘imi va oyoq panjasi sohasidagi amputatsiyalar** alohida anatomik nuqson sifatida ko‘rsatilgan.\n- **38-band**: nogironlik asosiy kasalliklar ro‘yxati va ularga nisbatan belgilangan mezonlar asosida belgilanadi.\n- **41-band**: 18 yoshdan katta shaxslar uchun nogironlik sababi sifatida **mehnatda mayiblanish** ko‘rsatilishi mumkin.\n- **57-band**: organ yoki organizm tizimlaridagi barqaror, qaytarib bo‘lmaydigan morfologik o‘zgarishlar mavjud bo‘lsa va reabilitatsiya natijasida sog‘liqni tiklash yoki ijtimoiy moslashuvni yaxshilash mumkin bo‘lmasa, nogironlik qayta ko‘rik muddati ko‘rsatilmagan holda belgilanadi.\n- **60-band**: tumanlararo yoki tuman/shahar TIEK xulosasidan norozi shaxs yuqori turuvchi hududiy TIEKga yoki sudga murojaat qilishi mumkin.\n\n[62-son qaror](https://lex.uz/docs/-5852486)\n\n### 2. O‘zbekiston Respublikasi Vazirlar Mahkamasining 2025-yil 16-sentabrdagi 587-son qarori bilan tasdiqlangan mezonlar\n\n587-son qaror bilan nogironlikni belgilash mezonlari yangilangan. Undagi jadvalga ko‘ra:\n\n- **“Son cho‘ltog‘ligi”** bo‘yicha:\n  - 18–35 yoshdagi shaxsga — **II guruh, muddatsiz**;\n  - 36–45 yoshdagi shaxsga — **II guruh, muddatsiz**;\n  - 46–60 yoshdagi shaxsga — **II guruh, muddatsiz**;\n  - 55 yoshdan katta shaxsga — **II guruh, muddatsiz** belgilanadi.\n- Shuningdek, **chanoq-son bo‘g‘imidan ekzoartikulyatsiya** holati ham 18 yoshdan katta shaxslar uchun II guruhni muddatsiz belgilash mezonlari qatorida ko‘rsatilgan.\n- Jadvalda son protezi, protez uchun poyabzal va qo‘ltiq tayoq kabi reabilitatsiya vositalariga ehtiyoj ham nazarda tutilgan.\n\nShu sababli fuqaroning amputatsiyasi tibbiy hujjatlarda **“son cho‘ltog‘ligi”** yoki unga tenglashtirilgan anatomik nuqson sifatida qayd etilgan bo‘lsa, bir yilga uzaytirish o‘rniga muddatsiz nogironlik belgilashni talab qilishga huquqiy asos mavjud.\n\n[587-son qaror](https://lex.uz/docs/-7730821)\n\n### 3. Ishlab chiqarishdagi jarohatning huquqiy ahamiyati\n\n“Ishlab chiqarishdagi baxtsiz hodisalar va kasb kasalliklaridan majburiy davlat ijtimoiy sug‘urtasi to‘g‘risida”gi 2008-yil 10-sentabrdagi O‘RQ-174-son Qonun:\n\n- **11-modda**ga ko‘ra, ishlab chiqarishdagi baxtsiz hodisa oqibatida mehnat qobiliyati to‘liq yoki qisman yo‘qotilganda nogironlik pensiyasi tayinlanadi;\n- bunday pensiya ish stajidan qat’i nazar tayinlanadi;\n- nogironlik sababi, guruhi va muddati TIEK tomonidan qonunchilikda belgilangan tartibda aniqlanadi.\n\nMazkur qonun nogironlik muddatini o‘zi belgilamaydi, lekin ishlab chiqarishdagi jarohat sababini tasdiqlash va tegishli pensiya hamda sug‘urta huquqlarini amalga oshirish uchun muhimdir.\n\n[O‘RQ-174-son Qonun](https://lex.uz/docs/-1390913)\n\n## Vaziyatga tatbiq etilishi\n\n1. **Amputatsiya anatomik jihatdan “son cho‘ltog‘ligi” sifatida tasdiqlanishi kerak.**  \n   Tibbiy xulosada amputatsiya darajasi aniq ko‘rsatilishi lozim. Oddiy “oyoq amputatsiyasi” degan umumiy qayd o‘rniga son sohasi, amputatsiya darajasi va qaytarib bo‘lmas anatomik nuqson qayd etilgani ma’qul. Bu 587-son qarordagi mezonning aynan qo‘llanishi uchun muhim.\n\n2. **Fuqaroni muddatsiz nogironlikka qayta ko‘rikda ham yuborish mumkin.**  \n   Muddatsiz nogironlik faqat birinchi ko‘rikda belgilanadi, degan cheklov mavjud emas. Qayta ko‘rik vaqtida ham avvalgi tashxis, amputatsiya fakti, funksional cheklanishlar va amaldagi mezonlar asosida muddatni qayta ko‘rib chiqish talab qilinishi mumkin.\n\n3. **Tibbiy hujjatlarda quyidagilar bo‘lishi kerak:**\n   - amputatsiya qilinganligi va uning darajasi haqidagi jarroh yoki travmatolog xulosasi;\n   - amputatsiyadan keyingi holatni tasdiqlovchi tibbiy hujjatlar;\n   - protezga ehtiyoj to‘g‘risidagi xulosa;\n   - ishlab chiqarishdagi baxtsiz hodisa bo‘yicha **N-1 shakldagi dalolatnoma**;\n   - avvalgi TIEK xulosalari va nogironlik to‘g‘risidagi ma’lumotnomalar;\n   - amaldagi bir yillik nogironlik belgilanganligi haqidagi xulosa.\n\n   62-son qaror nizomining 14-bandiga ko‘ra, mehnatda mayiblanish sababini belgilash uchun N-1 shakldagi dalolatnoma “Ekspertiza” moduliga yuklanadi.\n\n4. **TIEKga yozma ravishda aniq talab qo‘yish lozim.**  \n   Arizada 62-son qarorning 11 va 57-bandlari hamda 587-son qarorda “son cho‘ltog‘ligi” uchun belgilangan 18 yoshdan katta shaxslarga nisbatan II guruhni muddatsiz belgilash mezonlariga havola qilish kerak. TIEK rad etsa, rad etish sababi va qaysi mezon qo‘llanilmagani yozma ravishda berilishini so‘rash lozim.\n\n## Rad javobidan keyin qayerga murojaat qilish kerak?\n\n### 1. Yuqori turuvchi hududiy TIEKga\n\nAgar qarorni tumanlararo yoki tuman/shahar TIEK chiqargan bo‘lsa, fuqaro:\n\n- qarordan norozi bo‘lgan kundan boshlab **30 kalendar kun ichida** Qoraqalpog‘iston Respublikasi, viloyat yoki Toshkent shahar TIEKga murojaat qilishi mumkin;\n- hududiy TIEK arizani olgach, odatda **20 kalendar kun ichida** qayta ko‘rik o‘tkazib, xulosa chiqaradi.\n\nAgar hududiy TIEK xulosasidan ham norozi bo‘lsa, fuqaro xulosa qabul qilingan kundan keyin **5 kun ichida Respublika TIEKga** shikoyat qilishi mumkin. Respublika TIEKning xulosasi yakuniy ekspert xulosasi hisoblanadi, biroq u ustidan sudga murojaat qilish mumkin.\n\n### 2. Ma’muriy sudga\n\nFuqaro TIEK xulosasi yoki harakatsizligi ustidan ma’muriy sudga ham murojaat qilishi mumkin. Odatda ariza tegishli TIEK joylashgan hududdagi **tumanlararo ma’muriy sudga** beriladi.\n\nSuddan quyidagilarni so‘rash mumkin:\n\n- TIEKning muddatsiz nogironlikni belgilashni rad etgan xulosasini qonunga xilof deb topish;\n- masalani qonunchilik mezonlarini hisobga olgan holda qayta ko‘rib chiqishni majbur qilish;\n- zarur bo‘lsa, tibbiy hujjatlarni talab qilib olish va ekspertiza tayinlash.\n\nAmaliy jihatdan shikoyatga avvalgi TIEK xulosalari, yangi tibbiy xulosalar, amputatsiya darajasi haqidagi hujjatlar, N-1 dalolatnomasi va 587-son qarordagi mezonlarga mos kelishini ko‘rsatuvchi hujjatlarni ilova qilish kerak.\n\n**Muhim shart:** agar amputatsiya tibbiy hujjatlarda son sohasi emas, masalan, boldir yoki oyoq panjasi amputatsiyasi sifatida qayd etilgan bo‘lsa, 587-son qarordagi mezon va nogironlik guruhi boshqacha qo‘llanilishi mumkin. Shu bois talabning asosiy nuqtasi — amputatsiyaning aniq anatomik darajasini hujjatlar bilan tasdiqlashdir.\n\n### Manbalar\n\n- [O‘zbekiston Respublikasi Vazirlar Mahkamasining 2022-yil 8-fevraldagi 62-son qarori](https://lex.uz/docs/-5852486)\n- [O‘zbekiston Respublikasi Vazirlar Mahkamasining 2025-yil 16-sentabrdagi 587-son qarori](https://lex.uz/docs/-7730821)\n- [O‘zbekiston Respublikasining 2008-yil 10-sentabrdagi O‘RQ-174-son Qonuni](https://lex.uz/docs/-1390913)",
+    "review": {
+      "verdict": "reject",
+      "scores": {
+        "legal_accuracy": 2,
+        "citation_basis": 1,
+        "completeness": 4,
+        "tone": 5
+      },
+      "issues": [
+        {
+          "type": "unsupported_claim",
+          "quote": "11-band: aniq ko'rinib turgan anatomik nuqsonlar ro'yxatiga kiradigan holatlarda fuqaro qo'shimcha klinik-funksional tekshiruvlardan o'tkazilmasdan TIEKga yuboriladi va bunday holat tasdiqlansa, nogironlik muddatsiz belgilanadi.",
+          "problem": "Kontekstda 9-ilova 11-band matni va amputatsiyalar ro'yxati keltirilmagan, da'vo tasdiqlanmaydi.",
+          "fix": "11-band iqtibosini olib tashlang yoki faqat kontekstda bor O'RQ-641 31-moddasi va 9-ilova 56-bandiga tayaning.",
+          "severity": "major"
+        },
+        {
+          "type": "unsupported_claim",
+          "quote": "“Son cho'ltog'ligi” bo'yicha: 18–35 yoshdagi shaxsga — II guruh, muddatsiz; 36–45 yoshdagi shaxsga — II guruh, muddatsiz;",
+          "problem": "Kontekstdagi VMQ-587 parchasida bunday jadval, yosh kesimlari va II guruh muddatsiz mezoni yo'q.",
+          "fix": "Yoshlar bo'yicha aniq taqsimotni o'chiring, faqat 56-banddagi muddatsiz belgilash imkoniyatiga havola qoldiring.",
+          "severity": "major"
+        },
+        {
+          "type": "unsupported_claim",
+          "quote": "57-band: organ yoki organizm tizimlaridagi barqaror, qaytarib bo'lmaydigan morfologik o'zgarishlar mavjud bo'lsa...",
+          "problem": "Kontekstda 57-band matni yo'q, muddatsiz belgilash sharti tasdiqlanmaydi.",
+          "fix": "57-bandga havolani olib tashlang, o'rniga kontekstda bor 56-band matniga tayaning.",
+          "severity": "major"
+        },
+        {
+          "type": "unsupported_claim",
+          "quote": "60-band: tumanlararo yoki tuman/shahar TIEK xulosasidan norozi shaxs yuqori turuvchi hududiy TIEKga yoki sudga murojaat qilishi mumkin.",
+          "problem": "Kontekstda 60-band matni keltirilmagan.",
+          "fix": "60-band havolasini o'chiring, shikoyat huquqi uchun kontekstda bor 8-ilova 11-bandiga tayaning.",
+          "severity": "major"
+        },
+        {
+          "type": "unsupported_claim",
+          "quote": "11-moddaga ko'ra, ishlab chiqarishdagi baxtsiz hodisa oqibatida mehnat qobiliyati to'liq yoki qisman yo'qotilganda nogironlik pensiyasi tayinlanadi;",
+          "problem": "Kontekstda O'RQ-174-son Qonun umuman yo'q, 11-modda mazmuni tasdiqlanmaydi.",
+          "fix": "O'RQ-174-son Qonunga oid da'volarni kontekst tasdiqlamaguncha olib tashlang.",
+          "severity": "major"
+        },
+        {
+          "type": "unsupported_claim",
+          "quote": "qarordan norozi bo'lgan kundan boshlab 30 kalendar kun ichida Qoraqalpog'iston Respublikasi, viloyat yoki Toshkent shahar TIEKga murojaat qilishi mumkin;",
+          "problem": "Kontekstda 30 kun, 20 kun va 5 kunlik shikoyat va qayta ko'rik muddatlari yo'q.",
+          "fix": "Aniq 30/20/5 kun muddatlarni o'chiring, faqat 8-ilova 11-banddagi shikoyat bo'yicha ko'rik vakolatiga havola qoldiring.",
+          "severity": "major"
+        },
+        {
+          "type": "unsupported_claim",
+          "quote": "62-son qaror nizomining 14-bandiga ko'ra, mehnatda mayiblanish sababini belgilash uchun N-1 shakldagi dalolatnoma “Ekspertiza” moduliga yuklanadi.",
+          "problem": "Kontekstda 14-band va N-1 dalolatnoma talabi haqida norma yo'q.",
+          "fix": "14-band va N-1 dalolatnoma haqidagi aniq da'voni olib tashlang.",
+          "severity": "major"
+        }
+      ],
+      "summary": "Javobning asosiy g'oyasi kontekstdagi 56-bandga mos keladi, ammo son amputatsiyasi uchun II guruh muddatsiz, 11/38/41/57/60-bandlar, 587-son jadval, O'RQ-174 va 30/20/5 kun muddatlar haqidagi aniq da'volar kontekstda yo'q va tasdiqlanmaydi.",
+      "delivery_hint": null,
+      "confidence": 0.7,
+      "rubric_version": "1.0",
+      "model": "muse-spark-1.3",
+      "retrieved": [
+        "vmq_62_2022_a9_p_56",
+        "vmq_587_2025_a6_p_39",
+        "vmq_62_2022_p_2",
+        "law_disability_2020_art_31",
+        "vmq_62_2022_a8_p_11"
+      ],
+      "elapsed_s": 92.57
+    }
+  },
+  "legal_rag": {
+    "answer": "**Sizda tiklanmaydigan anatomik nuqson bo‘lib, holatingiz tasdiqlangan ro‘yxatga kirsa, sizga qayta ko‘rik muddati ko‘rsatilmasdan muddatsiz nogironlik belgilanishi kerak.**\n\nMuddatsiz belgilash asoslari:\n- Qonunga ko‘ra, a’zolar funksiyalarining barqaror, asliga qaytarib bo‘lmas morfologik o‘zgarishlari bo‘lganda va reabilitatsiya samarasizligi tufayli sog‘liqni tiklash, ijtimoiy moslashuvni yaxshilash mumkin bo‘lmaganda nogironlik tasdiqlangan kasalliklar va anatomik nuqsonlar ro‘yxatiga muvofiq, qayta tekshiruv muddati ko‘rsatilmasdan belgilanadi [1].\n- 2021-yil 1-dekabrdan boshlab nogironlik belgilari aniq ko‘rinib turgan, anatomik nuqsonlari bo‘lgan shaxslar qo‘shimcha klinik-funksional tekshiruvlarsiz, tasdiqlangan ro‘yxat asosida, fuqaroning ishtirokisiz nogironligi bo‘lgan shaxs deb topilganda nogironlik muddatsiz davrga belgilanadi [2].\n- 2022-yil 8-fevraldagi tartibga ko‘ra ham 2-ilovadagi ro‘yxatdagi anatomik nuqsonli shaxslar qo‘shimcha tekshiruvsiz TIEKga yuboriladi va TIEK ularni ishtirokisiz nogironligi bo‘lgan shaxs deb topsa, nogironlik muddatsiz belgilanadi [3].\n- 18 yoshdan kattalarga nogironlik olti oy, bir, ikki, besh yil muddatga yoki qayta ko‘rik muddati ko‘rsatilmasdan belgilanadi, bunda vrach-ekspertlar 1-1-ilovadagi ro‘yxat va mezonlarga asoslanadi, bu qoida eng so‘nggi 2025-yil 16-sentabrdagi tahrirda ham saqlangan [4][5].\n- Ro‘yxatdagi shaxslarning tibbiy hujjatlari 5 ish kuni ichida, qolgan holatlarda 10 ish kuni ichida TIEKga yuboriladi [3].\n\n**Nima qilish kerak:**\n- Tumanlararo, tuman (shahar) TIEK xulosasidan norozi bo‘lsangiz, Qoraqalpog‘iston Respublikasi, viloyat yoki Toshkent shahar TIEK shikoyatingizni ko‘rib chiqadi va belgilangan tartibda qayta ko‘rikdan o‘tkazadi [6].\n- Respublika TIEK ham shikoyat asosida va nazorat tariqasida ko‘rikdan o‘tkazadi hamda TIEK va mansabdor shaxslarning harakati yuzasidan shikoyatlarni ko‘rib chiqadi [6].\n\n---\n*Eslatma: Ushbu ma'lumot O'zbekiston Respublikasining amaldagi qonunchiligi asosida axborot va tushuntirish berish maqsadida taqdim etildi. U vakolatli davlat organlarining rasmiy qarori yoki sud hujjati o'rnini bosmaydi.*",
+    "citations": [
+      {
+        "number": 1,
+        "canonical_id": "law_disability_2020_art_31",
+        "title": "Nogironligi bo'lgan shaxslarning huquqlari to'g'risida",
+        "law_number": "O'RQ-641",
+        "article": "31-modda",
+        "article_title": "Tibbiy-ijtimoiy ekspertiza",
+        "url": "https://lex.uz/uz/docs/-5049511#-5054284",
+        "source_type": "lex",
+        "status": "active",
+        "quote": "Fuqaroni nogironligi bo'lgan shaxs yoki o'n sakkiz yoshgacha bo'lgan bolani nogironligi bo'lgan bola deb topish tibbiy-ijtimoiy ekspert komissiyalari tomonidan amalga oshiriladi."
+      },
+      {
+        "number": 2,
+        "canonical_id": "pq_22_2021_p_3",
+        "title": "Tibbiy-ijtimoiy ekspertiza xizmati faoliyati hamda bolalarga nogironlikni belgilash tizimini yanada takomillashtirish chora-tadbirlari to'g'risida",
+        "law_number": "PQ-22",
+        "article": "3-band",
+        "article_title": "Shunday tartib o'rnatilsinki, unga muvofiq:",
+        "url": "https://lex.uz/uz/docs/-5745300#-5745736",
+        "source_type": "lex",
+        "status": "active",
+        "quote": "Shunday tartib o'rnatilsinki, unga muvofiq: a) 2021-yil 1-dekabrdan boshlab: shaxs sog'lig'ining holatiga ko'ra tibbiy-ijtimoiy ekspert komissiyasiga borish imkoniga ega bo'lmagan holatda nogironlikni belgilash biriktirilgan hududlarga chiqib ko'chma majlis..."
+      },
+      {
+        "number": 3,
+        "canonical_id": "vmq_62_2022_a9_p_11",
+        "title": "Tibbiy-ijtimoiy ekspertiza xizmati tashkiliy tuzilmasini va faoliyatini tashkil etishga oid normativ-huquqiy hujjatlarni tasdiqlash to'g'risida",
+        "law_number": "VMQ-62",
+        "article": "9-ilova, 11-band",
+        "article_title": "Ushbu Nizomga 2-ilovadagi ro'yxatda keltirilgan, ya'ni nogironlik belgilari aniq ko'rinib turgan, anatomik…",
+        "url": "https://lex.uz/uz/docs/-5852486#-7747399",
+        "source_type": "lex",
+        "status": "active",
+        "quote": "Ushbu Nizomga 2-ilovadagi ro'yxatda keltirilgan, ya'ni nogironlik belgilari aniq ko'rinib turgan, anatomik nuqsonlar, shuningdek, noxush klinik prognozga ega kasalliklarga chalingan va ularning asoratlari bo'lgan shaxslarning tibbiy hujjatlari mazkur Nizomg..."
+      },
+      {
+        "number": 4,
+        "canonical_id": "vmq_62_2022_a9_p_56",
+        "title": "Tibbiy-ijtimoiy ekspertiza xizmati tashkiliy tuzilmasini va faoliyatini tashkil etishga oid normativ-huquqiy hujjatlarni tasdiqlash to'g'risida",
+        "law_number": "VMQ-62",
+        "article": "9-ilova, 56-band",
+        "article_title": "18 yoshdan katta nogironligi bo'lgan shaxslarga organlar funksiyalari hamda organizm tizimlarining qayta…",
+        "url": "https://lex.uz/uz/docs/-5852486#-7747585",
+        "source_type": "lex",
+        "status": "active",
+        "quote": "18 yoshdan katta nogironligi bo'lgan shaxslarga organlar funksiyalari hamda organizm tizimlarining qayta tiklanadigan buzilishlari sodir bo'lganda, davolashning va o'tkazilgan reabilitatsiya tadbirlari samaradorligini, sog'lig'ining holatini hamda ijtimoiy ..."
+      },
+      {
+        "number": 5,
+        "canonical_id": "vmq_587_2025_a6_p_39",
+        "title": "Nogironlikni belgilash tizimi raqamlashtirilishi munosabati bilan O'zbekiston Respublikasi Hukumatining ayrim qarorlariga o'zgartirish va qo'shimchalar kiritish to'g'risida",
+        "law_number": "VMQ-587",
+        "article": "6-ilova, 39-band",
+        "article_title": "Organizm funksiyasining buzilishiga qarab asosiy kasallikning klinik o'tishini, uning asoratlarini va…",
+        "url": "https://lex.uz/uz/docs/-7730821#-7731717",
+        "source_type": "lex",
+        "status": "active",
+        "quote": "Organizm funksiyasining buzilishiga qarab asosiy kasallikning klinik o'tishini, uning asoratlarini va klinik-ekspert prognozini hisobga olgan holda 18 yoshgacha bo'lgan bolalarga — nogironligi bo'lgan bola toifasi, 18 yoshdan kattalarga nogironlikning birin..."
+      },
+      {
+        "number": 6,
+        "canonical_id": "vmq_62_2022_a8_p_11",
+        "title": "Tibbiy-ijtimoiy ekspertiza xizmati tashkiliy tuzilmasini va faoliyatini tashkil etishga oid normativ-huquqiy hujjatlarni tasdiqlash to'g'risida",
+        "law_number": "VMQ-62",
+        "article": "8-ilova, 11-band",
+        "article_title": "TIEK o'ziga yuklangan vazifalarga muvofiq quyidagi funksiyalarni bajaradi:",
+        "url": "https://lex.uz/uz/docs/-5852486#-5853454",
+        "source_type": "lex",
+        "status": "active",
+        "quote": "TIEK o'ziga yuklangan vazifalarga muvofiq quyidagi funksiyalarni bajaradi: Respublika TIEK: Qoraqalpog'iston Respublikasi, viloyatlar va Toshkent shahar, tuman (shahar), tumanlararo TIEKlari faoliyatini nazorat qiladi va muvofiqlashtiradi; fuqarolarni shiko..."
+      }
+    ],
+    "review": {
+      "verdict": "reject",
+      "scores": {
+        "legal_accuracy": 2,
+        "citation_basis": 2,
+        "completeness": 4,
+        "tone": 5
+      },
+      "issues": [
+        {
+          "type": "missing_norm",
+          "quote": "2021-yil 1-dekabrdan boshlab nogironlik belgilari aniq ko‘rinib turgan, anatomik nuqsonlari bo‘lgan shaxslar...",
+          "problem": "Mazmun kontekstga mos, lekin akt nomi va modda ko‘rsatilmagan, [2] ishorasi huquqiy havola emas.",
+          "fix": "PQ-22 3-bandi a) kichik bandiga aniq havola qo‘shing.",
+          "severity": "major"
+        },
+        {
+          "type": "unsupported_claim",
+          "quote": "Qonunga ko‘ra, a’zolar funksiyalarining barqaror, asliga qaytarib bo‘lmas morfologik o‘zgarishlari bo‘lganda va reabilitatsiya samarasizligi tufayli...",
+          "problem": "Bunday mezon ta’rifi kontekstda yo‘q, qaysi qonunligi ko‘rsatilmagan.",
+          "fix": "Bu ta’rifni olib tashlang, o‘rniga faqat PQ-22 3-bandidagi tasdiqlangan ro‘yxat asosida muddatsiz belgilash qoidasini qoldiring.",
+          "severity": "major"
+        },
+        {
+          "type": "unsupported_claim",
+          "quote": "18 yoshdan kattalarga nogironlik olti oy, bir, ikki, besh yil muddatga yoki qayta ko‘rik muddati ko‘rsatilmasdan belgilanadi, bunda vrach-ekspertlar 1-1-ilovadagi ro‘yxat va mezonlarga asoslanadi, bu qoida eng so‘nggi 2025-yil 16-sentabrdagi tahrirda ham saqlangan",
+          "problem": "Olti oy, bir, ikki, besh yil muddatlar, 1-1-ilova va 2025-yil tahrir kontekstda yo‘q.",
+          "fix": "Muddatlar va ilova raqamlarini olib tashlang, VMQ-62 2-bandidagi ro‘yxatga umumiy havola bilan cheklaning.",
+          "severity": "major"
+        },
+        {
+          "type": "unsupported_claim",
+          "quote": "Ro‘yxatdagi shaxslarning tibbiy hujjatlari 5 ish kuni ichida, qolgan holatlarda 10 ish kuni ichida TIEKga yuboriladi",
+          "problem": "5 va 10 ish kuni muddatlari kontekstda yo‘q.",
+          "fix": "Bu muddatlarni olib tashlang, zarur bo‘lsa O‘RQ-641 31-moddasidagi 20 kalendar kun qoidasiga havola qo‘shing.",
+          "severity": "major"
+        },
+        {
+          "type": "unsupported_claim",
+          "quote": "Tumanlararo, tuman (shahar) TIEK xulosasidan norozi bo‘lsangiz, Qoraqalpog‘iston Respublikasi, viloyat yoki Toshkent shahar TIEK shikoyatingizni ko‘rib chiqadi va belgilangan tartibda qayta ko‘rikdan o‘tkazadi",
+          "problem": "Viloyat TIEKning shikoyat ko‘rib chiqish vakolati kontekstda keltirilmagan.",
+          "fix": "Faqat kontekstda tasdiqlangan Respublika TIEK vakolatini qoldiring: 8-ilova 11-bandiga havola qo‘shing.",
+          "severity": "major"
+        }
+      ],
+      "summary": "Javobning o‘zagi PQ-22 bo‘yicha muddatsiz belgilash haqida to‘g‘ri, ohang hurmatli, lekin aniq muddatlar, ilovalar, sanalar va shikoyat tartibi kontekst bilan tasdiqlanmagan va akt/modda havolalari ko‘rsatilmagan.",
+      "delivery_hint": null,
+      "confidence": 0.88,
+      "rubric_version": "1.0",
+      "model": "muse-spark-1.3",
+      "retrieved": [
+        "pq_22_2021_p_3",
+        "vmq_587_2025_a6_p_39",
+        "vmq_62_2022_p_2",
+        "vmq_62_2022_a8_p_11",
+        "law_disability_2020_art_31"
+      ],
+      "elapsed_s": 70.58
+    }
+  }
+}
