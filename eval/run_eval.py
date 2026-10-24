@@ -430,16 +430,16 @@ async def main() -> int:
         print(f"gold set names units that are not in the store: {missing}")
         return 2
 
-    original_retrieve = service.retrieve_contexts
+    original_retrieve = service.retrieve_within
 
-    async def recording_retrieve(**kwargs):
-        res = await original_retrieve(**kwargs)
+    async def recording_retrieve(deadline_s, **kwargs):
+        res = await original_retrieve(deadline_s, **kwargs)
         rec = CURRENT.get(None)
         if rec is not None:
             rec["_retrieval"] = res
         return res
 
-    service.retrieve_contexts = recording_retrieve
+    service.retrieve_within = recording_retrieve
 
     before = {} if args.offline else await balance()
     if before.get("balance") is not None and before["balance"] < args.min_balance:
