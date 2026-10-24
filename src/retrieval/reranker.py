@@ -264,7 +264,8 @@ class Reranker:
                                     law_title=law_t,
                                     law_number=ctx.article.metadata.law_number,
                                     category=ctx.article.metadata.category or "",
-                                    promulgation_date=ctx.article.metadata.promulgation_date
+                                    promulgation_date=ctx.article.metadata.promulgation_date,
+                                    source_type=getattr(ctx.article.metadata, "source_type", "lex") or "lex",
                                 )
                             except Exception:
                                 h_boost = 0.70

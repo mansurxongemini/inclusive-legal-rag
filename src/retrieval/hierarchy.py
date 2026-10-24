@@ -88,6 +88,8 @@ class StateOrganHierarchy:
     ]
     LAW_PATTERNS = [
         r"\bo['`’‘ʻʼ]?rq\s*[-–—]?\s*\d+", r"\bзру\s*[-–—]?\s*\d+",
+        # laws of the Supreme Council and of the first Oliy Majlis convocations: 938-XII, 343-I, 258-II
+        r"(?:^|\s)\d+-[ivxlc]+(?=\s|$)",
         r"\bqonun\b", r"\bзакон\b", r"\bqonuni\b", r"\bзакона\b"
     ]
     PARLIAMENT_PATTERNS = [
@@ -216,19 +218,27 @@ class StateOrganHierarchy:
             is_presidential_agency=False
         )
 
+    # Huquq+ posts explain the law; they are not a level of it. They get the weight of the lowest statutory tier, so that a
+    # post whose title names the Constitution does not outrank the Constitution (it scored 1.00 before 2026-10-25 and
+    # pushed the Pension Law out of the candidates for "who is entitled to a disability pension").
+    COMMENTARY_WEIGHT = 0.68
+
     @classmethod
     def calculate_hierarchy_boost(
         cls,
         law_title: str,
         law_number: str = "",
         category: str = "",
-        promulgation_date: Optional[str] = None
+        promulgation_date: Optional[str] = None,
+        source_type: str = "lex",
     ) -> float:
         """
         Qidiruv va qayta saralashda (RRF/Rerank) yuridik kuch bo'yicha beriladigan mutanosib koeffitsiyent.
         Konstitutsiya va Kodekslar eng yuqori bonus oladi, past darajali idoraviy hujjatlar esa
         faqat maxsus mavzulariga mos kelgandagina tanlanadi.
         """
+        if source_type == "huquqplus":
+            return cls.COMMENTARY_WEIGHT
         score = cls.evaluate_hierarchy(law_title, law_number, category, promulgation_date)
         boost = score.hierarchy_weight
 

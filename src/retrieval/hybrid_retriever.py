@@ -236,7 +236,8 @@ class HybridRetriever:
                         law_title=law_t,
                         law_number=article.metadata.law_number,
                         category=article.metadata.category or "",
-                        promulgation_date=article.metadata.promulgation_date
+                        promulgation_date=article.metadata.promulgation_date,
+                        source_type=getattr(article.metadata, "source_type", "lex") or "lex",
                     )
                     score += (h_boost * 0.04)
                 except Exception:
