@@ -11,6 +11,7 @@ import hashlib
 import logging
 import re
 import unicodedata
+from collections import Counter
 from dataclasses import dataclass, field, asdict
 from datetime import date
 from typing import Dict, List, Optional, Tuple
@@ -185,13 +186,19 @@ class CorpusBuilder:
         law_title_uz = normalize_apostrophes(doc.title or spec.title_hint)
         law_title_ru = normalize_apostrophes(ru_doc.title) if ru_doc and ru_doc.title else ""
 
-        ru_units: Dict[Tuple[str, str, str], LexUnit] = {}
+        # The n-th Uzbek unit with a key is paired with the n-th Russian unit with that key. Annexes that number several
+        # lists 1, 2, 3 ... repeat keys; pairing every repeat with the first Russian unit gave point 7 of one list the
+        # Russian point 7 of another (284 units, removed 2026-10-25 by scripts/audit_translations.py). When the two
+        # editions repeat a key a different number of times the order says nothing, and the repeats get no Russian text.
+        ru_units: Dict[Tuple[str, str, str], List[LexUnit]] = {}
+        uz_repeats = Counter(_unit_key(u) for u in doc.units)
         ru_doc_id = None
         if ru_doc:
             m_ru = re.search(r"/docs/(-?\d+)", str(ru_doc.doc_id))
             ru_doc_id = m_ru.group(1) if m_ru else (str(ru_doc.doc_id) if str(ru_doc.doc_id).lstrip("-").isdigit() else None)
             for u in ru_doc.units:
-                ru_units.setdefault(_unit_key(u), u)
+                ru_units.setdefault(_unit_key(u), []).append(u)
+        occurrence: Dict[Tuple[str, str, str], int] = {}
 
         # The act's own category (from its title and the official OKOZ nodes); units inherit it unless their
         # own heading/body clearly points elsewhere.
@@ -207,6 +214,9 @@ class CorpusBuilder:
         total_chars = 0
 
         for unit in doc.units:
+            key = _unit_key(unit)
+            nth = occurrence.get(key, 0)
+            occurrence[key] = nth + 1
             if unit.kind == "preamble" and len(unit.text) < 80:
                 continue
             if len(unit.text.strip()) < 3:                       # header-only unit (sub-items are not published)
@@ -225,7 +235,9 @@ class CorpusBuilder:
                     and not any((unit.chapter or "").startswith(c) for c in spec.chapters):
                 continue
 
-            ru_unit = ru_units.get(_unit_key(unit))
+            candidates = ru_units.get(key) or []
+            paired = len(candidates) == uz_repeats[key] or (uz_repeats[key] == 1 and len(candidates) >= 1)
+            ru_unit = candidates[nth] if paired and nth < len(candidates) else None
             ru_text = ru_unit.text if ru_unit and ru_unit.text else ""
             if ru_text:
                 ru_aligned += 1
