@@ -24,6 +24,8 @@ from src.gateway.clients import ClientStore
 from src.gateway.conversations import ConversationStore
 from src.gateway.formatting import split_parts, to_plain_text, to_telegram_html
 
+EMOJI = re.compile("[\U0001F000-\U0001FAFF\U00002600-\U000027BF\U00002B00-\U00002BFF\uFE0F]")
+
 
 @pytest.fixture(autouse=True)
 async def seed_knowledge_base():
@@ -675,15 +677,15 @@ def test_telegram_sources_block_escapes_and_links_only_http():
         cit(2, title="Tahririyat javobi", source_type="curated"),
         cit(3, law_number="PQ-1", url="javascript:alert(1)"),
     ])
-    assert block.startswith("📚 <b>Manbalar</b>")
+    assert block.startswith("<b>Manbalar</b>")
     assert "Mehnat kodeksi &lt;b&gt; (O'RQ-798), 427-modda" in block
     assert 'href="https://lex.uz/uz/docs/-6257288#-6266772&quot;&gt;&lt;script&gt;"' in block
     assert "[2] Tahririyat javobi" in block
     assert "javascript:" not in block and "[3] PQ-1" in block
     assert is_well_formed_telegram_html(block)
-    assert telegram_sources_block([cit(1, law_number="X")], "ru").startswith("📚 <b>Источники</b>")
-    assert telegram_sources_block([cit(1, law_number="X")], "en").startswith("📚 <b>Sources</b>")
-    assert telegram_sources_block([cit(1, law_number="X")]).startswith("📚 <b>Manbalar</b>")
+    assert telegram_sources_block([cit(1, law_number="X")], "ru").startswith("<b>Источники</b>")
+    assert telegram_sources_block([cit(1, law_number="X")], "en").startswith("<b>Sources</b>")
+    assert telegram_sources_block([cit(1, law_number="X")]).startswith("<b>Manbalar</b>")
     assert telegram_sources_block([]) == ""
 
 
@@ -708,7 +710,7 @@ async def test_telegram_html_answer_ends_with_sources(gateway_stores, monkeypatc
                             json={"question": "Savol?", "user_id": "u1", "format": "telegram_html"})
     assert res.status_code == 200, res.text
     last = res.json()["parts"][-1]
-    assert '[1] <a href="https://lex.uz/uz/docs/-5049511#-5054165">' in last and "📚 <b>Manbalar</b>" in last
+    assert '[1] <a href="https://lex.uz/uz/docs/-5049511#-5054165">' in last and "<b>Manbalar</b>" in last and not EMOJI.search(last)
     assert '<a href="https://lex.uz/uz/docs/-5049511#-5054165">[1]</a>' in last
     _verify_tags_balanced(last)
 
@@ -807,10 +809,12 @@ def test_telegram_html_post_design_formatting():
     out = to_telegram_html(sample_md)
     assert is_well_formed_telegram_html(out), out
     assert "---" not in out
-    assert "⚖️ <b>Qisqa javob:</b>" in out
-    assert "📌 <b>Sizga tegishli bo'lishi mumkin bo'lgan yordam turlari:</b>" in out
-    assert "📋 <b>Nima qilish kerak:</b>" in out
-    assert "<blockquote><i>ℹ️ Eslatma: Ushbu ma'lumot axborot berish maqsadida taqdim etildi.</i></blockquote>" in out
+    # answers carry no emoji (owner's rule, 2026-10-25): headings stay plain bold
+    assert "<b>Qisqa javob:</b>" in out and "\u2696" not in out
+    assert "\n<b>Sizga tegishli bo'lishi mumkin bo'lgan yordam turlari:</b>" in out
+    assert "\n<b>Nima qilish kerak:</b>" in out
+    assert "<blockquote><i>Eslatma: Ushbu ma'lumot axborot berish maqsadida taqdim etildi.</i></blockquote>" in out
+    assert not EMOJI.search(out)
     assert "• Davlat budjeti hisobidan bepul operatsiya [1].\n\n• Shifoxonada bepul ovqatlanish [2]." in out
     assert "<b>1.</b> Oilaviy poliklinikaga murojaat qiling [1].\n\n<b>2.</b> Elektron yo'llanma (order) oling [1]." in out
 

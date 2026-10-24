@@ -77,7 +77,7 @@ def telegram_sources_block(citations: List[StructuredCitation], language: str = 
             lines.append(f"[{c.number}] {label}")
     if not lines:
         return ""
-    heading = {"ru": "📚 <b>Источники</b>", "en": "📚 <b>Sources</b>"}.get(language, "📚 <b>Manbalar</b>")
+    heading = {"ru": "<b>Источники</b>", "en": "<b>Sources</b>"}.get(language, "<b>Manbalar</b>")
     return heading + "\n\n" + "\n\n".join(lines)
 
 
@@ -147,32 +147,12 @@ def to_telegram_html(markdown_text: str) -> str:
     return html.escape(to_plain_text(markdown_text), quote=False)
 
 
-def _decorate_section_heading(line: str) -> str:
-    """Adds subtle visual icons to standalone bold section headings in Telegram HTML."""
-    m = re.match(r"^<b>([^<]+)</b>(:?)$", line.strip())
-    if not m:
-        if line.strip().startswith("<b>Qisqa javob:") or line.strip().startswith("<b>Короткий ответ:"):
-            return "⚖️ " + line.strip()
-        return line
-    heading_inner = m.group(1).strip()
-    trail = m.group(2)
-    # Skip if already starts with an emoji/symbol
-    if heading_inner and not heading_inner[0].isalnum():
-        return line
-    low = heading_inner.lower()
-    if any(k in low for k in ("nima qilish", "qadam", "murojaat", "tartib", "что делать", "порядок", "шаг", "what to do", "steps")):
-        return f"📋 <b>{heading_inner}{trail}</b>"
-    if any(k in low for k in ("yordam", "imtiyoz", "huquq", "shart", "toifa", "льгот", "помощ", "прав", "услов", "benefit", "right")):
-        return f"📌 <b>{heading_inner}{trail}</b>"
-    return line
-
-
 def _markdown_to_telegram_html(markdown_text: str) -> str:
     """
     Converts markdown to Telegram-compatible HTML:
     - Escapes &, <, > in regular text
     - Removes raw horizontal rules (---)
-    - Wraps disclaimer (*Eslatma:...*) in a clean <blockquote><i>ℹ️ ...</i></blockquote>
+    - Wraps disclaimer (*Eslatma:...*) in a clean <blockquote><i>...</i></blockquote>
     - Headings -> bold lines (<b>Heading</b>) with contextual icons
     - List items -> spaced • Item and <b>1.</b> Item for clean mobile readability
     - Markdown bold -> <b>...</b>
@@ -275,16 +255,15 @@ def _markdown_to_telegram_html(markdown_text: str) -> str:
     # 10b. Convert italicized disclaimer into a styled blockquote card
     text = re.sub(
         r"^<i>((?:Eslatma|Примечание|Disclaimer):[^\n]+)</i>$",
-        r"<blockquote><i>ℹ️ \1</i></blockquote>",
+        r"<blockquote><i>\1</i></blockquote>",
         text,
         flags=re.MULTILINE,
     )
 
-    # 10c. Decorate section headings and add breathing room between consecutive list/step items
+    # 10c. Breathing room between consecutive list/step items (no icons: answers carry no emoji)
     raw_out_lines = text.split("\n")
     spaced_lines: List[str] = []
-    for idx, ln in enumerate(raw_out_lines):
-        decorated = _decorate_section_heading(ln)
+    for idx, decorated in enumerate(raw_out_lines):
         if idx > 0:
             prev = spaced_lines[-1].strip() if spaced_lines else ""
             curr = decorated.strip()

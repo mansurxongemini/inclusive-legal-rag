@@ -191,7 +191,6 @@ async def get_admin_hierarchy():
         "constitution": {
             "id": "constitution",
             "title": "Konstitutsiya (Constitution)",
-            "icon": "🏛️",
             "description": "O'zbekiston Respublikasi Konstitutsiyasi (Oliy yuridik kuchga ega Bosh qonun)",
             "documents": [],
             "total_articles": 0,
@@ -200,7 +199,6 @@ async def get_admin_hierarchy():
         "codes": {
             "id": "codes",
             "title": "Kodekslar (Codes)",
-            "icon": "📕",
             "description": "O'zbekiston Respublikasining barcha amaldagi 19 ta kodeksi",
             "documents": [],
             "total_articles": 0,
@@ -209,7 +207,6 @@ async def get_admin_hierarchy():
         "laws": {
             "id": "laws",
             "title": "Qonunlar (Laws - O'RQ)",
-            "icon": "📜",
             "description": "O'zbekiston Respublikasining barcha amaldagi qonunlari",
             "documents": [],
             "total_articles": 0,
@@ -218,7 +215,6 @@ async def get_admin_hierarchy():
         "decrees": {
             "id": "decrees",
             "title": "Prezident Farmonlari (PF)",
-            "icon": "🦅",
             "description": "O'zbekiston Respublikasi Prezidentining amaldagi farmonlari",
             "documents": [],
             "total_articles": 0,
@@ -227,7 +223,6 @@ async def get_admin_hierarchy():
         "resolutions": {
             "id": "resolutions",
             "title": "Prezident va Hukumat Qarorlari (PQ, VMQ)",
-            "icon": "🏛️",
             "description": "Vazirlar Mahkamasi va Prezidentning sohalar bo'yicha amaldagi qarorlari",
             "documents": [],
             "total_articles": 0,
@@ -236,7 +231,6 @@ async def get_admin_hierarchy():
         "regulations": {
             "id": "regulations",
             "title": "Hukumat va Davlat Nizomlari",
-            "icon": "📋",
             "description": "Hukumat va idoraviy tasdiqlangan qoidalar, reglamentlar va nizomlar",
             "documents": [],
             "total_articles": 0,
@@ -245,7 +239,6 @@ async def get_admin_hierarchy():
         "orders": {
             "id": "orders",
             "title": "Vazirlik va Idoralar Buyruqlari",
-            "icon": "📑",
             "description": "Adliya vazirligidan ro'yxatdan o'tgan vazirlik va idoraviy normativ buyruqlar",
             "documents": [],
             "total_articles": 0,
@@ -254,7 +247,6 @@ async def get_admin_hierarchy():
         "parliament": {
             "id": "parliament",
             "title": "Oliy Majlis Qarorlari",
-            "icon": "🏛️",
             "description": "Oliy Majlis Qonunchilik palatasi va Senatining normativ qarorlari",
             "documents": [],
             "total_articles": 0,
@@ -263,7 +255,6 @@ async def get_admin_hierarchy():
         "directives": {
             "id": "directives",
             "title": "Farmoyishlar",
-            "icon": "📝",
             "description": "Prezident va Hukumatning normativ xarakterdagi amaldagi farmoyishlari",
             "documents": [],
             "total_articles": 0,
@@ -272,7 +263,6 @@ async def get_admin_hierarchy():
         "conventions": {
             "id": "conventions",
             "title": "Xalqaro Shartnomalar va Konvensiyalar",
-            "icon": "🌐",
             "description": "O'zbekiston ratifikatsiya qilgan xalqaro shartnomalar, bitimlar va konvensiyalar",
             "documents": [],
             "total_articles": 0,
@@ -281,7 +271,6 @@ async def get_admin_hierarchy():
         "commentary": {
             "id": "commentary",
             "title": "Huquqiy Sharhlar va Maqolalar",
-            "icon": "📚",
             "description": "Norma.uz, Advice.uz, Adliya vazirligi va yetakchi huquqiy portallarning tushuntirish maqolalari",
             "documents": [],
             "total_articles": 0,

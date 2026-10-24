@@ -729,10 +729,10 @@ class UniversalAutonomousEngine:
     ) -> int:
         """Autonomously fetches, parses, validates, and indexes a single normative act spec."""
         if not force_reindex and spec.slug in self.state.completed_slugs:
-            logger.info(f"⏭️ Skipping {spec.slug} (already indexed with {self.state.completed_slugs[spec.slug].get('count')} articles)")
+            logger.info(f"⏭ Skipping {spec.slug} (already indexed with {self.state.completed_slugs[spec.slug].get('count')} articles)")
             return 0
 
-        logger.info(f"📥 Processing: {spec.title_uz} [{spec.slug}]...")
+        logger.info(f"Processing: {spec.title_uz} [{spec.slug}]...")
 
         # 1. Fetch UZ text
         try:
@@ -741,7 +741,7 @@ class UniversalAutonomousEngine:
                 raise RuntimeError(f"HTTP {resp_uz.status_code} on {spec.url_uz}")
             html_uz = resp_uz.text
         except Exception as e:
-            logger.error(f"❌ Failed to fetch UZ for {spec.slug}: {e}")
+            logger.error(f"Failed to fetch UZ for {spec.slug}: {e}")
             self.state.failed_slugs[spec.slug] = str(e)
             self._save_state()
             return 0
@@ -797,12 +797,12 @@ class UniversalAutonomousEngine:
                     articles = UniversalParser._wrap_single_article(full_text, spec, html_ru)
 
         if not articles:
-            logger.warning(f"⚠️ No articles parsed for {spec.slug}")
+            logger.warning(f"No articles parsed for {spec.slug}")
             self.state.failed_slugs[spec.slug] = "Zero articles parsed"
             self._save_state()
             return 0
 
-        logger.info(f"✅ Extracted {len(articles)} articles/clauses for {spec.slug}")
+        logger.info(f"Extracted {len(articles)} articles/clauses for {spec.slug}")
 
         # 5. Save cache catalog
         catalog_path = self.catalog_dir / f"{spec.slug}.json"
@@ -825,7 +825,7 @@ class UniversalAutonomousEngine:
             del self.state.failed_slugs[spec.slug]
         self._save_state()
 
-        logger.info(f"🎯 Successfully indexed {len(articles)} articles for {spec.slug}. Total store: {self.store.count()}")
+        logger.info(f"Successfully indexed {len(articles)} articles for {spec.slug}. Total store: {self.store.count()}")
         return len(articles)
 
     async def run_pipeline(

@@ -9,3 +9,4 @@ Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `
 | 2026-10-25 00:34 | eval 20261025_003407 | 10.00 | 0.0001 | 9.9999 | 0.0001 |
 | 2026-10-25 00:39 | eval baseline | 10.00 | 0.1086 | 9.8914 | 0.1086 |
 | 2026-10-25 01:09 | eval cycle 1: guard ids, ru alignment, hierarchy, scope | 10.00 | 0.1960 | 9.8040 | 0.1960 |
+| 2026-10-25 01:23 | eval cycle 2: number words, retrieval deadline | 10.00 | 0.2041 | 9.7959 | 0.2041 |
