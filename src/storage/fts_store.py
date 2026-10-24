@@ -478,6 +478,19 @@ class SqliteFtsStore:
             rows = cursor.fetchall()
             docs = []
             q_clean = (search_query or "").strip().lower()
+            # Acts with at least one unit containing the query, found in ONE pass. Asking per act (518 full scans with
+            # json_extract) took 90 s for "641" and made the public search endpoint a denial-of-service lever.
+            matching_law_ids: set = set()
+            if q_clean:
+                escaped = q_clean.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                # the unit's text and title only: the raw JSON also holds URLs and element ids ("#-5641...") that
+                # matched almost any number
+                cursor.execute("""
+                    SELECT DISTINCT json_extract(json_data, '$.metadata.law_id') FROM articles_metadata
+                    WHERE json_extract(json_data, '$.translations.uz') LIKE ?1 ESCAPE '\\'
+                       OR json_extract(json_data, '$.metadata.article_title.uz') LIKE ?1 ESCAPE '\\'
+                """, (f"%{escaped}%",))
+                matching_law_ids = {row[0] for row in cursor.fetchall()}
 
             for r in rows:
                 law_num = r["law_num"]
@@ -497,16 +510,8 @@ class SqliteFtsStore:
 
                 if q_clean:
                     haystack = f"{law_num} {law_title} {detected_auth} {detected_type} {category}".lower()
-                    if q_clean not in haystack:
-                        # Check whether any norm inside this law matches the query string
-                        cursor.execute("""
-                            SELECT 1 FROM articles_metadata
-                            WHERE (json_extract(json_data, '$.metadata.law_number') = ? OR json_extract(json_data, '$.metadata.law_id') = ?)
-                              AND (canonical_id LIKE ? OR json_data LIKE ?)
-                            LIMIT 1
-                        """, (law_num, law_id, f"%{q_clean}%", f"%{q_clean}%"))
-                        if not cursor.fetchone():
-                            continue
+                    if q_clean not in haystack and r["law_id"] not in matching_law_ids:
+                        continue
 
                 docs.append({
                     "law_number": law_num,
@@ -518,6 +523,9 @@ class SqliteFtsStore:
                     "authority": detected_auth,
                     "doc_type": detected_type,
                 })
+            if q_clean:
+                # acts whose number or title holds the query first ("641" -> O'RQ-641), then those with a matching norm
+                docs.sort(key=lambda d: 0 if q_clean in d["law_number"].lower() else 1 if q_clean in d["law_title"].lower() else 2)
             return docs
 
     def get_articles_by_law(self, law_identifier: str) -> List[Dict]:
