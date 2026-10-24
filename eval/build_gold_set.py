@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Builds eval/gold_set.jsonl: 75 questions (25 uz, 25 ru, 25 en) on disability rights.
+Builds eval/gold_set.jsonl: 76 questions (26 uz, 25 ru, 25 en) on disability rights.
 
 Every expected unit was read in the live store (data/store) before it was written here. "expected" is a list of slots;
 a slot is satisfied when any one of its ids is retrieved (several units of the corpus answer the same point). Types:
@@ -59,6 +59,14 @@ uz = [
  item("uz22","uz","short","benefits","Bolalikdan nogironligi bo'lgan shaxslar daromad solig'i bo'yicha qanday imtiyozga ega?",[[TAX]],note="Soliq kodeksi 380-modda: jami daromadni kamaytirish"),
  item("uz23","uz","short","disability_group","Nogironlikning nechta guruhi bor va guruhni qaysi organ belgilaydi?",[[P+"16"]],[FTHREE],note="Pensiya qonuni 16-modda: uch guruh, TIEK"),
  item("uz24","uz","short","social_protection","Nogironligi bo'lgan shaxslarga ijtimoiy yordamning qanday turlari ko'rsatiladi?",[[D+"36"]],note="O'RQ-641 36-modda"),
+ item("uz26","uz","noisy","social_protection",
+      "Ассалаумаликум мен 1 гурух ногироныман хозирда ижарада турипман умрлик юоддашим ишсиз ичтимойи рестрга утмакши "
+      "булип ариза ташладим лекин жавоп келмади .Кейнг узлари меники шакирип ташакурнама йоздирип рестрга утасиз деп "
+      "ариза калдирдим Лекин еки кунан сунг телефонимга аризан рад этилди деп смс келдим Инсан социал орайига "
+      "барганимда улардан мазмунли жавоп алмадим нимага маслахат бера оласиз олдинан рахмат",
+      [[f"vmq_35_2026_a4_p_{n}" for n in (6, 7, 27, 33, 42, 45)], [f"vmq_35_2026_a1_p_{n}" for n in (10, 32, 33, 34, 51)]],
+      note="Kirill, imlo xatolari, uzun hikoya: ijtimoiy reyestr rad etildi. VMQ-35 4-ilova (apellyatsiya kengashi) va 1-ilova "
+           "(rad etish asoslari). Avval tests/test_query_subquestions.py dagi jonli (LIVE_RETRIEVAL_TESTS) test edi."),
  item("uz25","uz","short","education","Nogironligi bo'lgan bolalar maktabgacha ta'limni qayerda oladi va ular uchun qanday sharoit yaratiladi?",[[D+"39"]],note="O'RQ-641 39-modda"),
 ]
 ru = [

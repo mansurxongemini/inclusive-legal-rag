@@ -1,7 +1,5 @@
 """Long chat questions that tell a story are also searched through short legal sub-questions written by the LLM."""
 import asyncio
-import os
-from pathlib import Path
 from typing import List
 from unittest.mock import AsyncMock, MagicMock
 
@@ -22,10 +20,8 @@ REFUSED_REGISTRY_STORY = (
     "ариза калдирдим Лекин еки кунан сунг телефонимга аризан рад этилди деп смс келдим Инсан социал орайига "
     "барганимда улардан мазмунли жавоп алмадим нимага маслахат бера оласиз олдинан рахмат"
 )
-# annex 4: appellate councils (free complaint, higher body or court, filing via the Inson centre, 15 days, court)
-APPEAL_UNITS = {f"vmq_35_2026_a4_p_{n}" for n in (6, 7, 27, 33, 42, 45)}
-# annex 1: grounds for refusing to enter a family into the register, complaint about the staff
-REFUSAL_UNITS = {f"vmq_35_2026_a1_p_{n}" for n in (10, 32, 33, 34, 51)}
+# The live retrieval check of this story (VMQ-35 annex 4 appeal units, annex 1 refusal units) is gold-set item uz26,
+# run on the real corpus by eval/run_eval.py.
 
 
 def _scored(cid: str, rrf: float, bm25_rank=None, vector_rank=None) -> ScoredArticle:
@@ -204,30 +200,3 @@ async def test_long_question_is_searched_through_its_sub_questions(monkeypatch, 
     res = await retrieve_contexts(analysis=QueryAnalyzer.analyze("Protez qanday beriladi?"), store=store,
                                   client=client, top_k=5, max_extra=0, rerank_top_n=3, apply_gate=False)
     assert asked == [] and res.signals["subquestions"] == []
-
-
-@pytest.mark.skipif(not os.environ.get("LIVE_RETRIEVAL_TESTS"),
-                    reason="live: real corpus, Meta LLM, embeddings and Jev (set LIVE_RETRIEVAL_TESTS=1)")
-async def test_live_refused_registry_story_finds_appeal_and_refusal_norms(monkeypatch):
-    """LIVE_RETRIEVAL_TESTS=1 .venv/bin/python -m pytest -q tests/test_query_subquestions.py -k live
-    Retrieval only, with the settings of the assistant API (src/gateway/service.py)."""
-    from src.clients.openrouter import OpenRouterClient
-    from src.storage.hybrid_store import HybridStore
-
-    store_dir = str(Path(__file__).resolve().parents[1] / "data" / "store")
-    monkeypatch.setattr(settings, "MOCK_EXTERNAL_APIS", False)
-    monkeypatch.setattr(settings, "RERANK_PROVIDER", "jev")
-    monkeypatch.setattr(settings, "STORAGE_DIR", store_dir)     # the editorial (Huquq+) store as in production
-    store = HybridStore(store_dir)
-    client = OpenRouterClient()
-    if client.is_mock:
-        pytest.skip("no OpenRouter key")
-    QueryTranslator._cache.clear()
-    try:
-        res = await retrieve_contexts(analysis=QueryAnalyzer.analyze(REFUSED_REGISTRY_STORY), store=store,
-                                      client=client, top_k=40, max_extra=8, rerank_top_n=8)
-    finally:
-        await client.close()
-    ids = {c.article.canonical_id for c in res.contexts}
-    assert len(ids & APPEAL_UNITS) >= 2, (res.signals, sorted(ids))
-    assert ids & REFUSAL_UNITS, (res.signals, sorted(ids))
