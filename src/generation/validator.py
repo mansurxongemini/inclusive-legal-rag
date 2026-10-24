@@ -295,6 +295,8 @@ class CitationValidator:
             )
         telegram_formatted = clean_answer + "\n".join(bot_footer_lines)
 
+        if unresolved:
+            warnings.append("unresolved_citations: " + ", ".join(unresolved) + " (not retrieved; removed from the answer)")
         has_lex_basis = any(getattr(c, "source_type", "lex") == "lex" for c in citations)
         if citations and not has_lex_basis:
             warnings.append("curated_without_lex_basis: answer cites only curated/huquqplus sources, no lex norm")

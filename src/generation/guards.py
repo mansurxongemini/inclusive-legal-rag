@@ -1,6 +1,7 @@
 """
 Post-generation guards that need no judge model: the answer is written in the script of the question, contains none
-of the wording the prompt forbids and states no amount, deadline or percentage that is absent from the sources.
+of the wording the prompt forbids, states no amount, deadline or percentage that is absent from the sources and cites
+only the units it was given (a model shown point 44 of a regulation may "cite" point 46 by extrapolating the id).
 An answer that fails is repaired by ONE regeneration that names the problems; if the repair is not better, the
 original is kept and the problems are returned as warnings.
 """
@@ -24,6 +25,7 @@ REPAIR_INSTRUCTIONS = {
     },
     "banned": "Javobda \"kontekst\" yoki \"taqdim etilgan hujjatlar\" kabi iboralarni ishlatmang: ular o'rniga to'g'ridan-to'g'ri javob bering.",
     "numbers": "Quyidagi raqamlar manbada yo'q: {numbers}. Ularni olib tashlang yoki manbadagi aniq qiymat bilan almashtiring; manbada yo'q raqam yozmang.",
+    "unknown_ids": "Quyidagi manbalar sizga berilmagan: {ids}. Faqat berilgan manbalarning identifikatorlariga havola qiling: bu gapni berilgan manba bilan asoslang yoki olib tashlang.",
 }
 
 
@@ -46,17 +48,26 @@ def source_texts(contexts: Sequence, language: str) -> List[str]:
     return texts
 
 
+def unknown_citations(answer: str, contexts: Sequence) -> List[str]:
+    """Ids cited in brackets that are not among the units the model was given (the validator would drop them)."""
+    from src.generation.validator import CitationValidator
+    given = {c.article.canonical_id for c in contexts if getattr(c, "article", None) is not None}
+    cited = CitationValidator.extract_canonical_ids(strip_disclaimer(answer))
+    return [cid for cid in cited if cid not in given and CitationValidator._ID_LIKE.match(cid)]
+
+
 def find_issues(question: str, answer: str, contexts: Sequence, language: str) -> Dict:
     body = _BRACKET_ID.sub(" ", strip_disclaimer(answer))
     return {
         "script": not script_ok(question, body, language),
         "banned": banned_phrases(body),
         "numbers": ungrounded_numbers(body, source_texts(contexts, language), question),
+        "unknown_ids": unknown_citations(answer, contexts),
     }
 
 
 def issue_count(issues: Dict) -> int:
-    return int(bool(issues["script"])) + len(issues["banned"]) + len(issues["numbers"])
+    return int(bool(issues["script"])) + len(issues["banned"]) + len(issues["numbers"]) + len(issues["unknown_ids"])
 
 
 def issue_warnings(issues: Dict) -> List[str]:
@@ -67,6 +78,8 @@ def issue_warnings(issues: Dict) -> List[str]:
         out.append("forbidden_wording: " + ", ".join(issues["banned"]))
     if issues["numbers"]:
         out.append("ungrounded_numbers: " + ", ".join(issues["numbers"]))
+    if issues["unknown_ids"]:
+        out.append("unknown_citations: " + ", ".join(issues["unknown_ids"]))
     return out
 
 
@@ -81,6 +94,8 @@ def repair_message(issues: Dict, language: str, question: str) -> str:
         parts.append(REPAIR_INSTRUCTIONS["banned"])
     if issues["numbers"]:
         parts.append(REPAIR_INSTRUCTIONS["numbers"].format(numbers=", ".join(issues["numbers"])))
+    if issues["unknown_ids"]:
+        parts.append(REPAIR_INSTRUCTIONS["unknown_ids"].format(ids=", ".join(f"[{i}]" for i in issues["unknown_ids"])))
     return " ".join(parts) + " Boshqa hamma narsani (iqtiboslar, tuzilma) o'zgartirmang; faqat tuzatilgan javobni yozing."
 
 

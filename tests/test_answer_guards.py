@@ -95,6 +95,30 @@ async def test_a_repair_that_is_not_better_keeps_the_original_and_reports_the_pr
     assert len(client.calls) == 1                                    # one repair round, never a loop
 
 
+NEIGHBOUR_ID = GOOD + "\n- Ariza elektron beriladi. [vmq_10_2024_p_6]"
+
+
+def test_a_citation_of_a_unit_the_model_was_not_given_is_an_issue():
+    # seen live: shown point 44 of a regulation (whose text also carries points 46-48), the model cited [..._p_46]
+    issues = guards.find_issues("Yordam qancha?", NEIGHBOUR_ID, [_ctx()], "uz")
+    assert issues["unknown_ids"] == ["vmq_10_2024_p_6"] and guards.issue_count(issues) == 1
+    assert guards.find_issues("Yordam qancha?", GOOD, [_ctx()], "uz")["unknown_ids"] == []
+
+
+@pytest.mark.asyncio
+async def test_an_unknown_citation_is_repaired_by_naming_it():
+    client = Client(replies=[GOOD])
+    text, warnings = await guards.guard_answer(client, [], NEIGHBOUR_ID, "Yordam qancha?", [_ctx()], "uz")
+    assert text == GOOD and warnings == ["answer_repaired"]
+    assert "[vmq_10_2024_p_6]" in client.calls[0][-1]["content"]
+
+
+def test_validator_reports_the_citations_it_had_to_remove():
+    result = CitationValidator.validate_and_sanitize(NEIGHBOUR_ID, [_ctx()], "uz")
+    assert result.is_valid is False and "vmq_10_2024_p_6" not in result.clean_answer
+    assert any(w.startswith("unresolved_citations: vmq_10_2024_p_6") for w in result.warnings)
+
+
 @pytest.mark.asyncio
 async def test_clean_answers_cost_no_extra_call_and_guards_can_be_switched_off(monkeypatch):
     client = Client(replies=[GOOD])
