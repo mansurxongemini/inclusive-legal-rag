@@ -26,3 +26,7 @@ src/admin/static/scratch/
 
 # local agent/IDE state and scratch files
 .claude/
+
+# gold-set evaluation: response cache and per-run reports
+eval/cache/
+eval/reports/report_*.json
