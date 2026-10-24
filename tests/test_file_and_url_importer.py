@@ -1,32 +1,7 @@
 import pytest
-import os
 from pathlib import Path
-from httpx import AsyncClient, ASGITransport
-import docx
 
-from src.api.app import app
-from src.ingestion.file_importer import LocalFileImporter
 from src.ingestion.url_importer import LexUrlImporter, UrlImportRequest
-
-
-@pytest.mark.asyncio
-async def test_file_importer_docx_parsing(tmp_path):
-    # Create temporary docx
-    test_file = tmp_path / "test_law.docx"
-    doc = docx.Document()
-    doc.add_heading("O‘zbekiston Respublikasining Qonuni: O‘RQ-777", level=1)
-    doc.add_paragraph("Nogironligi bo‘lgan shaxslar huquqlari kafolatlari")
-    doc.add_paragraph("1-modda. Asosiy maqsad")
-    doc.add_paragraph("Ushbu qonun nogironligi bo‘lgan shaxslarning teng huquqlarini ta'minlashga qaratilgan.")
-    doc.save(str(test_file))
-
-    importer = LocalFileImporter()
-    articles, law_num, title = importer.parse_file(test_file)
-
-    assert len(articles) == 1
-    assert "777" in law_num
-    assert articles[0].metadata.article_number == "1-modda"
-    assert "teng huquqlarini" in articles[0].translations["uz"]
 
 
 def test_url_importer_html_parsing():
@@ -88,7 +63,6 @@ def test_document_inspector_with_table():
 @pytest.mark.asyncio
 async def test_url_importer_differential_logic(tmp_path, monkeypatch):
     import httpx
-    from unittest.mock import AsyncMock
     from src.storage.hybrid_store import HybridStore
 
     # Use isolated test store in tmp_path

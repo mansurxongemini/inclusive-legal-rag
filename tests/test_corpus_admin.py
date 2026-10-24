@@ -1,12 +1,9 @@
 import asyncio
 import json
 import pytest
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 
 from src.api.app import app
-from src.ingestion.lex_client import LexClient
 from src.ingestion.lex_structured import LexDocument, LexUnit
 
 
@@ -143,7 +140,6 @@ async def test_corpus_add_and_refresh_flow(monkeypatch):
         assert "1 changed/new indexed" in (job_data["summary"] or "")
 
         # Refresh job: only for an act that is in the registry
-        from src.api.routes import corpus_admin
         monkeypatch.setattr(corpus_admin, "_registry_entry", lambda lex_id: None)
         res_unknown = await ac.post("/api/v1/admin/corpus/refresh", json={"lex_id": "-999"})
         assert res_unknown.status_code == 404
@@ -196,7 +192,6 @@ async def test_corpus_job_clears_server_article_cache(monkeypatch, returncode):
 
 @pytest.mark.asyncio
 async def test_corpus_job_conflict_409(monkeypatch):
-    from src.api.routes import corpus_admin
 
     # Mock a long running subprocess
     class SlowProcess:

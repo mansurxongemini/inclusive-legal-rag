@@ -6,8 +6,8 @@ extracts clean text, performs smart structural chunking, identifies referenced l
 and indexes into the Hybrid Legal Store under 'commentary'.
 """
 
+import asyncio
 import hashlib
-import json
 import logging
 import re
 from datetime import datetime, timezone
@@ -88,7 +88,7 @@ class WebArticleIngester:
     @classmethod
     async def fetch_page(cls, url: str, timeout: float = 20.0) -> Tuple[str, str]:
         """Fetches raw HTML and resolves final URL (public hosts only, redirects included)."""
-        assert_public_http_url(url)
+        await asyncio.to_thread(assert_public_http_url, url)
         async with httpx.AsyncClient(
             headers=DESKTOP_HEADERS,
             follow_redirects=True,

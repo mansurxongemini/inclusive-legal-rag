@@ -72,15 +72,25 @@ def _bearer_token(authorization: Optional[str]) -> Optional[str]:
     return None
 
 
+def _key_matches(token: Optional[str]) -> bool:
+    configured = settings.ADMIN_API_KEY
+    return bool(configured and token and hmac.compare_digest(token.encode("utf-8"), configured.encode("utf-8")))
+
+
+def is_admin_request(request: Request) -> bool:
+    """True for a request that require_admin would let through (right key, or a direct local connection where that is on)."""
+    token = request.headers.get("x-admin-key") or _bearer_token(request.headers.get("authorization"))
+    return _key_matches(token) or (settings.admin_loopback_enabled and is_direct_loopback(request))
+
+
 async def require_admin(
     request: Request,
     x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key"),
     authorization: Optional[str] = Header(None),
 ) -> None:
     token = x_admin_key or _bearer_token(authorization)
-    configured = settings.ADMIN_API_KEY
 
-    if configured and token and hmac.compare_digest(token.encode("utf-8"), configured.encode("utf-8")):
+    if _key_matches(token):
         return
     if settings.admin_loopback_enabled and is_direct_loopback(request):
         return

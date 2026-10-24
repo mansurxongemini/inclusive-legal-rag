@@ -21,7 +21,6 @@ from src.storage.sqlite_utils import connect as _sqlite_connect
 SIGNATURE_HEADER = "X-HuquqPlus-Signature"
 TIMESTAMP_HEADER = "X-HuquqPlus-Timestamp"
 MAX_BODY_BYTES = 8192
-EVENTS = ("upsert", "delete", "ping")
 
 
 def sign(secret: str, timestamp: str, body: bytes) -> str:

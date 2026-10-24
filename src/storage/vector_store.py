@@ -1,5 +1,5 @@
-import json
 import logging
+import threading
 from datetime import timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -8,6 +8,11 @@ import pyarrow as pa
 from src.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+# Nearest chunk rows read per wanted unit (several chunks can belong to one unit). 8 measured no better: hit@1 -2.9 on the stress set,
+# within noise.
+VECTOR_WINDOW_FACTOR = 4
 
 
 def _sql_quote(value: str) -> str:
@@ -27,6 +32,9 @@ class LanceVectorStore:
         # sees vectors written by another HybridStore instance (importers, ingestion scripts) until restart.
         self.db = lancedb.connect(str(self.storage_dir), read_consistency_interval=timedelta(seconds=0))
         self.table = self._get_or_create_table()
+        # Indexing runs in worker threads (the event loop must stay free while a law is imported). An upsert is a delete
+        # followed by an add, so two of them must never interleave.
+        self._write_lock = threading.RLock()
 
     def _get_or_create_table(self):
         schema = pa.schema([
@@ -67,22 +75,32 @@ class LanceVectorStore:
         if not records:
             return
 
-        # Delete existing entries with matching canonical_ids to avoid duplicates in a single batch
-        canonical_ids = list({r["canonical_id"] for r in records})
-        if canonical_ids:
-            try:
-                if len(self.table) > 0:
-                    cids_str = ", ".join(_sql_quote(cid) for cid in canonical_ids)
-                    self.table.delete(f"canonical_id IN ({cids_str})")
-            except Exception as e:
-                logger.warning(f"Error during existing record deletion in LanceDB: {e}")
+        # Only VECTOR_LANGUAGES are stored: a record of another language is a caller's mistake, not a row to keep
+        allowed = settings.vector_language_list
+        foreign = {r.get("language") for r in records} - set(allowed)
+        if foreign:
+            logger.warning(f"Skipping vector records of languages outside VECTOR_LANGUAGES: {sorted(map(str, foreign))}")
+            records = [r for r in records if r.get("language") in allowed]
+            if not records:
+                return
 
-        # A table created before chunk_index existed rejects the extra field
-        if not self.has_chunk_index and any("chunk_index" in r for r in records):
-            records = [{k: v for k, v in r.items() if k != "chunk_index"} for r in records]
+        with self._write_lock:
+            # Delete existing entries with matching canonical_ids to avoid duplicates in a single batch
+            canonical_ids = list({r["canonical_id"] for r in records})
+            if canonical_ids:
+                try:
+                    if len(self.table) > 0:
+                        cids_str = ", ".join(_sql_quote(cid) for cid in canonical_ids)
+                        self.table.delete(f"canonical_id IN ({cids_str})")
+                except Exception as e:
+                    logger.warning(f"Error during existing record deletion in LanceDB: {e}")
 
-        # Add new records
-        self.table.add(records)
+            # A table created before chunk_index existed rejects the extra field
+            if not self.has_chunk_index and any("chunk_index" in r for r in records):
+                records = [{k: v for k, v in r.items() if k != "chunk_index"} for r in records]
+
+            # Add new records
+            self.table.add(records)
 
     def search_vector(
         self,
@@ -99,15 +117,13 @@ class LanceVectorStore:
 
         # Several chunk rows can belong to one unit (long units are embedded chunk by chunk), so the window is wide
         # enough for top_k distinct units even when one long unit fills many of the nearest rows.
-        window = top_k * settings.VECTOR_WINDOW_FACTOR
+        window = top_k * VECTOR_WINDOW_FACTOR
         columns = ["canonical_id", "language", "status", "category"] + (["chunk_index"] if self.has_chunk_index else [])
-        excluded = [l.strip() for l in settings.VECTOR_EXCLUDE_LANGUAGES.split(",") if l.strip()]
-        where = " AND ".join(f"language != {_sql_quote(l)}" for l in excluded)
+        # rows of other languages (e.g. restored from an old backup) are never searched
+        where = f"language IN ({', '.join(_sql_quote(l) for l in settings.vector_language_list)})"
 
         def query(select: bool):
-            q = self.table.search(query_vector).metric("cosine")
-            if where:
-                q = q.where(where)
+            q = self.table.search(query_vector).metric("cosine").where(where)
             if select:
                 q = q.select(columns)
             return q.limit(window).to_list()
@@ -147,23 +163,31 @@ class LanceVectorStore:
         return sorted_results[:top_k]
 
     def delete_by_canonical_id(self, canonical_id: str):
-        if len(self.table) > 0:
-            self.table.delete(f"canonical_id = {_sql_quote(canonical_id)}")
+        predicate = f"canonical_id = {_sql_quote(canonical_id)}"
+        with self._write_lock:
+            # a delete that matches nothing still commits a new table version: a unit without vectors (Russian text)
+            # must not cost one (deleting the 257 Russian Huquq+ units made 257 versions)
+            if len(self.table) > 0 and self.table.count_rows(predicate) > 0:
+                self.table.delete(predicate)
 
     def reset(self) -> None:
         """Drops and recreates the vector table (all embeddings)."""
-        try:
-            self.db.drop_table(self.TABLE_NAME)
-        except Exception:
-            pass
-        self.table = self._get_or_create_table()
+        with self._write_lock:
+            try:
+                self.db.drop_table(self.TABLE_NAME)
+            except Exception:
+                pass
+            self.table = self._get_or_create_table()
 
     def delete_many(self, canonical_ids: List[str]) -> None:
         if not canonical_ids or len(self.table) == 0:
             return
-        for i in range(0, len(canonical_ids), 200):
-            chunk = canonical_ids[i:i + 200]
-            self.table.delete(f"canonical_id IN ({', '.join(_sql_quote(c) for c in chunk)})")
+        with self._write_lock:
+            for i in range(0, len(canonical_ids), 200):
+                chunk = canonical_ids[i:i + 200]
+                predicate = f"canonical_id IN ({', '.join(_sql_quote(c) for c in chunk)})"
+                if self.table.count_rows(predicate) > 0:
+                    self.table.delete(predicate)
 
     def count(self) -> int:
         return len(self.table)
@@ -178,11 +202,12 @@ class LanceVectorStore:
         if cleanup_older_than is None:
             cleanup_older_than = timedelta(days=7)
         try:
-            stats_before = self.table.stats()
-            frag_before = stats_before.get("fragment_stats", {}).get("num_fragments", 0)
-            self.table.optimize(cleanup_older_than=cleanup_older_than)
-            stats_after = self.table.stats()
-            frag_after = stats_after.get("fragment_stats", {}).get("num_fragments", 0)
+            with self._write_lock:
+                stats_before = self.table.stats()
+                frag_before = stats_before.get("fragment_stats", {}).get("num_fragments", 0)
+                self.table.optimize(cleanup_older_than=cleanup_older_than)
+                stats_after = self.table.stats()
+                frag_after = stats_after.get("fragment_stats", {}).get("num_fragments", 0)
             return {
                 "fragments_before": frag_before,
                 "fragments_after": frag_after,

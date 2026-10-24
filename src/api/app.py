@@ -11,7 +11,8 @@ from typing import Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.config import settings
+from src.config import removed_settings_in_use, settings
+from src.logging_setup import configure_logging
 from src.storage.hybrid_store import HybridStore
 from src.api.cache import QueryCache
 from src.clients.openrouter import OpenRouterClient
@@ -19,6 +20,7 @@ from src.api.routes import query, article, feedback, health, admin, inclusive_ap
 from src.editorial.router import router as editorial_router
 from src.api.middleware.hardening import BodyLimitMiddleware, SecurityHeadersMiddleware
 
+configure_logging(settings.LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -91,7 +93,9 @@ async def _run_assistant_maintenance_scheduler():
     while True:
         try:
             days = getattr(settings, "ASSISTANT_LOG_RETENTION_DAYS", 90)
-            get_conversation_store().purge_older_than(days)
+            await asyncio.to_thread(get_conversation_store().purge_older_than, days)
+            removed = await asyncio.to_thread(get_cache().purge_expired)
+            logger.info(f"Answer cache: {removed} expired entries removed")
             await asyncio.sleep(86400)
         except asyncio.CancelledError:
             logger.info("Assistant API jurnallari tozalash rejalashtiruvchisi to'xtatildi.")
@@ -148,6 +152,17 @@ async def lifespan(app: FastAPI):
             "OPENROUTER_API_KEY is not set: running in MOCK mode. Answers are deterministic placeholders, "
             "not real legal analysis. Configure the key (or set MOCK_EXTERNAL_APIS=true to silence this)."
         )
+    stale = removed_settings_in_use()
+    if stale:
+        logger.warning(
+            f"These settings are no longer read: {', '.join(stale)}. They belonged to the Meta test provider (one "
+            "OPENROUTER_API_KEY and OPENROUTER_BASE_URL serve every call now) or to experiments that were dropped; remove them from .env."
+        )
+    if not settings.is_mock_mode and "openrouter.ai" not in settings.OPENROUTER_BASE_URL:
+        logger.warning(
+            f"OPENROUTER_BASE_URL is {settings.OPENROUTER_BASE_URL}: the service is built for OpenRouter "
+            "(https://openrouter.ai/api/v1) for chat, embeddings and Jev, and models are named as OpenRouter names them."
+        )
     if settings.admin_loopback_enabled and settings.HOST not in ("127.0.0.1", "::1", "localhost"):
         logger.warning(
             "Administration is open to direct local connections without a key. Behind a reverse proxy that does not "
@@ -173,22 +188,11 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown
-    if sync_task:
-        sync_task.cancel()
-        try:
-            await sync_task
-        except asyncio.CancelledError:
-            pass
-
-    limit_task.cancel()
-    maintenance_task.cancel()
-    if purge_task:
-        purge_task.cancel()
-        try:
-            await purge_task
-        except asyncio.CancelledError:
-            pass
+    # Shutdown: cancel every background task and wait until each has really stopped
+    background = [t for t in (sync_task, purge_task, limit_task, maintenance_task) if t]
+    for task in background:
+        task.cancel()
+    await asyncio.gather(*background, return_exceptions=True)
 
     if _client:
         await _client.close()

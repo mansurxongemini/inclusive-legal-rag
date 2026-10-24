@@ -5,9 +5,8 @@ Tarmoqsiz: tests/fixtures/huquqplus/* va soxta get_json yordamida.
 """
 import copy
 import json
-import sqlite3
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -21,30 +20,15 @@ from src.editorial.store import EditorialStore
 from src.editorial.watch import check_legal_links
 from src.ingestion.huquqplus_client import HuquqPlusClient, parse_lex_ref
 from src.integrations.huquqplus_sync import (
-    build_canonical_articles_for_post,
-    delete_post,
-    full_sync,
-    get_lex_index,
-    get_sync_status,
-    list_synced_posts,
-    process_queue,
-    reset_lex_index_cache,
-    resolve_lex_ref,
-    resync_post,
-    suspend_post,
-    unsuspend_post,
-    upsert_post,
+    purge_disallowed_languages,
+    full_sync, get_lex_index, list_synced_posts, process_queue, reset_lex_index_cache, resolve_lex_ref, suspend_post,
+    unsuspend_post, upsert_post,
 )
 from src.integrations.huquqplus_webhook import WebhookQueue
 from src.retrieval.reranker import RetrievedArticleContext
-from src.schema.canonical import (
-    ArticleMetadata,
-    ArticleStatus,
-    CanonicalArticle,
-    CrossReference,
-    RefType,
-)
+from src.schema.canonical import ArticleMetadata, ArticleStatus, CanonicalArticle
 from src.storage.hybrid_store import HybridStore
+from src.storage.sqlite_utils import connect as sqlite_connect
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures" / "huquqplus"
 
@@ -526,7 +510,7 @@ async def test_listing_that_lost_most_posts_does_not_wipe_the_base(custom_store,
     from src.integrations import huquqplus_sync as sync_mod
     reset_lex_index_cache()
     sync_mod.init_huquqplus_db(db_path)
-    with sqlite3.connect(db_path) as conn:          # six known posts, the listing now returns none
+    with sqlite_connect(db_path) as conn:          # six known posts, the listing now returns none
         for i in range(1, 7):
             conn.execute("INSERT INTO hp_posts VALUES (?, 'uz', '2026-01-01', 'h', 't', 'u', 'materials', 'active', "
                          "'[]', '[]', '[]', '2026-01-01')", (i,))
@@ -540,7 +524,7 @@ async def test_listing_that_lost_most_posts_does_not_wipe_the_base(custom_store,
 
     res = await full_sync(client=EmptyListing(), store=custom_store, editorial=custom_editorial, db_path=db_path)
     assert res["removed"] == 0 and "mass_removal_blocked" in res["message"]
-    with sqlite3.connect(db_path) as conn:
+    with sqlite_connect(db_path) as conn:
         assert conn.execute("SELECT COUNT(*) FROM hp_posts WHERE status = 'active'").fetchone()[0] == 6
 
 
@@ -548,7 +532,7 @@ async def test_listing_that_lost_most_posts_does_not_wipe_the_base(custom_store,
 async def test_abandoned_run_does_not_block_sync_forever(custom_store, custom_editorial, db_path):
     from src.integrations import huquqplus_sync as sync_mod
     sync_mod.init_huquqplus_db(db_path)
-    with sqlite3.connect(db_path) as conn:
+    with sqlite_connect(db_path) as conn:
         conn.execute("INSERT INTO sync_runs (kind, started_at) VALUES ('full', '2020-01-01T00:00:00+00:00')")
     res = await full_sync(client=_fake_client_factory(), store=custom_store, editorial=custom_editorial,
                           db_path=db_path)
@@ -635,7 +619,7 @@ def test_admin_huquqplus_posts_enrichment(custom_store, db_path):
         {"doc_id": "48496", "law_id": "vmq_62", "url": "https://lex.uz/docs/48496"},
         {"doc_id": "99999", "law_id": None, "url": "https://lex.uz/docs/99999"},
     ]
-    with sqlite3.connect(db_path) as conn:
+    with sqlite_connect(db_path) as conn:
         conn.execute("""
             INSERT INTO hp_posts (wp_id, lang, modified, content_hash, title, url, section, status, unit_ids, lex_refs, unresolved_refs, synced_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -677,3 +661,101 @@ def test_admin_huquqplus_posts_enrichment(custom_store, db_path):
         single_linked = next(r for r in single_post["unresolved_links"] if r["law_id"] == "vmq_62")
         assert single_linked["law_label"] == "VMQ-62 Tibbiy-ijtimoiy ekspertiza xizmati"
         assert single_linked["source_url"] == "https://lex.uz/uz/docs/48496"
+
+
+# -- only the Uzbek posts are synchronized: the Russian version says what the Uzbek one says -------------------------
+
+def _russian_copy(post):
+    ru = copy.deepcopy(post)
+    ru.lang = "ru"
+    ru.title = "Как устанавливается инвалидность у взрослых?"
+    ru.text = "Инвалидность устанавливается медико-социальной экспертной комиссией по заявлению гражданина. " * 3
+    return ru
+
+
+@pytest.mark.asyncio
+async def test_a_full_sync_asks_for_the_uzbek_posts_only(custom_store, custom_editorial, db_path):
+    asked = []
+
+    class Recording:
+        def list_post_index(self, lang="uz"):
+            asked.append(lang)
+            return {}
+
+        def fetch_posts(self, lang="uz", ids=None):
+            return []
+
+    await full_sync(client=Recording(), store=custom_store, editorial=custom_editorial, db_path=db_path)
+    assert asked == ["uz"]
+
+
+@pytest.mark.asyncio
+async def test_a_russian_post_is_not_indexed(custom_store, custom_editorial, db_path):
+    reset_lex_index_cache()
+    ru = _russian_copy(_fake_client_factory().fetch_post(2966, lang="uz"))
+    res = await upsert_post(ru, custom_store, custom_editorial, db_path=db_path)
+    assert res["action"] == "skipped_language" and res["lang"] == "ru"
+    assert custom_store.get_article("hp_ru_2966_1") is None
+    with sqlite_connect(db_path) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM hp_posts").fetchone()[0] == 0
+
+
+@pytest.mark.asyncio
+async def test_russian_posts_stored_earlier_are_removed_with_their_units_and_links(custom_store, custom_editorial, db_path, monkeypatch):
+    reset_lex_index_cache()
+    uz = _fake_client_factory().fetch_post(2966, lang="uz")
+    monkeypatch.setattr(settings, "HUQUQPLUS_LANGUAGES", "uz,ru")
+    await upsert_post(uz, custom_store, custom_editorial, db_path=db_path)
+    await upsert_post(_russian_copy(uz), custom_store, custom_editorial, db_path=db_path)
+    assert custom_store.get_article("hp_ru_2966_1") is not None and custom_store.get_article("hp_uz_2966_1") is not None
+
+    monkeypatch.setattr(settings, "HUQUQPLUS_LANGUAGES", "uz")
+    assert purge_disallowed_languages(custom_store, custom_editorial, db_path=db_path) == 1
+    assert custom_store.get_article("hp_ru_2966_1") is None
+    assert custom_store.get_article("hp_uz_2966_1") is not None              # the Uzbek post stays
+    with sqlite_connect(db_path) as conn:
+        assert dict(conn.execute("SELECT lang, status FROM hp_posts").fetchall()) == {"uz": "active", "ru": "deleted"}
+    assert purge_disallowed_languages(custom_store, custom_editorial, db_path=db_path) == 0     # nothing is left to remove
+
+
+@pytest.mark.asyncio
+async def test_a_full_sync_also_cleans_up_the_languages_it_no_longer_syncs(custom_store, custom_editorial, db_path, monkeypatch):
+    reset_lex_index_cache()
+    uz = _fake_client_factory().fetch_post(2966, lang="uz")
+    monkeypatch.setattr(settings, "HUQUQPLUS_LANGUAGES", "uz,ru")
+    await upsert_post(_russian_copy(uz), custom_store, custom_editorial, db_path=db_path)
+    monkeypatch.setattr(settings, "HUQUQPLUS_LANGUAGES", "uz")
+    res = await full_sync(client=_fake_client_factory(), store=custom_store, editorial=custom_editorial, db_path=db_path)
+    assert res["removed"] >= 1 and custom_store.get_article("hp_ru_2966_1") is None
+
+
+@pytest.mark.asyncio
+async def test_a_webhook_event_of_the_russian_version_is_dropped_without_a_fetch(custom_store, custom_editorial, db_path):
+    from src.integrations import huquqplus_sync as sync_mod
+    sync_mod.init_huquqplus_db(db_path)
+    fetched = []
+
+    class Recording:
+        def fetch_post(self, post_id, lang="uz"):
+            fetched.append((post_id, lang))
+            return None
+
+    pending = [{"id": 1, "event": "upsert", "post_id": 2966, "lang": "ru"}]
+    marked = []
+
+    class FakeQueue:
+        def __init__(self, path):
+            pass
+
+        def pending(self, limit=50):
+            return pending
+
+        def mark_done(self, row_id):
+            marked.append(row_id)
+
+        def mark_failed(self, row_id, message):
+            raise AssertionError(message)
+
+    with patch.object(sync_mod, "WebhookQueue", FakeQueue):
+        res = await sync_mod._process_queue_unlocked(10, Recording(), custom_store, custom_editorial, db_path)
+    assert res == {"processed": 1, "errors": 0} and marked == [1] and fetched == []

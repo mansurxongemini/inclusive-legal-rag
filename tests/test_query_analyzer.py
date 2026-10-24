@@ -83,3 +83,26 @@ def test_russian_only_letters_do_not_mark_uzbek_text_as_russian_when_uzbek_evide
     assert QueryAnalyzer.detect_language("Ногиронлиги бор шахсга компьютер берилади") == "uz"
     # ... and they are what keeps a keyword-free Russian question Russian
     assert QueryAnalyzer.detect_language("Положены ли льготы?") == "ru"
+
+
+# --- English questions are recognised even without legal vocabulary (the service answers Uzbek only) ---------------------
+
+@pytest.mark.parametrize("question", [
+    "Hello, can you help me with my rights?",
+    "I want to apply for a pension, what documents do I need?",
+    "Please tell me about the benefits that you can get",
+    "Where is the nearest office for disabled people?",
+])
+def test_english_questions_without_legal_keywords_are_detected(question):
+    assert QueryAnalyzer.detect_language(question) == "en"
+
+
+@pytest.mark.parametrize("question", [
+    "Nogironligi bo'lgan shaxslarga pensiya qancha to'lanadi?",
+    "Ish beruvchi nogironlarni ishga qabul qilishi shartmi?",
+    "Telegram bot orqali ariza berish mumkinmi?",
+    "TIEK qarori ustidan qayerga shikoyat qilinadi?",
+    "Ногирони бўлган шахсларга нафақа қанча тўланади?",
+])
+def test_uzbek_questions_are_never_taken_for_english(question):
+    assert QueryAnalyzer.detect_language(question) == "uz"

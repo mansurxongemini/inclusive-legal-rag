@@ -6,7 +6,6 @@ APOSTROPHES = "’‘`ʻʼ''"
 APOSTROPHE_PATTERN = re.compile(f"[{re.escape(APOSTROPHES)}]")
 
 VOWELS_CYRILLIC = "аеёиоуўэюяАЕЁИОУЎЭЮЯ"
-VOWELS_LATIN = "aeiouo'AEIOUO'"
 
 # Special word dictionary for high-precision transliteration
 SPECIAL_WORDS = {

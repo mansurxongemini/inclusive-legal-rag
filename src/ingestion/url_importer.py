@@ -6,7 +6,7 @@ import hashlib
 import logging
 import re
 from datetime import date
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -17,13 +17,7 @@ from pydantic import BaseModel, Field
 from src.ingestion.localized import localized, provenance_for
 from src.nlp.transliteration import cyrillic_to_latin, detect_script, normalize_apostrophes
 from src.schema.canonical import (
-    ArticleMetadata,
-    ArticlePoint,
-    ArticleStatus,
-    CanonicalArticle,
-    CrossReference,
-    RefType,
-    TranslationProvenanceType,
+    ArticleMetadata, ArticlePoint, ArticleStatus, CanonicalArticle, CrossReference, RefType,
 )
 from src.ingestion.url_safety import is_lex_uz_url
 from src.storage.hybrid_store import HybridStore

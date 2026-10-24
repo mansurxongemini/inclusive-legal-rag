@@ -53,10 +53,9 @@ def local_client():
 # Access control
 # ----------------------------------------------------------------------------------------------------------
 
+ADMIN_PATH = "/api/v1/admin/stats"
+
 ADMIN_CALLS = [
-    ("get", "/api/v1/inclusive/admin/api-keys", None),
-    ("post", "/api/v1/inclusive/admin/api-keys", {"name": "x"}),
-    ("delete", "/api/v1/inclusive/admin/api-keys/key_abc", None),
     ("post", "/api/v1/admin/corpus/preview", {"source": "-1"}),
     ("post", "/api/v1/admin/corpus/add", {"lex_id": "-1", "include": "all"}),
     ("post", "/api/v1/admin/corpus/refresh", {"lex_id": "-1"}),
@@ -82,11 +81,7 @@ async def test_admin_routes_reject_remote_callers(method, path, body):
 @pytest.mark.asyncio
 async def test_forged_referer_does_not_grant_access():
     async with remote_client() as c:
-        res = await c.post(
-            "/api/v1/inclusive/query",
-            json={"question": "Nogironlik nafaqasi qanday tayinlanadi?"},
-            headers={"Referer": "http://attacker.example:8000/"},
-        )
+        res = await c.get(ADMIN_PATH, headers={"Referer": "http://attacker.example:8000/"})
     assert res.status_code == 401
 
 
@@ -94,20 +89,18 @@ async def test_forged_referer_does_not_grant_access():
 async def test_proxy_headers_disable_loopback_trust():
     # nginx on the same host shows up as 127.0.0.1 but always forwards the real client address
     async with local_client() as c:
-        res = await c.get("/api/v1/inclusive/admin/api-keys", headers={"X-Forwarded-For": "198.51.100.9"})
+        res = await c.get(ADMIN_PATH, headers={"X-Forwarded-For": "198.51.100.9"})
     assert res.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_direct_loopback_keeps_dashboard_working():
     async with local_client() as c:
-        res = await c.get("/api/v1/inclusive/admin/api-keys")
+        res = await c.get(ADMIN_PATH)
     assert res.status_code == 200
-    assert "api_keys" in res.json()
 
 
 LOCAL_PEER = ("127.0.0.1", 40000)
-ADMIN_PATH = "/api/v1/inclusive/admin/api-keys"
 
 
 @pytest.mark.asyncio
@@ -154,26 +147,38 @@ async def test_loopback_trust_can_be_switched_off_behind_a_proxy(monkeypatch):
 async def test_admin_key_grants_remote_access(monkeypatch):
     monkeypatch.setattr(settings, "ADMIN_API_KEY", "s3cret-admin-key")
     async with remote_client() as c:
-        ok = await c.get("/api/v1/inclusive/admin/api-keys", headers={"X-Admin-Key": "s3cret-admin-key"})
+        ok = await c.get(ADMIN_PATH, headers={"X-Admin-Key": "s3cret-admin-key"})
         bearer = await c.get("/api/v1/feedback", headers={"Authorization": "Bearer s3cret-admin-key"})
-        wrong = await c.get("/api/v1/inclusive/admin/api-keys", headers={"X-Admin-Key": "nope"})
+        wrong = await c.get(ADMIN_PATH, headers={"X-Admin-Key": "nope"})
     assert ok.status_code == 200
     assert bearer.status_code == 200
     assert wrong.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_valid_api_key_works_remotely_and_is_rate_limited_per_key():
-    from src.api.auth.api_keys import api_key_manager
-    created = api_key_manager.create_key("pytest-bot", rate_limit=2)
-    headers = {"X-API-Key": created["api_key"]}
-    body = {"question": "Nogironligi bo'lgan shaxslarga tibbiy yordam qanday ko'rsatiladi?", "language": "uz"}
+@pytest.mark.parametrize("method,path", [
+    ("post", "/api/v1/inclusive/query"),                 # the old keyed endpoint: gone
+    ("get", "/api/v1/inclusive/admin/api-keys"),
+    ("post", "/api/v1/inclusive/admin/api-keys"),
+    ("delete", "/api/v1/inclusive/admin/api-keys/key_abc"),
+])
+async def test_old_incl_key_system_is_gone(method, path):
+    async with local_client() as c:
+        res = await c.request(method.upper(), path, json={"question": "x", "name": "x"})
+    assert res.status_code in (404, 405), f"{method.upper()} {path} -> {res.status_code}"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("path", [
+    "/api/v1/inclusive/categories",
+    "/api/v1/inclusive/norms",
+    "/api/v1/inclusive/documents",
+    "/api/v1/inclusive/stats",
+])
+async def test_public_browsing_stays_open_to_remote_callers(path):
     async with remote_client() as c:
-        codes = [(await c.post("/api/v1/inclusive/query", json=body, headers=headers)).status_code for _ in range(3)]
-    assert codes[:2] == [200, 200]
-    assert codes[2] == 429
-
-
+        res = await c.get(path)
+    assert res.status_code == 200, path
 
 
 @pytest.mark.asyncio

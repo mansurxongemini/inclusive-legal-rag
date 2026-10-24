@@ -1,6 +1,6 @@
 """
-LLM routing: light helper calls run on a fast non-reasoning utility model, the Meta API gets `reasoning_effort`
-(it rejects `reasoning`), and a failed generation model is backed up by a model on the other provider.
+One OpenRouter key and endpoint serve every call, on one chat model: the cost of each reply is recorded, a budget that is
+used up (or a key that is refused) stops the calls, and an optional helper call is skipped as soon as the budget runs low.
 """
 import json
 
@@ -8,200 +8,184 @@ import httpx
 import pytest
 
 from src.clients.openrouter import OpenRouterClient, reasoning_fields
+from src.clients.spend import SpendLedger
 from src.config import settings
 
-META = "https://api.meta.ai/v1"
 OPENROUTER = "https://openrouter.ai/api/v1"
-UTILITY = "https://openrouter.ai/api/v1"
+MESSAGES = [{"role": "user", "content": "savol"}]
 
 
-def test_reasoning_fields_per_provider():
+def test_reasoning_fields_are_for_openrouter_only():
     assert reasoning_fields(OPENROUTER, {"enabled": False}) == {"reasoning": {"enabled": False}}
     assert reasoning_fields(OPENROUTER, {"effort": "low"}) == {"reasoning": {"effort": "low"}}
-    assert reasoning_fields(META, {"enabled": False}) == {"reasoning_effort": "minimal"}
-    assert reasoning_fields(META, {"effort": "HIGH"}) == {"reasoning_effort": "high"}
-    assert reasoning_fields(META, {"effort": "none"}) == {}            # not a Meta level: leave the API default
-    assert reasoning_fields(META, None) == {} and reasoning_fields(OPENROUTER, None) == {}
+    assert reasoning_fields(OPENROUTER, None) == {}
     assert reasoning_fields("https://other.example/v1", {"enabled": False}) == {}
 
 
-def _reply(text):
-    return {"choices": [{"message": {"content": text}, "finish_reason": "stop"}]}
+def _reply(text, cost=None):
+    body = {"choices": [{"message": {"content": text}, "finish_reason": "stop"}]}
+    if cost is not None:
+        body["usage"] = {"cost": cost}
+    return body
 
 
-def _client(main_handler, utility_handler=None, monkeypatch=None):
-    calls = {"main": [], "utility": []}
-
-    def wrap(name, handler):
-        def inner(request: httpx.Request) -> httpx.Response:
-            body = json.loads(request.content)
-            calls[name].append(body)
-            return handler(body)
-        return httpx.AsyncClient(transport=httpx.MockTransport(inner))
-
-    c = OpenRouterClient()
-    c.is_mock = False
-    c.base_url = META
-    c.primary_model = c.fallback_model = "muse-spark-1.3"
-    c._http_client = wrap("main", main_handler)
-    if utility_handler is not None:
-        c.utility_base_url, c.utility_api_key = UTILITY, "k"
-        c._utility_http_client = wrap("utility", utility_handler)
-    else:
-        c.utility_api_key = None
-    return c, calls
+@pytest.fixture
+def ledger(tmp_path, monkeypatch):
+    led = SpendLedger(path=str(tmp_path / "spend.db"), scope="service")
+    monkeypatch.setattr("src.clients.openrouter.ledger", led)
+    monkeypatch.setattr(settings, "OPENROUTER_MONTHLY_BUDGET_USD", 10.0)
+    monkeypatch.setattr(settings, "OPENROUTER_BUDGET_SOFT_RATIO", 0.8)
+    return led
 
 
-def ok(text):
-    return lambda body: httpx.Response(200, json=_reply(text))
-
-
-def fail(status=500):
-    return lambda body: httpx.Response(status, json={"error": {"message": "boom"}})
-
-
-MSG = [{"role": "user", "content": "savol"}]
-
-
-@pytest.mark.asyncio
-async def test_light_call_uses_the_utility_model_without_reasoning(monkeypatch):
-    monkeypatch.setattr(settings, "UTILITY_MODEL", "fast/model")
-    c, calls = _client(ok("main answer " * 5), ok("tarjima"))
-    out = await c.chat_completion(MSG, min_chars=2, light=True, reasoning={"enabled": False})
-    assert out == "tarjima"
-    assert calls["main"] == [] and calls["utility"][0]["model"] == "fast/model"
-    assert calls["utility"][0]["reasoning"] == {"enabled": False}      # OpenRouter-style endpoint
-
-
-@pytest.mark.asyncio
-async def test_light_call_falls_back_to_the_generation_model_with_minimal_reasoning(monkeypatch):
-    monkeypatch.setattr(settings, "UTILITY_MODEL", "fast/model")
-    c, calls = _client(ok("main answer " * 5), fail(500))
-    out = await c.chat_completion(MSG, min_chars=2, light=True, reasoning={"enabled": False})
-    assert out.startswith("main answer")
-    assert calls["main"][0]["reasoning_effort"] == "minimal" and "reasoning" not in calls["main"][0]
-
-
-@pytest.mark.asyncio
-async def test_utility_endpoint_is_skipped_after_three_failures(monkeypatch):
-    monkeypatch.setattr(settings, "UTILITY_MODEL", "fast/model")
-    c, calls = _client(ok("main answer " * 5), fail(500))
-    for _ in range(5):
-        await c.chat_completion(MSG, min_chars=2, light=True)
-    assert len(calls["utility"]) == 3 and len(calls["main"]) == 5      # breaker open for the last two calls
-
-
-@pytest.mark.asyncio
-async def test_generation_backup_answers_when_the_generation_model_is_down(monkeypatch):
-    monkeypatch.setattr(settings, "GENERATION_MODEL_BACKUP", "backup/model")
-    c, calls = _client(fail(500), ok("zaxira javobi " * 5))
-    out = await c.chat_completion(MSG, reasoning={"enabled": False})
-    assert out.startswith("zaxira javobi")
-    assert calls["utility"][0]["model"] == "backup/model"
-    assert len(calls["main"]) == 2                                      # one model name, two attempts (was four)
-
-
-@pytest.mark.asyncio
-async def test_rejected_request_is_not_retried_on_the_same_model():
-    c, calls = _client(fail(400))
-    with pytest.raises(RuntimeError):
-        await c.chat_completion(MSG)
-    assert len(calls["main"]) == 1
-
-
-@pytest.mark.asyncio
-async def test_no_backup_configured_still_raises(monkeypatch):
-    monkeypatch.setattr(settings, "GENERATION_MODEL_BACKUP", "")
-    c, _ = _client(fail(500), ok("x" * 60))
-    with pytest.raises(RuntimeError):
-        await c.chat_completion(MSG)
-
-
-def _sse(*texts):
-    def handler(body):
-        lines = "".join(f"data: {json.dumps({'choices': [{'delta': {'content': t}}]})}\n\n" for t in texts)
-        return httpx.Response(200, text=lines + "data: [DONE]\n\n", headers={"content-type": "text/event-stream"})
-    return handler
-
-
-@pytest.mark.asyncio
-async def test_stream_falls_over_to_the_backup_model_when_nothing_was_emitted(monkeypatch):
-    monkeypatch.setattr(settings, "GENERATION_MODEL_BACKUP", "backup/model")
-    c, calls = _client(_sse(), _sse("Zaxira ", "javob."))
-    out = [t async for t in c.chat_completion_stream(MSG, max_tokens=2048, reasoning={"effort": "low"})]
-    assert "".join(out) == "Zaxira javob."
-    assert calls["main"][0]["reasoning_effort"] == "low" and calls["utility"][0]["model"] == "backup/model"
-
-
-# --- second generation key ---------------------------------------------------------------------------------------------
-
-def _two_key_client(statuses_by_key):
+def _client(handler):
     seen = []
 
-    def handler(request: httpx.Request) -> httpx.Response:
-        key = request.headers["authorization"].split()[-1]
-        seen.append(key)
-        status = statuses_by_key[key]
-        if status == 200:
-            return httpx.Response(200, json=_reply("Javob matni " * 6))
-        return httpx.Response(status, json={"error": {"code": "billing_not_configured"}})
+    def inner(request: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(request.content))
+        return handler(len(seen))
 
     c = OpenRouterClient()
     c.is_mock = False
-    c.base_url = META
-    c.api_key, c._plus_api_key = "first", "second"
-    c.primary_model = c.fallback_model = "muse-spark-1.3"
-    c.utility_api_key = None
-    c._http_client = None
-
-    async def get_client():
-        if c._http_client is None:
-            c._http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler), headers={"Authorization": f"Bearer {c.api_key}"})
-        return c._http_client
-
-    c.get_client = get_client
+    c.api_key, c.base_url = "k", OPENROUTER
+    c.primary_model = "vendor/chat-model"
+    c._http_client = httpx.AsyncClient(transport=httpx.MockTransport(inner))
     return c, seen
 
 
-@pytest.mark.asyncio
-async def test_a_402_from_the_first_key_switches_to_the_second_and_stays_there():
-    c, seen = _two_key_client({"first": 402, "second": 200})
-    assert (await c.chat_completion(MSG)).startswith("Javob matni")
-    assert seen == ["first", "second"] and c.api_key == "second"
-    await c.chat_completion(MSG)
-    assert seen[-1] == "second" and seen.count("first") == 1
+def ok(text="Javob matni yetarlicha uzun bo'lishi kerak.", cost=0.001):
+    return lambda n: httpx.Response(200, json=_reply(text, cost))
+
+
+def sse(*chunks, usage=None):
+    lines = [f"data: {json.dumps({'choices': [{'delta': {'content': t}}]})}\n\n" for t in chunks]
+    if usage is not None:
+        lines.append(f"data: {json.dumps({'choices': [], 'usage': usage})}\n\n")
+    return httpx.Response(200, text="".join(lines) + "data: [DONE]\n\n", headers={"content-type": "text/event-stream"})
 
 
 @pytest.mark.asyncio
-async def test_both_keys_out_of_credit_is_an_error_not_a_loop():
-    c, seen = _two_key_client({"first": 402, "second": 402})
-    with pytest.raises(RuntimeError):
-        await c.chat_completion(MSG)
+async def test_one_model_answers_and_its_cost_is_recorded(ledger):
+    c, seen = _client(ok(cost=0.0021))
+    assert (await c.chat_completion(MESSAGES)).startswith("Javob matni")
+    assert len(seen) == 1 and seen[0]["model"] == "vendor/chat-model"
+    assert ledger.by_kind() == {"chat": 0.0021}
+
+
+@pytest.mark.asyncio
+async def test_a_helper_call_runs_without_reasoning(ledger):
+    c, seen = _client(ok())
+    await c.chat_completion(MESSAGES, light=True)
+    assert seen[0]["reasoning"] == {"enabled": False}
+
+
+@pytest.mark.asyncio
+async def test_a_failed_call_is_asked_once_more_then_gives_up(ledger, monkeypatch):
+    async def no_wait(_):
+        return None
+
+    monkeypatch.setattr("src.clients.openrouter.asyncio.sleep", no_wait)
+    c, seen = _client(lambda n: httpx.Response(200, json=_reply("ok")) if n == 1 else httpx.Response(500, json={}))
+    with pytest.raises(RuntimeError, match="did not answer"):
+        await c.chat_completion(MESSAGES)                       # a stub reply, then a 500
+    assert len(seen) == 2
+
+    c, seen = _client(lambda n: httpx.Response(500, json={}) if n == 1 else httpx.Response(200, json=_reply("Javob matni yetarlicha uzun bo'lishi kerak.")))
+    assert (await c.chat_completion(MESSAGES)).startswith("Javob")
     assert len(seen) == 2
 
 
 @pytest.mark.asyncio
-async def test_stream_switches_key_on_402_too():
-    seen = []
+async def test_a_request_the_provider_rejects_is_not_repeated(ledger):
+    c, seen = _client(lambda n: httpx.Response(400, json={"error": {"message": "bad"}}))
+    with pytest.raises(RuntimeError):
+        await c.chat_completion(MESSAGES)
+    assert len(seen) == 1
 
-    def handler(request):
-        key = request.headers["authorization"].split()[-1]
-        seen.append(key)
-        if key == "first":
-            return httpx.Response(402, json={"error": {"code": "billing_not_configured"}})
-        return _sse("Javob ", "matni.")(None)
 
+@pytest.mark.asyncio
+async def test_a_refused_key_stops_every_later_call(ledger):
+    c, seen = _client(lambda n: httpx.Response(402, json={"error": {"code": "billing_not_configured"}}))
+    with pytest.raises(RuntimeError, match="refused the key"):
+        await c.chat_completion(MESSAGES)
+    assert ledger.state() == "exhausted"
+    with pytest.raises(RuntimeError, match="budget"):
+        await c.chat_completion(MESSAGES)
+    assert len(seen) == 1                                       # the second call never left the process
+
+
+@pytest.mark.asyncio
+async def test_optional_calls_stop_at_the_soft_limit_and_everything_stops_at_the_hard_one(ledger):
+    c, seen = _client(ok())
+    ledger.add("chat", 8.5)                                     # 85% of 10 USD
+    assert ledger.state() == "soft"
+    with pytest.raises(RuntimeError, match="optional"):
+        await c.chat_completion(MESSAGES, light=True, optional=True)
+    assert (await c.chat_completion(MESSAGES)).startswith("Javob")     # the answer itself still runs
+    assert len(seen) == 1
+    ledger.add("chat", 2.0)
+    assert ledger.state() == "exhausted"
+    with pytest.raises(RuntimeError, match="budget"):
+        await c.chat_completion(MESSAGES)
+    with pytest.raises(RuntimeError, match="budget"):
+        async for _ in c.chat_completion_stream(MESSAGES):
+            pass
+    assert len(seen) == 1
+
+
+@pytest.mark.asyncio
+async def test_a_paused_service_makes_no_call_at_all(ledger, monkeypatch):
+    monkeypatch.setattr(settings, "OPENROUTER_PAUSED", True)
+    c, seen = _client(ok())
+    with pytest.raises(RuntimeError, match="paused"):
+        await c.chat_completion(MESSAGES)
+    assert seen == []
+
+
+@pytest.mark.asyncio
+async def test_a_stream_records_its_cost_from_the_last_chunk(ledger):
+    c, seen = _client(lambda n: sse("Javob ", "matni.", usage={"cost": 0.0042}))
+    out = [t async for t in c.chat_completion_stream(MESSAGES)]
+    assert "".join(out) == "Javob matni."
+    assert seen[0]["stream"] is True and seen[0]["stream_options"] == {"include_usage": True}
+    assert ledger.by_kind() == {"chat": 0.0042}
+
+
+@pytest.mark.asyncio
+async def test_a_stream_that_failed_before_its_first_token_is_asked_once_more(ledger, monkeypatch):
+    async def no_wait(_):
+        return None
+
+    monkeypatch.setattr("src.clients.openrouter.asyncio.sleep", no_wait)
+    c, seen = _client(lambda n: httpx.Response(503, json={}) if n == 1 else sse("Javob."))
+    assert "".join([t async for t in c.chat_completion_stream(MESSAGES)]) == "Javob."
+    assert len(seen) == 2
+
+
+class _CutAfterFirstToken(httpx.AsyncByteStream):
+    async def __aiter__(self):
+        yield b'data: {"choices": [{"delta": {"content": "Boshi"}}]}\n\n'
+        raise httpx.ReadError("connection cut")
+
+    async def aclose(self):
+        pass
+
+
+@pytest.mark.asyncio
+async def test_a_stream_cut_after_its_first_token_is_an_error_not_a_second_answer(ledger):
+    c, seen = _client(lambda n: httpx.Response(200, headers={"content-type": "text/event-stream"}, stream=_CutAfterFirstToken()))
+    got = []
+    with pytest.raises(RuntimeError, match="interrupted"):
+        async for t in c.chat_completion_stream(MESSAGES):
+            got.append(t)
+    assert got == ["Boshi"] and len(seen) == 1                  # no second attempt: it would splice two answers together
+
+
+def test_openrouter_provider_routing_is_sent_only_to_openrouter(monkeypatch):
+    monkeypatch.setattr(settings, "LLM_PROVIDER_ORDER", "deepinfra")
+    monkeypatch.setattr(settings, "LLM_PROVIDER_QUANTIZATIONS", "fp8")
     c = OpenRouterClient()
-    c.is_mock = False
-    c.base_url, c.api_key, c._plus_api_key = META, "first", "second"
-    c.primary_model = c.fallback_model = "muse-spark-1.3"
-    c.utility_api_key = None
-
-    async def get_client():
-        if c._http_client is None:
-            c._http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler), headers={"Authorization": f"Bearer {c.api_key}"})
-        return c._http_client
-
-    c.get_client = get_client
-    out = [t async for t in c.chat_completion_stream(MSG, max_tokens=2048)]
-    assert "".join(out) == "Javob matni." and seen == ["first", "second"]
+    c.base_url = OPENROUTER
+    assert c.provider_preferences() == {"order": ["deepinfra"], "allow_fallbacks": True, "quantizations": ["fp8"]}
+    c.base_url = "https://other.example/v1"
+    assert c.provider_preferences() is None

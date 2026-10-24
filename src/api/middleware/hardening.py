@@ -18,7 +18,7 @@ _CSP = (
 )
 _NO_CSP_PATHS = ("/docs", "/redoc", "/openapi.json")
 PUBLIC_BODY_PREFIXES = (
-    "/api/v1/query", "/api/v1/feedback", "/api/v1/inclusive/query", "/api/v1/assistant", "/api/v1/openai",
+    "/api/v1/query", "/api/v1/feedback", "/api/v1/assistant", "/api/v1/openai",
 )
 
 

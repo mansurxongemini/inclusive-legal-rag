@@ -49,7 +49,7 @@ So'rov maydonlari:
 | `question` | string, 1–4000 | Savol (o'zbek lotin/kirill, rus, ingliz) |
 | `user_id` | string ≤ 256, ixtiyoriy | Sizning foydalanuvchi id'ingiz: shaxsiy limit va suhbat egasi |
 | `conversation_id` | string, ixtiyoriy | Oldingi javobdagi `conversation_id` — keyingi savol kontekst bilan tushuniladi |
-| `language` | `auto` \| `uz` \| `ru` \| `en` | Javob tili (standart `auto`) |
+| `language` | `auto` \| `uz` \| `ru` \| `en` | Javob tili (standart `auto`: savol tilida) |
 | `format` | `markdown` \| `text` \| `telegram_html` | Javob formati |
 | `mode` | `plain` \| `legal_text` \| `easy_read` \| `subsumption` | Uslub: sodda, norma matni bilan, oson o'qiladigan, tahliliy |
 | `disability_group`, `category` | string | Filtrlar (`GET /api/v1/inclusive/categories` dagi qiymatlar), standart `all` |

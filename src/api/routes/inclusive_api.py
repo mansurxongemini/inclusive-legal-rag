@@ -1,232 +1,16 @@
 """
-Inclusive Legal RAG - Public Integration API & Admin Control Routes.
-Exclusively serving legal rights, benefits, and statutory procedures for Persons with Disabilities.
+Public read-only browsing of the legal corpus: categories, norms, documents of an act and the corpus statistics.
+Questions are answered by POST /api/v1/query (the site) and POST /api/v1/assistant/ask (bots and partners, API key).
 """
-import asyncio
-from datetime import datetime, timezone
 import json
-import logging
 import time
-from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, field_validator
+from typing import Dict, Optional
+from fastapi import APIRouter, HTTPException, Query, Request
 
-from src.domain.disability_taxonomy import CATEGORIES, CATEGORY_IDS, DISABILITY_GROUPS
-
-
-from src.gateway.service import answer_question, answer_question_stream
-from src.generation.validator import CitationItem
-from src.api.middleware.security import sanitize_user_input
-from src.api.middleware.rate_limiter import rate_limiter
-from src.api.auth.admin import is_direct_loopback, require_admin
-from src.api.auth.api_keys import api_key_manager, ApiKeyRecord
-from src.ingestion.file_importer import LocalFileImporter, BatchFileImportReport
-from src.ingestion.document_inspector import DocumentInspector, DocumentInspectionReport
-from src.clients.openrouter import OpenRouterClient
-
-logger = logging.getLogger(__name__)
+from src.api.middleware.rate_limiter import limit_public_browsing
+from src.domain.disability_taxonomy import CATEGORIES, DISABILITY_GROUPS
 
 router = APIRouter(prefix="/api/v1/inclusive", tags=["Inclusive Legal RAG"])
-
-# Every route that changes the corpus, manages keys or runs paid/diagnostic jobs is administrator-only.
-_ADMIN = [Depends(require_admin)]
-
-# Bulk file import is confined to the project's data directory (no arbitrary filesystem reads).
-_PROJECT_ROOT = Path(__file__).resolve().parents[3]
-_DATA_ROOT = (_PROJECT_ROOT / "data").resolve()
-_DEFAULT_IMPORT_DIR = "data/qonunlar"
-
-
-def _resolve_import_dir(directory_path: str) -> Path:
-    raw = Path(directory_path or _DEFAULT_IMPORT_DIR)
-    candidate = (raw if raw.is_absolute() else _PROJECT_ROOT / raw).resolve()
-    if candidate != _DATA_ROOT and _DATA_ROOT not in candidate.parents:
-        raise HTTPException(
-            status_code=400,
-            detail="Papka faqat loyihaning data/ katalogi ichida bo'lishi mumkin.",
-        )
-    return candidate
-
-
-def _invalidate_answer_cache() -> None:
-    """Cached answers describe the corpus as it was; drop them whenever norms change."""
-    from src.api.app import get_cache
-    try:
-        get_cache().clear()
-    except Exception as e:  # cache is an optimization, never fail the write because of it
-        logger.warning(f"Could not clear query cache: {e}")
-
-
-# --- Request and Response Schemas ---
-
-class InclusiveQueryRequest(BaseModel):
-    question: str = Field(..., min_length=1, max_length=4000, description="Legal question regarding disability rights, pensions, employment, TMEK, or benefits")
-    disability_group: str = Field(
-        default="all",
-        description="Target beneficiary group to prioritize relevant benefits (see /categories)"
-    )
-    category: str = Field(default="all", description="Legal domain filter (see /categories)")
-
-    @field_validator("disability_group")
-    @classmethod
-    def _check_group(cls, v: str) -> str:
-        if v not in {"all", "general", *(g.id for g in DISABILITY_GROUPS)}:
-            raise ValueError("unknown disability_group")
-        return v
-
-    @field_validator("category")
-    @classmethod
-    def _check_category(cls, v: str) -> str:
-        if v != "all" and v not in CATEGORY_IDS:
-            raise ValueError("unknown category")
-        return v
-
-    language: Literal["auto", "uz", "ru", "en"] = Field(default="auto", description="Preferred response language")
-    mode: Literal["plain", "legal_text", "easy_read"] = Field(default="plain", description="plain language summary, verbatim legal text, or easy-read (very short sentences)")
-
-
-class InclusiveQueryResponse(BaseModel):
-    answer: str
-    clean_answer: str
-    telegram_formatted: str
-    citations: List[CitationItem]
-    detected_language: str
-    detected_script: str
-    mode: str = "plain"
-    category: str
-    disability_group: str
-    validation_passed: bool
-    is_refusal: bool
-    cached: bool = False
-    cache_type: Optional[str] = None
-    semantic_similarity: Optional[float] = None
-    response_time_ms: float = 0.0
-    retrieval_confidence: Optional[float] = None
-    status_warnings: List[dict] = []
-    warnings: List[str] = []
-    degraded: bool = False
-
-
-class ApiKeyCreateRequest(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100, description="Name of external service or developer (e.g. 'Toshkent Inclusive Bot')")
-    rate_limit_per_min: int = Field(default=60, ge=1, le=10000, description="Rate limit per minute")
-
-
-class InspectUrlRequest(BaseModel):
-    url: str = Field(..., max_length=2048, description="Lex.uz URL to inspect and visualize")
-
-
-class TestVectorRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=8000, description="Text payload to generate BGE-M3 vector for")
-
-
-class TestJevRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=8000, description="Statutory clause text to classify with TypeSafe Jev 1.13")
-    law_title: Optional[str] = Field(default=None, description="Optional parent law title")
-
-
-
-
-
-# --- Authentication Dependency ---
-
-def authenticate_api_key(
-    request: Request,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
-    authorization: Optional[str] = Header(None),
-) -> Optional[ApiKeyRecord]:
-    token = x_api_key
-    if not token and authorization:
-        parts = authorization.split()
-        if len(parts) == 2 and parts[0].lower() in ["bearer", "token"]:
-            token = parts[1]
-
-    # The local dashboard (direct loopback connection, no proxy headers) may query without a key.
-    # The Referer header is client-controlled and must never grant access.
-    if not token:
-        if is_direct_loopback(request):
-            return None
-        raise HTTPException(
-            status_code=401,
-            detail="API kaliti talab qilinadi. X-API-Key sarlavhasi orqali kalitingizni yuboring."
-        )
-
-    record = api_key_manager.validate_key(token)
-    if not record:
-        raise HTTPException(
-            status_code=403,
-            detail="Yaroqsiz yoki bekor qilingan API kaliti."
-        )
-    return record
-
-
-# --- Primary Query Endpoints ---
-
-@router.post("/query", response_model=InclusiveQueryResponse)
-async def query_inclusive_rag(
-    request: Request,
-    payload: InclusiveQueryRequest,
-    stream: bool = Query(default=False, description="Stream response tokens via SSE"),
-    auth: Optional[ApiKeyRecord] = Depends(authenticate_api_key),
-):
-    """
-    Primary endpoint for third-party bots, mobile apps, and inclusive portals.
-    Answers legal questions strictly grounded in Uzbekistan's disability legislation.
-    """
-    start_time = time.time()
-    if auth is not None:
-        rate_limiter.check(request, key=f"apikey:{auth.key_id}", limit=auth.rate_limit_per_min)
-    else:
-        rate_limiter.check(request)
-
-    cleaned_query = sanitize_user_input(payload.question)
-    if not cleaned_query:
-        raise HTTPException(status_code=422, detail="Savol matni bo'sh bo'lishi mumkin emas.")
-
-    # Same answering pipeline as /api/v1/query: one retrieval depth, exact + semantic cache, one generation path.
-    if stream:
-        return StreamingResponse(
-            answer_question_stream(
-                cleaned_query,
-                language=payload.language,
-                mode=payload.mode,
-                disability_group=payload.disability_group,
-                category=payload.category,
-            ),
-            media_type="text/event-stream",
-        )
-
-    result = await answer_question(
-        cleaned_query,
-        language=payload.language,
-        mode=payload.mode,
-        disability_group=payload.disability_group,
-        category=payload.category,
-    )
-
-    return InclusiveQueryResponse(
-        answer=result.clean_answer or result.answer,
-        clean_answer=result.clean_answer or result.answer,
-        telegram_formatted=result.telegram_formatted or result.answer,
-        citations=result.citations,
-        detected_language=result.detected_language,
-        detected_script=result.detected_script,
-        mode=result.mode,
-        category=payload.category,
-        disability_group=payload.disability_group,
-        validation_passed=result.validation_passed,
-        is_refusal=result.is_refusal,
-        cached=result.cached,
-        cache_type=result.cache_type,
-        semantic_similarity=result.semantic_similarity,
-        response_time_ms=round((time.time() - start_time) * 1000, 2),
-        retrieval_confidence=result.retrieval_confidence,
-        status_warnings=result.status_warnings,
-        warnings=result.warnings,
-        degraded=result.degraded,
-    )
 
 
 # --- Public Norms and Categories Metadata ---
@@ -269,12 +53,14 @@ def _query_norm_rows(cursor, q: Optional[str], category: Optional[str], limit: i
 
 
 @router.get("/norms")
-async def list_inclusive_norms(
+def list_inclusive_norms(
+    request: Request,
     category: Optional[str] = Query(None, description="Optional category filter"),
     q: Optional[str] = Query(None, max_length=200, description="Search term"),
     limit: int = Query(default=50, ge=1, le=200),
 ):
     """Lists or searches verified statutory norms currently in the inclusive database."""
+    limit_public_browsing(request)
     from src.api.app import get_store
     store = get_store()
 
@@ -309,7 +95,8 @@ async def list_inclusive_norms(
 
 
 @router.get("/documents")
-async def list_inclusive_documents(
+def list_inclusive_documents(
+    request: Request,
     q: Optional[str] = Query(None, max_length=200, description="Search keyword in law title, number, authority or norm body"),
     doc_type: Optional[str] = Query(None, description="Document type filter (all, Qonun, Farmon, Qaror, Buyruq, Boshqa)"),
     authority: Optional[str] = Query(None, description="Adopting authority filter"),
@@ -318,6 +105,7 @@ async def list_inclusive_documents(
     Returns grouped list of legal documents directly from the database,
     with auto-detected authority, document type, and norm counts.
     """
+    limit_public_browsing(request)
     from src.api.app import get_store
     store = get_store()
     
@@ -346,10 +134,11 @@ async def list_inclusive_documents(
 
 
 @router.get("/documents/{law_identifier}/norms")
-async def get_document_norms(law_identifier: str):
+def get_document_norms(request: Request, law_identifier: str):
     """
     Returns all statutory norms and articles belonging to a specific legal document.
     """
+    limit_public_browsing(request)
     import urllib.parse
     from src.api.app import get_store
     from src.storage.fts_store import detect_authority_and_type
@@ -377,12 +166,10 @@ async def get_document_norms(law_identifier: str):
     }
 
 
-
-
-
 @router.get("/stats")
-async def get_system_stats():
-    """Returns database size, norms count, and API key metrics."""
+def get_system_stats(request: Request):
+    """Returns database size and norms count. The keys of the partners are administrative: see the Integratsiyalar page."""
+    limit_public_browsing(request)
     from src.api.app import get_store
     store = get_store()
     with store.fts_store._get_connection() as conn:
@@ -408,111 +195,11 @@ async def get_system_stats():
         """)
         cat_distribution = {row[0]: row[1] for row in c.fetchall() if row[0]}
 
-    api_keys = api_key_manager.list_keys()
-    total_requests = sum(k.total_requests for k in api_keys)
-
     return {
         "status": "healthy",
         "total_statutory_norms": total_norms,
         "total_documents": total_docs,
         "database_storage": "Clean Inclusive SQLite + FTS5 + LanceDB",
         "category_distribution": cat_distribution,
-        "active_api_keys": len([k for k in api_keys if k.is_active]),
-        "total_api_requests_served": total_requests,
         "timestamp": time.time(),
     }
-
-
-# --- Administration: Ingestion (URL & Local Folder) & Manual Upload ---
-
-
-
-@router.post("/admin/inspect-document", dependencies=_ADMIN, response_model=DocumentInspectionReport)
-async def inspect_document(payload: InspectUrlRequest):
-    """Parses and visualizes how a Lex.uz document and its tables are structured and sent to BGE-M3."""
-    inspector = DocumentInspector()
-    try:
-        return await inspector.inspect_url(payload.url)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error inspecting document {payload.url}: {e}", exc_info=True)
-        raise HTTPException(status_code=502, detail="Hujjatni tahlil qilib bo'lmadi. Keyinroq qayta urinib ko'ring.")
-
-
-@router.post("/admin/test-vector", dependencies=_ADMIN)
-async def test_vector(payload: TestVectorRequest):
-    """Calculates live BGE-M3 vector embedding for any text payload and returns coordinates."""
-    from src.api.app import get_client
-    client = get_client()
-    t0 = time.time()
-    try:
-        embeddings = await client.get_embeddings([payload.text])
-    except RuntimeError as e:
-        logger.error(f"Embedding service unavailable: {e}")
-        raise HTTPException(status_code=503, detail="Embedding xizmati vaqtincha mavjud emas.")
-    dur = (time.time() - t0) * 1000
-    vec = embeddings[0] if embeddings else []
-    norm = sum(x * x for x in vec) ** 0.5 if vec else 0.0
-    return {
-        "dimensions": len(vec),
-        "norm": round(norm, 4),
-        "sample_coordinates": [round(x, 5) for x in vec[:15]],
-        "duration_ms": round(dur, 1),
-    }
-
-
-@router.post("/admin/test-jev", dependencies=_ADMIN, response_model=None)
-async def test_jev_decision(payload: TestJevRequest):
-    """Runs TypeSafe Jev 1.13 decision engine on statutory clause for category, score, and relevance."""
-    from src.ingestion.jev_classifier import JevLegalClassifier
-    classifier = JevLegalClassifier()
-    try:
-        return await classifier.classify_clause(payload.text, payload.law_title)
-    except Exception as e:
-        logger.error(f"Error running Jev decision: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Tahlilni bajarishda ichki xatolik yuz berdi.")
-
-
-@router.post("/admin/sync", dependencies=_ADMIN)
-async def legacy_sync_alias():
-    """Legacy alias, executes safe local folder scanning without crawler 404s."""
-    from src.api.app import get_store
-    importer = LocalFileImporter(store=get_store())
-    report = await importer.scan_and_import_directory(str(_resolve_import_dir(_DEFAULT_IMPORT_DIR)))
-    _invalidate_answer_cache()
-    return {
-        "success": report.success,
-        "total_ingested": report.total_articles_indexed,
-        "message": report.message
-    }
-
-
-
-
-# --- Administration: API Keys Management ---
-
-@router.get("/admin/api-keys", dependencies=_ADMIN)
-async def get_api_keys():
-    """Lists all active and revoked API keys."""
-    return {"api_keys": [k.model_dump() for k in api_key_manager.list_keys()]}
-
-
-@router.post("/admin/api-keys", dependencies=_ADMIN)
-async def create_new_api_key(payload: ApiKeyCreateRequest):
-    """Creates a new API key for a developer or bot."""
-    new_key = api_key_manager.create_key(payload.name, payload.rate_limit_per_min)
-    return {
-        "success": True,
-        "message": "Yangi API kaliti muvaffaqiyatli yaratildi. Uni nusxalab oling, kalit qayta to'liq ko'rsatilmaydi.",
-        "key": new_key,
-    }
-
-
-@router.delete("/admin/api-keys/{key_id}", dependencies=_ADMIN)
-async def revoke_existing_api_key(key_id: str):
-    """Revokes an API key."""
-    revoked = api_key_manager.revoke_key(key_id)
-    if not revoked:
-        raise HTTPException(status_code=404, detail="API kaliti topilmadi")
-    return {"success": True, "message": f"{key_id} kaliti bekor qilindi."}

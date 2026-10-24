@@ -222,7 +222,7 @@ async def check_support(
         )
 
     formatted_claims = "\n\n".join(claims_blocks)
-    # a checker that does not reason at length: the utility model unless SUPPORT_CHECK_MODEL names another one
+    # a checker that does not reason at length: the chat model unless SUPPORT_CHECK_MODEL names another one
     target_model = model or settings.SUPPORT_CHECK_MODEL or None
 
     messages = [
@@ -239,6 +239,7 @@ async def check_support(
                 max_tokens=2048,
                 reasoning={"enabled": False},
                 light=True,
+                optional=True,
             ),
             timeout=timeout,
         )

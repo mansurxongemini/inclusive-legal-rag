@@ -682,6 +682,8 @@ def test_telegram_sources_block_escapes_and_links_only_http():
     assert "javascript:" not in block and "[3] PQ-1" in block
     assert is_well_formed_telegram_html(block)
     assert telegram_sources_block([cit(1, law_number="X")], "ru").startswith("📚 <b>Источники</b>")
+    assert telegram_sources_block([cit(1, law_number="X")], "en").startswith("📚 <b>Sources</b>")
+    assert telegram_sources_block([cit(1, law_number="X")]).startswith("📚 <b>Manbalar</b>")
     assert telegram_sources_block([]) == ""
 
 

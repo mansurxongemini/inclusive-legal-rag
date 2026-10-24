@@ -164,14 +164,6 @@ class ConversationStore:
             )
         return Conversation(new_id, client_id, user_ref, now, now), True
 
-    def get_conversation(self, conversation_id: str) -> Optional[Conversation]:
-        with self._conn() as conn:
-            r = conn.execute(
-                "SELECT conversation_id, client_id, user_ref, created_at, updated_at FROM conversations WHERE conversation_id = ?",
-                (conversation_id,),
-            ).fetchone()
-        return Conversation(*r) if r else None
-
     def delete_conversation(self, conversation_id: str, client_id: str, user_ref: Optional[str]) -> bool:
         """Deletes that user's conversation and its turns. Must match client_id and user_ref."""
         with self._conn() as conn:
@@ -277,11 +269,6 @@ class ConversationStore:
                 (answer_id, rating, comment_clean, now),
             )
         return FeedbackRecord(answer_id, rating, comment_clean, now)
-
-    def get_feedback(self, answer_id: str) -> Optional[FeedbackRecord]:
-        with self._conn() as conn:
-            r = conn.execute("SELECT answer_id, rating, comment, created_at FROM feedback WHERE answer_id = ?", (answer_id,)).fetchone()
-        return FeedbackRecord(*r) if r else None
 
     # -- Retention Purge ---------------------------------------------------------------------------------
     def purge_older_than(self, days: int) -> Dict[str, int]:

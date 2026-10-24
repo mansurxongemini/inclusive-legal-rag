@@ -28,6 +28,7 @@ from src.gateway.review import (
     ReviewScores,
     decide_verdict,
 )
+from src.storage.sqlite_utils import connect as sqlite_connect
 
 
 APPROVE_JSON = json.dumps({
@@ -324,8 +325,7 @@ async def test_review_log_privacy_and_hint(gateway_stores, review_mocks, monkeyp
     # hint verdictga ta'sir qilmaydi: bir xil LLM chiqishi hint siz ham bir xil verdict beradi
     assert data["verdict"] == "approve"
 
-    import sqlite3
-    with sqlite3.connect(log_store.db_path) as conn:
+    with sqlite_connect(log_store.db_path) as conn:
         rows = conn.execute("SELECT verdict, scores_json, question_sha256, question_len, answer_sha256, answer_len FROM review_log").fetchall()
     assert len(rows) == 1
     assert q not in json.dumps(rows) and a not in json.dumps(rows)
@@ -410,3 +410,46 @@ async def test_status_reports_balance(gateway_stores, monkeypatch):
         denied = await ac.get("/api/v1/assistant/status")
     assert res.status_code == 200 and res.json()["llm"]["error"] == "insufficient_credits"
     assert denied.status_code in (401, 403)
+
+
+# -- the review is written in the language of the question ----------------------------------------------
+
+async def _review(c_store, **body):
+    _, key = _make_client(c_store, ["ask", "review"])
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.post("/api/v1/assistant/review", json=_body(**body), headers={"Authorization": f"Bearer {key}"})
+    assert res.status_code == 200, res.text
+    return res.json()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("question,expected_language,phrase", [
+    ("Какое пособие положено лицу с инвалидностью второй группы?", "ru", "rus tilida"),
+    ("What benefit is a person with a second group disability entitled to?", "en", "ingliz tilida"),
+    ("Nogironligi bo'lgan shaxsga qanday nafaqa tegishli?", "uz", "o'zbek tilida"),
+])
+async def test_review_text_is_requested_in_the_language_of_the_question(gateway_stores, review_mocks, question, expected_language, phrase):
+    c_store, _ = gateway_stores
+    data = await _review(c_store, question=question, disability_state="vision")
+
+    system = review_mocks["llm_messages"][-1][0]["content"]
+    assert phrase in system and "@@LANG@@" not in system
+    assert data["language"] == expected_language
+    hint = data["delivery_hint"]
+    assert {"ru": "зрения", "en": "visual", "uz": "Ko'rishida"}[expected_language] in hint
+
+
+@pytest.mark.asyncio
+async def test_review_of_an_uzbek_cyrillic_question_asks_for_cyrillic(gateway_stores, review_mocks):
+    c_store, _ = gateway_stores
+    await _review(c_store, question="Ногиронлиги бўлган шахсга қандай нафақа тегишли?")
+    assert "kirill yozuvida" in review_mocks["llm_messages"][-1][0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_an_explicit_review_language_wins_over_the_detected_one(gateway_stores, review_mocks):
+    c_store, _ = gateway_stores
+    data = await _review(c_store, question="Nogironligi bo'lgan shaxsga qanday nafaqa tegishli?", language="en")
+    assert data["language"] == "en" and "ingliz tilida" in review_mocks["llm_messages"][-1][0]["content"]
+    data = await _review(c_store, question="Какое пособие положено?", language="oz")
+    assert data["language"] == "uz" and "kirill yozuvida" in review_mocks["llm_messages"][-1][0]["content"]

@@ -147,7 +147,7 @@ class AnswerGenerator:
             degraded=degraded,
         )
 
-    def _degraded_answer(self, contexts, language: str, mode, query: str = "") -> GeneratedAnswer:
+    def degraded_answer(self, contexts, language: str, mode, query: str = "") -> GeneratedAnswer:
         _, result = self._finish(sources_only_text(contexts, language, query=query), contexts, language, mode,
                                  ["llm_unavailable: sources only, no generated text"], query, degraded=True)
         return result
@@ -183,23 +183,9 @@ class AnswerGenerator:
                 reasoning=reasoning,
             )
             raw_llm_response = (raw_llm_response or "").strip()
-
-            if not raw_llm_response or len(raw_llm_response) < 50:
-                logger.warning("AnswerGenerator: primary LLM response was empty or too short. Attempting fallback model...")
-                try:
-                    raw_llm_response = await self.client.chat_completion(
-                        messages=messages,
-                        model=self.client.fallback_model,
-                        temperature=0.0,
-                        max_tokens=_max_answer_tokens(),
-                        reasoning=reasoning,
-                    )
-                    raw_llm_response = (raw_llm_response or "").strip()
-                except Exception as e:
-                    logger.error(f"Fallback generation also failed: {e}")
         except RuntimeError as e:
             logger.error(f"AnswerGenerator: no generation model available, serving the matching norms only: {e}")
-            return self._degraded_answer(contexts, language, mode, query)
+            return self.degraded_answer(contexts, language, mode, query)
 
         raw_llm_response, post_warnings = await self._post_process(
             messages, raw_llm_response, query, contexts, language, reasoning)
@@ -249,7 +235,7 @@ class AnswerGenerator:
                 }
                 yield f"data: {json.dumps(error_payload)}\n\n"
                 return
-            degraded = self._degraded_answer(contexts, language, mode, query)
+            degraded = self.degraded_answer(contexts, language, mode, query)
             yield f"data: {json.dumps({'type': 'token', 'text': degraded.clean_answer})}\n\n"
             yield f"data: {json.dumps(self._done_payload(degraded, status_warnings))}\n\n"
             return

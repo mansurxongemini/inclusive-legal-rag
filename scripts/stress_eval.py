@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-End-to-end stress evaluation: the production path of /api/v1/inclusive/query (no category hint, auto language)
+End-to-end stress evaluation: the production path of POST /api/v1/query (no category hint, auto language)
 followed by an LLM judge that compares the answer with the expected provision.
 
   python scripts/stress_eval.py                                   # data/golden_dataset/stress_eval_200.json
@@ -108,7 +108,7 @@ async def judge_answer(item, out, store, client, judge_model: str = "") -> dict:
                 f"ASSISTANT ANSWER:\n{out['answer'][:4000]}")
     messages = [{"role": "system", "content": sys_p}, {"role": "user", "content": user}]
     try:
-        if judge_model:     # a judge other than the generator (another Meta model): the generator grading itself is not independent
+        if judge_model:     # a judge other than the generator (another model): the generator grading itself is not independent
             raw = await client.chat_completion(messages=messages, model=judge_model, temperature=0.0, max_tokens=6000,
                                                min_chars=2, reasoning={"effort": "low"})
         else:
@@ -294,7 +294,7 @@ async def main() -> int:
     ap.add_argument("--concurrency", type=int, default=4)
     ap.add_argument("--retrieval-only", action="store_true")
     ap.add_argument("--no-judge", dest="judge", action="store_false")
-    ap.add_argument("--judge-model", default="", help="model of the generation provider that grades the answers (not the generator), e.g. muse-spark-1.2")
+    ap.add_argument("--judge-model", default="", help="OpenRouter model that grades the answers (not the generator); empty = the chat model grades its own answers")
     ap.add_argument("--profile", choices=["inclusive", "prod"], default="inclusive",
                     help="retrieval sizes: inclusive = 25/6/6 (stress history), prod = 40/8/8 (gateway)")
     ap.add_argument("--top-k", type=int, default=0)

@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/v1", tags=["Query"])
 
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=4000, description="Legal question from citizen or reviewer")
-    language: Literal["auto", "uz", "ru", "en"] = Field(default="auto", description="Preferred response language")
+    language: Literal["auto", "uz", "ru", "en"] = Field(default="auto", description="Language of the question and of the answer; auto detects it")
     mode: Literal["plain", "legal_text", "easy_read", "subsumption"] = Field(default="plain", description="plain language summary, verbatim legal text, easy-read, or structured analysis")
     conversation_id: Optional[str] = Field(default=None, max_length=128, description="Optional conversation trace ID")
     disability_group: str = Field(default="all", description="Beneficiary group to prioritize (see /api/v1/inclusive/categories)")

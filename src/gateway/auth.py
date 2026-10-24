@@ -11,13 +11,13 @@ Authentication and limits of the assistant API.
 Behind a reverse proxy, run uvicorn with `--proxy-headers --forwarded-allow-ips=<proxy ip>` so that the client IP
 is the real one.
 """
-import time
-from collections import defaultdict, deque
+import asyncio
 from dataclasses import dataclass
-from typing import Deque, Dict, Optional
+from typing import Dict, Optional
 
 from fastapi import Depends, HTTPException, Request
 
+from src.api.middleware.rate_limiter import SlidingWindowLimiter
 from src.gateway.clients import KIND_BROWSER, Client, get_client_store, normalize_origin
 
 
@@ -31,35 +31,6 @@ class ClientContext:
 
 def gateway_error(status: int, code: str, message: str, headers: Optional[Dict[str, str]] = None) -> HTTPException:
     return HTTPException(status_code=status, detail={"code": code, "message": message}, headers=headers)
-
-
-class SlidingWindowLimiter:
-    """Per-key sliding one-minute window, in memory (one API process)."""
-
-    _SWEEP_EVERY = 1000
-
-    def __init__(self, window_s: float = 60.0):
-        self.window = window_s
-        self._hits: Dict[str, Deque[float]] = defaultdict(deque)
-        self._calls = 0
-
-    def hit(self, key: str, limit: int, now: Optional[float] = None) -> Optional[int]:
-        """Records a hit; returns None when allowed, else the seconds until a slot frees up."""
-        now = time.monotonic() if now is None else now
-        self._calls += 1
-        if self._calls % self._SWEEP_EVERY == 0:
-            for k in [k for k, q in self._hits.items() if not q or now - q[-1] >= self.window]:
-                del self._hits[k]
-        q = self._hits[key]
-        while q and now - q[0] >= self.window:
-            q.popleft()
-        if len(q) >= limit:
-            return max(1, int(self.window - (now - q[0])) + 1)
-        q.append(now)
-        return None
-
-    def reset(self) -> None:
-        self._hits.clear()
 
 
 limiter = SlidingWindowLimiter()
@@ -85,7 +56,7 @@ async def authenticate_client(request: Request) -> ClientContext:
                             "API kaliti kerak: 'Authorization: Bearer <kalit>' sarlavhasini yuboring.",
                             headers={"WWW-Authenticate": "Bearer"})
     store = get_client_store()
-    found = store.resolve_key(raw)
+    found = await asyncio.to_thread(store.resolve_key, raw)       # a SQLite read (and a periodic write): not on the event loop
     if found is None:
         # unknown, revoked, expired and disabled keys look the same to the caller
         raise gateway_error(401, "invalid_api_key", "API kaliti yaroqsiz yoki bekor qilingan.",

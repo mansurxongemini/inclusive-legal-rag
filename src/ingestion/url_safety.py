@@ -4,6 +4,7 @@ Outbound-URL validation for the ingestion endpoints (SSRF protection).
 * `is_lex_uz_url` - strict host check (``"lex.uz" in netloc`` accepted ``lex.uz.evil.com``).
 * `assert_public_http_url` - for "any legal website" ingestion: only http(s) to publicly routable addresses.
 """
+import asyncio
 import ipaddress
 import socket
 from typing import Optional
@@ -54,4 +55,4 @@ def assert_public_http_url(url: str) -> None:
 
 async def httpx_public_request_hook(request) -> None:
     """httpx `request` event hook: validates the initial URL and every redirect hop."""
-    assert_public_http_url(str(request.url))
+    await asyncio.to_thread(assert_public_http_url, str(request.url))     # getaddrinfo blocks: not on the event loop

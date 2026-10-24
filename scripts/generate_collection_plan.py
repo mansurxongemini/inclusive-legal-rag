@@ -10,7 +10,7 @@ import logging
 import re
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
 
 import sys
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,7 +45,6 @@ def classify_group(doc_type: str, title: str, lex_id: str) -> str:
 def main():
     reg_data = json.loads((SOURCES / "disability_registry.json").read_text(encoding="utf-8"))
     existing_reg = reg_data.get("documents", [])
-    reg_by_id = {d["lex_id"]: d for d in existing_reg}
 
     parser = LexDocumentParser()
     lex = LexClient(cache_dir=str(ROOT / "data" / "raw_lex"), min_delay=0.5)

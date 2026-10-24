@@ -1,11 +1,12 @@
 import asyncio
 import json
 import logging
-from typing import AsyncGenerator, List, Optional
+from dataclasses import dataclass
+from typing import AsyncGenerator, List, Optional, Tuple
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
-from src.nlp.query_analyzer import QueryAnalyzer
+from src.nlp.query_analyzer import QueryAnalysis, QueryAnalyzer
 from src.retrieval.pipeline import retrieve_contexts
 from src.config import settings
 from src.api.middleware.hardening import generation_budget
@@ -72,6 +73,7 @@ async def condense_question(history, question: str, client: Optional[OpenRouterC
             min_chars=2,
             reasoning={"enabled": False},
             light=True,
+            optional=True,
         )
         if not raw:
             return question
@@ -105,6 +107,13 @@ class AnswerResult(BaseModel):
 
 DAILY_LIMIT_MESSAGE = "Bugungi javoblar chegarasi tugadi. Iltimos, ertaga qayta urinib ko'ring yoki vakolatli organga murojaat qiling."
 
+# What every answering path asks of the retrieval and generation steps
+RETRIEVAL_TOP_K = 40
+RETRIEVAL_MAX_EXTRA = 8
+RERANK_TOP_N = 8
+SEMANTIC_CACHE_THRESHOLD = 0.95
+MIN_CACHEABLE_CHARS = 80
+
 
 def cache_keys(analysis, mode: str) -> tuple:
     """(language, mode) parts of the cache key. The script is part of the language part: the canonical query of a
@@ -112,6 +121,118 @@ def cache_keys(analysis, mode: str) -> tuple:
     answer version and the model are part of the mode part: a cached answer of an older pipeline is not served."""
     return (f"{analysis.detected_language}:{analysis.detected_script}",
             f"{mode}|{ANSWER_VERSION}|{settings.GENERATION_MODEL_PRIMARY}")
+
+
+@dataclass
+class _Question:
+    """What the one-shot and the streaming path derive from a question before they diverge."""
+    analysis: QueryAnalysis
+    mode: str
+    category: str
+    groups_key: List[str]          # beneficiary groups of the question: a cached answer is reused only for the same ones
+    asker: dict                    # generator argument when the client stated its own group
+    has_filters: bool
+    cache_text: str
+    cache_lang: str
+    cache_mode: str
+
+    @property
+    def language(self) -> str:
+        return self.analysis.detected_language
+
+
+def _analyse(question: str, language: str, mode: str, disability_group: str, category: str) -> _Question:
+    """Sanitizes and analyzes the question. Pure: no store, cache or client is touched, so it can run before the language gate."""
+    cleaned_query = sanitize_user_input(question)
+    if not cleaned_query:
+        raise HTTPException(status_code=422, detail="Savol matni bo'sh bo'lishi mumkin emas.")
+
+    analysis = QueryAnalyzer.analyze(cleaned_query, user_language=None if language == "auto" else language)
+    if disability_group not in ("all", "general"):
+        if "general" in analysis.extracted_disability_types:
+            analysis.extracted_disability_types.remove("general")
+        if disability_group not in analysis.extracted_disability_types:
+            analysis.extracted_disability_types.append(disability_group)
+    has_filters = disability_group != "all" or category != "all"
+    cache_lang, cache_mode = cache_keys(analysis, mode)
+    return _Question(
+        analysis=analysis,
+        mode=mode,
+        category=category,
+        groups_key=sorted(analysis.extracted_disability_types),
+        asker={"asker_group": disability_group} if disability_group not in ("all", "general") else {},
+        has_filters=has_filters,
+        cache_text=f"{cleaned_query} [{disability_group}|{category}]" if has_filters else cleaned_query,
+        cache_lang=cache_lang,
+        cache_mode=cache_mode,
+    )
+
+
+async def _lookup_cache(q: _Question, cache, client) -> Tuple[Optional[dict], Optional[List[float]], bool]:
+    """
+    (cached answer or None, the question's embedding or None, whether embeddings are available). The exact layer is asked
+    first and a hit costs nothing else; only on a miss is the question embedded (a paid call) for the semantic layer
+    and, later, for retrieval. The SQLite lookups run in worker threads: they must not stall the event loop.
+    """
+    hit = await asyncio.to_thread(cache.get, q.cache_text, q.cache_lang, q.cache_mode)
+    if hit or client.is_mock:
+        return hit, None, True
+    try:
+        vectors = await client.get_embeddings([q.analysis.normalized_query])
+    except Exception as e:
+        logger.warning(f"Error computing query vector for the semantic cache and retrieval: {e}")
+        return None, None, False
+    if not vectors:
+        return None, None, True
+    vector = vectors[0]
+    try:
+        hit = await asyncio.to_thread(
+            cache.get_semantic, vector, q.cache_lang, q.cache_mode, threshold=SEMANTIC_CACHE_THRESHOLD,
+            accept=lambda d: d.get("_groups") == q.groups_key and not q.has_filters and not d.get("_filtered"),
+        )
+    except Exception as e:
+        logger.warning(f"Semantic cache lookup failed, answering without it: {e}")
+        hit = None
+    return hit, vector, True
+
+
+def _result_from_cache(hit: dict, q: _Question) -> AnswerResult:
+    text = hit.get("clean_answer") or hit.get("answer", "")
+    return AnswerResult(
+        answer=text,
+        clean_answer=text,
+        telegram_formatted=hit.get("telegram_formatted") or hit.get("answer", ""),
+        citations=[CitationItem(**c) if isinstance(c, dict) else c for c in hit.get("citations", [])],
+        detected_language=hit.get("detected_language", q.language),
+        detected_script=hit.get("detected_script", q.analysis.detected_script),
+        mode=q.mode,
+        is_refusal=hit.get("is_refusal", False),
+        validation_passed=hit.get("validation_passed", True),
+        status_warnings=hit.get("status_warnings", []),
+        cached=True,
+        cache_type=hit.get("cache_type", "exact"),
+        semantic_similarity=hit.get("semantic_similarity"),
+        retrieval_confidence=hit.get("retrieval_confidence"),
+    )
+
+
+def _is_cacheable(result: AnswerResult) -> bool:
+    """Caching rules: verified, substantive, non-refusal, really generated."""
+    return (
+        result.validation_passed
+        and not result.is_refusal
+        and not result.degraded
+        and len((result.clean_answer or result.answer).strip()) > MIN_CACHEABLE_CHARS
+    )
+
+
+async def _cache_answer(q: _Question, cache, query_vector: Optional[List[float]], result: AnswerResult) -> None:
+    if not _is_cacheable(result):
+        return
+    data = result.model_dump()
+    data["_groups"] = q.groups_key
+    data["_filtered"] = q.has_filters
+    await asyncio.to_thread(cache.set, q.cache_text, q.cache_lang, q.cache_mode, data, query_vector)
 
 
 async def answer_question(
@@ -125,128 +246,55 @@ async def answer_question(
     """
     Core answering pipeline for legal questions:
     1. Sanitize user input against injection
-    2. Analyze query language, script, and disability domain
+    2. Analyze query language (uz, ru or en: the answer is written in it), script, and disability domain
     3. Check Layer 1 (exact cache) and Layer 2 (semantic cache)
     4. Hybrid retrieval, expansion, rerank, and relevance gating
     5. Anti-hallucination generation and citation validation
     6. Cache substantive verified answers
     """
-    cleaned_query = sanitize_user_input(question)
-    if not cleaned_query:
-        raise HTTPException(status_code=422, detail="Savol matni bo'sh bo'lishi mumkin emas.")
+    q = _analyse(question, language, mode, disability_group, category)
 
     from src.api.app import get_store, get_cache, get_client
     store = get_store()
     cache = get_cache()
     client = get_client()
 
-    # Query analysis
-    user_lang = None if language == "auto" else language
-    analysis = QueryAnalyzer.analyze(cleaned_query, user_language=user_lang)
-    target_language = analysis.detected_language
-
-    if disability_group not in ("all", "general"):
-        if "general" in analysis.extracted_disability_types:
-            analysis.extracted_disability_types.remove("general")
-        if disability_group not in analysis.extracted_disability_types:
-            analysis.extracted_disability_types.append(disability_group)
-    groups_key = sorted(analysis.extracted_disability_types)
-    asker = {"asker_group": disability_group} if disability_group not in ("all", "general") else {}
-    has_filters = disability_group != "all" or category != "all"
-    cache_text = f"{cleaned_query} [{disability_group}|{category}]" if has_filters else cleaned_query
-
-    # Exact cache check
-    cache_lang, cache_mode = cache_keys(analysis, mode)
-    cached_resp = cache.get(cache_text, cache_lang, cache_mode)
-    if cached_resp:
-        return AnswerResult(
-            answer=cached_resp.get("clean_answer") or cached_resp.get("answer", ""),
-            clean_answer=cached_resp.get("clean_answer") or cached_resp.get("answer", ""),
-            telegram_formatted=cached_resp.get("telegram_formatted") or cached_resp.get("answer", ""),
-            citations=[CitationItem(**c) if isinstance(c, dict) else c for c in cached_resp.get("citations", [])],
-            detected_language=cached_resp.get("detected_language", target_language),
-            detected_script=cached_resp.get("detected_script", analysis.detected_script),
-            mode=mode,
-            is_refusal=cached_resp.get("is_refusal", False),
-            validation_passed=cached_resp.get("validation_passed", True),
-            status_warnings=cached_resp.get("status_warnings", []),
-            cached=True,
-            cache_type=cached_resp.get("cache_type", "exact"),
-            semantic_similarity=cached_resp.get("semantic_similarity"),
-            retrieval_confidence=cached_resp.get("retrieval_confidence"),
-        )
-
-    # Compute dense vector
-    query_vector = None
-    embedding_available = True
-    if not client.is_mock:
-        try:
-            q_vectors = await client.get_embeddings([analysis.normalized_query])
-            if q_vectors:
-                query_vector = q_vectors[0]
-                sem_cached = cache.get_semantic(
-                    query_vector,
-                    cache_lang,
-                    cache_mode,
-                    threshold=0.95,
-                    accept=lambda d: d.get("_groups") == groups_key and not has_filters and not d.get("_filtered"),
-                )
-                if sem_cached:
-                    return AnswerResult(
-                        answer=sem_cached.get("clean_answer") or sem_cached.get("answer", ""),
-                        clean_answer=sem_cached.get("clean_answer") or sem_cached.get("answer", ""),
-                        telegram_formatted=sem_cached.get("telegram_formatted") or sem_cached.get("answer", ""),
-                        citations=[CitationItem(**c) if isinstance(c, dict) else c for c in sem_cached.get("citations", [])],
-                        detected_language=sem_cached.get("detected_language", target_language),
-                        detected_script=sem_cached.get("detected_script", analysis.detected_script),
-                        mode=mode,
-                        is_refusal=sem_cached.get("is_refusal", False),
-                        validation_passed=sem_cached.get("validation_passed", True),
-                        status_warnings=sem_cached.get("status_warnings", []),
-                        cached=True,
-                        cache_type="semantic",
-                        semantic_similarity=sem_cached.get("semantic_similarity"),
-                        retrieval_confidence=sem_cached.get("retrieval_confidence"),
-                    )
-        except Exception as e:
-            embedding_available = False
-            logger.warning(f"Error computing query vector for semantic cache: {e}")
+    hit, query_vector, embedding_available = await _lookup_cache(q, cache, client)
+    if hit:
+        return _result_from_cache(hit, q)
 
     if not generation_budget.consume():
         raise HTTPException(status_code=429, detail=DAILY_LIMIT_MESSAGE)
 
-    # Retrieval
     retrieval = await retrieve_contexts(
-        analysis=analysis,
+        analysis=q.analysis,
         store=store,
         client=client,
-        top_k=40,
-        max_extra=8,
-        rerank_top_n=8,
+        top_k=RETRIEVAL_TOP_K,
+        max_extra=RETRIEVAL_MAX_EXTRA,
+        rerank_top_n=RERANK_TOP_N,
         query_vector=query_vector,
         use_vector=embedding_available,
-        category=category,
+        category=q.category,
     )
-    final_contexts = retrieval.contexts
-    status_warnings = retrieval.status_warnings
 
-    # Generation
     generator = AnswerGenerator(client=client)
+    cleaned_query = q.analysis.raw_query
     try:
         try:
             gen_result = await asyncio.wait_for(
                 generator.generate_answer(
                     query=cleaned_query,
-                    contexts=final_contexts,
-                    language=target_language,
+                    contexts=retrieval.contexts,
+                    language=q.language,
                     mode=mode,
-                    **asker,
+                    **q.asker,
                 ),
                 timeout=settings.ANSWER_TIMEOUT_S,
             )
         except asyncio.TimeoutError:      # a hung provider must not hold the request: the matching norms are shown
             logger.error(f"Answer generation exceeded {settings.ANSWER_TIMEOUT_S}s; serving the matching norms only")
-            gen_result = generator._degraded_answer(final_contexts, target_language, mode, cleaned_query)
+            gen_result = generator.degraded_answer(retrieval.contexts, q.language, mode, cleaned_query)
     except RuntimeError as e:
         logger.error(f"Answer generation unavailable: {e}")
         raise HTTPException(
@@ -260,30 +308,18 @@ async def answer_question(
         clean_answer=res_answer,
         telegram_formatted=gen_result.telegram_formatted or gen_result.answer,
         citations=gen_result.citations,
-        detected_language=target_language,
-        detected_script=analysis.detected_script,
+        detected_language=q.language,
+        detected_script=q.analysis.detected_script,
         mode=mode,
         is_refusal=gen_result.is_refusal,
         validation_passed=gen_result.validation_passed,
-        status_warnings=status_warnings,
+        status_warnings=retrieval.status_warnings,
         cached=False,
         retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
         warnings=gen_result.warnings,
         degraded=gen_result.degraded,
     )
-
-    # Caching rules: verified, substantive, non-refusal, really generated
-    if (
-        result.validation_passed
-        and not result.is_refusal
-        and not result.degraded
-        and len((result.clean_answer or result.answer).strip()) > 80
-    ):
-        cached_data = result.model_dump()
-        cached_data["_groups"] = groups_key
-        cached_data["_filtered"] = has_filters
-        cache.set(cache_text, cache_lang, cache_mode, cached_data, vector=query_vector)
-
+    await _cache_answer(q, cache, query_vector, result)
     return result
 
 
@@ -310,6 +346,10 @@ async def answer_question_stream_events(
                 pass
 
 
+def _sse(event: dict) -> str:
+    return f"data: {json.dumps(event)}\n\n"
+
+
 async def answer_question_stream(
     question: str,
     *,
@@ -324,100 +364,59 @@ async def answer_question_stream(
     `data: {"type": "done", ...}\n\n`
     Directly compatible with existing /api/v1/query?stream=true behavior.
     """
-    cleaned_query = sanitize_user_input(question)
-    if not cleaned_query:
-        raise HTTPException(status_code=422, detail="Savol matni bo'sh bo'lishi mumkin emas.")
+    q = _analyse(question, language, mode, disability_group, category)
 
     from src.api.app import get_store, get_cache, get_client
     store = get_store()
     cache = get_cache()
     client = get_client()
 
-    user_lang = None if language == "auto" else language
-    analysis = QueryAnalyzer.analyze(cleaned_query, user_language=user_lang)
-    target_language = analysis.detected_language
-
-    if disability_group not in ("all", "general"):
-        if "general" in analysis.extracted_disability_types:
-            analysis.extracted_disability_types.remove("general")
-        if disability_group not in analysis.extracted_disability_types:
-            analysis.extracted_disability_types.append(disability_group)
-    groups_key = sorted(analysis.extracted_disability_types)
-    asker = {"asker_group": disability_group} if disability_group not in ("all", "general") else {}
-    has_filters = disability_group != "all" or category != "all"
-    cache_text = f"{cleaned_query} [{disability_group}|{category}]" if has_filters else cleaned_query
-
     # Same two cache layers as answer_question; a hit is replayed as one token event plus the final event
-    cache_lang, cache_mode = cache_keys(analysis, mode)
-    cached = cache.get(cache_text, cache_lang, cache_mode)
-    cache_type = "exact"
-    query_vector = None
-    embedding_available = True
-    if not client.is_mock:
-        try:
-            q_vectors = await client.get_embeddings([analysis.normalized_query])
-            if q_vectors:
-                query_vector = q_vectors[0]
-                if not cached:
-                    cached = cache.get_semantic(
-                        query_vector,
-                        cache_lang,
-                        cache_mode,
-                        threshold=0.95,
-                        accept=lambda d: d.get("_groups") == groups_key and not has_filters and not d.get("_filtered"),
-                    )
-                    cache_type = "semantic"
-        except Exception as e:
-            embedding_available = False
-            logger.warning(f"Error computing query vector for streaming retrieval: {e}")
-
-    if cached:
-        text = cached.get("clean_answer") or cached.get("answer", "")
-        yield f"data: {json.dumps({'type': 'token', 'text': text})}\n\n"
-        done = {
+    hit, query_vector, embedding_available = await _lookup_cache(q, cache, client)
+    if hit:
+        cached = _result_from_cache(hit, q)
+        yield _sse({"type": "token", "text": cached.clean_answer})
+        yield _sse({
             "type": "done",
-            "citations": cached.get("citations", []),
-            "is_refusal": cached.get("is_refusal", False),
-            "validation_passed": cached.get("validation_passed", True),
-            "clean_answer": text,
-            "telegram_formatted": cached.get("telegram_formatted") or text,
-            "warnings": cached.get("warnings", []),
-            "status_warnings": cached.get("status_warnings", []),
-            "language": target_language,
+            "citations": [c.model_dump() for c in cached.citations],
+            "is_refusal": cached.is_refusal,
+            "validation_passed": cached.validation_passed,
+            "clean_answer": cached.clean_answer,
+            "telegram_formatted": cached.telegram_formatted or cached.clean_answer,
+            "warnings": hit.get("warnings", []),
+            "status_warnings": cached.status_warnings,
+            "language": q.language,
             "mode": mode,
             "cached": True,
-            "cache_type": cached.get("cache_type", cache_type),
-        }
-        yield f"data: {json.dumps(done)}\n\n"
+            "cache_type": cached.cache_type,
+        })
         return
 
     if not generation_budget.consume():
-        yield f"data: {json.dumps({'type': 'error', 'message': DAILY_LIMIT_MESSAGE})}\n\n"
+        yield _sse({"type": "error", "message": DAILY_LIMIT_MESSAGE})
         return
 
     retrieval = await retrieve_contexts(
-        analysis=analysis,
+        analysis=q.analysis,
         store=store,
         client=client,
-        top_k=40,
-        max_extra=8,
-        rerank_top_n=8,
+        top_k=RETRIEVAL_TOP_K,
+        max_extra=RETRIEVAL_MAX_EXTRA,
+        rerank_top_n=RERANK_TOP_N,
         query_vector=query_vector,
         use_vector=embedding_available,
-        category=category,
+        category=q.category,
     )
-    final_contexts = retrieval.contexts
-    status_warnings = retrieval.status_warnings
 
     generator = AnswerGenerator(client=client)
     final_event = None
     async for sse_chunk in generator.generate_answer_stream(
-        query=cleaned_query,
-        contexts=final_contexts,
-        language=target_language,
+        query=q.analysis.raw_query,
+        contexts=retrieval.contexts,
+        language=q.language,
         mode=mode,
-        status_warnings=status_warnings,
-        **asker,
+        status_warnings=retrieval.status_warnings,
+        **q.asker,
     ):
         yield sse_chunk
         trimmed = sse_chunk.strip()
@@ -429,30 +428,25 @@ async def answer_question_stream(
             if event.get("type") == "done":
                 final_event = event
 
-    # Caching rules: verified, substantive, non-refusal (as in answer_question)
     if final_event:
-        text = (final_event.get("clean_answer") or "").strip()
-        if (final_event.get("validation_passed") and not final_event.get("is_refusal")
-                and not final_event.get("degraded") and len(text) > 80):
-            try:
-                result = AnswerResult(
-                    answer=text,
-                    clean_answer=text,
-                    telegram_formatted=final_event.get("telegram_formatted") or text,
-                    citations=[CitationItem(**c) for c in final_event.get("citations", [])],
-                    detected_language=target_language,
-                    detected_script=analysis.detected_script,
-                    mode=mode,
-                    is_refusal=False,
-                    validation_passed=True,
-                    status_warnings=final_event.get("status_warnings", []),
-                    cached=False,
-                    retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
-                    warnings=final_event.get("warnings", []),
-                )
-                data = result.model_dump()
-                data["_groups"] = groups_key
-                data["_filtered"] = has_filters
-                cache.set(cache_text, cache_lang, cache_mode, data, vector=query_vector)
-            except Exception:
-                logger.warning("Could not cache a streamed answer", exc_info=True)
+        try:
+            text = (final_event.get("clean_answer") or "").strip()
+            result = AnswerResult(
+                answer=text,
+                clean_answer=text,
+                telegram_formatted=final_event.get("telegram_formatted") or text,
+                citations=[CitationItem(**c) for c in final_event.get("citations", [])],
+                detected_language=q.language,
+                detected_script=q.analysis.detected_script,
+                mode=mode,
+                is_refusal=bool(final_event.get("is_refusal", False)),
+                validation_passed=bool(final_event.get("validation_passed", False)),
+                status_warnings=final_event.get("status_warnings", []),
+                cached=False,
+                retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
+                warnings=final_event.get("warnings", []),
+                degraded=bool(final_event.get("degraded", False)),
+            )
+            await _cache_answer(q, cache, query_vector, result)
+        except Exception:
+            logger.warning("Could not cache a streamed answer", exc_info=True)

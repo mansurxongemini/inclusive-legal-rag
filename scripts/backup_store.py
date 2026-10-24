@@ -92,7 +92,10 @@ def main() -> int:
     if args.keep > 0:
         old = sorted([p for p in dest_root.glob("legal_rag_backup_*")], key=lambda p: p.name)[:-args.keep]
         for p in old:
-            shutil.rmtree(p) if p.is_dir() else p.unlink()
+            if p.is_dir():
+                shutil.rmtree(p)
+            else:
+                p.unlink()
             print(f"  removed old backup {p.name}")
     print(f"Backup ready: {final}")
     return 0

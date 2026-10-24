@@ -1,11 +1,4 @@
-import pytest
-from src.ingestion.universal_engine import (
-    DocumentSpec,
-    IngestionState,
-    UniversalAutonomousEngine,
-    UniversalParser,
-)
-from src.schema.canonical import TranslationProvenanceType
+from src.ingestion.universal_engine import DocumentSpec, IngestionState, UniversalParser
 
 
 def test_universal_parser_regulation_clauses():

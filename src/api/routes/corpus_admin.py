@@ -254,6 +254,16 @@ class CorpusJobResponse(BaseModel):
 
 # --- Endpoints ---
 
+def _fetch_preview(raw_id: str, parser: LexDocumentParser):
+    """(Lex id, parsed document). The Lex client is synchronous (blocking HTTP, sleeps between retries): call this in a thread."""
+    with LexClient(cache_dir=_RAW_CACHE_DIR) as lex:
+        latin_id = _latin_edition(lex, parser, raw_id) or (raw_id if raw_id.startswith("-") else f"-{raw_id}")
+        html = lex.fetch_document(latin_id)
+        if not html:
+            raise HTTPException(status_code=404, detail=f"Hujjat Lex.uz'da topilmadi: {latin_id}")
+        return latin_id, parser.parse(html, latin_id)
+
+
 @router.post("/preview", response_model=CorpusPreviewResponse, dependencies=_ADMIN)
 async def preview_corpus_document(payload: CorpusPreviewRequest):
     """
@@ -264,12 +274,7 @@ async def preview_corpus_document(payload: CorpusPreviewRequest):
     parser = LexDocumentParser()
 
     try:
-        with LexClient(cache_dir=_RAW_CACHE_DIR) as lex:
-            latin_id = _latin_edition(lex, parser, raw_id) or (raw_id if raw_id.startswith("-") else f"-{raw_id}")
-            html = lex.fetch_document(latin_id)
-            if not html:
-                raise HTTPException(status_code=404, detail=f"Hujjat Lex.uz'da topilmadi: {latin_id}")
-            doc = parser.parse(html, latin_id)
+        latin_id, doc = await asyncio.to_thread(_fetch_preview, raw_id, parser)
     except HTTPException:
         raise
     except Exception as e:

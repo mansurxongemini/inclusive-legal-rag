@@ -1,7 +1,7 @@
 import hashlib
 import re
 from datetime import date
-from typing import Dict, List, Optional
+from typing import List, Optional
 from src.schema.canonical import (
     CanonicalArticle,
     ArticleMetadata,
@@ -67,7 +67,7 @@ def parse_law_text_file(text: str, filename: str) -> List[CanonicalArticle]:
     current_lines: List[str] = []
 
     def flush_article():
-        nonlocal current_art_num, current_art_title, current_lines
+        nonlocal current_lines
         if not current_art_num or not current_lines:
             return
 

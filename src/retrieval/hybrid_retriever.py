@@ -48,10 +48,8 @@ class HybridRetriever:
 
     @staticmethod
     async def _call(fn, *args, **kwargs):
-        """Runs a blocking store call in a worker thread (RETRIEVAL_THREADS) so the event loop keeps serving requests."""
-        if settings.RETRIEVAL_THREADS:
-            return await asyncio.to_thread(fn, *args, **kwargs)
-        return fn(*args, **kwargs)
+        """Runs a blocking store call in a worker thread so the event loop keeps serving requests."""
+        return await asyncio.to_thread(fn, *args, **kwargs)
 
     def _lookup_direct_article(self, law_id: str, article_number: str) -> Optional[str]:
         """Resolves direct canonical ID for explicit law_id and article_number mention."""
@@ -132,19 +130,6 @@ class HybridRetriever:
             self._call(self.store.fts_store.bm25_search, query=sq.enriched_query, language=language, top_k=top_k)
             for sq in subqueries
         ))
-        if settings.FTS_STEM_EXTRA_WEIGHT > 0 and subqueries:
-            # A second full-text list on search stems (soliqdan -> soliq, ozodmi -> ozod): the whole-word list is what the
-            # ranking was tuned on and stays as it is; the stem list only adds units whose inflected words it would miss.
-            stem_matches = await self._call(self.store.fts_store.bm25_search, query=subqueries[0].enriched_query,
-                                            language=language, top_k=top_k, stemmed=True)
-            for rank, m in enumerate(stem_matches, start=1):
-                cid = m["canonical_id"]
-                bm25_rrf_scores[cid] = bm25_rrf_scores.get(cid, 0.0) + settings.FTS_STEM_EXTRA_WEIGHT / (rrf_k + rank)
-                if rank <= settings.LIST_LEADERS:
-                    leaders.add(cid)
-                if cid not in bm25_best_ranks or rank < bm25_best_ranks[cid]:
-                    bm25_best_ranks[cid] = rank
-                    bm25_best_scores[cid] = m["score"]
         for sq_idx, matches in enumerate(bm25_matches):
             sq_weight = 1.0 if sq_idx == 0 else 0.85
             for rank, m in enumerate(matches, start=1):
@@ -161,11 +146,9 @@ class HybridRetriever:
         # If the embedding service is unavailable the request degrades to BM25-only instead of failing.
         query_vectors: List[List[float]] = []
         if use_vector:
+            # a short question's domain sub-query carries the very same text, so the dense side counts 1.8 times against the
+            # full-text side: that is part of the measured ranking (embedding each distinct text once measured hit@1 -3.5)
             embed_texts = [sq.query_text for sq in subqueries[:2]]
-            if settings.VECTOR_DEDUP_QUERIES:
-                # the domain sub-query of a short question carries the very same text: embedding and searching it twice
-                # only counted the dense side 1.8 times against the full-text side
-                embed_texts = list(dict.fromkeys(embed_texts))
             if precomputed_query_vector is not None:
                 query_vectors = [precomputed_query_vector]
             try:

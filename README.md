@@ -38,7 +38,8 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
   - **Dense Vector Search**: Powered by LanceDB with 1024-dimensional multilingual embeddings (`baai/bge-m3`), chunked at paragraph boundaries for long provisions.
   - **Reciprocal Rank Fusion (RRF)**: Merges sparse and dense ranking scores via `score = 1/(60 + rank_bm25) + 1/(60 + rank_vec)`.
 - **🔤 Script & Language Invariance**:
-  - Seamlessly handles user queries in **Uzbek Latin, Uzbek Cyrillic, and Russian**.
+  - Seamlessly handles user queries in **Uzbek (Latin and Cyrillic), Russian and English** and answers in the language of the question.
+    The units and every vector are Uzbek: a Russian or English question is searched through an Uzbek translation.
   - Built-in rule-based phonetic and statutory transliteration engine (`src/nlp/transliteration.py`).
 - **🪶 Ultra-Lightweight Resource Footprint**:
   - Engineered for resource-constrained non-profit infrastructure: runs on a basic **2 vCPU, 4GB RAM VPS**.
@@ -160,8 +161,8 @@ cd inclusive-legal-rag
 python3 -m venv .venv
 source .venv/bin/activate
 
-# 2. Install dependencies
-pip install -r requirements.txt
+# 2. Install dependencies (the exact tested versions are in requirements.lock)
+pip install -r requirements-dev.txt -c requirements.lock
 
 # 3. Set environment variables
 cp .env.example .env
@@ -177,8 +178,8 @@ pytest -v
 
 ## 🔐 Administration Access
 
-Every route that changes the corpus, manages API keys or exports user feedback (`/api/v1/admin/*`,
-`/api/v1/inclusive/admin/*`, `PUT /api/v1/inclusive/norms/{id}`, `GET /api/v1/feedback`) is administrator-only:
+Every route that changes the corpus, manages the partners' API keys or exports user feedback (`/api/v1/admin/*`,
+`GET /api/v1/articles`, `GET /api/v1/feedback`) is administrator-only:
 
 - A **direct local connection** (the dashboard opened on the server itself) needs no key **while `ADMIN_API_KEY` is empty**; as soon as a key is configured the loopback shortcut is off by default (`ADMIN_LOOPBACK_ENABLED` overrides).
 - Anything else must send `X-Admin-Key: <ADMIN_API_KEY>` (or `Authorization: Bearer ...`). Set `ADMIN_API_KEY` in `.env`;
@@ -187,7 +188,7 @@ Every route that changes the corpus, manages API keys or exports user feedback (
 - **Behind a reverse proxy** that does not forward `X-Forwarded-For` / `X-Real-IP` (nginx does not by default) every visitor
   looks like a direct local connection. Set `ADMIN_LOOPBACK_ENABLED=false` there: the key is then the only way in.
 - The dashboard asks for the key once per browser session when the server answers 401.
-- Third-party bots use regular API keys (`X-API-Key`) for `POST /api/v1/inclusive/query`; each key's `rate_limit_per_min` is enforced.
+- Third-party bots and partner sites use the assistant API (`POST /api/v1/assistant/ask`, `Authorization: Bearer hpk_...`); keys are issued on the dashboard's Integratsiyalar page and carry their own limits (see `integrations/api/README.md`).
 
 ## 🔌 REST API Endpoints
 
@@ -209,14 +210,14 @@ JSON
 | Field | Required | Values |
 | :--- | :--- | :--- |
 | `question` | yes | 1-4000 characters |
-| `language` | no | `auto` (default), `uz`, `ru`, `en` |
+| `language` | no | `auto` (default: detected from the question), `uz`, `ru`, `en`; the answer is written in this language |
 | `mode` | no | `plain` (default), `legal_text`, `easy_read`, `subsumption` |
 | `disability_group` | no | `all` (default) or an id from `GET /api/v1/inclusive/categories` |
 | `category` | no | `all` (default) or an id from `GET /api/v1/inclusive/categories` |
 | `conversation_id` | no | optional trace id echoed back in the response |
 
-Add `?stream=true` for a Server-Sent Events stream of tokens. The partner endpoint `POST /api/v1/inclusive/query`
-(`X-API-Key`) takes the same body (without `subsumption` and `conversation_id`) and runs the same pipeline.
+Add `?stream=true` for a Server-Sent Events stream of tokens. Bots and partner sites call `POST /api/v1/assistant/ask`
+with a key instead; it runs the same pipeline.
 
 **Response Format** (abridged):
 ```json
@@ -264,7 +265,7 @@ Returns live server metrics, memory RSS, vector store status, and connection hea
 
 This project is a dedicated submission candidate for the **OpenAI Codex for Open Source Software Grant**:
 - **Why it matters**: Bridges statutory jurisprudence and accessible AI for an underserved population of 1M+ individuals in Central Asia.
-- **Providers**: answers and every chat call run on Meta AI (`muse-spark-1.3`); OpenRouter is used only for embeddings (`baai/bge-m3`) and the Jev reranker/scope gate. See `docs/OPERATIONS.md` for cost, degradation order, backup and the evaluation commands.
+- **Providers**: one OpenRouter key and endpoint serve every call: the chat model (`GENERATION_MODEL_PRIMARY`: answers, translation, ranking, review), embeddings (`baai/bge-m3`) and, optionally, the Jev reranker/scope gate. See `docs/OPERATIONS.md` for cost, the budget guard, degradation order, backup and the evaluation commands.
 - **Institutional Commitment**: Backed by HuquqPlus NGO and university legal researchers from Tashkent State University of Law (TSUL).
 
 ---
@@ -272,7 +273,7 @@ This project is a dedicated submission candidate for the **OpenAI Codex for Open
 ## 📊 Evaluation & Benchmarking
 
 Measured on 2026-10-23 (commands and cost notes in `docs/OPERATIONS.md`). Retrieval = the production pipeline (BM25 + vectors + RRF + Jev);
-the judge is `muse-spark-1.2`, the generator `muse-spark-1.3`.
+the judge was `muse-spark-1.2` and the generator `muse-spark-1.3` (a test provider that is gone: re-measure on the production model, see `docs/OPERATIONS.md`).
 
 | Set | Questions | What is measured | Result |
 | :--- | :--- | :--- | :--- |

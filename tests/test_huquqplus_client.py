@@ -12,14 +12,7 @@ from typing import Any, Dict, List, Tuple
 import httpx
 import pytest
 
-from src.ingestion.huquqplus_client import (
-    HuquqPlusClient,
-    HuquqPlusPost,
-    LexRef,
-    clean_html,
-    diff_index,
-    parse_lex_ref,
-)
+from src.ingestion.huquqplus_client import HuquqPlusClient, clean_html, diff_index, parse_lex_ref
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures" / "huquqplus"
 

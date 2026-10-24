@@ -216,7 +216,6 @@ class CitationValidator:
 
         # Resolve citations and preserve markdown structure
         cited_in_text = cls.extract_canonical_ids(answer_text, retrieved_ids)
-        resolved_cids_in_answer: Set[str] = set(cited_in_text)
         warnings = []
 
         no_explicit_citation = False

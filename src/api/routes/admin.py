@@ -2,10 +2,9 @@ import hashlib
 import json
 import logging
 import re
-import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
@@ -675,22 +674,6 @@ async def preview_web_url(req: PreviewUrlRequest):
     except Exception as e:
         logger.error(f"URL preview error: {e}", exc_info=True)
         raise HTTPException(status_code=502, detail="Havolani tahlil qilib bo'lmadi.")
-
-
-@router.get("/api/v1/admin/ingest-status", dependencies=_ADMIN)
-async def get_ingest_status():
-    """Returns the current state and progress of the autonomous ingestion engine."""
-    from src.ingestion.universal_engine import UniversalAutonomousEngine
-    from src.api.app import get_store
-    engine = UniversalAutonomousEngine(store=get_store())
-    return {
-        "status": "active",
-        "last_updated": engine.state.last_updated,
-        "total_articles": engine.state.total_articles,
-        "completed_slugs": engine.state.completed_slugs,
-        "failed_slugs": engine.state.failed_slugs,
-        "store_count": engine.store.count(),
-    }
 
 
 @router.post("/api/v1/admin/ingest-url", dependencies=_ADMIN)

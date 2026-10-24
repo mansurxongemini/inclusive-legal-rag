@@ -1,10 +1,9 @@
 """Admin API: Tahririyat (curated answers, legal links, notifications)."""
 
 import logging
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
 
 from src.api.auth.admin import require_admin
 from src.config import settings
@@ -32,10 +31,6 @@ def _get_store():
 def _answer_detail(editorial: EditorialStore, answer: dict) -> dict:
     links = editorial.list_links(owner_type="curated", owner_id=str(answer["id"]))
     return {**answer, "links": links, "links_count": len(links)}
-
-
-class AltQuestionsFix(BaseModel):
-    alt_questions: List[str] = Field(default_factory=list, max_length=20)
 
 
 # -- answers -------------------------------------------------------------------------------------

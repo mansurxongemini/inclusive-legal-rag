@@ -1,7 +1,6 @@
 """Whole-act Lex.uz links of a Huquq+ article bring the matching units of that act into the context."""
 from types import SimpleNamespace
 
-from src.config import settings
 from src.editorial.retrieval import add_linked_act_units, ensure_curated_contexts
 from src.retrieval.reranker import RetrievedArticleContext
 from src.schema.canonical import ArticleStatus

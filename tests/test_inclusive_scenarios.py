@@ -16,7 +16,7 @@ async def test_tmek_scenario():
             "language": "uz",
             "mode": "plain",
         }
-        res = await ac.post("/api/v1/inclusive/query", json=payload)
+        res = await ac.post("/api/v1/query", json=payload)
         assert res.status_code == 200
         data = res.json()
         assert len(data["clean_answer"]) > 50
@@ -35,7 +35,7 @@ async def test_tax_scenario():
             "language": "uz",
             "mode": "plain",
         }
-        res = await ac.post("/api/v1/inclusive/query", json=payload)
+        res = await ac.post("/api/v1/query", json=payload)
         assert res.status_code == 200
         data = res.json()
         assert len(data["clean_answer"]) > 50
@@ -52,7 +52,7 @@ async def test_prosthetics_scenario():
             "language": "uz",
             "mode": "plain",
         }
-        res = await ac.post("/api/v1/inclusive/query", json=payload)
+        res = await ac.post("/api/v1/query", json=payload)
         assert res.status_code == 200
         data = res.json()
         assert len(data["clean_answer"]) > 50

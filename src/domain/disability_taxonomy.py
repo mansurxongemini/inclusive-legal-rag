@@ -6,7 +6,7 @@ Used by ingestion (tagging), query analysis (scope detection) and the public API
 """
 import re
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 from src.nlp.transliteration import cyrillic_to_latin, detect_script, normalize_apostrophes
 

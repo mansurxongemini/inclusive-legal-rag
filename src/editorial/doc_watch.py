@@ -7,7 +7,7 @@ so any amendment of those units raises one "document_amended" notification listi
 """
 import hashlib
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 DOC_PREFIX = "law:"
 

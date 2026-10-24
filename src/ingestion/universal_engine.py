@@ -10,7 +10,6 @@ import hashlib
 import json
 import logging
 import re
-import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,13 +20,7 @@ from bs4 import BeautifulSoup
 from pydantic import BaseModel, Field
 
 from src.schema.canonical import (
-    CanonicalArticle,
-    ArticleMetadata,
-    ArticlePoint,
-    ArticleStatus,
-    CrossReference,
-    RefType,
-    TranslationProvenanceType,
+    CanonicalArticle, ArticleMetadata, ArticlePoint, ArticleStatus, TranslationProvenanceType,
 )
 from src.storage.hybrid_store import HybridStore
 from src.clients.openrouter import OpenRouterClient
@@ -817,7 +810,7 @@ class UniversalAutonomousEngine:
             json.dump([a.model_dump() for a in articles], f, ensure_ascii=False, indent=2)
 
         # 5. Batch index into LanceDB and SQLite FTS5
-        indexed_count = await self.store.index_articles_batch(
+        await self.store.index_articles_batch(
             articles, client=self.client, batch_size=20
         )
 

@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from src.schema.canonical import CanonicalArticle
 from src.storage.vector_store import LanceVectorStore
 from src.storage.fts_store import SqliteFtsStore
@@ -13,10 +13,12 @@ from src.config import settings
 
 logger = logging.getLogger(__name__)
 
-def excluded_languages() -> List[str]:
-    """Languages that are not embedded (VECTOR_EXCLUDE_LANGUAGES): their texts are kept, only the vector rows are not made."""
-    from src.config import settings as _settings
-    return [l.strip() for l in _settings.VECTOR_EXCLUDE_LANGUAGES.split(",") if l.strip()]
+def vector_languages(article: CanonicalArticle) -> List[str]:
+    """Languages of the article that get vector rows: its translations with text that are in VECTOR_LANGUAGES (Uzbek by
+    default); the other texts are kept, only their vector rows are not made. Every indexing path (single, batch,
+    re-embedding) and every cost estimate uses this rule, so a unit has the same vectors however it was indexed."""
+    allowed = settings.vector_language_list
+    return [lang for lang, text in article.translations.items() if lang in allowed and (text or "").strip()]
 
 
 class HybridStore:
@@ -47,10 +49,8 @@ class HybridStore:
 
         vector_records = []
         texts_to_embed: List[str] = []
-        langs: List[str] = []
-        for lang in article.translations:
-            if lang in excluded_languages():
-                continue
+        langs: List[Tuple[str, int]] = []
+        for lang in vector_languages(article):
             for idx, chunk in enumerate(build_chunks(article, lang)):
                 texts_to_embed.append(chunk)
                 langs.append((lang, idx))
@@ -69,21 +69,24 @@ class HybridStore:
                     "chunk_index": idx,
                 })
 
-        # 2. Persist metadata + full-text search, then vectors
-        self.fts_store.upsert_article(article)
+        # 2. Persist metadata + full-text search, then vectors (blocking I/O: in a worker thread, not on the event loop)
+        await asyncio.to_thread(self._write_articles, [article], vector_records)
+
+    def _write_articles(self, articles: List[CanonicalArticle], vector_records: List[Dict]) -> None:
+        """Full-text rows first, then vectors; both are blocking, so callers run this in a worker thread."""
+        for art in articles:
+            self.fts_store.upsert_article(art)
         if vector_records:
             self.vector_store.upsert_vectors(vector_records)
 
     def _prepare_article_chunks(
         self, articles: List[CanonicalArticle]
     ) -> Tuple[List[str], List[tuple]]:
-        """Prepares text chunks and metadata mapping for embedding articles in uz and ru."""
+        """Prepares text chunks and metadata mapping for embedding the articles (languages: see vector_languages)."""
         texts_to_embed: List[str] = []
         mapping: List[tuple] = []
         for art in articles:
-            for lang in ("uz", "ru"):
-                if lang in excluded_languages():
-                    continue
+            for lang in vector_languages(art):
                 for idx, text in enumerate(build_chunks(art, lang)):
                     texts_to_embed.append(text)
                     mapping.append((
@@ -141,15 +144,12 @@ class HybridStore:
                 embeddings = await client.get_embeddings(texts_to_embed)
                 vector_records = self._build_vector_records(mapping, embeddings)
 
-            for art in chunk:
-                self.fts_store.upsert_article(art)
-            if vector_records:
-                self.vector_store.upsert_vectors(vector_records)
+            await asyncio.to_thread(self._write_articles, chunk, vector_records)
             total_indexed += len(chunk)
 
         if total_indexed > 0:
             try:
-                self.vector_store.optimize()
+                await asyncio.to_thread(self.vector_store.optimize)
             except Exception as e:
                 logger.warning(f"Error optimizing vector store after batch indexing: {e}")
 
@@ -163,7 +163,7 @@ class HybridStore:
         concurrency: int = 3,
         on_batch: Optional[Any] = None,
     ) -> int:
-        """Vector-only re-indexing of already stored articles for languages 'uz' and 'ru'.
+        """Vector-only re-indexing of already stored articles (languages: see vector_languages).
 
         Does NOT touch the FTS index. Embedding requests run concurrently bounded by
         concurrency; writes to LanceDB are serialized with an asyncio.Lock.
@@ -192,7 +192,7 @@ class HybridStore:
 
             async with write_lock:
                 if vector_records:
-                    self.vector_store.upsert_vectors(vector_records)
+                    await asyncio.to_thread(self.vector_store.upsert_vectors, vector_records)
                 if on_batch is not None:
                     res = on_batch(batch_cids)
                     if asyncio.iscoroutine(res):

@@ -4,9 +4,11 @@ import json
 import logging
 import re
 import sqlite3
+import threading
 import time
+from collections import OrderedDict
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 import numpy as np
 
 from src.config import settings
@@ -15,20 +17,29 @@ from src.nlp.transliteration import normalize_apostrophes, cyrillic_to_latin, de
 
 logger = logging.getLogger(__name__)
 
+# Candidate rows a semantic lookup compares against (the newest ones of the language/mode)
+SEMANTIC_CANDIDATES = 500
+
 
 class QueryCache:
     """
     Dual-Layer Intelligent Caching Engine for Legal RAG:
     - Layer 1: Canonical Normalized Hash Cache (invariant to punctuation, scripts, spaces, casing)
-    - Layer 2: Vector Semantic Similarity Cache (cosine similarity >= 0.93 for rephrased queries)
-    - Layer 3: Ultra-fast in-memory RAM cache for hot items
+    - Layer 2: Vector Semantic Similarity Cache (cosine similarity above a caller-chosen threshold for rephrased queries)
+    - Layer 3: Ultra-fast in-memory RAM cache for hot items (LRU)
+
+    Every method opens its own SQLite connection and the RAM layer is guarded by a lock, so the cache can be used from
+    worker threads (the answering pipeline calls it through asyncio.to_thread: a lookup must not stall the event loop).
     """
+
+    RAM_MAX_ITEMS = 512
 
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = Path(db_path or settings.CACHE_DB_PATH)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.ttl = settings.CACHE_TTL_SECONDS
-        self._ram_cache: Dict[str, Tuple[float, dict]] = {}
+        self._ram_cache: "OrderedDict[str, Tuple[float, dict]]" = OrderedDict()     # least recently used first
+        self._lock = threading.Lock()                                               # guards _ram_cache and _stats
         self._stats = {
             "canonical_hits": 0,
             "semantic_hits": 0,
@@ -66,8 +77,11 @@ class QueryCache:
                 if new_col not in cols:
                     try:
                         conn.execute(f"ALTER TABLE query_cache ADD COLUMN {new_col} {col_type};")
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"query_cache migration of column {new_col} failed: {e}")
+            # the semantic lookup reads the newest rows of one language/mode; created_at also serves the expiry purge
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_query_cache_lang_mode ON query_cache (language, mode, created_at)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_query_cache_created ON query_cache (created_at)")
             conn.commit()
 
     @classmethod
@@ -92,40 +106,52 @@ class QueryCache:
         raw = f"{canonical}|{language}|{mode}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
+    def _ram_put(self, key: str, created_at: float, data: dict) -> None:
+        """Stores (or replaces) a hot entry; once RAM_MAX_ITEMS is exceeded the least recently used one is dropped, so
+        a full cache neither keeps serving a replaced answer nor refuses new entries."""
+        snapshot = copy.deepcopy(data)
+        with self._lock:
+            self._ram_cache[key] = (created_at, snapshot)
+            self._ram_cache.move_to_end(key)
+            while len(self._ram_cache) > self.RAM_MAX_ITEMS:
+                self._ram_cache.popitem(last=False)
+
+    def _count(self, hit_kind: str, data: dict) -> None:
+        with self._lock:
+            self._stats[hit_kind] += 1
+            self._stats["saved_tokens_est"] += len(data.get("answer", "").split()) * 2
+
     def get(self, query: str, language: str, mode: str) -> Optional[dict]:
         """Layer 1: Canonical Normalized Cache Lookup (sub-millisecond)."""
         key = self._make_key(query, language, mode)
         now = time.time()
 
         # 1. In-memory RAM lookup
-        if key in self._ram_cache:
-            created_at, resp = self._ram_cache[key]
-            if now - created_at < self.ttl:
-                self._stats["canonical_hits"] += 1
-                resp = copy.deepcopy(resp)
-                resp["cache_type"] = "exact_ram"
-                return resp
-            else:
+        with self._lock:
+            hot = self._ram_cache.get(key)
+            if hot is not None:
+                created_at, resp = hot
+                if now - created_at < self.ttl:
+                    self._ram_cache.move_to_end(key)
+                    self._stats["canonical_hits"] += 1
+                    resp = copy.deepcopy(resp)
+                    resp["cache_type"] = "exact_ram"
+                    return resp
                 del self._ram_cache[key]
 
         # 2. SQLite lookup
         with self._get_conn() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT response_json, created_at FROM query_cache WHERE cache_key = ?", (key,))
-            row = cursor.fetchone()
+            row = conn.execute("SELECT response_json, created_at FROM query_cache WHERE cache_key = ?", (key,)).fetchone()
             if row:
                 resp_json, created_at = row
                 if now - created_at < self.ttl:
                     data = json.loads(resp_json)
                     data["cache_type"] = "exact_disk"
-                    self._stats["canonical_hits"] += 1
-                    self._stats["saved_tokens_est"] += len(data.get("answer", "").split()) * 2
-                    if len(self._ram_cache) < 512:
-                        self._ram_cache[key] = (created_at, copy.deepcopy(data))
+                    self._count("canonical_hits", data)
+                    self._ram_put(key, created_at, data)
                     return data
-                else:
-                    cursor.execute("DELETE FROM query_cache WHERE cache_key = ?", (key,))
-                    conn.commit()
+                conn.execute("DELETE FROM query_cache WHERE cache_key = ?", (key,))
+                conn.commit()
         return None
 
     def get_semantic(
@@ -138,7 +164,9 @@ class QueryCache:
     ) -> Optional[dict]:
         """
         Layer 2: Semantic Vector Similarity Cache Lookup.
-        Returns cached response if cosine similarity >= threshold (default 93%).
+        Returns the most similar cached response whose cosine similarity is >= threshold (default 93%) and which
+        `accept` does not veto. Only the vectors of the newest SEMANTIC_CANDIDATES rows are read and compared in one
+        matrix product; the (large) response of a row is read only when that row is a hit.
         """
         if not query_vector:
             return None
@@ -150,53 +178,57 @@ class QueryCache:
 
         now = time.time()
         with self._get_conn() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT response_json, vector_blob, created_at 
-                FROM query_cache 
-                WHERE language = ? AND mode = ? AND vector_blob IS NOT NULL
-                ORDER BY created_at DESC LIMIT 500
-            """, (language, mode))
-            rows = cursor.fetchall()
+            rows = conn.execute(
+                "SELECT cache_key, vector_blob FROM query_cache "
+                "WHERE language = ? AND mode = ? AND vector_blob IS NOT NULL AND created_at > ? "
+                "ORDER BY created_at DESC LIMIT ?",
+                (language, mode, now - self.ttl, SEMANTIC_CANDIDATES),
+            ).fetchall()
 
-            for resp_json, vec_blob, created_at in rows:
-                if now - created_at >= self.ttl:
+            keys, vectors = [], []
+            for cache_key, blob in rows:
+                vec = np.frombuffer(blob, dtype=np.float32) if blob else None
+                if vec is not None and len(vec) == len(q_vec):
+                    keys.append(cache_key)
+                    vectors.append(vec)
+            if not vectors:
+                return None
+
+            matrix = np.vstack(vectors)
+            norms = np.linalg.norm(matrix, axis=1)
+            norms[norms == 0] = 1.0
+            similarities = (matrix / norms[:, None]) @ q_vec
+
+            for idx in np.argsort(-similarities):
+                sim = float(similarities[idx])
+                if sim < threshold:
+                    break
+                row = conn.execute("SELECT response_json FROM query_cache WHERE cache_key = ?", (keys[idx],)).fetchone()
+                if not row:
                     continue
-                if not vec_blob:
+                data = json.loads(row[0])
+                # a near-identical question may still concern another beneficiary group ("I guruh" vs
+                # "II guruh"); the caller can veto such hits
+                if accept is not None and not accept(data):
                     continue
-                c_vec = np.frombuffer(vec_blob, dtype=np.float32)
-                if len(c_vec) != len(q_vec):
-                    continue
-                norm_c = np.linalg.norm(c_vec)
-                if norm_c > 0:
-                    c_vec = c_vec / norm_c
-                sim = float(np.dot(q_vec, c_vec))
-                if sim >= threshold:
-                    data = json.loads(resp_json)
-                    # a near-identical question may still concern another beneficiary group ("I guruh" vs
-                    # "II guruh"); the caller can veto such hits
-                    if accept is not None and not accept(data):
-                        continue
-                    data["cache_type"] = "semantic"
-                    data["semantic_similarity"] = round(sim, 3)
-                    self._stats["semantic_hits"] += 1
-                    self._stats["saved_tokens_est"] += len(data.get("answer", "").split()) * 2
-                    return data
+                data["cache_type"] = "semantic"
+                data["semantic_similarity"] = round(sim, 3)
+                self._count("semantic_hits", data)
+                return data
         return None
 
     def get_stats(self) -> dict:
         """Returns live cache efficiency and token savings metrics."""
         with self._get_conn() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT count(*) FROM query_cache;")
-            count = cursor.fetchone()[0]
-        return {
-            "total_cached_queries": count,
-            "ram_cache_hot_items": len(self._ram_cache),
-            "canonical_exact_hits": self._stats["canonical_hits"],
-            "semantic_similarity_hits": self._stats["semantic_hits"],
-            "estimated_saved_tokens": self._stats["saved_tokens_est"],
-        }
+            count = conn.execute("SELECT count(*) FROM query_cache;").fetchone()[0]
+        with self._lock:
+            return {
+                "total_cached_queries": count,
+                "ram_cache_hot_items": len(self._ram_cache),
+                "canonical_exact_hits": self._stats["canonical_hits"],
+                "semantic_similarity_hits": self._stats["semantic_hits"],
+                "estimated_saved_tokens": self._stats["saved_tokens_est"],
+            }
 
     def set(
         self,
@@ -220,9 +252,7 @@ class QueryCache:
         if vector:
             vec_blob = np.array(vector, dtype=np.float32).tobytes()
 
-        # Update RAM cache
-        if len(self._ram_cache) < 512:
-            self._ram_cache[key] = (now, copy.deepcopy(data))
+        self._ram_put(key, now, data)
 
         with self._get_conn() as conn:
             conn.execute("""
@@ -233,9 +263,22 @@ class QueryCache:
             """, (key, canonical, language, mode, vec_blob, json.dumps(data), now))
             conn.commit()
 
+    def purge_expired(self) -> int:
+        """Deletes the entries older than the TTL (disk and RAM) and returns how many disk rows were removed. Without it
+        a row that is never asked for again stays in the file for ever."""
+        cutoff = time.time() - self.ttl
+        with self._lock:
+            for key in [k for k, (created_at, _) in self._ram_cache.items() if created_at < cutoff]:
+                del self._ram_cache[key]
+        with self._get_conn() as conn:
+            removed = conn.execute("DELETE FROM query_cache WHERE created_at < ?", (cutoff,)).rowcount
+            conn.commit()
+        return removed
+
     def clear(self):
         """Flushes both the RAM cache and the persistent SQLite cache (call after any corpus change)."""
-        self._ram_cache.clear()
+        with self._lock:
+            self._ram_cache.clear()
         with self._get_conn() as conn:
             conn.execute("DELETE FROM query_cache;")
             conn.commit()

@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from typing import Iterable, List, Optional, Sequence, Set
 
 from src.config import settings
-from src.nlp.transliteration import cyrillic_to_latin, detect_script, normalize_apostrophes
+from src.nlp.transliteration import detect_script, normalize_apostrophes
 
 _STOP = {
     # Uzbek question/function words
@@ -120,14 +120,11 @@ def jev_gate_decision(
     answerable: Optional[float],
     top_probability: Optional[float],
 ) -> GateDecision:
-    """Evaluates Jev scope and answerability signals to decide if the query can be answered."""
-    if settings.GATE_JEV_MIN_ANSWERABLE > 0 and answerable is not None and answerable < settings.GATE_JEV_MIN_ANSWERABLE:
-        return GateDecision(False, "jev_no_evidence", answerable)
-    if (
-        settings.GATE_JEV_SCOPE_ENABLED
-        and in_scope is not None
-        and in_scope < settings.GATE_JEV_MIN_IN_SCOPE
-        and (answerable is None or answerable < settings.GATE_JEV_ANSWERABLE_CEILING)
-    ):
+    """
+    Refuses a question whose scope signal is below GATE_JEV_MIN_IN_SCOPE. A high answerability does not excuse a low scope
+    (the Traffic and Criminal codes in the corpus answer their questions, 0.89-0.96, just like the Convention questions that
+    Jev misjudges); it only becomes the confidence of an accepted question.
+    """
+    if settings.GATE_JEV_SCOPE_ENABLED and in_scope is not None and in_scope < settings.GATE_JEV_MIN_IN_SCOPE:
         return GateDecision(False, "jev_out_of_scope", in_scope)
     return GateDecision(True, "jev_match", answerable if answerable is not None else (top_probability or 1.0))

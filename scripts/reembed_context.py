@@ -23,7 +23,7 @@ from src.clients.openrouter import OpenRouterClient  # noqa: E402
 from src.config import settings  # noqa: E402
 from src.schema.canonical import CanonicalArticle  # noqa: E402
 from src.storage.chunking import build_chunks, has_context_header  # noqa: E402
-from src.storage.hybrid_store import HybridStore  # noqa: E402
+from src.storage.hybrid_store import HybridStore, vector_languages  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("reembed_context")
@@ -74,12 +74,12 @@ def collect_units_to_reembed(
 
 
 def count_chunk_stats(articles: List[CanonicalArticle]) -> Tuple[int, int, int, int]:
-    """Computes total units, chunks, characters, and estimated tokens across uz and ru."""
+    """Computes total units, chunks, characters, and estimated tokens across the vector languages."""
     total_units = len(articles)
     total_chunks = 0
     total_chars = 0
     for art in articles:
-        for lang in ("uz", "ru"):
+        for lang in vector_languages(art):
             chunks = build_chunks(art, lang)
             total_chunks += len(chunks)
             total_chars += sum(len(c) for c in chunks)

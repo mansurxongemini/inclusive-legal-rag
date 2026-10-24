@@ -75,3 +75,19 @@ def test_administration_is_closed_to_loopback_once_a_key_is_configured(monkeypat
     assert settings.admin_loopback_enabled is False                  # a deployment
     monkeypatch.setattr(settings, "ADMIN_LOOPBACK_ENABLED", True)
     assert settings.admin_loopback_enabled is True                   # explicit choice wins
+
+
+def test_an_explicit_zero_limit_blocks_instead_of_falling_back_to_the_default():
+    from fastapi import HTTPException
+    from src.api.middleware.rate_limiter import SlidingWindowLimiter
+
+    limiter = SlidingWindowLimiter(default_limit=5)
+    request = _request()
+    with pytest.raises(HTTPException) as blocked:
+        limiter.check(request, key="key-with-zero", limit=0)
+    assert blocked.value.status_code == 429
+
+    for _ in range(5):                                               # no limit given = the default one
+        limiter.check(request, key="default-limit")
+    with pytest.raises(HTTPException):
+        limiter.check(request, key="default-limit")

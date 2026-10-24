@@ -476,6 +476,13 @@
     - Bot polling holatida: `Run polling for bot @murojattest1456_bot id=8954778334 - 'Test murojaat Huquq'`;
     - Foydalanuvchi Telegram orqali jonli savol yuborib sinashiga to'liq tayyor.
 
+70. [DONE] Huquqiy RAG baholashi uchun 40 ta Out-Of-Scope (OOS) savollar to'plamini shakllantirish:
+    - Nogironlik huquqi va ijtimoiy himoyadan mutlaqo tashqari bo'lgan 40 ta savol ishlab chiqildi va `.claude/scratch/qs_oos.json` fayliga saqlandi;
+    - Toifalar balansi: 8 ta `injection`, 10 ta `near`, 3 ta `criminal`, 3 ta `traffic`, 3 ta `customs`, 4 ta `commercial`, 3 ta `general_civil`, 3 ta `tax_business`, 3 ta `medicine_general`;
+    - Tillar taqsimoti: 28 ta o'zbekcha (22 lotin, 6 kirill), 8 ta ruscha, 4 ta inglizcha (jami 40 ta);
+    - Python `json.load()` orqali to'liq validatsiyadan o'tkazildi;
+    - Dalil: `.claude/scratch/qs_oos.json` va python validatsiya skripti chiqishi (40 ta savol).
+
 
 
 

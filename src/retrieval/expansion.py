@@ -1,6 +1,6 @@
 import logging
 from typing import List, Set
-from src.schema.canonical import CanonicalArticle, RefType
+from src.schema.canonical import CanonicalArticle
 from src.storage.hybrid_store import HybridStore
 from src.retrieval.hybrid_retriever import ScoredArticle
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from src.clients.openrouter import OpenRouterClient
 from src.config import settings
@@ -57,7 +57,7 @@ class JevRanker:
         return settings.LLM_RANK_FALLBACK and not getattr(self.client, "is_mock", False)
 
     async def _fallback_scope(self, question: str) -> Optional[float]:
-        """Jev is unavailable (paused, out of balance, down): the generation provider judges the scope."""
+        """Jev is unavailable (paused, out of balance, down): the chat model judges the scope."""
         if not self._fallback_enabled():
             return None
         from src.retrieval.llm_ranker import LlmRanker

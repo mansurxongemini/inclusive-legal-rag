@@ -87,7 +87,7 @@ muhitda interaktiv rebase ishlamaydi, shuning uchun yuqoridagi `filter-branch` t
 
 ## 4. Nega bunday bo'ldi / qayta takrorlanmasligi uchun
 
-- Kalit skriptga qattiq yozilgan edi; endi `GATEWAY_API_KEY` muhit o'zgaruvchisidan olinadi (`.env.example` da bor).
+- Kalit skriptga qattiq yozilgan edi; endi `GATEWAY_API_KEY` muhit o'zgaruvchisidan olinadi (faqat shu skript o'qiydi, `.env.example` da yo'q).
 - Bu ish davomida agentlarga `.env` ni `cat`/`grep` qilishni taqiqlash va kalit nomlarini faqat maskalangan ko'rsatish qoidasi kerak
   (bir marta maskalash xato ketib, Meta kaliti jurnalga tushdi).
 

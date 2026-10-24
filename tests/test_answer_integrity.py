@@ -8,9 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from httpx import ASGITransport, AsyncClient
 
-from src.api.app import app
 from src.api.cache import QueryCache
 from src.generation.generator import MAX_ANSWER_TOKENS, attach_disclaimer
 from src.generation.prompts import DISCLAIMERS, build_system_prompt
@@ -86,7 +84,7 @@ def test_genuine_russian_is_kept_as_russian():
 
 
 def test_importers_do_not_copy_uzbek_text_into_ru_or_en():
-    for name in ("file_importer", "url_importer", "document_inspector", "manual_importer"):
+    for name in ("url_importer", "document_inspector"):
         source = Path(f"src/ingestion/{name}.py").read_text(encoding="utf-8")
         assert not re.search(r'"uz":[^\n]*"ru":[^\n]*"en":', source), name
 
@@ -146,3 +144,72 @@ async def test_streamed_answer_is_cached_and_replayed(monkeypatch, tmp_path):
     assert first[-1]["type"] == "done" and not first[-1].get("cached")
     assert second[0]["type"] == "token" and second[0]["text"] == text.strip()
     assert second[-1]["type"] == "done" and second[-1]["cached"] is True and second[-1]["validation_passed"] is True
+
+
+# --- an exact cache hit of a streamed question costs no embedding ----------------------------------------------------
+
+def _stream_fixture(monkeypatch, tmp_path):
+    from src.gateway import service
+
+    cache = QueryCache(str(tmp_path / "cache.db"))
+    embeddings = []
+
+    class FakeClient:
+        is_mock = False
+
+        async def get_embeddings(self, texts):
+            embeddings.append(texts)
+            return [[0.1] * 8]
+
+    monkeypatch.setattr("src.api.app.get_cache", lambda: cache)
+    monkeypatch.setattr("src.api.app.get_store", lambda: None)
+    monkeypatch.setattr("src.api.app.get_client", lambda: FakeClient())
+
+    async def events(question):
+        return [json.loads(c.strip()[6:]) async for c in service.answer_question_stream(question, language="uz")]
+
+    return service, cache, embeddings, events
+
+
+@pytest.mark.asyncio
+async def test_stream_exact_cache_hit_does_not_pay_for_an_embedding(monkeypatch, tmp_path):
+    from src.nlp.query_analyzer import QueryAnalyzer
+
+    service, cache, embeddings, events = _stream_fixture(monkeypatch, tmp_path)
+    question = "Tibbiy yordam bepulmi?"
+    text = "Nogironligi bo'lgan shaxslar uchun tibbiy yordam bepul ko'rsatiladi [1]. " * 6
+    lang, mode = service.cache_keys(QueryAnalyzer.analyze(question, user_language="uz"), "plain")
+    cache.set(question, lang, mode, {"answer": text, "clean_answer": text, "citations": [], "validation_passed": True})
+
+    out = await events(question)
+
+    assert embeddings == [], "the answer is already known: the embedding call is wasted money and latency"
+    assert out[0]["type"] == "token" and out[0]["text"] == text
+    assert out[-1]["cached"] is True and out[-1]["cache_type"].startswith("exact")
+
+
+@pytest.mark.asyncio
+async def test_stream_cache_miss_still_embeds_the_question_once(monkeypatch, tmp_path):
+    service, cache, embeddings, events = _stream_fixture(monkeypatch, tmp_path)
+    seen = {}
+
+    async def fake_retrieve(**kwargs):
+        seen["query_vector"] = kwargs["query_vector"]
+        return SimpleNamespace(contexts=[], status_warnings=[], decision=None)
+
+    class FakeGenerator:
+        def __init__(self, client=None):
+            pass
+
+        async def generate_answer_stream(self, **kwargs):
+            done = {"type": "done", "citations": [], "is_refusal": True, "validation_passed": False,
+                    "clean_answer": "", "warnings": [], "status_warnings": []}
+            yield f"data: {json.dumps(done)}\n\n"
+
+    monkeypatch.setattr(service, "retrieve_contexts", fake_retrieve)
+    monkeypatch.setattr(service, "AnswerGenerator", FakeGenerator)
+
+    out = await events("Pensiya yoshi qanday belgilanadi?")
+
+    assert len(embeddings) == 1 and seen["query_vector"] == [0.1] * 8      # the vector still reaches retrieval
+    assert out[-1]["type"] == "done"

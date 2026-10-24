@@ -1,7 +1,7 @@
 """
 One retrieval pipeline shared by every query endpoint:
 
-    hybrid retrieval (with ru/en query translation to uz) -> (optional category focus) -> cross-reference expansion -> status filter
+    hybrid retrieval (ru/en questions also through an Uzbek translation: the vectors are Uzbek only) -> (optional category focus) -> cross-reference expansion -> status filter
     -> rerank (Jev with Cohere fallback) -> relevance gate
 
 Returns the contexts to answer from (empty when the evidence is not good enough) plus diagnostics.
@@ -139,6 +139,16 @@ def _use_uz_rewrite(rewrite: str, analysis: QueryAnalysis) -> bool:
     return overlap < 0.9 if analysis.detected_script == "cyrillic" else overlap < 0.5
 
 
+def _discard_tasks(tasks: List[asyncio.Task]) -> None:
+    """Cancels the helper tasks that a failed (or finished) retrieval left running, e.g. a paid Jev call or an LLM
+    rewrite, and marks the error of one that had already failed as seen so that nothing is logged as never retrieved."""
+    for task in tasks:
+        if not task.done():
+            task.cancel()
+        elif not task.cancelled():
+            task.exception()
+
+
 async def retrieve_contexts(
     *,
     analysis: QueryAnalysis,
@@ -161,7 +171,7 @@ async def retrieve_contexts(
     if use_jev and apply_gate and settings.GATE_JEV_SCOPE_ENABLED:
         scope_task = asyncio.create_task(JevRanker(client).scope(analysis.normalized_query))
 
-    # Most units have only the Uzbek text, so ru/en questions are also searched through an Uzbek translation.
+    # The units (and every vector) are in Uzbek, so ru/en questions are also searched through an Uzbek translation.
     # The translation call runs while the original-language retrieval is in flight.
     translation = None
     if language in ("ru", "en"):
@@ -173,121 +183,119 @@ async def retrieve_contexts(
     subquestions_task: Optional[asyncio.Task] = None
     if _wants_subquestions(analysis):
         subquestions_task = asyncio.create_task(QueryTranslator.legal_subquestions(analysis.raw_query, client))
+    tasks = [t for t in (scope_task, translation, subquestions_task) if t]
     try:
         candidates = await retriever.retrieve(
             analysis, top_k=top_k, precomputed_query_vector=query_vector, use_vector=use_vector,
         )
-    except BaseException:
-        for task in (translation, subquestions_task, scope_task):
-            if task:
-                task.cancel()
-        raise
-    translated = await translation if translation else None
+        translated = await translation if translation else None
 
-    uz_analysis = None
-    if translated and language == "uz" and not _use_uz_rewrite(translated, analysis):
-        translated = None
-    if translated:
-        uz_analysis = QueryAnalyzer.analyze(translated, user_language="uz")
-        uz_candidates = await retriever.retrieve(uz_analysis, top_k=top_k, use_vector=use_vector)
-        candidates = merge_candidates([candidates, uz_candidates], limit=top_k + 10)
+        uz_analysis = None
+        if translated and language == "uz" and not _use_uz_rewrite(translated, analysis):
+            translated = None
+        if translated:
+            uz_analysis = QueryAnalyzer.analyze(translated, user_language="uz")
+            uz_candidates = await retriever.retrieve(uz_analysis, top_k=top_k, use_vector=use_vector)
+            candidates = merge_candidates([candidates, uz_candidates], limit=top_k + 10)
 
-    subquestions = (await subquestions_task) if subquestions_task else None
-    if subquestions:
-        aspect_lists = await asyncio.gather(*(
-            retriever.retrieve(QueryAnalyzer.analyze(q, user_language="uz"), top_k=top_k, use_vector=use_vector)
-            for q in subquestions
-        ))
-        # every sub-question brings its own norms, so the pool (and Jev's share of it) grows with their number
-        limit = top_k + 10 + settings.JEV_RERANK_UNITS_PER_SUBQUESTION * len(subquestions)
-        candidates = fuse_aspect_candidates(candidates, list(aspect_lists), limit=limit)
+        subquestions = (await subquestions_task) if subquestions_task else None
+        if subquestions:
+            aspect_lists = await asyncio.gather(*(
+                retriever.retrieve(QueryAnalyzer.analyze(q, user_language="uz"), top_k=top_k, use_vector=use_vector)
+                for q in subquestions
+            ))
+            # every sub-question brings its own norms, so the pool (and Jev's share of it) grows with their number
+            limit = top_k + 10 + settings.JEV_RERANK_UNITS_PER_SUBQUESTION * len(subquestions)
+            candidates = fuse_aspect_candidates(candidates, list(aspect_lists), limit=limit)
 
-    # A client-selected legal domain is a hint, not a filter: act/unit categories are heuristic labels and a
-    # hard filter silently drops a correct article whenever the label is imperfect. Matching units get a boost.
-    if category and category != "all":
-        art_map = store.get_articles_batch([c.canonical_id for c in candidates])
-        for c in candidates:
-            art = art_map.get(c.canonical_id)
-            if art is not None and art.metadata.category == category:
-                c.rrf_score += CATEGORY_BOOST
-        candidates.sort(key=lambda c: c.rrf_score, reverse=True)
+        # A client-selected legal domain is a hint, not a filter: act/unit categories are heuristic labels and a
+        # hard filter silently drops a correct article whenever the label is imperfect. Matching units get a boost.
+        if category and category != "all":
+            art_map = store.get_articles_batch([c.canonical_id for c in candidates])
+            for c in candidates:
+                art = art_map.get(c.canonical_id)
+                if art is not None and art.metadata.category == category:
+                    c.rrf_score += CATEGORY_BOOST
+            candidates.sort(key=lambda c: c.rrf_score, reverse=True)
 
-    expanded = expand_cross_references(candidates, store, max_extra=max_extra)
-    valid, warnings = apply_status_and_amendment_filter(expanded, store)
+        expanded = expand_cross_references(candidates, store, max_extra=max_extra)
+        valid, warnings = apply_status_and_amendment_filter(expanded, store)
 
-    rerank_query = analysis.normalized_query if not uz_analysis else f"{analysis.normalized_query}\n{uz_analysis.normalized_query}"
-    if subquestions:
-        rerank_query += "\n" + "\n".join(subquestions)
+        rerank_query = analysis.normalized_query if not uz_analysis else f"{analysis.normalized_query}\n{uz_analysis.normalized_query}"
+        if subquestions:
+            rerank_query += "\n" + "\n".join(subquestions)
 
-    reranker = Reranker(client=client)
-    contexts = await reranker.rerank(
-        query=rerank_query,
-        language=language,
-        candidates=valid,
-        store=store,
-        top_n=rerank_top_n,
-        use_model=use_reranker,
-        subquestions=subquestions,
-    )
+        reranker = Reranker(client=client)
+        contexts = await reranker.rerank(
+            query=rerank_query,
+            language=language,
+            candidates=valid,
+            store=store,
+            top_n=rerank_top_n,
+            use_model=use_reranker,
+            subquestions=subquestions,
+        )
 
-    # Editorial curated answers that the reranker found relevant become the primary answer; their linked Lex.uz
-    # norms are added even when retrieval missed them. Weak or unpublished curated hits are dropped.
-    if any(c.article.canonical_id.startswith("qa_") or c.article.canonical_id.startswith("hp_") for c in contexts):
-        try:
-            from src.editorial.retrieval import (
-                add_linked_act_units,
-                curated_relevance_threshold,
-                ensure_curated_contexts,
-            )
-            from src.editorial.store import EditorialStore
-            editorial = EditorialStore()
-            contexts = ensure_curated_contexts(
-                contexts, store, editorial,
-                min_rerank_score=curated_relevance_threshold(reranker.last_provider),
-            )
-            contexts = add_linked_act_units(contexts, store, editorial, rerank_query)
-        except Exception:
-            logger.warning("Curated-context ordering failed; serving lex norms only.", exc_info=True)
-            contexts = [c for c in contexts if not c.article.canonical_id.startswith("qa_") and not c.article.canonical_id.startswith("hp_")]
+        # Editorial curated answers that the reranker found relevant become the primary answer; their linked Lex.uz
+        # norms are added even when retrieval missed them. Weak or unpublished curated hits are dropped.
+        if any(c.article.canonical_id.startswith("qa_") or c.article.canonical_id.startswith("hp_") for c in contexts):
+            try:
+                from src.editorial.retrieval import (
+                    add_linked_act_units,
+                    curated_relevance_threshold,
+                    ensure_curated_contexts,
+                )
+                from src.editorial.store import EditorialStore
+                editorial = EditorialStore()
+                contexts = ensure_curated_contexts(
+                    contexts, store, editorial,
+                    min_rerank_score=curated_relevance_threshold(reranker.last_provider),
+                )
+                contexts = add_linked_act_units(contexts, store, editorial, rerank_query)
+            except Exception:
+                logger.warning("Curated-context ordering failed; serving lex norms only.", exc_info=True)
+                contexts = [c for c in contexts if not c.article.canonical_id.startswith("qa_") and not c.article.canonical_id.startswith("hp_")]
 
-    decision: Optional[GateDecision] = None
-    in_scope: Optional[float] = None
-    if apply_gate:
-        if reranker.last_provider == "jev":
-            in_scope = await scope_task if scope_task else None
-            top_prob = max((c.rerank_score for c in contexts if c.rerank_score is not None), default=None)
-            decision = jev_gate_decision(in_scope, reranker.last_answerable, top_prob)
-            if not decision.answerable:
-                logger.info(f"Relevance gate refused: {decision.reason} (conf={decision.confidence:.2f})")
-                contexts = []
+        decision: Optional[GateDecision] = None
+        in_scope: Optional[float] = None
+        if apply_gate:
+            if reranker.last_provider == "jev":
+                in_scope = await scope_task if scope_task else None
+                top_prob = max((c.rerank_score for c in contexts if c.rerank_score is not None), default=None)
+                decision = jev_gate_decision(in_scope, reranker.last_answerable, top_prob)
+                if not decision.answerable:
+                    logger.info(f"Relevance gate refused: {decision.reason} (conf={decision.confidence:.2f})")
+                    contexts = []
+            else:
+                if scope_task:
+                    scope_task.cancel()
+                decision = RelevanceGate().assess(
+                    query=rerank_query,
+                    scored=candidates,                 # scores of the original hybrid hits (expanded ones carry none)
+                    context_texts=[c.article.get_text(language) for c in contexts],
+                    rerank_scores=[c.rerank_score for c in contexts if c.rerank_score is not None],
+                    is_mock=client.is_mock,
+                )
+                if not decision.answerable:
+                    logger.info(f"Relevance gate refused: {decision.reason} (conf={decision.confidence:.2f})")
+                    contexts = []
         else:
             if scope_task:
                 scope_task.cancel()
-            decision = RelevanceGate().assess(
-                query=rerank_query,
-                scored=candidates,                 # scores of the original hybrid hits (expanded ones carry none)
-                context_texts=[c.article.get_text(language) for c in contexts],
-                rerank_scores=[c.rerank_score for c in contexts if c.rerank_score is not None],
-                is_mock=client.is_mock,
-            )
-            if not decision.answerable:
-                logger.info(f"Relevance gate refused: {decision.reason} (conf={decision.confidence:.2f})")
-                contexts = []
-    else:
-        if scope_task:
-            scope_task.cancel()
 
-    signals = {
-        "rerank_provider": reranker.last_provider,
-        "jev_in_scope": in_scope,
-        "jev_answerable": reranker.last_answerable,
-        "subquestions": subquestions or [],
-    }
+        signals = {
+            "rerank_provider": reranker.last_provider,
+            "jev_in_scope": in_scope,
+            "jev_answerable": reranker.last_answerable,
+            "subquestions": subquestions or [],
+        }
 
-    return RetrievalResult(
-        contexts=contexts,
-        candidates=candidates,
-        status_warnings=warnings,
-        decision=decision,
-        signals=signals,
-    )
+        return RetrievalResult(
+            contexts=contexts,
+            candidates=candidates,
+            status_warnings=warnings,
+            decision=decision,
+            signals=signals,
+        )
+    finally:
+        _discard_tasks(tasks)

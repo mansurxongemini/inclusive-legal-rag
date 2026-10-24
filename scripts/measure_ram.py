@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 import os
 import sys
-import psutil
 from pathlib import Path
 
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.storage.hybrid_store import HybridStore
-from src.api.app import app, get_store
+from src.api.app import get_store
 from src.api.routes.health import get_process_memory_mb
 
 
@@ -36,7 +34,7 @@ def measure_memory():
     print(f"[*] Process PID         : {os.getpid()}")
     print(f"[*] Total Articles      : {count}")
     print(f"[*] Measured Idle RSS   : {rss_mb:.2f} MB")
-    print(f"[*] Memory Ceiling Limit: 350.00 MB")
+    print("[*] Memory Ceiling Limit: 350.00 MB")
     print(f"[*] Remaining Headroom  : {350.0 - rss_mb:.2f} MB")
     print("-" * 65)
 

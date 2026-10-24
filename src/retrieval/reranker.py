@@ -1,6 +1,4 @@
-import json
 import logging
-import re
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 from src.schema.canonical import CanonicalArticle
@@ -151,7 +149,7 @@ class Reranker:
                     source_tag=c.source_tag,
                     is_superseded=(art.metadata.status.value in ("repealed", "amended")),
                     superseded_by=art.metadata.superseded_by,
-                    focus=focus_chunks(art, query, ("uz", language), c.vector_chunk) if settings.PASSAGE_FOCUS else {},
+                    focus=focus_chunks(art, query, ("uz", language), c.vector_chunk),
                 ))
 
         # RERANK_PROVIDER "rrf" / "none": no model reranking at all, fused (RRF) order is the final order
@@ -187,7 +185,7 @@ class Reranker:
             elif "openrouter.ai" in getattr(self.client, "base_url", "openrouter.ai"):
                 logger.warning("Jev rerank unavailable, falling back to Cohere")
             else:
-                # Jev is down or paused (monthly budget) and the generation provider has no /rerank endpoint: the RRF
+                # Jev is down or paused (monthly budget) and there is no other reranker to ask: the RRF
                 # order serves the request instead of an endpoint that cannot answer.
                 logger.warning("Jev rerank unavailable, serving the RRF order")
                 self.last_provider = "rrf"

@@ -183,7 +183,6 @@ def main():
     print(f"Jami yig'ilgan unikal savol-javoblar soni: {len(all_qas)}")
 
     missing_lex_ids = set()
-    verified_citations = []
     faq_items = []
 
     for item in all_qas:

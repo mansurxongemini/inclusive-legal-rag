@@ -1,9 +1,10 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field
 
 from src.api.auth.admin import require_admin
 from src.api.middleware.rate_limiter import rate_limiter
+from src.config import settings
 
 router = APIRouter(prefix="/api/v1", tags=["Feedback"])
 
@@ -16,12 +17,15 @@ class FeedbackRequest(BaseModel):
     feedback_text: Optional[str] = Field(default="", max_length=4000, description="Reviewer or citizen comment")
 
 
+# Plain `def` handlers run in FastAPI's thread pool: the SQLite writes do not stall the event loop.
+
 @router.post("/feedback")
-async def submit_feedback(request: Request, payload: FeedbackRequest):
+def submit_feedback(request: Request, payload: FeedbackRequest):
     """
-    Submits user or legal reviewer feedback on an answer, feeding the review queue and eval set.
+    Submits user or legal reviewer feedback on an answer, feeding the review queue and eval set. Open to the public (the
+    site's feedback buttons), so each address may send only FEEDBACK_RATE_PER_MINUTE of them a minute.
     """
-    rate_limiter.check(request)
+    rate_limiter.check(request, scope="feedback", limit=settings.FEEDBACK_RATE_PER_MINUTE)
     from src.api.app import get_store
     store = get_store()
     store.fts_store.record_feedback(
@@ -35,7 +39,7 @@ async def submit_feedback(request: Request, payload: FeedbackRequest):
 
 
 @router.get("/feedback", dependencies=[Depends(require_admin)])
-async def get_feedback_records(limit: int = Query(default=50, ge=1, le=500)):
+def get_feedback_records(limit: int = Query(default=50, ge=1, le=500)):
     """Lists stored citizen questions and answers - administrators only (contains personal data)."""
     from src.api.app import get_store
     store = get_store()

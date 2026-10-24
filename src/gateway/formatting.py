@@ -77,7 +77,7 @@ def telegram_sources_block(citations: List[StructuredCitation], language: str = 
             lines.append(f"[{c.number}] {label}")
     if not lines:
         return ""
-    heading = "📚 <b>Источники</b>" if language == "ru" else "📚 <b>Manbalar</b>"
+    heading = {"ru": "📚 <b>Источники</b>", "en": "📚 <b>Sources</b>"}.get(language, "📚 <b>Manbalar</b>")
     return heading + "\n\n" + "\n\n".join(lines)
 
 

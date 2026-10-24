@@ -77,7 +77,7 @@ async def main() -> None:
     ap.add_argument("--contexts", required=True, help="stress report with context_ids per item")
     ap.add_argument("--dataset", default=str(ROOT / "data" / "golden_dataset" / "stress_eval_200.json"))
     ap.add_argument("--arms", default="off,on")
-    ap.add_argument("--judge-model", default="muse-spark-1.2")
+    ap.add_argument("--judge-model", default="", help="OpenRouter model that grades the answers; empty = the chat model grades its own answers")
     ap.add_argument("--concurrency", type=int, default=3)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--report", required=True)

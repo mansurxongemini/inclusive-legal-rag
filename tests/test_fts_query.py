@@ -1,35 +1,21 @@
-"""Full-text query building: stopwords are dropped, words are cut to their search stem, codes stay whole, and an
-inflected question word finds the unit that holds another form of it."""
-import pytest
+"""Full-text query building: whole words, quoted and stripped of FTS syntax, codes kept whole."""
 
 from src.config import settings
-from src.nlp.stemming import search_stem
 from src.schema.canonical import CanonicalArticle
 from src.storage.fts_store import SqliteFtsStore, build_fts_terms
 
 
-def test_stems_strip_case_and_plural_endings_and_keep_codes():
-    assert search_stem("bolaning") == "bola"
-    assert search_stem("nafaqalarni") == "nafaqa"
-    assert search_stem("nogironligidan") == "nogiron" and search_stem("nogironlik") == "nogiron"
-    assert search_stem("pensiyalarni") == "pensiya"
-    assert search_stem("VMQ-62") == "VMQ-62" and search_stem("483-modda") == "483-modda"
-    assert search_stem("инвалидности") == "инвал" and search_stem("налога") == "налог"
-    assert search_stem("soliq") == "soliq" and search_stem("ish") == "ish"       # short words are kept
+def test_whole_words_are_quoted_prefix_terms_in_question_order():
+    assert build_fts_terms("Nogironligi bo'lgan bolaga qanday nafaqa") == ['"Nogironligi"*', '"bolgan"*', '"bolaga"*', '"qanday"*', '"nafaqa"*']
+    assert build_fts_terms("nafaqa nafaqa") == ['"nafaqa"*']                         # a repeated word is searched once
 
 
-def test_terms_drop_question_words_but_never_return_nothing(monkeypatch):
-    monkeypatch.setattr(settings, "FTS_STOPWORDS", True)
-    monkeypatch.setattr(settings, "FTS_STEM_PREFIX", 1)
-    terms = build_fts_terms("Nogironligi bo'lgan bolaga qanday nafaqa to'lanadi?")
-    assert '"qanday"*' not in terms and '"nafaqa"*' in terms and '"Nogiron"*' in terms
-    assert build_fts_terms("qanday mumkin") == ['"qanday"*', '"mumkin"*']          # only stopwords: keep them
-
-
-def test_stemming_can_be_switched_off(monkeypatch):
-    monkeypatch.setattr(settings, "FTS_STEM_PREFIX", 0)
-    monkeypatch.setattr(settings, "FTS_STOPWORDS", False)
-    assert build_fts_terms("qanday nogironligidan") == ['"qanday"*', '"nogironligidan"*']
+def test_codes_stay_whole_and_syntax_characters_are_stripped():
+    assert build_fts_terms("483-modda VMQ-62") == ['"483-modda"*', '"VMQ-62"*']
+    # a question cannot inject an FTS5 operator or a column filter: every word is quoted, quotes and symbols are dropped
+    assert build_fts_terms('foo" OR "bar') == ['"foo"*', '"OR"*', '"bar"*']
+    assert build_fts_terms("title:nafaqa NEAR(a b) *") == ['"titlenafaqa"*', '"NEARa"*', '"b"*']
+    assert build_fts_terms("?!") == []
 
 
 def _article(cid, text, title="Qoida"):
@@ -42,18 +28,11 @@ def _article(cid, text, title="Qoida"):
     )
 
 
-def test_whole_words_are_the_default():
-    assert build_fts_terms("Nogironligi bo'lgan bolaga qanday nafaqa") == ['"Nogironligi"*', '"bolgan"*', '"bolaga"*', '"qanday"*', '"nafaqa"*']
-
-
-def test_an_inflected_question_word_finds_the_unit(tmp_path, monkeypatch):
-    monkeypatch.setattr(settings, "FTS_STOPWORDS", True)
-    monkeypatch.setattr(settings, "FTS_STEM_PREFIX", 1)
+def test_a_unit_is_found_by_the_words_it_contains(tmp_path):
     store = SqliteFtsStore(str(tmp_path / "t.db"))
     store.upsert_article(_article("t_art_1", "Nogironlik pensiyasi har oyda to'lanadi. Nafaqa miqdori belgilanadi."))
     store.upsert_article(_article("t_art_2", "Transport vositasini haydash qoidalari belgilanadi."))
-    # the question has other forms of the unit's words: nogironligi, pensiyalar
-    hits = store.bm25_search("Nogironligi bo'lgan shaxslarning pensiyalari qanday to'lanadi", language="uz", top_k=5)
+    hits = store.bm25_search("nogironlik pensiyasi qanday to'lanadi", language="uz", top_k=5)
     assert hits and hits[0]["canonical_id"] == "t_art_1"
 
 

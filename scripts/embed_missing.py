@@ -13,15 +13,13 @@ interrupted run resumes where it stopped.
     python scripts/embed_missing.py --extend-chunks [--run]
                                                     # re-embed units that have more chunks than the 14 the index held
 
-Embeddings need EMBEDDING_BASE_URL (https://openrouter.ai/api/v1) and EMBEDDING_API_KEY in .env when the LLM
-uses another provider (OPENROUTER_BASE_URL / OPENROUTER_API_KEY).
+Embeddings go through OPENROUTER_BASE_URL (https://openrouter.ai/api/v1) with OPENROUTER_API_KEY, like every other call.
 """
 import argparse
 import asyncio
 import logging
 import math
 import shutil
-import os
 import sys
 import time
 from collections import Counter
@@ -32,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.clients.openrouter import OpenRouterClient  # noqa: E402
 from src.config import settings  # noqa: E402
 from src.storage.chunking import LEGACY_CHUNK_CAP, build_chunks, chunk_layout  # noqa: E402
-from src.storage.hybrid_store import HybridStore  # noqa: E402
+from src.storage.hybrid_store import HybridStore, vector_languages  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("embed_missing")
@@ -61,16 +59,16 @@ def ids_without_chunk_index(store: HybridStore) -> set:
 
 
 def multi_chunk_ids(store: HybridStore, ids: list) -> list:
-    """Articles with more than one embedded chunk in uz or ru: the only ones where chunk_index matters."""
+    """Articles with more than one embedded chunk in a vector language: the only ones where chunk_index matters."""
     return [art.canonical_id for art in load(store, ids)
-            if any(len(build_chunks(art, lang)) > 1 for lang in ("uz", "ru"))]
+            if any(len(build_chunks(art, lang)) > 1 for lang in vector_languages(art))]
 
 
 def long_unit_ids(store: HybridStore, ids: list) -> list:
-    """Units whose uncapped layout has more chunks than the index used to hold, in uz or ru."""
+    """Units whose uncapped layout has more chunks than the index used to hold, in a vector language."""
     out = []
     for art in load(store, ids):
-        for lang in ("uz", "ru"):
+        for lang in vector_languages(art):
             layout = chunk_layout(art, lang)
             if layout is not None and len(layout.texts) > LEGACY_CHUNK_CAP:
                 out.append(art.canonical_id)
@@ -100,7 +98,7 @@ def estimate(store: HybridStore, ids: list) -> dict:
     no_text = 0
     for art in load(store, ids):
         n_art = 0
-        for lang in ("uz", "ru"):
+        for lang in vector_languages(art):
             texts = build_chunks(art, lang)
             n_art += len(texts)
             by_lang[lang] += len(texts)
@@ -121,11 +119,11 @@ def cosine(a, b) -> float:
 
 async def check_endpoint(store: HybridStore, client: OpenRouterClient, known_ids: set) -> None:
     """Refuses to write unless the endpoint is OpenRouter and returns vectors from the SAME space as the stored ones."""
-    host = client.embedding_base_url.split("/")[2] if "//" in client.embedding_base_url else client.embedding_base_url
+    host = client.base_url.split("/")[2] if "//" in client.base_url else client.base_url
     if client.embedding_is_mock:
-        sys.exit("Embedding is in mock mode (no EMBEDDING_API_KEY/OPENROUTER_API_KEY or MOCK_EXTERNAL_APIS=true). Nothing written.")
+        sys.exit("Embedding is in mock mode (no OPENROUTER_API_KEY or MOCK_EXTERNAL_APIS=true). Nothing written.")
     if "openrouter.ai" not in host:
-        sys.exit(f"Embedding endpoint is {host}, not openrouter.ai. Set EMBEDDING_BASE_URL and EMBEDDING_API_KEY in .env. Nothing written.")
+        sys.exit(f"The endpoint is {host}, not openrouter.ai. Set OPENROUTER_BASE_URL and OPENROUTER_API_KEY in .env. Nothing written.")
 
     # several articles that already have vectors: re-embed their first chunk and compare with the stored vectors.
     # Same model => own similarity is high (old chunk headers/text may differ a little) and clearly above other articles.

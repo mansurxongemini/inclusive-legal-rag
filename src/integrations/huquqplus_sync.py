@@ -111,7 +111,7 @@ def split_post_into_chunks(post_title: str, text: str, max_chars: int = 3500) ->
     current_title = post_title
 
     def flush():
-        nonlocal current_paras, current_len, current_title
+        nonlocal current_paras, current_len
         if current_paras:
             body = "\n\n".join(current_paras)
             chunks.append((current_title, body))
@@ -322,6 +322,9 @@ async def upsert_post(
     path = db_path or get_huquqplus_db_path()
     init_huquqplus_db(path)
 
+    if post.lang not in settings.huquqplus_language_list:        # e.g. the Russian version of a post (HUQUQPLUS_LANGUAGES)
+        return {"action": "skipped_language", "wp_id": post.wp_id, "lang": post.lang}
+
     owner_id = f"{post.lang}:{post.wp_id}"
 
     # Mavjud holatni tekshirish
@@ -477,6 +480,34 @@ def delete_post(
     return True
 
 
+def purge_disallowed_languages(
+    store: HybridStore,
+    editorial: Optional[EditorialStore] = None,
+    db_path: Optional[Path] = None,
+) -> int:
+    """
+    Removes the posts of a language that is not synchronized (HUQUQPLUS_LANGUAGES) any more: their units leave the store
+    (text index, vectors), their Lex.uz links and the answer cache go with them, and the row stays as a 'deleted' record.
+    Returns the number of posts removed; nothing is left to remove on the next run.
+    """
+    editorial = editorial or EditorialStore()
+    path = db_path or get_huquqplus_db_path()
+    init_huquqplus_db(path)
+    allowed = settings.huquqplus_language_list
+    marks = ",".join("?" for _ in allowed)
+    with _sqlite_connect(path, timeout=30.0) as conn:
+        rows = conn.execute(
+            f"SELECT wp_id, lang FROM hp_posts WHERE status != 'deleted' AND lang NOT IN ({marks})", allowed,
+        ).fetchall()
+    removed = 0
+    for wp_id, lang in rows:
+        if delete_post(int(wp_id), lang, store, editorial, db_path=path):
+            removed += 1
+    if removed:
+        logger.info(f"Huquq+: {removed} posts of languages other than {allowed} removed")
+    return removed
+
+
 def suspend_post(owner_id: str, store: Optional[HybridStore] = None, db_path: Optional[Path] = None) -> bool:
     """
     Maqolani RAG'dan vaqtincha oladi (status = 'suspended').
@@ -565,7 +596,7 @@ async def full_sync(
     db_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """
-    uz va ru uchun to'liq sinxronlash:
+    HUQUQPLUS_LANGUAGES (odatda faqat uz) uchun to'liq sinxronlash:
     list_post_index -> hp_posts bilan diff_index -> fetch_posts -> upsert / delete.
     Bir vaqtda faqat bitta sync bajariladi.
     """
@@ -600,7 +631,7 @@ async def full_sync(
         run_id = cur.lastrowid
 
     async with _sync_lock:
-        started_at = _now()
+        _now()
         hp_client = client or HuquqPlusClient()
         if store is None:
             from src.api.app import get_store
@@ -614,7 +645,8 @@ async def full_sync(
         error_messages: List[str] = []
 
         try:
-            for lang in ("uz", "ru"):
+            total_removed += await asyncio.to_thread(purge_disallowed_languages, store, editorial, path)
+            for lang in settings.huquqplus_language_list:
                 # 1. Hozirgi saytdagi indeks
                 try:
                     current_index = await asyncio.to_thread(hp_client.list_post_index, lang=lang)
@@ -769,6 +801,9 @@ async def _process_queue_unlocked(
             if event == "delete":
                 delete_post(post_id, lang, store, editorial, db_path=path)
                 queue.mark_done(row_id)
+                processed += 1
+            elif event == "upsert" and lang not in settings.huquqplus_language_list:
+                queue.mark_done(row_id)          # a language that is not synchronized: nothing to fetch
                 processed += 1
             elif event == "upsert":
                 post = await asyncio.to_thread(hp_client.fetch_post, post_id, lang=lang)

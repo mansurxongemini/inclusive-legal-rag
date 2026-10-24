@@ -196,15 +196,3 @@ async def test_reranker_attaches_the_focus_to_each_context():
     out = await Reranker(client=SimpleNamespace()).rerank(
         query="kunduzgi parvarish", language="ru", candidates=[cand], store=store, top_n=5, use_model=False)
     assert out[0].focus == {"ru": 2, "uz": _target_chunk(art)}
-
-
-@pytest.mark.asyncio
-async def test_passage_focus_can_be_switched_off(monkeypatch):
-    monkeypatch.setattr(settings, "PASSAGE_FOCUS", False)
-    art = _article()
-    store = SimpleNamespace(get_articles_batch=lambda ids: {art.canonical_id: art})
-    cand = ScoredArticle(canonical_id=art.canonical_id, rrf_score=0.5, vector_chunk=("uz", 2))
-    out = await Reranker(client=SimpleNamespace()).rerank(
-        query="kunduzgi parvarish", language="uz", candidates=[cand], store=store, top_n=5, use_model=False)
-    assert out[0].focus == {}
-    assert focused_text(art, "uz", out[0].focus, 1500).startswith(art.get_text("uz")[:200])

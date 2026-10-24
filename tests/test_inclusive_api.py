@@ -1,10 +1,9 @@
 """
-Automated Test Suite for Inclusive Legal RAG API.
+Public browsing API of the legal corpus (categories, norms, documents, stats) and the site question endpoint.
 """
 import pytest
 from httpx import AsyncClient, ASGITransport
 from src.api.app import app
-from src.api.auth.api_keys import api_key_manager
 
 
 @pytest.mark.asyncio
@@ -49,26 +48,7 @@ async def test_inclusive_norms_search():
 
 
 @pytest.mark.asyncio
-async def test_api_key_lifecycle():
-    # 1. Create key
-    new_key = api_key_manager.create_key("Unit Test Client", rate_limit=30)
-    raw_key = new_key["api_key"]
-    key_id = new_key["key_id"]
-
-    # 2. Validate
-    rec = api_key_manager.validate_key(raw_key)
-    assert rec is not None
-    assert rec.key_id == key_id
-    assert rec.name == "Unit Test Client"
-
-    # 3. Revoke
-    revoked = api_key_manager.revoke_key(key_id)
-    assert revoked is True
-    assert api_key_manager.validate_key(raw_key) is None
-
-
-@pytest.mark.asyncio
-async def test_inclusive_query_endpoint():
+async def test_query_endpoint_with_category_and_group():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         payload = {
@@ -78,7 +58,7 @@ async def test_inclusive_query_endpoint():
             "language": "uz",
             "mode": "plain",
         }
-        res = await ac.post("/api/v1/inclusive/query", json=payload)
+        res = await ac.post("/api/v1/query", json=payload)
         assert res.status_code == 200
         data = res.json()
         assert "answer" in data
@@ -127,6 +107,3 @@ async def test_get_document_norms():
         first_norm = data["norms"][0]
         assert "canonical_id" in first_norm
         assert "text_uz" in first_norm
-
-
-

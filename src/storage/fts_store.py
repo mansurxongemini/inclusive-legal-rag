@@ -9,8 +9,6 @@ from src.config import settings
 from src.schema.canonical import CanonicalArticle
 from src.storage.sqlite_utils import connect as _sqlite_connect
 from src.nlp.transliteration import normalize_apostrophes
-from src.nlp.stopwords import STOPWORDS
-from src.nlp.stemming import search_stem
 
 logger = logging.getLogger(__name__)
 
@@ -28,25 +26,20 @@ def fts_text(text: str) -> str:
     return _INNER_APOSTROPHE.sub("", normalize_apostrophes(text or ""))
 
 
-def build_fts_terms(query: str, stemmed: Optional[bool] = None) -> List[str]:
+def build_fts_terms(query: str) -> List[str]:
     """
-    FTS5 prefix terms of a question: `"stem"*`. Words without a topic are dropped (nlp/stopwords.py; when nothing else
-    is left the question keeps them), and a long word is cut to its search stem (nlp/stemming.py) because the wildcard only
-    extends the query word: the query form "nogironligidan" never matched the unit's "nogironlik". Numbers and codes
-    (483-modda, VMQ-62) are kept whole.
+    FTS5 prefix terms of a question: `"word"*`, whole words. Each word is quoted, and quotes and other characters that FTS5
+    treats as syntax are stripped, so a question can never inject an operator. Numbers and codes (483-modda, VMQ-62) stay whole.
+    Dropping question words and cutting words to a search stem were measured on the stress set and made the ranking worse
+    (hit@1 68-70% against 72.7%): the whole-word list is what the ranking was tuned on.
     """
     words = []
     for word in fts_text(query).replace('"', '').replace("'", "").split():
         clean = "".join(c for c in word if c.isalnum() or c in "-_")
         if clean:
             words.append(clean)
-    use_stopwords = settings.FTS_STOPWORDS if stemmed is None else stemmed
-    stem = settings.FTS_STEM_PREFIX if stemmed is None else int(stemmed)
-    content = [w for w in words if w.lower() not in STOPWORDS] if use_stopwords else words
     terms: List[str] = []
-    for w in content or words:
-        if stem:
-            w = search_stem(w)
+    for w in words:
         term = f'"{w}"*'
         if term not in terms:
             terms.append(term)
@@ -195,7 +188,6 @@ class SqliteFtsStore:
         query: str,
         language: str = "uz",
         top_k: int = 20,
-        stemmed: Optional[bool] = None,
     ) -> List[Dict]:
         """
         Executes BM25 search on FTS5 virtual table.
@@ -203,11 +195,9 @@ class SqliteFtsStore:
         """
         if language in [l.strip() for l in settings.FTS_EXCLUDE_LANGUAGES.split(",") if l.strip()]:
             return []
-        clean_terms = build_fts_terms(query, stemmed)
+        clean_terms = build_fts_terms(query)
         if not clean_terms:
             return []
-
-        fts_match_query = " OR ".join(clean_terms)
 
         with self._get_connection() as conn:
             cursor = conn.cursor()

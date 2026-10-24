@@ -1,3 +1,4 @@
+import json
 import pytest
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -395,6 +396,26 @@ async def test_query_translator_passes_reasoning_and_max_tokens():
 
 
 @pytest.mark.asyncio
+async def test_uzbek_normalization_is_skipped_in_mock_mode_and_passes_reasoning_and_max_tokens():
+    assert await QueryTranslator.normalize_uzbek("озик овкат ккийим вавчир", OpenRouterClient()) is None   # mock client
+
+    recorded_kwargs = {}
+
+    class RecordingClient:
+        is_mock = False
+
+        async def chat_completion(self, **kwargs):
+            recorded_kwargs.update(kwargs)
+            return "Nogironligi bo'lgan shaxslarning pensiya ta'minoti qanday belgilanadi?"
+
+    unique_query = "Nogironligi bolgan shaxslar pensiyasi qanday hisoblanadi 2026 yilda?"
+    res = await QueryTranslator.normalize_uzbek(unique_query, RecordingClient())
+    assert res == "Nogironligi bo'lgan shaxslarning pensiya ta'minoti qanday belgilanadi?"
+    assert recorded_kwargs.get("reasoning") == {"enabled": False}
+    assert recorded_kwargs.get("max_tokens") == 300
+
+
+@pytest.mark.asyncio
 async def test_jev_ranker_rank():
     from src.retrieval.jev_ranker import JevRanker
     from src.retrieval.reranker import RetrievedArticleContext
@@ -608,29 +629,21 @@ def test_jev_gate_decision(monkeypatch):
 
     monkeypatch.setattr(settings, "GATE_JEV_SCOPE_ENABLED", True)
     monkeypatch.setattr(settings, "GATE_JEV_MIN_IN_SCOPE", 0.3)
-    monkeypatch.setattr(settings, "GATE_JEV_ANSWERABLE_CEILING", 0.9)
-    monkeypatch.setattr(settings, "GATE_JEV_MIN_ANSWERABLE", 0.0)
 
-    # (in_scope 0.1, answerable 0.5) -> refused "jev_out_of_scope"
-    d1 = jev_gate_decision(in_scope=0.1, answerable=0.5, top_probability=None)
-    assert d1.answerable is False
-    assert d1.reason == "jev_out_of_scope"
+    # a low scope is refused whatever the answerability: the Traffic and Criminal codes in the corpus answer their
+    # questions (0.89-0.96) just like the Convention questions that Jev misjudges
+    for answerable in (0.5, 0.95, None):
+        d = jev_gate_decision(in_scope=0.1, answerable=answerable, top_probability=None)
+        assert d.answerable is False and d.reason == "jev_out_of_scope"
 
-    # (0.1, 0.95) -> answerable
-    d2 = jev_gate_decision(in_scope=0.1, answerable=0.95, top_probability=None)
-    assert d2.answerable is True
-    assert d2.reason == "jev_match"
+    # in scope: accepted, and the answerability (else the top probability, else 1.0) is the confidence
+    d = jev_gate_decision(in_scope=0.8, answerable=0.2, top_probability=None)
+    assert d.answerable is True and d.reason == "jev_match" and d.confidence == 0.2
+    assert jev_gate_decision(in_scope=0.8, answerable=None, top_probability=0.6).confidence == 0.6
+    assert jev_gate_decision(in_scope=None, answerable=None, top_probability=None).answerable is True   # no scope signal
 
-    # (0.8, 0.2) -> answerable with GATE_JEV_MIN_ANSWERABLE 0
-    d3 = jev_gate_decision(in_scope=0.8, answerable=0.2, top_probability=None)
-    assert d3.answerable is True
-    assert d3.reason == "jev_match"
-
-    # with monkeypatched GATE_JEV_MIN_ANSWERABLE=0.3 -> (0.8, 0.2) refused "jev_no_evidence"
-    monkeypatch.setattr(settings, "GATE_JEV_MIN_ANSWERABLE", 0.3)
-    d4 = jev_gate_decision(in_scope=0.8, answerable=0.2, top_probability=None)
-    assert d4.answerable is False
-    assert d4.reason == "jev_no_evidence"
+    monkeypatch.setattr(settings, "GATE_JEV_SCOPE_ENABLED", False)
+    assert jev_gate_decision(in_scope=0.1, answerable=0.5, top_probability=None).answerable is True
 
 
 @pytest.mark.asyncio
@@ -656,6 +669,7 @@ async def test_openrouter_decide_http_error():
     client = OpenRouterClient()
     client.is_mock = False
     client.api_key = "test_key"
+    client.jev_api_key = client.api_key            # decisions go through the Jev client: with one shared key that is the fake
     client.base_url = "https://openrouter.ai/api/v1"
     client._http_client = FakeAsyncClient()
 
@@ -676,7 +690,8 @@ async def test_rrf_provider_never_calls_a_rerank_model(monkeypatch, provider):
     from src.config import settings
 
     monkeypatch.setattr(settings, "RERANK_PROVIDER", provider)
-    art = CanonicalArticle.model_validate(__import__("json").load(open("data/pilot_laws/law_disability_2020.json", encoding="utf-8"))[0])
+    with open("data/pilot_laws/law_disability_2020.json", encoding="utf-8") as f:
+        art = CanonicalArticle.model_validate(json.load(f)[0])
     arts = {f"id{i}": art.model_copy(update={"canonical_id": f"id{i}"}) for i in range(12)}
 
     class NoModelClient:

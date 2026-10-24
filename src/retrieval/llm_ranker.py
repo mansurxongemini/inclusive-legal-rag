@@ -1,5 +1,5 @@
 """
-Reranking and scope check on the generation provider (Meta AI), used when Jev (OpenRouter) is unavailable: the key's
+Reranking and scope check by the chat model, used when Jev is off (JEV_ENABLED=false) or unavailable: the key's
 balance is at its reserve, OPENROUTER_PAUSED is on, or the provider refused. It answers the same two questions as Jev --
 which passages answer the question, and is the question in scope -- with one small chat call each, so that retrieval
 keeps a judged order instead of falling back to the plain rank-fusion order and a gate without a scope signal.
@@ -68,8 +68,7 @@ class LlmRanker:
         except Exception as e:
             logger.warning(f"Fallback scope check failed: {e}")
             return None
-        p = _probability(data.get("in_scope"))
-        return None if p is None else min(1.0, p * settings.LLM_SCOPE_SCALE)
+        return _probability(data.get("in_scope"))
 
     async def rank(self, query: str, contexts: list, subquestions: Optional[List[str]] = None):
         """JevRankResult over `contexts` (all of them keep their place; the model's picks come first), or None."""

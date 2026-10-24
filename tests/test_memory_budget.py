@@ -1,7 +1,4 @@
 import sys
-import pytest
-from src.api.routes.health import get_process_memory_mb
-from src.api.app import get_store
 
 
 def test_no_local_model_dependencies():

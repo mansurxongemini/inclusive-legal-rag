@@ -27,21 +27,3 @@ export function SkeletonCard({ rows = 3, className = '' }) {
     className: `card-surface p-5 space-y-3 ${className}`.trim()
   }, ...children);
 }
-
-export function SkeletonTable({ cols = 5, rows = 4 }) {
-  const trs = [];
-
-  for (let r = 0; r < rows; r++) {
-    const tds = [];
-    for (let c = 0; c < cols; c++) {
-      tds.push(h('td', { className: 'p-3' }, SkeletonBox({ width: c === 0 ? '70%' : '50%', height: '14px' })));
-    }
-    trs.push(h('tr', {}, ...tds));
-  }
-
-  return h('div', { className: 'table-wrapper' },
-    h('table', { className: 'data-table' },
-      h('tbody', {}, ...trs)
-    )
-  );
-}

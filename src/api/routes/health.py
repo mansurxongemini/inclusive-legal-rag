@@ -1,7 +1,7 @@
 import os
 import psutil
 from fastapi import APIRouter, Depends
-from src.storage.hybrid_store import HybridStore
+from src.api.auth.admin import require_admin
 from src.config import settings
 from src.clients.spend import ledger
 
@@ -24,21 +24,18 @@ def get_process_memory_mb() -> float:
         return 0.0
 
 
-@router.get("/health")
-async def health_check():
-    rss_mb = get_process_memory_mb()
-    
-    # Check storage health
+def _snapshot() -> dict:
+    """The service's state: store reachable, budget state, memory. Plain `def` (it reads SQLite): runs in the thread pool."""
     store_healthy = True
     article_count = 0
     try:
         from src.api.app import get_store
-        store = get_store()
-        article_count = store.count()
+        article_count = get_store().count()
     except Exception:
         store_healthy = False
 
     budget_state = ledger.state()
+    rss_mb = get_process_memory_mb()
     return {
         "status": "healthy" if store_healthy and budget_state != "exhausted" else "degraded",
         # ok | soft (light calls on the free provider) | exhausted (embeddings and Jev paused: full-text search only)
@@ -50,4 +47,18 @@ async def health_check():
         "memory_budget_mb": settings.MEMORY_BUDGET_MB,
         "memory_budget_exceeded": (rss_mb > settings.MEMORY_BUDGET_MB),
         "articles_indexed": article_count,
+        "spend": ledger.summary(),
     }
+
+
+@router.get("/health")
+def health_check():
+    """Public liveness for load balancers and the container health check: the status and nothing about the internals."""
+    snap = _snapshot()
+    return {"status": snap["status"], "service": snap["service"], "version": snap["version"]}
+
+
+@router.get("/health/details", dependencies=[Depends(require_admin)])
+def health_details():
+    """Budget state, memory and corpus size: administrators only (the public /health does not publish them)."""
+    return _snapshot()

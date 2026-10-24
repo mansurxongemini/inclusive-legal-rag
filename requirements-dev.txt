@@ -1,0 +1,5 @@
+# Development and CI: the runtime dependencies plus the test runner and the linter.
+-r requirements.txt
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pyflakes>=3.2.0

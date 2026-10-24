@@ -2,13 +2,13 @@
 OpenRouter spend ledger and monthly budget guard.
 
 Every OpenRouter response (chat, embeddings, Jev decisions) carries `usage.cost` in USD. The ledger adds it up per day
-and kind in a small SQLite file and tells the client in which state the month is:
+and kind (chat, embedding, jev, rerank) in a small SQLite file and tells the client in which state the month is:
 
 * ok         - below OPENROUTER_BUDGET_SOFT_RATIO of the monthly budget: everything runs;
-* soft       - above it: optional OpenRouter calls (query rewriting, claim check, backup model) are skipped, the free
-               generation provider (Meta) does that work instead;
-* exhausted  - the monthly budget is used up: embeddings and Jev are skipped too, retrieval degrades to full-text
-               search with the RRF order, and nothing more is spent until the month changes.
+* soft       - above it: the optional calls (query rewriting, claim check, history condensing) are skipped;
+* exhausted  - the monthly budget is used up, the key's own limit is reached or OPENROUTER_PAUSED is on: no call is made
+               at all. Retrieval degrades to full-text search with the RRF order and an answer to a quotation of the
+               matching norms (no model writes a word of it), until the month changes or the key is topped up.
 
 Evaluation scripts count into their own ledger (SPEND_SCOPE=eval) and are never limited by the service budget.
 """
@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from src.config import settings
+from src.storage.sqlite_utils import connect as _sqlite_connect
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class SpendLedger:
             logger.warning(f"Spend ledger unavailable ({e}); the budget guard is off")
 
     def _connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self.path, timeout=10)
+        return _sqlite_connect(self.path, timeout=10)
 
     @staticmethod
     def _today() -> str:
@@ -110,12 +111,12 @@ class SpendLedger:
         balance (GET /credits: total_credits - total_usage). None when neither is known.
         """
         try:
-            http = await client.get_embedding_client()
+            http = await client.get_client()
             known = []
-            r = await http.get(f"{client.embedding_base_url}/key", timeout=15)
+            r = await http.get(f"{client.base_url}/key", timeout=15)
             if r.status_code == 200 and r.json().get("data", {}).get("limit_remaining") is not None:
                 known.append(float(r.json()["data"]["limit_remaining"]))
-            c = await http.get(f"{client.embedding_base_url}/credits", timeout=15)
+            c = await http.get(f"{client.base_url}/credits", timeout=15)
             if c.status_code == 200:
                 data = c.json().get("data", {})
                 if data.get("total_credits") is not None:

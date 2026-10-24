@@ -54,7 +54,7 @@ class QueryTranslator:
             {"role": "user", "content": query},
         ]
 
-        is_reasoning = any(k in getattr(client, "primary_model", "") for k in ("muse", "nemotron", "r1"))
+        is_reasoning = any(k in getattr(client, "primary_model", "") for k in ("nemotron", "r1"))
         max_toks = 1500 if is_reasoning else 300
         try:
             raw = await client.chat_completion(
@@ -110,7 +110,7 @@ class QueryTranslator:
             "Keep the meaning and every sub-question; do not add facts and do not answer. "
             "Output ONLY the rewritten question, no quotes or explanations."
         )
-        is_reasoning = any(k in getattr(client, "primary_model", "") for k in ("muse", "nemotron", "r1"))
+        is_reasoning = any(k in getattr(client, "primary_model", "") for k in ("nemotron", "r1"))
         max_toks = 1500 if is_reasoning else 300
         try:
             raw = await client.chat_completion(
@@ -120,6 +120,7 @@ class QueryTranslator:
                 min_chars=2,
                 reasoning={"enabled": False},
                 light=True,
+                optional=True,
             )
             rewritten = (raw or "").strip().strip('"\'`«»').strip()
             if not rewritten or len(rewritten) > 2 * len(query) + 100 or any("Ѐ" <= ch <= "ӿ" for ch in rewritten):
@@ -177,6 +178,7 @@ class QueryTranslator:
                 min_chars=2,
                 reasoning={"enabled": False},
                 light=True,
+                optional=True,
             )
             questions = _parse_subquestions(raw or "")
             if not questions:

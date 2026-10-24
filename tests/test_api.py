@@ -22,8 +22,13 @@ async def test_health_endpoint():
         assert res.status_code == 200
         data = res.json()
         assert data["status"] in ("healthy", "degraded")
-        assert "rss_memory_mb" in data
-        assert data["articles_indexed"] >= 8
+        # the public endpoint says nothing about the internals ...
+        assert set(data) == {"status", "service", "version"}
+        # ... they are administrative
+        details = await ac.get("/health/details")
+        assert details.status_code == 200
+        assert "rss_memory_mb" in details.json()
+        assert details.json()["articles_indexed"] >= 8
 
 
 @pytest.mark.asyncio

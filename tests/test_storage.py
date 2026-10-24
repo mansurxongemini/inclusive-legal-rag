@@ -1,5 +1,4 @@
 import pytest
-import shutil
 from pathlib import Path
 from src.schema.canonical import CanonicalArticle
 from src.storage.hybrid_store import HybridStore
@@ -75,7 +74,7 @@ from scripts.reembed_context import main as reembed_main
 @pytest.mark.asyncio
 async def test_reembed_articles(tmp_path, monkeypatch):
     from src.config import settings
-    monkeypatch.setattr(settings, "VECTOR_EXCLUDE_LANGUAGES", "")          # this test is about both languages
+    monkeypatch.setattr(settings, "VECTOR_LANGUAGES", "uz,ru")             # this test is about both languages
     store_dir = tmp_path / "test_reembed_store"
     store = HybridStore(str(store_dir))
     client = OpenRouterClient()
@@ -326,3 +325,101 @@ def test_old_versions_of_the_vector_table_are_pruned(tmp_path):
     assert before > 3
     store.optimize(timedelta(seconds=0))
     assert count() < before and len(store.table) == 7
+
+
+def _three_language_article(canonical_id: str) -> CanonicalArticle:
+    from src.schema.canonical import ArticleMetadata
+
+    return CanonicalArticle(
+        canonical_id=canonical_id,
+        metadata=ArticleMetadata(
+            law_id="law_4", law_title={"uz": "Qonun 4"}, law_number="O'RQ-4", article_number="1-modda",
+            article_title={"uz": "Modda"}, source_url="https://lex.uz/docs/4", effective_date="2022-01-01",
+            last_verified_date="2022-01-01", source_hash="sha256:three", category="social_protection",
+        ),
+        translations={"uz": "Nogironligi bo'lgan shaxslar uchun imtiyozlar belgilanadi.",
+                      "ru": "Устанавливаются льготы для лиц с инвалидностью.",
+                      "en": "Benefits are established for persons with disabilities.", "xx": "   "},
+    )
+
+
+def test_only_uzbek_gets_vectors_the_other_texts_are_kept(monkeypatch):
+    from src.config import Settings, settings
+    from src.storage.hybrid_store import vector_languages
+
+    assert Settings.model_fields["VECTOR_LANGUAGES"].default == "uz"
+    art = _three_language_article("langs_rule_1")
+    monkeypatch.setattr(settings, "VECTOR_LANGUAGES", "uz")
+    assert vector_languages(art) == ["uz"]                            # ru and en are kept in the article, never embedded
+    assert art.translations["ru"] and art.translations["en"]
+    monkeypatch.setattr(settings, "VECTOR_LANGUAGES", "uz, RU")
+    assert vector_languages(art) == ["uz", "ru"]                      # "xx" has no text and is not listed
+    monkeypatch.setattr(settings, "VECTOR_LANGUAGES", " ")
+    assert vector_languages(art) == ["uz"]                            # a blank setting is the default, not "no vectors"
+
+
+@pytest.mark.asyncio
+async def test_single_and_batch_indexing_make_the_same_vector_languages(tmp_path, monkeypatch):
+    """index_article embedded every translation, the batch and re-embedding paths only a fixed uz/ru pair: a unit had
+    other vectors depending on which importer had written it."""
+    from src.config import settings
+
+    monkeypatch.setattr(settings, "VECTOR_LANGUAGES", "uz")
+    art = _three_language_article("langs_same_1")
+    single, batch = HybridStore(str(tmp_path / "single")), HybridStore(str(tmp_path / "batch"))
+    await single.index_article(art, client=OpenRouterClient())
+    await batch.index_articles_batch([art], client=OpenRouterClient())
+
+    def languages(store):
+        rows = store.vector_store.table.search().select(["canonical_id", "language"]).limit(50).to_arrow().to_pylist()
+        return {r["language"] for r in rows if r["canonical_id"] == "langs_same_1"}
+
+    assert languages(single) == languages(batch) == {"uz"}
+
+
+def test_vector_store_writes_and_searches_only_the_vector_languages(tmp_path, monkeypatch):
+    from src.config import settings
+    from src.storage.vector_store import LanceVectorStore
+
+    store = LanceVectorStore(str(tmp_path))
+    vec = [0.1] * settings.EMBEDDING_DIMENSION
+
+    def rec(cid, language):
+        return {"canonical_id": cid, "vector": vec, "language": language, "status": "active", "category": "c",
+                "disability_types": "[]", "embedding_model_version": "v"}
+
+    def found():
+        return {r["canonical_id"] for r in store.search_vector(vec, top_k=10)}
+
+    monkeypatch.setattr(settings, "VECTOR_LANGUAGES", "uz")
+    store.upsert_vectors([rec("a_art_1", "uz"), rec("b_art_1", "ru")])
+    assert store.count() == 1 and found() == {"a_art_1"}              # the Russian record is not stored
+    store.upsert_vectors([rec("a_art_1", "ru")])                      # only foreign records: nothing is written or wiped
+    assert store.count() == 1 and found() == {"a_art_1"}
+
+    # a Russian row that is already in the table (a store restored from an old backup) is not searched
+    monkeypatch.setattr(settings, "VECTOR_LANGUAGES", "uz,ru")
+    store.upsert_vectors([rec("d_art_1", "ru")])
+    assert found() == {"a_art_1", "d_art_1"}
+    monkeypatch.setattr(settings, "VECTOR_LANGUAGES", "uz")
+    assert found() == {"a_art_1"}
+
+
+def test_deleting_what_has_no_vectors_does_not_commit_a_table_version(tmp_path):
+    """A delete that matches nothing used to commit a version all the same: removing 257 units that have no vectors (the
+    Russian Huquq+ posts) grew the table by 257 versions."""
+    from src.config import settings
+    from src.storage.vector_store import LanceVectorStore
+
+    store = LanceVectorStore(str(tmp_path))
+    vec = [0.1] * settings.EMBEDDING_DIMENSION
+    store.upsert_vectors([{"canonical_id": "a_art_1", "vector": vec, "language": "uz", "status": "active", "category": "c",
+                           "disability_types": "[]", "embedding_model_version": "v"}])
+    versions = len(store.table.list_versions())
+
+    store.delete_by_canonical_id("hp_ru_2966_1")
+    store.delete_many(["hp_ru_2966_2", "hp_ru_2966_3"])
+    assert len(store.table.list_versions()) == versions and store.count() == 1
+
+    store.delete_by_canonical_id("a_art_1")
+    assert store.count() == 0 and len(store.table.list_versions()) == versions + 1

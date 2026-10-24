@@ -30,7 +30,6 @@ ROLE_CHAPTER = "TEXT_HEADER_DEFAULT"
 ROLE_ARTICLE = "CLAUSE_DEFAULT"
 ROLE_ANNEX_BANNER = {"APPL_BANNER_LANDSCAPE_TITLE", "APPL_BANNER_PORTRAIT_TITLE", "APPL_BANNER_TITLE"}
 ROLE_ANNEX_TITLE = {"ACT_TITLE_APPL", "ACT_TITLE_APPL_ADD"}
-ROLE_AMENDMENT = "CHANGES_ORIGINS"
 ROLES_SKIPPED = {
     "COMMENT", "COMMENTLEXUZ", "INDEXES_ON_REF", "ACCEPTING_BODY", "ACT_FORM", "GRIF_PARLAMENT", "GRIF_PRESIDENT",
     "SIGNATURE", "SIGNATURE_WITH_BOLD", "ACT_ESSENTIAL_ELEMENTS", "ACT_ESSENTIAL_ELEMENTS_NUM", "BY_DEFAULT",
@@ -44,7 +43,6 @@ _UI_NOISE = re.compile(
     re.IGNORECASE,
 )
 _SUP_DIGITS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
-_SUP_FROM_UNICODE = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
 
 _NUM = r"(\d+(?:[\^-]\d+)?)"
 _ARTICLE_RE = re.compile(
@@ -187,10 +185,6 @@ def detect_doc_type(title: str, body: str, header_line: str = "") -> str:
         if needle in hay:
             return label
     return "Boshqa"
-
-
-def _to_latin(text: str, script: str) -> str:
-    return cyrillic_to_latin(text) if script == "cyrillic" else text
 
 
 def _match_article(line: str):

@@ -9,7 +9,6 @@ _TEST_ROOT = tempfile.mkdtemp(prefix="legal_rag_tests_")
 atexit.register(shutil.rmtree, _TEST_ROOT, ignore_errors=True)
 os.environ["STORAGE_DIR"] = os.path.join(_TEST_ROOT, "store")
 os.environ["CACHE_DB_PATH"] = os.path.join(_TEST_ROOT, "cache", "query_cache.db")
-os.environ["REVIEW_QUEUE_PATH"] = os.path.join(_TEST_ROOT, "store", "review_queue.db")
 os.environ["MOCK_EXTERNAL_APIS"] = "true"
 os.environ["ADMIN_API_KEY"] = ""
 
@@ -46,6 +45,40 @@ def force_mock_for_tests(monkeypatch):
 def reset_rate_limiter():
     """The limiter is a process-wide singleton; keep one test's traffic from throttling the next."""
     from src.api.middleware.rate_limiter import rate_limiter
-    rate_limiter.requests.clear()
+    rate_limiter.reset()
     yield
-    rate_limiter.requests.clear()
+    rate_limiter.reset()
+
+
+@pytest.fixture(autouse=True)
+def no_real_network(monkeypatch):
+    """The suite is offline by contract (CI has no keys, and a test must never spend money or hit a live site). A socket
+    that connects to anything but this machine is refused, and the test fails even when the code under test swallowed
+    the error (a client that turns a connection failure into "provider unavailable" would hide it otherwise)."""
+    import socket
+
+    real_connect, real_connect_ex = socket.socket.connect, socket.socket.connect_ex
+    attempts = []
+
+    def _remote(address) -> bool:
+        if not isinstance(address, tuple):
+            return False                                          # unix socket
+        host = address[0]
+        return not (isinstance(host, str) and (host in ("localhost", "::1") or host.startswith("127.")))
+
+    def guarded_connect(self, address):
+        if _remote(address):
+            attempts.append(address)
+            raise OSError(f"a test tried to open a real network connection to {address!r}")
+        return real_connect(self, address)
+
+    def guarded_connect_ex(self, address):
+        if _remote(address):
+            attempts.append(address)
+            raise OSError(f"a test tried to open a real network connection to {address!r}")
+        return real_connect_ex(self, address)
+
+    monkeypatch.setattr(socket.socket, "connect", guarded_connect)
+    monkeypatch.setattr(socket.socket, "connect_ex", guarded_connect_ex)
+    yield
+    assert not attempts, f"the test reached the network: {attempts}"

@@ -1,4 +1,3 @@
-import pytest
 from src.nlp.legal_synonyms import LegalSynonymExpander
 from src.nlp.query_decomposer import LegalQueryDecomposer
 from src.generation.validator import CitationValidator

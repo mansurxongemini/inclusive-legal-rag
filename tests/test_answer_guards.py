@@ -40,7 +40,7 @@ class Client:
     """LLM stub: answers come from `replies` in order; the stream yields `stream_text` in two parts."""
 
     is_mock = False
-    primary_model = fallback_model = "muse-spark-1.3"
+    primary_model = "test/model"
 
     def __init__(self, replies=(), stream_text=""):
         self.replies, self.calls, self.stream_text = list(replies), [], stream_text
@@ -179,7 +179,6 @@ def test_markers_after_the_full_stop_belong_to_their_sentence():
 @pytest.mark.asyncio
 async def test_a_hung_generation_is_cut_off_and_the_norms_are_shown(monkeypatch):
     import asyncio
-    from src.gateway import service
 
     async def hang(self, *a, **k):
         await asyncio.sleep(30)

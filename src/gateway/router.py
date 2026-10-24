@@ -41,7 +41,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/assistant", tags=["Assistant API"])
 
-DISCLAIMER_TEXT = disclaimer_text("uz")  # kept for importers; responses use disclaimer_text(<answer language>)
 
 
 class AskRequest(BaseModel):

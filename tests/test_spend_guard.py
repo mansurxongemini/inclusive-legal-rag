@@ -1,11 +1,9 @@
 """OpenRouter budget guard: costs are summed per month, the state follows the budget, and the client pauses what it must."""
-import json
 
 import httpx
 import pytest
 
 from src.clients.openrouter import OpenRouterClient
-from src.clients import spend
 from src.clients.spend import SpendLedger, cost_of
 from src.config import settings
 
@@ -26,11 +24,11 @@ def test_state_follows_the_monthly_budget(tmp_path, monkeypatch):
     assert led.state() == "ok"
     led.add("jev", 7.9)
     assert led.state() == "ok"
-    led.add("utility", 0.2)
+    led.add("chat", 0.2)
     assert led.state() == "soft"
     led.add("embedding", 2.0)
     assert led.state() == "exhausted"
-    assert led.by_kind() == {"jev": 7.9, "utility": 0.2, "embedding": 2.0}
+    assert led.by_kind() == {"jev": 7.9, "chat": 0.2, "embedding": 2.0}
     monkeypatch.setattr(settings, "OPENROUTER_MONTHLY_BUDGET_USD", 0.0)
     assert led.state() == "ok"                       # 0 switches the guard off
 
@@ -43,7 +41,7 @@ def test_the_month_is_counted_from_the_file_and_evaluation_is_never_limited(tmp_
     assert other_process.month_total() == pytest.approx(0.6)
     assert _ledger(tmp_path / "x", scope="eval").state() == "ok"
     ev = _ledger(tmp_path / "y", scope="eval")
-    ev.add("utility", 50.0)
+    ev.add("chat", 50.0)
     assert ev.state() == "ok"
 
 
@@ -61,27 +59,27 @@ class Exhausted:
 def _client(handler):
     c = OpenRouterClient()
     c.is_mock = False
-    c.utility_base_url, c.utility_api_key = "https://openrouter.ai/api/v1", "k"
-    c._utility_http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
-    c.embedding_api_key, c.jev_api_key = "e", "j"
+    c.api_key, c.base_url = "k", "https://openrouter.ai/api/v1"
+    c._http_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
     return c
 
 
 @pytest.mark.asyncio
-async def test_light_calls_leave_openrouter_once_the_soft_limit_is_reached(monkeypatch):
+async def test_optional_calls_leave_openrouter_once_the_soft_limit_is_reached(monkeypatch):
     calls = []
 
     def handler(request):
         calls.append(request)
         return httpx.Response(200, json={"choices": [{"message": {"content": "javob"}}], "usage": {"cost": 0.001}})
 
-    monkeypatch.setattr(settings, "UTILITY_MODEL", "cheap/model")
     c = _client(handler)
     fake = Exhausted("ok")
     monkeypatch.setattr("src.clients.openrouter.ledger", fake)
-    assert await c.utility_chat([{"role": "user", "content": "q"}]) == "javob" and fake.added == ("utility", 0.001)
+    assert await c.chat_completion([{"role": "user", "content": "q"}], min_chars=2, optional=True) == "javob"
+    assert fake.added == ("chat", 0.001)
     monkeypatch.setattr("src.clients.openrouter.ledger", Exhausted("soft"))
-    assert await c.utility_chat([{"role": "user", "content": "q"}]) is None        # the caller falls back to Meta
+    with pytest.raises(RuntimeError, match="optional"):
+        await c.chat_completion([{"role": "user", "content": "q"}], min_chars=2, optional=True)
     assert len(calls) == 1
 
 

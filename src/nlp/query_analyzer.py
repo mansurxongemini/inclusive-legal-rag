@@ -96,6 +96,15 @@ class QueryAnalyzer:
         "administrative", "code", "procedure", "claim", "appeal"
     }
 
+    # Everyday English words (three letters or more) that Uzbek written in Latin does not contain. The keyword list above is
+    # legal vocabulary: "hello, can you help me with my rights" has almost none of it, and a question with no keyword at all
+    # would otherwise be taken for Uzbek.
+    ENGLISH_FUNCTION_WORDS = {
+        "the", "and", "with", "this", "that", "these", "those", "what", "when", "where", "which", "who", "whom", "how", "why",
+        "are", "you", "your", "can", "could", "would", "should", "will", "does", "did", "have", "has", "not", "from", "about",
+        "please", "hello", "need", "want", "tell", "there", "they", "their", "any", "much", "many", "some", "than", "then",
+    }
+
     SUPERSCRIPT_MAP = {
         "¹": "-1", "²": "-2", "³": "-3", "⁴": "-4", "⁵": "-5",
         "⁶": "-6", "⁷": "-7", "⁸": "-8", "⁹": "-9", "⁰": "-0",
@@ -110,8 +119,7 @@ class QueryAnalyzer:
         script = detect_script(text)
         
         # Check English words
-        en_matches = len(words.intersection(cls.ENGLISH_KEYWORDS))
-        ru_matches = len(words.intersection(cls.RUSSIAN_KEYWORDS))
+        en_matches = len(words.intersection(cls.ENGLISH_KEYWORDS)) + len(words.intersection(cls.ENGLISH_FUNCTION_WORDS))
         uz_matches = len(words.intersection(cls.UZBEK_KEYWORDS))
 
         if any(char in cls.UZBEK_SPECIFIC_CHARS for char in text):

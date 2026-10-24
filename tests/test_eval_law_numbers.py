@@ -1,12 +1,7 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 import pytest
 
-from src.evaluation.retrieval_eval import (
-    EvalReport,
-    ItemResult,
-    RetrievalEvaluator,
-    normalize_law_number,
-)
+from src.evaluation.retrieval_eval import ItemResult, RetrievalEvaluator, normalize_law_number
 from src.retrieval.pipeline import RetrievalResult
 from src.retrieval.reranker import RetrievedArticleContext
 from src.retrieval.hybrid_retriever import ScoredArticle

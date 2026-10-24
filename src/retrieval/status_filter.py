@@ -1,6 +1,6 @@
 import logging
 from typing import List, Set, Tuple
-from src.schema.canonical import CanonicalArticle, ArticleStatus
+from src.schema.canonical import ArticleStatus
 from src.storage.hybrid_store import HybridStore
 from src.retrieval.hybrid_retriever import ScoredArticle
 

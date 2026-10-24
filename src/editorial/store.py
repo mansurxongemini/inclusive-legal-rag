@@ -4,7 +4,7 @@ import json
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 from src.config import settings
 from src.storage.sqlite_utils import connect as sqlite_connect
@@ -370,15 +370,6 @@ class EditorialStore:
                 UPDATE notifications SET status = 'resolved', resolution = ?, resolved_at = ?, resolved_by = ?
                 WHERE id = ?
             """, (resolution, _now(), resolved_by, notif_id))
-            conn.commit()
-            row = conn.execute("SELECT * FROM notifications WHERE id = ?", (notif_id,)).fetchone()
-            return dict(row) if row else None
-
-    def dismiss_notification(self, notif_id: int, *, resolved_by: str = "") -> Optional[dict]:
-        with self._conn() as conn:
-            conn.execute("""
-                UPDATE notifications SET status = 'dismissed', resolved_at = ?, resolved_by = ? WHERE id = ?
-            """, (_now(), resolved_by, notif_id))
             conn.commit()
             row = conn.execute("SELECT * FROM notifications WHERE id = ?", (notif_id,)).fetchone()
             return dict(row) if row else None
