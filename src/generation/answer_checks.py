@@ -6,7 +6,8 @@ through and they run both in the evaluation scripts and, for the cheap ones, on 
 * leaked_ids         - internal canonical ids shown to the user instead of [n] markers
 * banned_phrases     - wording the prompt forbids ("kontekstda ...", "taqdim etilgan hujjatlar ...")
 * ungrounded_numbers - amounts, percentages, terms and dates in the answer that appear neither in the retrieved
-                       context nor in the question (a number invented or taken from memory)
+                       context nor in the question (a number invented or taken from memory); numbers the sources
+                       write in words ("o'n to'rt kun", "тридцать шесть часов") count as present
 * uncited_ratio      - share of substantive sentences that carry no [n] citation marker
 """
 import re
@@ -79,6 +80,75 @@ def numbers_in(text: str, min_digits: int = 2) -> List[str]:
     return out
 
 
+# Numbers written in words. Uzbek statutes write most terms that way ("o'n to'rt kalendar kungacha", "o'ttiz olti
+# soatdan"), and an answer that writes them as digits is quoting, not inventing.
+_UZ_NUMBER_WORDS = {
+    "bir": 1, "ikki": 2, "uch": 3, "to'rt": 4, "besh": 5, "olti": 6, "yetti": 7, "sakkiz": 8, "to'qqiz": 9,
+    "o'n": 10, "yigirma": 20, "o'ttiz": 30, "qirq": 40, "ellik": 50, "oltmish": 60, "yetmish": 70, "sakson": 80,
+    "to'qson": 90, "yuz": 100, "ming": 1000,
+    "бир": 1, "икки": 2, "уч": 3, "тўрт": 4, "беш": 5, "олти": 6, "етти": 7, "саккиз": 8, "тўққиз": 9,
+    "ўн": 10, "йигирма": 20, "ўттиз": 30, "қирқ": 40, "эллик": 50, "олтмиш": 60, "етмиш": 70, "саксон": 80,
+    "тўқсон": 90, "юз": 100, "минг": 1000,
+}
+# a case or ordinal ending after the last word: "o'n oltiga", "uchinchi", "ўттиздан" ("uchun" is not one)
+_UZ_SUFFIX = re.compile(r"^(?:inchi|nchi|ta|tasi|ga|ka|qa|da|dan|ni|ning|gacha|lik|лик|инчи|нчи|та|таси|га|ка|қа|да|"
+                        r"дан|ни|нинг|гача)?$")
+# Russian stems, longest first (inflected forms: "четырнадцати", "тридцатью", "двух")
+_RU_NUMBER_STEMS = [
+    ("одиннадцат", 11), ("двенадцат", 12), ("тринадцат", 13), ("четырнадцат", 14), ("пятнадцат", 15),
+    ("шестнадцат", 16), ("семнадцат", 17), ("восемнадцат", 18), ("девятнадцат", 19), ("двадцат", 20),
+    ("тридцат", 30), ("сорок", 40), ("пятьдесят", 50), ("пятидесят", 50), ("шестьдесят", 60), ("шестидесят", 60),
+    ("семьдесят", 70), ("семидесят", 70), ("восемьдесят", 80), ("восьмидесят", 80), ("девяносто", 90),
+    ("двест", 200), ("трист", 300), ("четырест", 400), ("сто", 100), ("тысяч", 1000), ("десят", 10),
+    ("один", 1), ("одн", 1), ("два", 2), ("две", 2), ("двух", 2), ("три", 3), ("трех", 3), ("трёх", 3),
+    ("четыр", 4), ("пят", 5), ("шест", 6), ("сем", 7), ("восем", 8), ("восьм", 8), ("девят", 9),
+]
+_WORD = re.compile(r"[^\W\d_][\w'ʻʼ‘’]*", re.UNICODE)
+
+
+def _word_value(token: str) -> Optional[int]:
+    t = re.sub(r"[ʻʼ‘’`]", "'", token.lower())
+    for word, value in _UZ_NUMBER_WORDS.items():
+        if t.startswith(word) and _UZ_SUFFIX.match(t[len(word):]):
+            return value
+    for stem, value in _RU_NUMBER_STEMS:
+        if t.startswith(stem) and len(t) - len(stem) <= 4:
+            if stem in ("сем", "пят", "шест", "девят", "восем") and re.match(r"(?:ья|ей|ье)", t[len(stem):]):
+                return None                                      # семья, пятье: not numbers
+            return value
+    return None
+
+
+def number_words(text: str) -> List[str]:
+    """Numbers written in Uzbek (Latin or Cyrillic) or Russian words, as digit strings: "o'n to'rt" -> "14"."""
+    out: List[str] = []
+    total = current = 0
+    started = False
+
+    def flush():
+        nonlocal total, current, started
+        if started and total + current:
+            out.append(str(total + current))
+        total = current = 0
+        started = False
+
+    for token in _WORD.findall(text or ""):
+        value = _word_value(token)
+        if value is None:
+            flush()
+            continue
+        started = True
+        if value == 100:
+            current = (current or 1) * 100
+        elif value == 1000:
+            total += (current or 1) * 1000
+            current = 0
+        else:
+            current += value
+    flush()
+    return out
+
+
 def _loose(digits: str) -> str:
     """'1500000', '1,5 mln' and '15' share one loose form: trailing zeros do not tell amounts apart in a rewording."""
     return digits.rstrip("0") or "0"
@@ -92,6 +162,7 @@ def ungrounded_numbers(answer: str, context_texts: Sequence[str], question: str 
             exact.add(n)
             if len(n) >= 3:                      # short numbers are not loosened: "2" must not excuse "2 000 000"
                 loose.add(_loose(n))
+        exact.update(number_words(text))
     # list numbering at the start of a line ("1." "2)") is structure, not a claim
     body = re.sub(r"(?m)^\s*\d+[.)]\s+", "", answer or "")
     return sorted({n for n in numbers_in(body) if n not in exact and _loose(n) not in loose})

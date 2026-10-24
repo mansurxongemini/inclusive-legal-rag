@@ -1,5 +1,7 @@
+import pytest
+
 from src.generation.answer_checks import (
-    banned_phrases, check_answer, leaked_ids, numbers_in, script_ok, uncited_ratio, ungrounded_numbers,
+    banned_phrases, check_answer, leaked_ids, number_words, numbers_in, script_ok, uncited_ratio, ungrounded_numbers,
 )
 
 CONTEXT = ["Nogironligi bo'lgan shaxsga 1 500 000 so'm miqdorida bir martalik yordam beriladi. Ariza 30 kun ichida ko'riladi."]
@@ -48,3 +50,26 @@ def test_check_answer_bundles_everything():
     r = check_answer("Yordam qancha?", "Yordam 2 000 000 so'm [1].", CONTEXT, language="uz")
     assert r["script_ok"] and r["ungrounded_numbers"] == ["2000000"]
     assert r["leaked_ids"] == [] and r["banned_phrases"] == []
+
+
+# --- numbers written in words ---------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("text,expected", [
+    ("o'n to'rt kalendar kungacha", ["14"]),
+    ("haftasiga o'ttiz olti soatdan", ["36"]),
+    ("ikki yuz ellik ming so'm", ["250000"]),
+    ("ўн тўрт кунгача", ["14"]),
+    ("тридцать шесть часов", ["36"]),
+    ("до шестнадцати лет", ["16"]),
+    ("nogironlar uchun uch foiz", ["3"]),          # "uchun" is not "uch"
+    ("семья с детьми", []),                         # "семья" is not "семь"
+])
+def test_number_words_are_read(text, expected):
+    assert number_words(text) == expected
+
+
+def test_a_number_the_source_writes_in_words_is_grounded():
+    # gold set en14: "up to 14 calendar days" from Labour Code art. 402 ("o'n to'rt kalendar kungacha")
+    source = ["ish haqi saqlanmagan holda davomiyligi o'n to'rt kalendar kungacha bo'lgan ta'til beriladi"]
+    assert ungrounded_numbers("Up to 14 calendar days of unpaid leave [1].", source) == []
+    assert ungrounded_numbers("Up to 15 calendar days of unpaid leave [1].", source) == ["15"]
