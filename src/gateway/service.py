@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
 from src.nlp.query_analyzer import QueryAnalysis, QueryAnalyzer
-from src.retrieval.pipeline import retrieve_contexts
+from src.retrieval.pipeline import retrieve_within
 from src.config import settings
 from src.api.middleware.hardening import generation_budget
 from src.generation.generator import AnswerGenerator
@@ -178,8 +178,9 @@ async def _lookup_cache(q: _Question, cache, client) -> Tuple[Optional[dict], Op
     if hit or client.is_mock:
         return hit, None, True
     try:
-        vectors = await client.get_embeddings([q.analysis.normalized_query])
-    except Exception as e:
+        vectors = await asyncio.wait_for(client.get_embeddings([q.analysis.normalized_query]),
+                                         timeout=settings.QUERY_EMBED_TIMEOUT_S)
+    except Exception as e:      # an error or asyncio.TimeoutError: full-text search only
         logger.warning(f"Error computing query vector for the semantic cache and retrieval: {e}")
         return None, None, False
     if not vectors:
@@ -266,7 +267,8 @@ async def answer_question(
     if not generation_budget.consume():
         raise HTTPException(status_code=429, detail=DAILY_LIMIT_MESSAGE)
 
-    retrieval = await retrieve_contexts(
+    retrieval = await retrieve_within(
+        settings.RETRIEVAL_TIMEOUT_S,
         analysis=q.analysis,
         store=store,
         client=client,
@@ -396,7 +398,8 @@ async def answer_question_stream(
         yield _sse({"type": "error", "message": DAILY_LIMIT_MESSAGE})
         return
 
-    retrieval = await retrieve_contexts(
+    retrieval = await retrieve_within(
+        settings.RETRIEVAL_TIMEOUT_S,
         analysis=q.analysis,
         store=store,
         client=client,

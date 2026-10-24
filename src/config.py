@@ -126,6 +126,10 @@ class Settings(BaseSettings):
     TRUSTED_PROXIES: int = Field(default=0)
     MAX_PUBLIC_BODY_BYTES: int = Field(default=262144)       # 0 = no limit; applies to the public question endpoints
     ANSWER_TIMEOUT_S: float = Field(default=100.0)           # whole generation step of one request; then the matching norms are shown
+    # Retrieval of one request (question embedding, translation, scope, ranking). A provider that hangs - neither an answer
+    # nor an error - held a request for minutes; past these deadlines the question is searched by full-text search only.
+    QUERY_EMBED_TIMEOUT_S: float = Field(default=10.0)
+    RETRIEVAL_TIMEOUT_S: float = Field(default=30.0)
     PUBLIC_DAILY_GENERATIONS: int = Field(default=3000)      # answers generated per day (cache hits are free); 0 = no cap
     CACHE_TTL_SECONDS: int = Field(default=86400)
     MOCK_EXTERNAL_APIS: bool = Field(default=False)

@@ -245,11 +245,13 @@ def format_norms_for_review(contexts) -> str:
 async def retrieve_review_contexts(question: str, answer: str, client, store, top_k: int):
     """Savol VA volontyor javobi bo'yicha tegishli normalarni topadi (kontekst sifatida)."""
     from src.nlp.query_analyzer import QueryAnalyzer
-    from src.retrieval.pipeline import retrieve_contexts
+    from src.config import settings
+    from src.retrieval.pipeline import retrieve_within
 
     combined = f"{question}\n{answer[:2000]}"
     analysis = QueryAnalyzer.analyze(combined, user_language=QueryAnalyzer.detect_language(question))
-    result = await retrieve_contexts(
+    result = await retrieve_within(
+        settings.RETRIEVAL_TIMEOUT_S,
         analysis=analysis,
         store=store,
         client=client,

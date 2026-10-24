@@ -162,8 +162,13 @@ async def retrieve_contexts(
     category: Optional[str] = None,
     apply_gate: bool = True,
     use_reranker: bool = True,
+    use_llm: bool = True,
 ) -> RetrievalResult:
+    """use_llm=False makes no model call at all (no translation, rewrite, sub-questions, scope or ranking): the fallback
+    of retrieve_within when the provider does not answer in time."""
     language = analysis.detected_language
+    if not use_llm:
+        use_reranker = False
     retriever = HybridRetriever(store, client=client)
 
     use_jev = settings.RERANK_PROVIDER == "jev" and not client.is_mock and use_reranker
@@ -174,14 +179,16 @@ async def retrieve_contexts(
     # The units (and every vector) are in Uzbek, so ru/en questions are also searched through an Uzbek translation.
     # The translation call runs while the original-language retrieval is in flight.
     translation = None
-    if language in ("ru", "en"):
+    if not use_llm:
+        pass
+    elif language in ("ru", "en"):
         translation = asyncio.create_task(QueryTranslator.to_uzbek(analysis.normalized_query, language, client))
     elif language == "uz" and settings.QUERY_NORMALIZE_UZ:
         # chat questions are often Cyrillic and misspelled; a standard-Latin rewrite is searched as well
         translation = asyncio.create_task(QueryTranslator.normalize_uzbek(analysis.raw_query, client))
     # A long story is also split into short legal sub-questions, each searched on its own (see fuse_aspect_candidates)
     subquestions_task: Optional[asyncio.Task] = None
-    if _wants_subquestions(analysis):
+    if use_llm and _wants_subquestions(analysis):
         subquestions_task = asyncio.create_task(QueryTranslator.legal_subquestions(analysis.raw_query, client))
     tasks = [t for t in (scope_task, translation, subquestions_task) if t]
     try:
@@ -299,3 +306,19 @@ async def retrieve_contexts(
         )
     finally:
         _discard_tasks(tasks)
+
+
+async def retrieve_within(deadline_s: float, **kwargs) -> RetrievalResult:
+    """
+    retrieve_contexts with a deadline. A provider that hangs (no error, no answer) would hold the request for minutes in
+    the embedding, translation, scope and ranking calls, each with its own long HTTP timeout and retries. Past the deadline
+    the question is searched again by full-text search with no model call, so the visitor still gets the matching norms.
+    """
+    try:
+        return await asyncio.wait_for(retrieve_contexts(**kwargs), timeout=deadline_s)
+    except asyncio.TimeoutError:
+        logger.error(f"Retrieval exceeded {deadline_s:.0f}s (provider not answering): full-text search only")
+        kwargs.update(query_vector=None, use_vector=False, use_reranker=False, use_llm=False)
+        result = await retrieve_contexts(**kwargs)
+        result.signals["retrieval_timeout"] = True
+        return result

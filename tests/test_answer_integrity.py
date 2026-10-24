@@ -128,7 +128,7 @@ async def test_streamed_answer_is_cached_and_replayed(monkeypatch, tmp_path):
                     "language": "uz", "mode": "plain"}
             yield f"data: {json.dumps(done)}\n\n"
 
-    monkeypatch.setattr(service, "retrieve_contexts", fake_retrieve)
+    monkeypatch.setattr(service, "retrieve_within", lambda deadline_s, **kw: fake_retrieve(**kw))
     monkeypatch.setattr(service, "AnswerGenerator", FakeGenerator)
 
     async def run():
@@ -206,7 +206,7 @@ async def test_stream_cache_miss_still_embeds_the_question_once(monkeypatch, tmp
                     "clean_answer": "", "warnings": [], "status_warnings": []}
             yield f"data: {json.dumps(done)}\n\n"
 
-    monkeypatch.setattr(service, "retrieve_contexts", fake_retrieve)
+    monkeypatch.setattr(service, "retrieve_within", lambda deadline_s, **kw: fake_retrieve(**kw))
     monkeypatch.setattr(service, "AnswerGenerator", FakeGenerator)
 
     out = await events("Pensiya yoshi qanday belgilanadi?")

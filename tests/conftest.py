@@ -14,6 +14,10 @@ os.environ["ADMIN_API_KEY"] = ""
 
 import pytest
 from src.config import settings
+# src.api resolves the attribute "app" lazily to the FastAPI object until the submodule src.api.app is imported, so a
+# string patch such as monkeypatch.setattr("src.api.app.get_cache", ...) hit the FastAPI object whenever its test ran
+# first. Importing the submodule here makes "src.api.app" mean the module in every order.
+import src.api.app  # noqa: E402,F401
 
 
 @pytest.fixture(scope="session", autouse=True)
