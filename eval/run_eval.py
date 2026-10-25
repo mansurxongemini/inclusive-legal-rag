@@ -232,7 +232,9 @@ _QUANTIFIER_BEFORE = re.compile(r"(?:не\s+(?:менее|более|меньш�
 # a negation up to three words before the value: "not 45", "no provision for 45", "нет нормы о 60"
 _REJECTED_BEFORE = re.compile(r"(?:\bне|\bнет|\bnot|\bno|\binstead\s+of|\brather\s+than|\bвместо)(?:\s+[\w'‘’ʻ-]+){0,3}\s*$",
                               re.I)
-_REJECTED_AFTER = re.compile(r"^\W*(?:[\w'‘’ʻ-]+\s+){0,2}(?:emas|эмас)\b", re.I)
+# a rejection right after the value: "48 soat emas", "45 days is not supported", "60 дней не предусмотрено"
+_REJECTED_AFTER = re.compile(r"^\W*(?:[\w'‘’ʻ-]+\s+){0,2}(?:emas|эмас|(?:is|are|was)\s+(?:not|incorrect|wrong)|isn't|"
+                             r"не\s+(?:предусмотрен|соответству|верн|положен)\w*|неверн\w*|неправильн\w*)\b", re.I)
 
 
 def follows(pattern: str, text: str) -> bool:

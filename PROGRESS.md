@@ -2,18 +2,20 @@
 
 Read this first after a context reset. Branch `agent/max-quality`; never push; never touch .env.
 
-## State: finished (2026-10-25)
+## State: finished (2026-10-25, second round)
 All readiness criteria are met; proof and numbers are in FINAL_REPORT.md. Nothing is running.
 
-- Gold set `eval/gold_set.jsonl` (76: 26 uz / 25 ru / 25 en), runner `eval/run_eval.py` (cached responses, `--offline`),
-  server check `eval/check_server.py` (30 checks), injection set `eval/injection_set.jsonl`, regression cycle
-  `eval/cycle.sh`, clean install `eval/clean_install.sh`.
-- 13 regression cycles in EVAL_HISTORY.md (cycle 7 hit a DNS outage: INVALID, re-run). Baseline recall@5 0.891 ->
-  final 0.964; citations 95.5% -> 100%; false refusal 2.9% -> 0%.
-- Data: 284 + 9 misaligned Russian texts removed, 60 moved; 85 acts re-imported (+820 units); 3 broken characters and
-  18 glued headings fixed. Backups in data/backups/ (each named in DECISIONS.md).
-- Admin panel checked in the browser at dce19fa on a store copy (7 sections, all 200, no console errors).
-- Clean install OK at dce19fa. Spend ~$0.7 of $4 (BUDGET.md).
+Second round (owner: quality first, then low cost; switch to qwen3 if it really is better; remove excess code; every act
+complete and current, an old rule never shown as current):
+- Embeddings: qwen/qwen3-embedding-8b at 1024 dimensions (gold MRR 0.921 -> 0.964-0.971); the store records its model
+  (data/store/embedding_model.json) and never mixes two; semantic-cache and gate thresholds re-checked.
+- Corpus: every registry act re-read from Lex.uz (534 acts, all in force, 36 with new text), 5 acts added after a new
+  discovery run, VMQ-240 current edition; 29 418 units, 38 858 vectors. Corpus and translation audits clean.
+- Old law: repealed units never reach the answer; cached answers and articles do not outlive a corpus change.
+- Excess code removed (legacy upload/URL ingestion, one-off scripts, old eval harness): 678 -> 628 tests, then new tests.
+- Held-out set (95 questions written by another process): 77% of answered in-scope questions correct, 100% of
+  out-of-scope refused, 13% of in-scope refused (several outside the service's mission).
+- Backups: data/backups/legal_rag_backup_20261025_194616 (before the swap), store_before_qwen_20261025.
 
 ## Open for the owner (BLOCKERS.md)
-14 editorial cards, VMQ-240 refresh, 55 coarse units, embedding switch decision (docs/EMBEDDING_COMPARISON.md).
+15 editorial cards; 54 coarse units.

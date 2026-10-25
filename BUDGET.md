@@ -35,3 +35,5 @@ Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `
 | 2026-10-25 14:07 | eval qwen3-embedding-8b on a copy of the current store (before the switch) | 10.00 | 0.9567 | 9.0433 | 0.9567 |
 | 2026-10-25 19:43 | eval qwen3 + full Lex.uz refresh (5 acts added, VMQ-240 current edition) on the work copy | 10.00 | 1.1922 | 8.8078 | 1.1922 |
 | 2026-10-25 19:53 | eval cycle 14 (production): qwen3-embedding-8b, full Lex.uz refresh (29 418 units), repealed units never answer sources, cache tied to the corpus, dead code removed [tests: 643 passed, 1 warning; server: 30/30] | 10.00 | 1.2005 | 8.7995 | 1.2005 |
+| 2026-10-25 20:30 | eval cycle 15 (final commit): review/judge reasoning budget, held-out evaluation [tests: 644 passed, 1 warning; server: 30/30] | 10.00 | 1.3374 | 8.6626 | 1.3374 |
+| 2026-10-25 20:31 | eval injection set (final) | 10.00 | 1.3388 | 8.6612 | 1.3388 |
