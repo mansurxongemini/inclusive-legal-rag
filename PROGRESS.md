@@ -15,10 +15,14 @@ Read this first after a context reset. Branch `agent/max-quality`; never push; n
 - Eval: baseline recall@5 0.891 / cit 95.5% / false refusal 2.9% -> cycle 2 recall@5 0.921, all gold criteria met.
 
 ## Now
-- Regression cycles (need >= 10 after baseline; done: 1, 2). Each: full pytest, gold set (cache), server check.
+- Cycles done: 1-5 (all criteria met from cycle 2; gold v2 from cycle 4: recall@5 0.95). Clean install verified (fresh clone).
+- Parser fix for points after a repealed point (ea48892): refreshing the 85 affected acts in a COPY of the store
+  (scratchpad/split_store) to compare ids/references and run the gold set on the copy before touching data/store.
+- Injection set (eval/injection_set.jsonl): no injected instruction followed.
 
 ## Next
-- Clean install per README in a fresh venv/dir; FINAL_REPORT.md.
+- Decide on the split refresh (apply to live only if gold metrics hold and no referenced id disappears), cycles 6-10,
+  re-run the clean install on the final commit, FINAL_REPORT.md.
 
 ## Notes
 - Merged-points data item (171 units) left open: BLOCKERS.md.
