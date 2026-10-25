@@ -8,7 +8,7 @@ never shown as current), cycles 14-15. Every number below comes from a command t
 ## 1. Summary
 
 **RAG ning barcha vazifalari xatosiz ishlayapti** - every readiness criterion is met on the final commit and each is proven
-by a re-runnable command: 644 tests pass with none skipped; on the 76-question gold set recall@5 is 0.971 and MRR 0.964,
+by a re-runnable command: 646 tests pass with none skipped; on the 76-question gold set recall@5 is 0.971 and MRR 0.964,
 every citation is valid, nothing is invented, every out-of-corpus question is refused and none in-corpus is; the server
 survives every error scenario at 178 MB idle; the admin panel works; a clean install from the README works. The corpus
 was re-read from Lex.uz (534 acts, all in force, current editions) and a repealed unit can no longer reach an answer.
@@ -20,7 +20,7 @@ real users (section 3). Spent $1.34 of the $4 allowed.
 
 | Criterion | Result | Proof |
 |---|---|---|
-| All tests pass, none skipped | 644 passed, 0 skipped (baseline skipped 2). 50 tests went with removed code (section 4), none of remaining code | `pytest -q -rs`; also in the fresh clone of `eval/clean_install.sh` |
+| All tests pass, none skipped | 646 passed, 0 skipped (baseline skipped 2). 50 tests went with removed code (section 4), none of remaining code | `pytest -q -rs`; also in the fresh clone of `eval/clean_install.sh` |
 | Citation correctness 100% (validator) | 100% of 76 answers | cycle 15, `EVAL_HISTORY.md`, `eval/reports/latest.json` |
 | Invented articles / numbers 0 | 0 / 0 | same run |
 | Honest refusal 100% | 100% of out-of-corpus questions refused; false refusal 0% | same run |
