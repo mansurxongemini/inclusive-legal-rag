@@ -73,3 +73,11 @@ def test_a_number_the_source_writes_in_words_is_grounded():
     source = ["ish haqi saqlanmagan holda davomiyligi o'n to'rt kalendar kungacha bo'lgan ta'til beriladi"]
     assert ungrounded_numbers("Up to 14 calendar days of unpaid leave [1].", source) == []
     assert ungrounded_numbers("Up to 15 calendar days of unpaid leave [1].", source) == ["15"]
+
+
+def test_hours_and_minutes_quoted_as_a_decimal_are_grounded():
+    # gold set en20: "7.5 hours" from Labour Code art. 427 ("yetti soatu o'ttiz daqiqadan")
+    source = ["besh kunlik ish haftasida — yetti soatu o'ttiz daqiqadan ortib ketmasligi kerak"]
+    assert ungrounded_numbers("Up to 7.5 hours a day [1].", source) == []
+    assert ungrounded_numbers("Up to 7.25 hours a day [1].", source) == ["725"]
+    assert ungrounded_numbers("Не более 7,5 часа [1].", ["не более 7 часов 30 минут"]) == []

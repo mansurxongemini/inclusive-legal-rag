@@ -149,6 +149,29 @@ def number_words(text: str) -> List[str]:
     return out
 
 
+# "yetti soatu o'ttiz daqiqa" is quoted as "7.5 hours" by a faithful answer: hours and minutes also count as a decimal
+_HOURS_MINUTES = re.compile(
+    r"([^\W_][\w'ʻʼ‘’]*|\d+)\s+(?:soat|soatu|soati|час|часа|часов|hours?)\s+(?:va\s+|и\s+|and\s+)?"
+    r"([^\W_][\w'ʻʼ‘’]*|\d+)\s+(?:daqiqa|минут|minutes?)", re.IGNORECASE)
+
+
+def _as_int(token: str) -> Optional[int]:
+    if token.isdigit():
+        return int(token)
+    return _word_value(token)
+
+
+def hours_as_decimals(text: str) -> List[str]:
+    """Digit strings of "H soat M daqiqa" written as a decimal number of hours: 7 h 30 min -> "75" (7.5)."""
+    out = []
+    for h, m in _HOURS_MINUTES.findall(text or ""):
+        hours, minutes = _as_int(h), _as_int(m)
+        if hours is not None and minutes and 0 < minutes < 60:
+            decimal = f"{hours + minutes / 60:.2f}".rstrip("0").rstrip(".")
+            out.append(_digits(decimal))
+    return out
+
+
 def _loose(digits: str) -> str:
     """'1500000', '1,5 mln' and '15' share one loose form: trailing zeros do not tell amounts apart in a rewording."""
     return digits.rstrip("0") or "0"
@@ -163,6 +186,7 @@ def ungrounded_numbers(answer: str, context_texts: Sequence[str], question: str 
             if len(n) >= 3:                      # short numbers are not loosened: "2" must not excuse "2 000 000"
                 loose.add(_loose(n))
         exact.update(number_words(text))
+        exact.update(hours_as_decimals(text))
     # list numbering at the start of a line ("1." "2)") is structure, not a claim
     body = re.sub(r"(?m)^\s*\d+[.)]\s+", "", answer or "")
     return sorted({n for n in numbers_in(body) if n not in exact and _loose(n) not in loose})
