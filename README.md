@@ -78,21 +78,17 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
 
 ---
 
-## 📦 37 GB Pre-Indexed Vector Corpus Distribution
+## 📦 Size of the knowledge base
 
-The complete, production-scale legal corpus consists of:
-- **37 GB LanceDB Vector Table**: Covering dense vector embeddings for **100,000+ legislative articles** from the national statutory database of Uzbekistan.
-- **1.6 GB SQLite Relational Store & FTS5 Index**: Containing full canonical texts, cross-statute references, and bilingual translations.
+Measured on 2026-10-25 (`data/store`, built by `scripts/build_disability_corpus.py`):
+- **SQLite store with FTS5 index: 305 MB** - 27 530 units of 518 Lex.uz acts (14 963 with the official Russian text) and 324 units of
+  113 Huquq+ posts.
+- **LanceDB vector table: 148 MB** - 37 464 bge-m3 vectors (1024 numbers each; long units are embedded paragraph by paragraph).
 
-### Free Access for Academic, NGO & Disability Rights Initiatives
-To respect GitHub's file size policies while preserving open access for the public good, the pre-indexed 37 GB vector store is distributed freely upon request.
-
-If you are an AI researcher, legal-tech developer, humanitarian organization, or accessibility initiative:
-* **Contact the Lead Developer on Telegram**: [**@mansurxonrustamov**](https://t.me/mansurxonrustamov)
-* **Direct Telegram Link**: `https://t.me/mansurxonrustamov`
-* We provide direct, high-speed download mirrors and checksums for the pre-indexed LanceDB vectors.
-
-> *Note: The repository includes out-of-the-box pilot datasets (`data/pilot_laws/` containing the Law on the Rights of Persons with Disabilities LRU-641, the Labor Code, and the UN CRPD) allowing full local testing, development, and unit execution without downloading the 37 GB archive.*
+The built store is not in git (`data/store` is ignored). Build it from Lex.uz with the commands below (the HTML is fetched once and
+cached), or ask the maintainer for a copy: Telegram [@mansurxonrustamov](https://t.me/mansurxonrustamov).
+The repository ships `data/pilot_laws/` (the Law on the rights of persons with disabilities O'RQ-641, selected Labour Code articles and
+the UN CRPD): the server seeds O'RQ-641 into an empty store on its first start, and the test suite runs on it offline.
 
 ---
 
@@ -112,16 +108,15 @@ deep link to the exact paragraph on lex.uz.
 | ingest | `... ingest --replace-all` | embeddings + FTS index in `data/store` |
 | report | `... report` | `data/sources/REGISTRY.md` - exactly what is in the base |
 
-Current build: **518 Lex.uz acts, 27 530 articles/clauses** (Uzbek; 15 247 with the official Russian text) plus **201 Huquq+ posts (581 units)**
-= 28 111 units, 57 866 embedded chunks. Units longer than 6 000 characters are also indexed chunk by chunk, so a paragraph deep inside a
+Current build: **518 Lex.uz acts, 27 530 articles/clauses** (Uzbek; 14 963 with the official Russian text) plus **113 Huquq+ posts (324 units)**
+= 27 854 units, 37 464 embedded chunks. Units longer than 6 000 characters are also indexed chunk by chunk, so a paragraph deep inside a
 code article (the Tax Code day-care exemption, art. 483) is found. Amendment history is kept per unit (`metadata.amendment_history`).
 Re-run the stages to refresh the base when Lex.uz publishes new acts. HTML pages are cached in `data/raw_lex/`
 and requests are throttled (1 request/second).
 
-**Quality gate.** `python scripts/evaluate_retrieval.py` runs the production retrieval pipeline on
-`data/golden_dataset/disability_eval_set.json` (questions written from the corpus, every expected article is
-checked to contain an evidence phrase). Current results with BGE-M3 + reranker: hit@3 96%, hit@5 98%,
-MRR 0.87, 0% false refusals, 92% correct refusals of out-of-scope questions.
+**Quality gate.** `python eval/run_eval.py` answers the 76 questions of `eval/gold_set.jsonl` (Uzbek, Russian, English; every
+expected unit was read in the store) through the production path and measures retrieval, citations, refusals, answer language,
+numbers, repealed-act traps, latency and cost; results are in "Evaluation & Benchmarking" below.
 
 ## ♿ Public page
 
@@ -164,15 +159,27 @@ source .venv/bin/activate
 # 2. Install dependencies (the exact tested versions are in requirements.lock)
 pip install -r requirements-dev.txt -c requirements.lock
 
-# 3. Set environment variables
+# 3. Set environment variables (OPENROUTER_API_KEY; without it everything runs offline with placeholder answers)
 cp .env.example .env
 
 # 4. Run automated test suite (runs offline against a temporary store, never touches data/store)
 pytest -v
 
-# 5. Start development server
+# 5. Build the knowledge base in data/store (needs the key: the units are embedded with bge-m3)
+#    one act, about a minute - the Law on the rights of persons with disabilities:
+python scripts/build_disability_corpus.py refresh --law-ids law_disability_2020 --store-dir data/store
+#    or the whole registry (518 acts; Lex.uz is read at 1 request/second, so the first build takes hours):
+python scripts/build_disability_corpus.py build
+python scripts/build_disability_corpus.py ingest --replace-all --store-dir data/store
+#    (with no step 5 the server seeds O'RQ-641 from data/pilot_laws on its first start)
+
+# 6. Start development server, then check it
 .venv/bin/python -m uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
+curl http://localhost:8000/health
 ```
+
+Checked on 2026-10-25 in a fresh clone (Python 3.13): steps 1-6 work as written; one act ingests in about a minute and the server
+answers with a cited article.
 
 ---
 
@@ -272,6 +279,24 @@ This project is a dedicated submission candidate for the **OpenAI Codex for Open
 
 ## 📊 Evaluation & Benchmarking
 
+**Gold set, production model** (`deepseek/deepseek-v4-flash-0731`, bge-m3), 2026-10-25, `python eval/run_eval.py`; every run is a row of
+`EVAL_HISTORY.md`, the server-side checks are `python eval/check_server.py`:
+
+| Measure | Result |
+| :--- | :--- |
+| Questions | 76 (26 uz, 25 ru, 25 en): short, complex, multi-article, repealed-act traps, out-of-corpus, misspelled / mixed language |
+| Expected units in the top 5 contexts (recall@5) / MRR | **0.92 / 0.86** |
+| Answers whose every citation was retrieved, exists, is in force and passed the validator | **100%** |
+| Invented article numbers / numbers absent from the sources | **0 / 0** |
+| Out-of-corpus questions refused / answerable questions refused | **100% / 0%** |
+| Answer in the language of the question; required facts present | **100% / 100%** |
+| Repealed acts presented as valid | **0** |
+| Latency (full answer, uncached) median / p95 | **~16 s / ~32 s** |
+| Model cost per uncached question | **~$0.0015** |
+| Idle memory of the server; growth over 300 questions | **~180 MB; +1-5 MB** |
+
+The figures below are older measurements on other sets and another (test) generator, kept for history.
+
 Measured on 2026-10-23 (commands and cost notes in `docs/OPERATIONS.md`). Retrieval = the production pipeline (BM25 + vectors + RRF + Jev);
 the judge was `muse-spark-1.2` and the generator `muse-spark-1.3` (a test provider that is gone: re-measure on the production model, see `docs/OPERATIONS.md`).
 
@@ -291,12 +316,6 @@ held-out questions were written from units no other set uses. Known weak classes
 inflects differently (Cyrillic questions with typos), questions that need several units at once, and answers that add a plausible but
 unstated condition.
 
---- | :--- | :--- | :--- |
-| **Idle RAM Footprint** | < 350 MB | **~235 MB** | ✅ PASSED |
-| **Refusal Accuracy on Out-of-Scope** | 100% | **100%** | ✅ PASSED |
-| **Citation Precision (Grounding)** | > 95% | **98.2%** | ✅ PASSED |
-| **Bilingual Equivalence (Cyrillic/Latin)** | > 95% | **99.1%** | ✅ PASSED |
-| **Sub-second Response on Cache Hit** | < 50ms | **< 10ms** | ✅ PASSED |
 
 ---
 

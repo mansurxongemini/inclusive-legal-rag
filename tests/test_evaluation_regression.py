@@ -23,15 +23,19 @@ def _seed_ids():
 
 
 def test_golden_labels_are_grounded_in_the_corpus():
-    """Every expected id of the golden set exists in the built corpus and contains its evidence phrase."""
+    """Every expected id of the golden set exists in the corpus and contains its evidence phrase. With the built corpus
+    (data/sources/built_articles.json, not in git) every item is checked; in a fresh clone the items the shipped seed
+    covers are (the test used to skip there)."""
     built = ROOT / "data" / "sources" / "built_articles.json"
-    if not built.exists():
-        pytest.skip("corpus not built in this checkout")
-    arts = {a["canonical_id"]: a for a in json.loads(built.read_text(encoding="utf-8"))}
+    source = built if built.exists() else ROOT / "data" / "pilot_laws" / "law_disability_2020.json"
+    arts = {a["canonical_id"]: a for a in json.loads(source.read_text(encoding="utf-8"))}
     norm = lambda s: s.replace("ʻ", "'").replace("ʼ", "'").replace("’", "'").lower()  # noqa: E731
-    for item in json.loads((ROOT / "data" / "golden_dataset" / "disability_eval_set.json").read_text(encoding="utf-8")):
-        if item.get("out_of_scope"):
-            continue
+    items = [i for i in json.loads((ROOT / "data" / "golden_dataset" / "disability_eval_set.json").read_text(encoding="utf-8"))
+             if not i.get("out_of_scope")]
+    if not built.exists():
+        items = [i for i in items if i["expected_ids"] and all(e in arts for e in i["expected_ids"])]
+        assert len(items) >= 8, "the seed covers too few golden items to check"
+    for item in items:
         present = [e for e in item["expected_ids"] if e in arts]
         assert present, f"{item['id']}: none of the expected ids exist"
         assert any(norm(item["evidence"]) in norm(arts[e]["translations"]["uz"]) for e in present), (
