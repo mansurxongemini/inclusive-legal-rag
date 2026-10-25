@@ -2,10 +2,11 @@
 
 Nothing blocks the service. These items need the owner (editorial judgement or a decision), or are known limits.
 
-## 1. 11 open editorial notifications (owner)
+## 1. 14 open editorial notifications (owner)
 The re-import of 85 acts (2026-10-25) brought new text from Lex.uz for VMQ-119 (64 new sentences: allowance rules),
-VMQ-313 (point 10-1 inserted), VMQ-62 (a point on Chernobyl participants) and VMQ-482. 41 re-parse-only notifications
-were resolved automatically (scripts/classify_refresh_changes.py); these 11 stay open in the admin panel
+VMQ-313 (point 10-1 inserted), VMQ-62 (a point on Chernobyl participants) and VMQ-482; text was removed from VMQ-183,
+VMQ-223 and PF-79. 38 re-parse-only notifications were resolved through the "keep" path (scripts/classify_refresh_changes.py);
+these 14 stay open in the admin panel
 (Bildirishnomalar). Until they are resolved, the Huquq+ posts linked to those acts are held back from answers
 ("Dropping hp context ... (open notifications exist)" in the log).
 

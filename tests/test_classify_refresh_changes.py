@@ -17,3 +17,12 @@ def test_resplit_points_are_structural_and_new_text_is_content():
     assert mod.classify(before, after_split, rows)["structural"] == [1, 2]
     content = mod.classify(before, after_amended, rows)["content"]
     assert [c[0] for c in content] == [1, 2] and "chernobil qatnashchilari" in content[0][2][0]
+
+
+
+def test_a_removed_sentence_is_a_change_too():
+    # review 2026-10-25: a repealed point only removes text; "nothing new" was taken for "nothing changed"
+    before = {"act": mod.sentences("1. Nogironligi bo'lgan shaxslar yo'l haqidan ozod qilinadi. 2. Ariza 10 kun ichida ko'riladi.")}
+    after = {"act": mod.sentences("2. Ariza 10 kun ichida ko'riladi.")}
+    result = mod.classify(before, after, [(1, "document_amended", "law:act")])
+    assert result["structural"] == [] and result["content"][0][0] == 1
