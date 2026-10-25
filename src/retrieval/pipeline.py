@@ -20,6 +20,7 @@ from src.retrieval.expansion import expand_cross_references
 from src.retrieval.hybrid_retriever import HybridRetriever, ScoredArticle
 from src.retrieval.jev_ranker import JevRanker
 from src.retrieval.relevance_gate import GateDecision, RelevanceGate, jev_gate_decision
+from src.retrieval.repeal_notices import repeal_notices
 from src.retrieval.reranker import Reranker, RetrievedArticleContext
 from src.retrieval.status_filter import apply_status_and_amendment_filter
 from src.storage.hybrid_store import HybridStore
@@ -290,8 +291,21 @@ async def retrieve_contexts(
             if scope_task:
                 scope_task.cancel()
 
+        # An act the question names (number and year) that a unit of the corpus repealed: that unit goes first, so the
+        # answer says the act lost force instead of describing it as current law (see repeal_notices).
+        notice_ids: List[str] = []
+        if contexts:
+            notices = await asyncio.to_thread(repeal_notices, analysis.raw_query, store)
+            if notices:
+                notice_ids = [a.canonical_id for a in notices]
+                present = {c.article.canonical_id: c for c in contexts}
+                front = [present.get(a.canonical_id) or RetrievedArticleContext(
+                    article=a, final_score=0.0, source_tag="repeal_notice") for a in notices]
+                contexts = front + [c for c in contexts if c.article.canonical_id not in notice_ids]
+
         signals = {
             "rerank_provider": reranker.last_provider,
+            "repeal_notices": notice_ids,
             "jev_in_scope": in_scope,
             "jev_answerable": reranker.last_answerable,
             "subquestions": subquestions or [],

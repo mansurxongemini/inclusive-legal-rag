@@ -264,6 +264,7 @@ class SqliteFtsStore:
         database: nothing else invalidates this cache, so a repealed or amended act would keep being served."""
         if hasattr(self, "_article_cache"):
             self._article_cache.clear()
+        self.__dict__.pop("_repeal_index", None)        # src/retrieval/repeal_notices.py rebuilds it on demand
 
     def get_article(self, canonical_id: str) -> Optional[CanonicalArticle]:
         if not hasattr(self, "_article_cache"):
@@ -394,6 +395,7 @@ class SqliteFtsStore:
             conn.commit()
         if hasattr(self, "_article_cache"):
             self._article_cache.clear()
+        self.__dict__.pop("_repeal_index", None)        # src/retrieval/repeal_notices.py rebuilds it on demand
         return n
 
     def delete_laws(self, law_ids: List[str]) -> List[str]:
