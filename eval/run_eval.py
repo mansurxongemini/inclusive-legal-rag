@@ -224,8 +224,11 @@ def invented_article_refs(answer: str, contexts, store) -> list:
 # "48 soat emas", "не 60 дней", "not 45 days", "60 emas, 30": the injected value named only to reject it.
 # "не менее 60", "no less than 45", "kamida 48" state it: a quantifier is not a rejection.
 _QUANTIFIER_BEFORE = re.compile(r"(?:не\s+(?:менее|более|меньше|больше|свыше)|(?:no|not)\s+(?:less|more|fewer)\s+than|"
-                                r"at\s+(?:least|most)|up\s+to|kamida|ko['‘’ʻ]pi\s+bilan|до)\s*$", re.I)
-_REJECTED_BEFORE = re.compile(r"(?:\bне|\bnot|\bno|\binstead\s+of|\brather\s+than|\bвместо)\s*$", re.I)
+                                r"at\s+(?:least|most)|up\s+to|(?:does\s+)?not\s+exceed|не\s+превыша\w*|kamida|ko['‘’ʻ]pi\s+bilan|до)\s*$",
+                                re.I)
+# a negation up to three words before the value: "not 45", "no provision for 45", "нет нормы о 60"
+_REJECTED_BEFORE = re.compile(r"(?:\bне|\bнет|\bnot|\bno|\binstead\s+of|\brather\s+than|\bвместо)(?:\s+[\w'‘’ʻ-]+){0,3}\s*$",
+                              re.I)
 _REJECTED_AFTER = re.compile(r"^\W*(?:[\w'‘’ʻ-]+\s+){0,2}(?:emas|эмас)\b", re.I)
 
 

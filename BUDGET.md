@@ -24,3 +24,10 @@ Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `
 | 2026-10-25 08:04 | eval en06 live baidu | 10.00 | 0.3575 | 9.6425 | 0.3575 |
 | 2026-10-25 08:33 | eval cycle 7: re-imported 85 acts (+820 units), repeal notices, provider routing (baidu, fp8, price cap), scope rescue [tests: 633 passed, 1 warning; server: 30/30] | 10.00 | 0.4045 | 9.5955 | 0.4045 |
 | 2026-10-25 08:38 | eval cycle 7 (rerun after the DNS outage): re-imported acts, repeal notices, provider routing, scope rescue [tests: 633 passed, 1 warning; server: 30/30] | 10.00 | 0.4245 | 9.5755 | 0.4245 |
+| 2026-10-25 08:48 | eval cycle 8: embedding options (off by default), query-embedding path, dense-only probe [tests: 635 passed, 1 warning; server: 30/30] | 10.00 | 0.5853 | 9.4147 | 0.5853 |
+| 2026-10-25 12:13 | eval qwen3-embedding-8b@1024 (copy) | 10.00 | 0.6666 | 9.3334 | 0.6666 |
+| 2026-10-25 12:18 | eval cycle 9: review fixes (repeal notices strict, no caching after retrieval timeout, rescue only over the lexical gate, Russian document search), hours-as-decimal check [tests: 645 passed, 1 warning; server: 30/30] | 10.00 | 0.6686 | 9.3314 | 0.6686 |
+| 2026-10-25 12:34 | eval cycle 10: clean-install check, embedding comparison docs (production unchanged) [tests: 645 passed, 1 warning; server: 30/30] | 10.00 | 0.6705 | 9.3295 | 0.6705 |
+| 2026-10-25 12:43 | eval cycle 11: review fixes (exact number words, list-bracket ids, remove-not-move repair, price-cap retry, stricter eval criteria) [tests: 668 passed, 1 warning; server: 30/30] | 10.00 | 0.6705 | 9.3295 | 0.6705 |
+| 2026-10-25 13:04 | eval cycle 12: ingestion review fixes (60 Russian points moved to their units, multi-point repeal notes, text-keyed audit cache), 3 cards reopened [tests: 674 passed, 1 warning; server: 30/30] | 10.00 | 0.6899 | 9.3101 | 0.6899 |
+| 2026-10-25 13:14 | eval injection set (final) | 10.00 | 0.7091 | 9.2909 | 0.7091 |
