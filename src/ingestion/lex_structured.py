@@ -57,8 +57,21 @@ _REPEALED_RE = re.compile(r"kuchini\s+yo[ʻ'`’‘ʼ]?qot|кучини\s+йўқ
 # amendment note of a repealed point: "(45-band ... o'z kuchini yo'qotgan ...)", "(12 — 14-bandlar ...)",
 # "(пункт 45 утратил силу ...)"
 _REPEALED_POINTS_RE = re.compile(
-    r"^\(?\s*(\d+)(?:\s*[-–—]\s*(\d+))?\s*-\s*band(?:lar)?i?\b|^\(?\s*пункт(?:ы)?\s*(\d+)(?:\s*[-–—]\s*(\d+))?\b",
+    r"^\(?\s*((?:\d+\s*(?:[-–—]|,|va)\s*)*\d+)\s*-\s*band(?:lar)?i?\b|"
+    r"^\(?\s*пункт(?:ы)?\s*((?:\d+\s*(?:[-–—]|,|и)\s*)*\d+)\b",
     re.IGNORECASE)
+
+
+def _point_numbers(listing: str) -> set:
+    """'45' -> {45}; '5 va 6' -> {5, 6}; '12 — 14' -> {12, 13, 14}; '7, 8 va 10' -> {7, 8, 10}."""
+    numbers: set = set()
+    for part in re.split(r"\s*(?:,|\bva\b|\bи\b)\s*", listing.strip()):
+        bounds = [int(x) for x in re.findall(r"\d+", part)]
+        if len(bounds) == 2 and bounds[0] < bounds[1] <= bounds[0] + 100:
+            numbers.update(range(bounds[0], bounds[1] + 1))
+        else:
+            numbers.update(bounds)
+    return numbers
 _DATE_DMY = re.compile(r"(\d{1,2})\.(\d{1,2})\.(\d{4})")
 
 _UZ_MONTHS = {
@@ -434,8 +447,7 @@ class LexDocumentParser:
             for note in notes:
                 m = _REPEALED_POINTS_RE.match(note.strip())
                 if m and _REPEALED_RE.search(note):
-                    a, b = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
-                    repealed_points.update(range(int(a), int(b or a) + 1))
+                    repealed_points.update(_point_numbers(m.group(1) or m.group(2)))
 
         def flush():
             nonlocal cur
@@ -515,7 +527,7 @@ class LexDocumentParser:
                     n = int(parts[0])
                     inserted = len(parts) > 1          # "2-1." / "2^1.": clause 2¹ inserted by a later amendment
                     is_new_context = last_clause_no == 0
-                    after_repealed = n > last_clause_no + 1 and n - last_clause_no <= 10 and all(
+                    after_repealed = n > last_clause_no + 1 and n - last_clause_no <= 40 and all(
                         k in repealed_points for k in range(last_clause_no + 1, n))
                     if is_new_context or n == last_clause_no + 1 or after_repealed or (inserted and n == last_clause_no) or (
                             n == 1 and annex_no is not None and cur is not None and cur.annex_number != annex_no):

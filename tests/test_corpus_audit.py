@@ -30,3 +30,9 @@ def test_points_swallowed_by_an_earlier_point_are_reported():
 def test_audit_summarizes():
     report = audit([("u1", "Matn.", LEX, "lex"), ("u2", "bu�", LEX, "lex")])
     assert report["units"] == 2 and report["hard"] == {"broken_character": {"count": 1, "examples": ["u2"]}}
+
+
+def test_a_russian_text_holding_later_points_is_reported():
+    units = [("x_p_44", "44. To'rt daraja.", LEX, "lex", "44. Четыре степени.\n46. Критерий I группы."),
+             ("x_p_46", "46. I guruh mezoni.", LEX, "lex", "")]
+    assert audit(units)["russian_overflow"] == {"count": 2, "examples": ["x_p_44", "x_p_46"]}

@@ -22,6 +22,7 @@ another). On 2026-10-25 this flagged 284 of 15,247 pairs; aligned pairs score 0.
 text costs little (the answer is then written from the Uzbek text); keeping a wrong one costs a wrong answer.
 """
 import argparse
+import hashlib
 import asyncio
 import json
 import os
@@ -56,31 +57,37 @@ def load_units(db_path: Path):
     return units
 
 
+def _cache_key(cid: str, text: str) -> str:
+    """The id and a hash of the embedded text: after a re-parse changes a unit's text its old vector is not reused."""
+    return f"{cid}#{hashlib.sha1(text[:HEAD].encode('utf-8')).hexdigest()[:12]}"
+
+
 async def embed_cached(units: dict, lang: str) -> dict:
-    """{unit id: vector of the first HEAD characters of its `lang` text}, from the cache where possible."""
-    path = CACHE_DIR / f"{lang}_vectors.npz"
+    """{unit id: vector of the first HEAD characters of its `lang` text}, from the cache where the text is unchanged."""
+    path = CACHE_DIR / f"{lang}_vectors_v2.npz"
+    col = 0 if lang == "uz" else 1
     cached = {}
     if path.exists():
         data = np.load(path, allow_pickle=False)
         cached = dict(zip(data["ids"].tolist(), data["vectors"]))
-    todo = [cid for cid in units if cid not in cached]
+    keys = {cid: _cache_key(cid, units[cid][col]) for cid in units}
+    todo = [cid for cid in units if keys[cid] not in cached]
     if todo:
         client = OpenRouterClient()
         if client.embedding_is_mock:
             raise SystemExit("no OpenRouter key: the check needs the real embedding model")
         t0 = time.time()
-        col = 0 if lang == "uz" else 1
         for i in range(0, len(todo), 192):
             part = todo[i:i + 192]
             vecs = await client.get_embeddings([units[c][col][:HEAD] for c in part])
-            cached.update({c: np.asarray(v, dtype=np.float32) for c, v in zip(part, vecs)})
+            cached.update({keys[c]: np.asarray(v, dtype=np.float32) for c, v in zip(part, vecs)})
             if (i // 192) % 10 == 0:
                 print(f"  {lang}: embedded {min(i + 192, len(todo))}/{len(todo)} ({time.time() - t0:.0f}s)", flush=True)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 np.savez(path, ids=np.array(list(cached)), vectors=np.stack(list(cached.values())))
         await client.close()
         np.savez(path, ids=np.array(list(cached)), vectors=np.stack(list(cached.values())))
-    return cached
+    return {cid: cached[keys[cid]] for cid in units}
 
 
 def cosine(a, b) -> float:

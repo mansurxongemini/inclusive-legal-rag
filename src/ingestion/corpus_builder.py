@@ -152,6 +152,20 @@ def _points_from_text(text: str) -> List[ArticlePoint]:
     return points if len(points) >= 2 else []
 
 
+def _move_russian_overflow(articles: List[CanonicalArticle]) -> None:
+    """Russian points glued to the previous point (the Russian edition has no repeal notes) go to their own units."""
+    from src.ingestion.translation_alignment import split_russian_overflow
+    by_id = {a.canonical_id: a for a in articles}
+    changes = split_russian_overflow({cid: (a.get_text("uz"), a.translations.get("ru", "")) for cid, a in by_id.items()})
+    for cid, ru in changes.items():
+        art = by_id[cid]
+        if ru:
+            art.translations["ru"] = ru
+            art.translation_provenance["ru"] = TranslationProvenanceType.OFFICIAL
+        else:
+            art.translations.pop("ru", None)
+
+
 class CorpusBuilder:
     def __init__(self, client: Optional[LexClient] = None, today: Optional[str] = None):
         self.client = client or LexClient()
@@ -324,6 +338,7 @@ class CorpusBuilder:
             total_chars += len(unit.text)
 
         self._link_references(articles, law_id)
+        _move_russian_overflow(articles)
 
         report = DocumentReport(
             lex_id=doc.doc_id, law_id=law_id, number=number, title=law_title_uz, doc_type=doc.doc_type,

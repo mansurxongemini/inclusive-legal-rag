@@ -61,3 +61,18 @@ def test_a_point_after_a_repealed_one_starts_its_own_unit():
     clauses = [(u.number, u.element_ids) for u in doc.units if u.kind == "clause"]
     # 46 and 47 are units; 50 stays inside 47: 48 and 49 were not repealed, so the jump is not trusted
     assert clauses == [("44", ["144", "145"]), ("46", ["146"]), ("47", ["147", "150"])]
+
+
+def test_notes_that_repeal_several_points_at_once_are_understood():
+    # review 2026-10-25: "(5 va 6-bandlar ...)" and "(12 — 14-bandlar ...)" were not read, so the next point stayed glued
+    from src.ingestion.lex_structured import _point_numbers
+    assert _point_numbers("5 va 6") == {5, 6}
+    assert _point_numbers("12 — 14") == {12, 13, 14}
+    assert _point_numbers("7, 8 va 10") == {7, 8, 10}
+    html = "<html><body>" + "".join([
+        _elem(104, "4. To'rtinchi band."),
+        _note(900, "(5 va 6-bandlar Vazirlar Mahkamasining qaroriga asosan o'z kuchini yo'qotgan)"),
+        _elem(107, "7. Yettinchi band."),
+    ]) + "</body></html>"
+    doc = LexDocumentParser().parse(html, "-1", language="uz")
+    assert [(u.number, u.element_ids) for u in doc.units if u.kind == "clause"] == [("4", ["104"]), ("7", ["107"])]

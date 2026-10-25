@@ -50,3 +50,13 @@ def test_a_unique_key_is_paired_as_before():
     ru = [_clause("1", "1. Общее положение.")]
     arts, _ = _builder().to_articles(_doc(uz), _spec(), _doc(ru, "ru"))
     assert arts[0].translations["ru"] == "1. Общее положение."
+
+
+def test_russian_points_after_a_repealed_point_reach_their_own_units():
+    # the Uzbek edition splits 46 off point 44 (repeal note for 45); the Russian edition, without notes, keeps it glued
+    uz = [_clause("44", "44. To'rt daraja."), _clause("46", "46. I guruh mezoni.")]
+    ru = [_clause("44", "44. Четыре степени.\n46. Критерий I группы.")]
+    arts, _ = _builder().to_articles(_doc(uz), _spec(), _doc(ru, "ru"))
+    by_text = {a.translations["uz"]: a.translations.get("ru") for a in arts}
+    assert by_text["44. To'rt daraja."] == "44. Четыре степени."
+    assert by_text["46. I guruh mezoni."] == "46. Критерий I группы."

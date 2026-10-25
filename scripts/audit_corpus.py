@@ -29,8 +29,9 @@ def main() -> int:
     for cid, raw in con.execute("SELECT canonical_id, json_data FROM articles_metadata"):
         d = json.loads(raw)
         meta = d.get("metadata") or {}
-        units.append((cid, (d.get("translations") or {}).get("uz") or "", meta.get("source_url") or "",
-                      meta.get("source_type") or "lex"))
+        tr = d.get("translations") or {}
+        units.append((cid, tr.get("uz") or "", meta.get("source_url") or "", meta.get("source_type") or "lex",
+                      tr.get("ru") or ""))
     con.close()
     result = audit(units)
     text = json.dumps(result, ensure_ascii=False, indent=1)

@@ -13,7 +13,8 @@ these 14 stay open in the admin panel
 ## 2. VMQ-240 (2008) skipped by the refresh (owner / next run)
 `refresh` refused to replace it: 34 of 39 stored units would disappear (mass-removal guard). The stored units are kept.
 Look at the act on Lex.uz and run `scripts/build_disability_corpus.py refresh --law-ids=vmq_240_2008 --allow-mass-removal`
-only if the new parse is right.
+only if the new parse is right. With the multi-point repeal notes now read ("5 va 6-bandlar"), that refresh also splits 3
+swallowed points of this act; no other stored act is affected.
 
 ## 3. 55 units still contain later points (known limit)
 `scripts/audit_corpus.py` reports 55 units (171 before the parser fix) whose text holds later point numbers without units
