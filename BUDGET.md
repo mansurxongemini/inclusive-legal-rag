@@ -12,3 +12,9 @@ Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `
 | 2026-10-25 01:23 | eval cycle 2: number words, retrieval deadline | 10.00 | 0.2041 | 9.7959 | 0.2041 |
 | 2026-10-25 07:06 | eval cycle 3: emoji-free answers, one-pass document search [tests: 612 passed, 1 warning; server: 30/30] | 10.00 | 0.2047 | 9.7953 | 0.2047 |
 | 2026-10-25 07:12 | eval cycle 4: gold v2 (verified slot alternatives), README [tests: 612 passed, 1 warning; server: 30/30] | 10.00 | 0.2130 | 9.7870 | 0.2130 |
+| 2026-10-25 07:19 | eval cycle 5: corpus gate (U+FFFD, glued headings), quiet vector search [tests: 617 passed, 1 warning; server: 30/30] | 10.00 | 0.2148 | 9.7852 | 0.2148 |
+| 2026-10-25 07:19 | eval injection | 10.00 | 0.2154 | 9.7846 | 0.2154 |
+| 2026-10-25 07:20 | eval injection | 10.00 | 0.2215 | 9.7785 | 0.2215 |
+| 2026-10-25 07:28 | eval cycle 6: answer version, injection set, parser fix (code), conftest [tests: 620 passed, 1 warning; server: 30/30] | 10.00 | 0.2218 | 9.7782 | 0.2218 |
+| 2026-10-25 07:34 | eval split store (copy) | 10.00 | 0.2981 | 9.7019 | 0.2981 |
+| 2026-10-25 07:42 | eval split store (copy) + repeal notices | 10.00 | 0.3178 | 9.6822 | 0.3178 |
