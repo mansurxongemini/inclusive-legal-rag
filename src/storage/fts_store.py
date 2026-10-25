@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import sqlite3
 from datetime import datetime, timezone
@@ -266,15 +267,31 @@ class SqliteFtsStore:
         invalidate(self)
 
     def clear_article_cache(self) -> None:
-        """Drops the in-memory article objects. Needed after another process (the corpus build script) wrote to the
-        database: nothing else invalidates this cache, so a repealed or amended act would keep being served."""
+        """Drops the in-memory article objects and the indexes derived from the texts."""
         if hasattr(self, "_article_cache"):
             self._article_cache.clear()
         self._invalidate_derived()
 
+    def files_stamp(self) -> str:
+        """Changes whenever a commit reaches the database, from this process or another (modification times of the
+        database file and its write-ahead log)."""
+        return ":".join(str(os.stat(p).st_mtime_ns) if os.path.exists(p) else "0"
+                        for p in (self.db_path, f"{self.db_path}-wal"))
+
+    def _drop_cache_after_external_write(self) -> None:
+        """Another process (a refresh run of the corpus build script) writes behind this one's back: a repealed or
+        amended act would keep being served from the cache. The database and its write-ahead log change their
+        modification time on every commit, from any process; when they did since the last read, the cache goes."""
+        stamp = self.files_stamp()
+        if stamp != getattr(self, "_files_stamp", None):
+            if getattr(self, "_files_stamp", None) is not None:
+                self.clear_article_cache()
+            self._files_stamp = stamp
+
     def get_article(self, canonical_id: str) -> Optional[CanonicalArticle]:
         if not hasattr(self, "_article_cache"):
             self._article_cache = {}
+        self._drop_cache_after_external_write()
         if canonical_id in self._article_cache:
             return self._article_cache[canonical_id]
 
@@ -295,6 +312,7 @@ class SqliteFtsStore:
             return {}
         if not hasattr(self, "_article_cache"):
             self._article_cache = {}
+        self._drop_cache_after_external_write()
 
         result: Dict[str, CanonicalArticle] = {}
         missing_ids: List[str] = []

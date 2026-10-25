@@ -204,3 +204,32 @@ def test_an_answer_from_the_timed_out_retrieval_is_not_cached():
     ok = AnswerResult(answer=text, clean_answer=text, validation_passed=True)
     assert _is_cacheable(ok)
     assert not _is_cacheable(ok.model_copy(update={"warnings": [RETRIEVAL_TIMEOUT_WARNING]}))
+
+
+def test_cached_answers_go_when_the_corpus_changes_even_in_another_process(tmp_path):
+    from src.api.cache import QueryCache
+    server = QueryCache(str(tmp_path / "cache.db"))
+    assert server.sync_corpus("v1")                                    # first sight of the corpus: nothing to trust
+    server.set("Savol matni yetarlicha uzun", "uz:latin", "m", {"answer": "eski javob " * 40}, None)
+    assert server.get("Savol matni yetarlicha uzun", "uz:latin", "m")["answer"].startswith("eski javob")
+    assert not server.sync_corpus("v1")                                # unchanged corpus: answers stay
+    restarted = QueryCache(str(tmp_path / "cache.db"))
+    assert not restarted.sync_corpus("v1") and restarted.get("Savol matni yetarlicha uzun", "uz:latin", "m")
+    # a refresh run (another process) changed the corpus: the RAM layer of the running server must not serve it either
+    assert server.sync_corpus("v2")
+    assert server.get("Savol matni yetarlicha uzun", "uz:latin", "m") is None
+    restarted.sync_corpus("v2")                                        # another worker: the database was already cleared
+    assert restarted.get("Savol matni yetarlicha uzun", "uz:latin", "m") is None    # and its own RAM layer goes too
+
+
+def test_the_store_stamp_changes_on_every_commit(tmp_path):
+    import json
+    from pathlib import Path
+    from src.schema.canonical import CanonicalArticle
+    from src.storage.fts_store import SqliteFtsStore
+    fts = SqliteFtsStore(str(tmp_path / "fts.db"))
+    article = CanonicalArticle.model_validate(json.loads(Path("tests/fixtures/synthetic_pilot.json").read_text("utf-8"))[0])
+    fts.upsert_article(article)
+    before = fts.files_stamp()
+    fts.upsert_article(article.model_copy(update={"translations": {"uz": "Yangi matn."}}))
+    assert fts.files_stamp() != before

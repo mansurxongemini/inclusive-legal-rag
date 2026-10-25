@@ -112,6 +112,19 @@ async def test_status_filter_and_repealed_handling(populated_store):
 
 
 @pytest.mark.asyncio
+async def test_a_repealed_unit_is_never_an_answer_source(populated_store):
+    from src.retrieval.hybrid_retriever import ScoredArticle
+    store = populated_store
+    repealed = [a.canonical_id for a in store.list_articles(limit=100) if a.metadata.status.value == "repealed"]
+    assert repealed
+    candidates = [ScoredArticle(canonical_id=repealed[0], rrf_score=0.9)]
+    updated, warnings = apply_status_and_amendment_filter(candidates, store)
+    assert repealed[0] not in [u.canonical_id for u in updated]                 # dropped
+    assert [w["canonical_id"] for w in warnings] == [repealed[0]]                # but reported
+    assert "synthetic_law_art_15" in [u.canonical_id for u in updated]          # its current replacement is used
+
+
+@pytest.mark.asyncio
 async def test_reranker_end_to_end(populated_store):
     store = populated_store
     retriever = HybridRetriever(store)

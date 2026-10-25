@@ -15,6 +15,8 @@ def apply_status_and_amendment_filter(
     Inspects candidate articles for amended or repealed status.
     If an article is repealed or amended and has `superseded_by`,
     pulls in the active replacement article and flags the status.
+    A repealed article is never an answer source: it is dropped from the candidates (its warning stays, and a question
+    naming a repealed act gets the repealing clause from repeal_notices), so the model cannot present old law as current.
     Returns (updated_candidates, list_of_status_warnings).
     """
     updated: List[ScoredArticle] = []
@@ -54,6 +56,8 @@ def apply_status_and_amendment_filter(
                         rrf_score=candidate.rrf_score + 0.01,  # Prioritize active replacement
                         source_tag=f"superseded_replacement_for:{candidate.canonical_id}",
                     ))
+            if status == ArticleStatus.REPEALED:
+                continue
 
         updated.append(candidate)
 

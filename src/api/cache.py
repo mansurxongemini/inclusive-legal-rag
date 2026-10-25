@@ -82,7 +82,31 @@ class QueryCache:
             # the semantic lookup reads the newest rows of one language/mode; created_at also serves the expiry purge
             conn.execute("CREATE INDEX IF NOT EXISTS idx_query_cache_lang_mode ON query_cache (language, mode, created_at)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_query_cache_created ON query_cache (created_at)")
+            conn.execute("CREATE TABLE IF NOT EXISTS cache_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
             conn.commit()
+
+    def sync_corpus(self, stamp: str) -> bool:
+        """Cached answers were written from the corpus as it was. When the corpus changed since (a refresh run of the
+        build script, an editor's change, a Huquq+ sync; in this process or another, while the server ran or not),
+        every cached answer goes, the RAM layer too. The stamp is kept in the cache database, so all workers and
+        restarts agree. Returns True when the cache was cleared."""
+        known = getattr(self, "_corpus_stamp", None)
+        if stamp == known:
+            return False
+        with self._lock:
+            with self._get_conn() as conn:
+                row = conn.execute("SELECT value FROM cache_meta WHERE key = 'corpus_stamp'").fetchone()
+                changed = row is None or row[0] != stamp
+                if changed:
+                    conn.execute("DELETE FROM query_cache")
+                    conn.execute("INSERT OR REPLACE INTO cache_meta (key, value) VALUES ('corpus_stamp', ?)", (stamp,))
+                    conn.commit()
+            # another worker may have cleared the database already; this process's RAM layer is still its own
+            self._ram_cache.clear()
+            self._corpus_stamp = stamp
+        if changed or known is not None:
+            logger.info("Answer cache cleared: the corpus changed since the answers were cached")
+        return changed or known is not None
 
     @classmethod
     def canonicalize_query(cls, query: str) -> str:

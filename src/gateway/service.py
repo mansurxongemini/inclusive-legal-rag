@@ -118,9 +118,10 @@ MIN_CACHEABLE_CHARS = 80
 def cache_keys(analysis, mode: str) -> tuple:
     """(language, mode) parts of the cache key. The script is part of the language part: the canonical query of a
     Cyrillic question equals its Latin transliteration, but their answers are written in different scripts. The
-    answer version and the model are part of the mode part: a cached answer of an older pipeline is not served."""
+    answer version and both models are part of the mode part: a cached answer of an older pipeline is not served, and
+    the semantic layer never compares question vectors of two embedding models."""
     return (f"{analysis.detected_language}:{analysis.detected_script}",
-            f"{mode}|{ANSWER_VERSION}|{settings.GENERATION_MODEL_PRIMARY}")
+            f"{mode}|{ANSWER_VERSION}|{settings.GENERATION_MODEL_PRIMARY}|{settings.EMBEDDING_MODEL}")
 
 
 @dataclass
@@ -168,12 +169,15 @@ def _analyse(question: str, language: str, mode: str, disability_group: str, cat
     )
 
 
-async def _lookup_cache(q: _Question, cache, client) -> Tuple[Optional[dict], Optional[List[float]], bool]:
+async def _lookup_cache(q: _Question, cache, client, store=None) -> Tuple[Optional[dict], Optional[List[float]], bool]:
     """
     (cached answer or None, the question's embedding or None, whether embeddings are available). The exact layer is asked
     first and a hit costs nothing else; only on a miss is the question embedded (a paid call) for the semantic layer
     and, later, for retrieval. The SQLite lookups run in worker threads: they must not stall the event loop.
     """
+    if store is not None:
+        # an answer written from an older text of the corpus is never served (a refresh may have repealed its norm)
+        await asyncio.to_thread(cache.sync_corpus, store.fts_store.files_stamp())
     hit = await asyncio.to_thread(cache.get, q.cache_text, q.cache_lang, q.cache_mode)
     if hit or client.is_mock:
         return hit, None, True
@@ -270,7 +274,7 @@ async def answer_question(
     cache = get_cache()
     client = get_client()
 
-    hit, query_vector, embedding_available = await _lookup_cache(q, cache, client)
+    hit, query_vector, embedding_available = await _lookup_cache(q, cache, client, store)
     if hit:
         return _result_from_cache(hit, q)
 
@@ -384,7 +388,7 @@ async def answer_question_stream(
     client = get_client()
 
     # Same two cache layers as answer_question; a hit is replayed as one token event plus the final event
-    hit, query_vector, embedding_available = await _lookup_cache(q, cache, client)
+    hit, query_vector, embedding_available = await _lookup_cache(q, cache, client, store)
     if hit:
         cached = _result_from_cache(hit, q)
         yield _sse({"type": "token", "text": cached.clean_answer})

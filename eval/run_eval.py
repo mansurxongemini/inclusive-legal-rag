@@ -177,6 +177,9 @@ class NullCache:
     def set(self, *a, **k):
         return None
 
+    def sync_corpus(self, *a, **k):
+        return False
+
 
 class NoDailyLimit:
     def consume(self, limit=None) -> bool:

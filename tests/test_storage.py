@@ -41,9 +41,10 @@ async def test_hybrid_store_indexing_and_retrieval(tmp_path):
     assert store.get_article("synthetic_law_old_sample_art_10") is None
 
 
-def test_fts_article_cache_is_stale_after_external_write_until_cleared(tmp_path):
+def test_fts_article_cache_sees_a_write_of_another_process(tmp_path):
     """The corpus build script is a separate process: its writes never pass through the server's cache, so a
-    repealed act kept being served as active until clear_article_cache() existed and was called."""
+    repealed act kept being served as active until someone called clear_article_cache(). The store now notices the
+    write (the database files changed) and drops its cache by itself."""
     import json
     from src.storage.fts_store import SqliteFtsStore
 
@@ -59,9 +60,7 @@ def test_fts_article_cache_is_stale_after_external_write_until_cleared(tmp_path)
     repealed.metadata.status = type(article.metadata.status)("repealed")
     other_process.upsert_article(repealed)
 
-    assert server.get_article(cid).metadata.status.value == "active"      # the cache hides the change
-    server.clear_article_cache()
-    assert server.get_article(cid).metadata.status.value == "repealed"
+    assert server.get_article(cid).metadata.status.value == "repealed"    # no restart, no manual clearing
     assert server.get_articles_batch([cid])[cid].metadata.status.value == "repealed"
 
 
