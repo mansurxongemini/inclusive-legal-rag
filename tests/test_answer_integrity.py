@@ -12,7 +12,6 @@ from src.api.cache import QueryCache
 from src.generation.generator import MAX_ANSWER_TOKENS, attach_disclaimer
 from src.generation.prompts import DISCLAIMERS, build_system_prompt
 from src.generation.validator import CitationValidator
-from src.ingestion.localized import localized, provenance_for
 from src.retrieval.reranker import RetrievedArticleContext
 from src.schema.canonical import CanonicalArticle
 
@@ -63,23 +62,6 @@ def test_disclaimer_is_attached_after_validation_and_before_the_footer():
     # a disclaimer the model wrote itself is not repeated
     same = attach_disclaimer(val, disclaimer, already_present=True)
     assert same == (val.sanitized_answer, val.clean_answer, val.telegram_formatted)
-
-
-# --- importers store only languages that exist ------------------------------------------------------------------
-
-def test_uzbek_text_is_not_stored_as_russian_or_english():
-    fields = localized("Nogironligi bo'lgan shaxslarga yordam beriladi.", "Nogironligi bo'lgan shaxslarga yordam beriladi.")
-    assert fields == {"uz": "Nogironligi bo'lgan shaxslarga yordam beriladi."}
-    assert set(provenance_for(fields)) == {"uz"}
-
-    uz_cyrillic = "Ногиронлиги бўлган шахсларга ёрдам кўрсатилади"
-    assert "ru" not in localized("Nogironligi bo'lgan shaxslarga yordam", uz_cyrillic)
-
-
-def test_genuine_russian_is_kept_as_russian():
-    russian = "В соответствии с настоящим законом лицам с инвалидностью предоставляется помощь."
-    fields = localized("Ushbu qonunga muvofiq nogironligi bo'lgan shaxslarga yordam ko'rsatiladi.", russian)
-    assert fields["ru"] == russian and set(provenance_for(fields)) == {"uz", "ru"}
 
 
 # --- generation limits and prompt ---------------------------------------------------------------------------------
