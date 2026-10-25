@@ -118,7 +118,8 @@ class LanceVectorStore:
         # Several chunk rows can belong to one unit (long units are embedded chunk by chunk), so the window is wide
         # enough for top_k distinct units even when one long unit fills many of the nearest rows.
         window = top_k * VECTOR_WINDOW_FACTOR
-        columns = ["canonical_id", "language", "status", "category"] + (["chunk_index"] if self.has_chunk_index else [])
+        # "_distance" is named explicitly: a projection without it makes LanceDB log a deprecation warning on every search
+        columns = ["canonical_id", "language", "status", "category", "_distance"] + (["chunk_index"] if self.has_chunk_index else [])
         # rows of other languages (e.g. restored from an old backup) are never searched
         where = f"language IN ({', '.join(_sql_quote(l) for l in settings.vector_language_list)})"
 
