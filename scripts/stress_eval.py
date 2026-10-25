@@ -112,7 +112,9 @@ async def judge_answer(item, out, store, client, judge_model: str = "") -> dict:
             raw = await client.chat_completion(messages=messages, model=judge_model, temperature=0.0, max_tokens=6000,
                                                min_chars=2, reasoning={"effort": "low"})
         else:
-            raw = await client.chat_completion(messages=messages, temperature=0.0, max_tokens=2000)
+            # the chat model reasons by default: 2000 tokens went to its thinking and the verdict came back empty
+            raw = await client.chat_completion(messages=messages, temperature=0.0, max_tokens=6000, min_chars=2,
+                                               reasoning={"effort": "low"})
         return _json_obj(raw) or {"verdict": "unparsed", "raw": (raw or "")[:300]}
     except Exception as e:
         return {"verdict": "judge_error", "reason": str(e)[:200]}

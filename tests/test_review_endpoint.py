@@ -453,3 +453,18 @@ async def test_an_explicit_review_language_wins_over_the_detected_one(gateway_st
     assert data["language"] == "en" and "ingliz tilida" in review_mocks["llm_messages"][-1][0]["content"]
     data = await _review(c_store, question="Какое пособие положено?", language="oz")
     assert data["language"] == "uz" and "kirill yozuvida" in review_mocks["llm_messages"][-1][0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_the_review_call_states_its_reasoning_and_leaves_room_for_the_verdict():
+    # the chat model reasons by default; with 4096 tokens and no stated effort its thinking could use them all
+    from src.gateway.review import call_review_llm
+    sent = {}
+
+    class Client:
+        async def chat_completion(self, **kw):
+            sent.update(kw)
+            return '{"verdict": "approve"}'
+
+    await call_review_llm([{"role": "user", "content": "x"}], Client(), "m", timeout_s=5)
+    assert sent["reasoning"] == {"effort": "low"} and sent["max_tokens"] >= 8192

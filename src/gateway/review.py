@@ -265,6 +265,10 @@ async def retrieve_review_contexts(question: str, answer: str, client, store, to
 
 # -- LLM chaqiruvi + qat'iy validatsiya --------------------------------------------------------------
 
+REVIEW_REASONING = {"effort": "low"}
+REVIEW_MAX_TOKENS = 8192          # reasoning plus the JSON verdict
+
+
 async def call_review_llm(messages: List[Dict[str, str]], client, model: str, timeout_s: float) -> str:
     """Bitta LLM urinishi (tashqi timeout bilan). Avval OpenRouter JSON mode
     (`response_format: json_object`) bilan uriniladi; model uni qo'llamasa —
@@ -273,11 +277,14 @@ async def call_review_llm(messages: List[Dict[str, str]], client, model: str, ti
 
     async def _once(use_json_mode: bool) -> str:
         kwargs = {"response_format": {"type": "json_object"}} if use_json_mode else {}
+        # the model reasons by default: without a stated effort and room for it, its thinking used the whole token
+        # budget and the reply came back empty (seen with the gold-set judge, 2026-10-25)
         return await client.chat_completion(
             messages=messages,
             model=model,
             temperature=0.0,
-            max_tokens=4096,
+            max_tokens=REVIEW_MAX_TOKENS,
+            reasoning=REVIEW_REASONING,
             **kwargs,
         )
 
