@@ -18,9 +18,13 @@ A `.env` that still holds the old Meta settings (`PLUS_META_AI_API_KEY`, `EMBEDD
 OpenRouter key and `OPENROUTER_BASE_URL` must be `https://openrouter.ai/api/v1`**, and `GENERATION_MODEL_PRIMARY` an OpenRouter model name.
 
 **Default chat model: `deepseek/deepseek-v4-flash-0731`** (OpenRouter's list, 2026-10-24: 1M context, supports `reasoning` and `response_format`, 20+ providers).
-`LLM_PROVIDER_ORDER=deepinfra` asks DeepInfra first (fp8, $0.06 per million input and $0.18 per million output tokens; the cheapest provider, Baidu, asks
-$0.044 / $0.133 and the fp4 ones are excluded by `LLM_PROVIDER_QUANTIZATIONS`). Not yet tried with a real key: send one question and read the answer and
-`/health/details` -> `spend` before relying on it (the reasoning switch `GENERATION_REASONING_EFFORT=none` is expected to turn its thinking off).
+**Provider routing** (2026-10-25). About 25 OpenRouter providers serve the chat model at $0.042-0.44 per million input and $0.13-1.32 per million
+output tokens. `LLM_PROVIDER_ORDER=baidu,deepinfra` asks Baidu first (fp8, $0.044 / $0.133) and DeepInfra next (fp8, $0.06 / $0.18): on 12 gold
+questions Baidu cost $0.0009 a question against $0.0013 with the same answers. `LLM_PROVIDER_QUANTIZATIONS=fp8,fp16,bf16,fp32` keeps fp4 and
+"unknown" providers out, and `LLM_PROVIDER_MAX_PRICE_PROMPT=0.10` / `..._COMPLETION=0.30` (USD per million) keep a fallback from landing on a
+provider that charges 3-10 times more (before, "unknown" let it reach Reka, Phala or Cloudflare). Check the prices again when the model changes:
+`GET https://openrouter.ai/api/v1/models/<model>/endpoints`. Measured with the real key on 2026-10-25 (`eval/run_eval.py`, 76 gold questions):
+about $0.0013-0.0015 per uncached question on DeepInfra, $0.0009 on Baidu; `GENERATION_REASONING_EFFORT=none` keeps the model's thinking off.
 
 **What an uncached question costs** (token counts estimated from the prompt sizes, prices from the list above): about 6-7k input tokens for the
 answer, about 12k for the chat-model ranker (30 units x 1200 characters, `LLM_RANK_UNITS` / `LLM_RANK_CHARS`), under 1k for the scope check and each

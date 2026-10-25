@@ -113,18 +113,22 @@ def test_build_system_prompt_plain_word_limit():
 
 def test_openrouter_provider_preferences(monkeypatch):
     monkeypatch.setattr(settings, "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-    monkeypatch.setattr(settings, "LLM_PROVIDER_ORDER", "deepinfra")
-    monkeypatch.setattr(settings, "LLM_PROVIDER_QUANTIZATIONS", "fp8,fp16,bf16,fp32,unknown")
     client = OpenRouterClient()
-    prefs = client.provider_preferences()
-    assert prefs == {
-        "order": ["deepinfra"],
+    # the defaults: fast fp8 provider first, the cheapest fp8 one next, and no fallback above the price cap or below fp8
+    # (prices differed up to 10x between the 25 providers of the model on 2026-10-25)
+    assert client.provider_preferences() == {
+        "order": ["baidu", "deepinfra"],
         "allow_fallbacks": True,
-        "quantizations": ["fp8", "fp16", "bf16", "fp32", "unknown"],
+        "quantizations": ["fp8", "fp16", "bf16", "fp32"],
+        "max_price": {"prompt": 0.10, "completion": 0.30},
     }
+
+    monkeypatch.setattr(settings, "LLM_PROVIDER_MAX_PRICE_COMPLETION", 0.0)
+    assert client.provider_preferences()["max_price"] == {"prompt": 0.10}
 
     monkeypatch.setattr(settings, "LLM_PROVIDER_ORDER", "")
     monkeypatch.setattr(settings, "LLM_PROVIDER_QUANTIZATIONS", "")
+    monkeypatch.setattr(settings, "LLM_PROVIDER_MAX_PRICE_PROMPT", 0.0)
     assert client.provider_preferences() is None
 
 
@@ -167,6 +171,7 @@ async def test_chat_completion_sends_provider_and_reasoning(monkeypatch):
         "order": ["deepinfra"],
         "allow_fallbacks": True,
         "quantizations": ["fp8", "fp16", "bf16", "fp32", "unknown"],
+        "max_price": {"prompt": 0.10, "completion": 0.30},
     }
     assert stub_http.recorded_json["reasoning"] == reasoning_payload
 

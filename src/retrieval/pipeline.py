@@ -275,8 +275,12 @@ async def retrieve_contexts(
                     logger.info(f"Relevance gate refused: {decision.reason} (conf={decision.confidence:.2f})")
                     contexts = []
             else:
+                # the model ranker was off or failed; a scope judgement already asked for is still used (below)
                 if scope_task:
-                    scope_task.cancel()
+                    try:
+                        in_scope = await scope_task
+                    except Exception:
+                        in_scope = None
                 decision = RelevanceGate().assess(
                     query=rerank_query,
                     scored=candidates,                 # scores of the original hybrid hits (expanded ones carry none)
@@ -284,6 +288,12 @@ async def retrieve_contexts(
                     rerank_scores=[c.rerank_score for c in contexts if c.rerank_score is not None],
                     is_mock=client.is_mock,
                 )
+                if in_scope is not None and settings.GATE_JEV_SCOPE_ENABLED:
+                    if in_scope < settings.GATE_JEV_MIN_IN_SCOPE:
+                        decision = GateDecision(False, "jev_out_of_scope", in_scope)
+                    elif not decision.answerable and in_scope >= settings.GATE_SCOPE_RESCUE and contexts:
+                        logger.info(f"Lexical gate refused ({decision.reason}) but the scope judge says {in_scope:.2f}: answering")
+                        decision = GateDecision(True, "scope_rescue", in_scope)
                 if not decision.answerable:
                     logger.info(f"Relevance gate refused: {decision.reason} (conf={decision.confidence:.2f})")
                     contexts = []

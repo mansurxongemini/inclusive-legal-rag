@@ -18,3 +18,7 @@ Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `
 | 2026-10-25 07:28 | eval cycle 6: answer version, injection set, parser fix (code), conftest [tests: 620 passed, 1 warning; server: 30/30] | 10.00 | 0.2218 | 9.7782 | 0.2218 |
 | 2026-10-25 07:34 | eval split store (copy) | 10.00 | 0.2981 | 9.7019 | 0.2981 |
 | 2026-10-25 07:42 | eval split store (copy) + repeal notices | 10.00 | 0.3178 | 9.6822 | 0.3178 |
+| 2026-10-25 07:59 | eval provider: baidu | 10.00 | 0.3367 | 9.6633 | 0.3367 |
+| 2026-10-25 08:00 | eval provider: deepinfra | 10.00 | 0.3500 | 9.6500 | 0.3500 |
+| 2026-10-25 08:02 | eval en06 check | 10.00 | 0.3538 | 9.6462 | 0.3538 |
+| 2026-10-25 08:04 | eval en06 live baidu | 10.00 | 0.3575 | 9.6425 | 0.3575 |

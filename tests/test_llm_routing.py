@@ -186,6 +186,7 @@ def test_openrouter_provider_routing_is_sent_only_to_openrouter(monkeypatch):
     monkeypatch.setattr(settings, "LLM_PROVIDER_QUANTIZATIONS", "fp8")
     c = OpenRouterClient()
     c.base_url = OPENROUTER
-    assert c.provider_preferences() == {"order": ["deepinfra"], "allow_fallbacks": True, "quantizations": ["fp8"]}
+    assert c.provider_preferences() == {"order": ["deepinfra"], "allow_fallbacks": True, "quantizations": ["fp8"],
+                                        "max_price": {"prompt": 0.10, "completion": 0.30}}
     c.base_url = "https://other.example/v1"
     assert c.provider_preferences() is None

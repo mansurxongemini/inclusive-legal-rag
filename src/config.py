@@ -53,8 +53,14 @@ class Settings(BaseSettings):
     OPENROUTER_PAUSED: bool = Field(default=False)
     OPENROUTER_RESERVE_USD: float = Field(default=0.05)
     OPENROUTER_BUDGET_SOFT_RATIO: float = Field(default=0.8)
-    LLM_PROVIDER_ORDER: str = Field(default="deepinfra")            # comma-separated OpenRouter provider slugs tried first; "" = OpenRouter default routing
-    LLM_PROVIDER_QUANTIZATIONS: str = Field(default="fp8,fp16,bf16,fp32,unknown")  # allowed quantizations (excludes fp4/int4); "" = no filter
+    # Which of the ~25 OpenRouter providers of the chat model serve it. Their prices differ up to 10x (2026-10-25:
+    # $0.042-0.44 per M input, $0.13-1.32 output). Baidu first (fp8, $0.044/$0.133: 12 gold questions cost 31% less than on
+    # DeepInfra, $0.0009 vs $0.0013 each, same answers, median answer 13 s vs 26 s that day), DeepInfra (fp8, $0.06/$0.18) next;
+    # a fallback never goes above the price cap or below fp8 ("unknown" admitted Reka, Phala, Cloudflare at up to 10x).
+    LLM_PROVIDER_ORDER: str = Field(default="baidu,deepinfra")      # comma-separated OpenRouter provider slugs tried first; "" = OpenRouter default routing
+    LLM_PROVIDER_QUANTIZATIONS: str = Field(default="fp8,fp16,bf16,fp32")  # allowed quantizations (excludes fp4/int4/unknown); "" = no filter
+    LLM_PROVIDER_MAX_PRICE_PROMPT: float = Field(default=0.10)      # USD per million input tokens a provider may charge; 0 = no cap
+    LLM_PROVIDER_MAX_PRICE_COMPLETION: float = Field(default=0.30)  # USD per million output tokens; 0 = no cap
     GENERATION_REASONING_EFFORT: str = Field(default="none")        # "", "none", "low", "high" or "max"; "" = model default, "none" = reasoning off
     # Deterministic guards on every answer (script of the question, forbidden wording, numbers absent from the sources):
     # one repair regeneration, then warnings (src/generation/guards.py)
@@ -109,6 +115,10 @@ class Settings(BaseSettings):
     LEADER_ANCHOR_POSITION: int = Field(default=12)
     # A high P(answerable) does not excuse a low scope: the Traffic/Criminal codes in the corpus answer their questions (0.89-0.96) just
     # like the Convention questions that Jev misjudges. The chat model's scope judge is decisive (0.0 for out-of-scope questions).
+    # When the model ranker fails (a provider error) the scope judgement already made is kept: at or above this value the
+    # question is answered from the fused order instead of being refused by the lexical gate (which refuses ru/en questions
+    # whose words are not in the Uzbek units: gold item en06 was refused that way).
+    GATE_SCOPE_RESCUE: float = Field(default=0.8)
     GATE_JEV_MIN_IN_SCOPE: float = Field(default=0.2)               # refuse when P(in_scope) is below this (calibrated on the stress set and the held-out set: 100% / 95% of the out-of-scope questions, 1-4% of the in-scope ones)
 
     # Rate limiting & Security

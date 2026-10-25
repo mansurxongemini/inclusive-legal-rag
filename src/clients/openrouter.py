@@ -109,14 +109,18 @@ class OpenRouterClient:
             return None
         order = [x.strip() for x in (settings.LLM_PROVIDER_ORDER or "").split(",") if x.strip()]
         quantizations = [x.strip() for x in (settings.LLM_PROVIDER_QUANTIZATIONS or "").split(",") if x.strip()]
-        if not order and not quantizations:
+        max_price = {k: v for k, v in (("prompt", settings.LLM_PROVIDER_MAX_PRICE_PROMPT),
+                                       ("completion", settings.LLM_PROVIDER_MAX_PRICE_COMPLETION)) if v and v > 0}
+        if not order and not quantizations and not max_price:
             return None
         prefs: Dict = {}
         if order:
             prefs["order"] = order
-        prefs["allow_fallbacks"] = True
+        prefs["allow_fallbacks"] = True       # within the quantization and price limits below
         if quantizations:
             prefs["quantizations"] = quantizations
+        if max_price:
+            prefs["max_price"] = max_price    # USD per million tokens: a fallback never lands on a 3-10x dearer provider
         return prefs
 
     def _deterministic_mock_embedding(self, text: str, dim: int = 1024) -> List[float]:

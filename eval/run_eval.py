@@ -264,6 +264,8 @@ async def run_item(item: dict, store, sem: asyncio.Semaphore, service) -> dict:
         rec["rr"] = round(1 / rank, 3) if rank else 0.0
     gate = retrieval.decision if retrieval else None
     rec["gate_answerable"] = None if gate is None else bool(gate.answerable)
+    rec["gate_reason"] = gate.reason if gate is not None else ""
+    rec["signals"] = {k: v for k, v in (retrieval.signals or {}).items() if k != "subquestions"} if retrieval else {}
 
     if result is None:
         rec["refused"] = bool(rec.get("http_error") and rec["http_error"]["status"] in (400, 422))
