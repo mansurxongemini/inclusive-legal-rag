@@ -41,3 +41,23 @@ def test_act_readopted_in_new_edition_is_not_in_force():
 def test_no_banner_keeps_the_act_active():
     doc = LexDocumentParser().parse(_page(" "), "-1", language="uz")
     assert doc.status == "active"
+
+
+def _note(eid: int, text: str) -> str:
+    return (f'<div class="CHANGES_ORIGINS lx_no_select"><label></label><div name="{eid}" id="{eid}">{text}</div></div>')
+
+
+def test_a_point_after_a_repealed_one_starts_its_own_unit():
+    # VMQ-62 annex 9 as Lex.uz serves it: point 45 repealed by VMQ-587 (only its note is left), 46-47 follow
+    html = "<html><body>" + "".join([
+        _elem(144, "44. Organizm funksiyalari buzilishlari to'rtta darajaga ajratiladi:"),
+        _elem(145, "I daraja — yengil buzilishlar;"),
+        _note(900, "(45-band Vazirlar Mahkamasining 2025-yil 16-sentabrdagi 587-sonli qaroriga asosan o'z kuchini yo'qotgan)"),
+        _elem(146, "46. Birinchi guruhni belgilash mezoni."),
+        _elem(147, "47. Ikkinchi guruhni belgilash mezoni."),
+        _elem(150, "50. Bu raqam bo'shliqdan keyin keladi, lekin 48-49 bekor qilinmagan."),
+    ]) + "</body></html>"
+    doc = LexDocumentParser().parse(html, "-1", language="uz")
+    clauses = [(u.number, u.element_ids) for u in doc.units if u.kind == "clause"]
+    # 46 and 47 are units; 50 stays inside 47: 48 and 49 were not repealed, so the jump is not trusted
+    assert clauses == [("44", ["144", "145"]), ("46", ["146"]), ("47", ["147", "150"])]

@@ -54,6 +54,11 @@ _ANNEX_NUM_RE = re.compile(
     r"(\d+)\s*[-–—]?\s*(?:son\s+)?(?:ilova|илова)|(?:приложение|прил\.)\s*(?:№|N|no\.?)?\s*(\d+)", re.IGNORECASE
 )
 _REPEALED_RE = re.compile(r"kuchini\s+yo[ʻ'`’‘ʼ]?qot|кучини\s+йўқот|утратил[аи]?\s+силу", re.IGNORECASE)
+# amendment note of a repealed point: "(45-band ... o'z kuchini yo'qotgan ...)", "(12 — 14-bandlar ...)",
+# "(пункт 45 утратил силу ...)"
+_REPEALED_POINTS_RE = re.compile(
+    r"^\(?\s*(\d+)(?:\s*[-–—]\s*(\d+))?\s*-\s*band(?:lar)?i?\b|^\(?\s*пункт(?:ы)?\s*(\d+)(?:\s*[-–—]\s*(\d+))?\b",
+    re.IGNORECASE)
 _DATE_DMY = re.compile(r"(\d{1,2})\.(\d{1,2})\.(\d{4})")
 
 _UZ_MONTHS = {
@@ -422,6 +427,15 @@ class LexDocumentParser:
         last_clause_no = 0
         preamble_lines: List[str] = []
         preamble_ids: List[str] = []
+        # A repealed point leaves no text, only its amendment note: "44.", (note: 45 repealed), "46." must still start a
+        # new unit. Without this, points 46-48 of the Regulation on medical-social expertise were glued to point 44.
+        repealed_points = set()
+        for notes in amend_after.values():
+            for note in notes:
+                m = _REPEALED_POINTS_RE.match(note.strip())
+                if m and _REPEALED_RE.search(note):
+                    a, b = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+                    repealed_points.update(range(int(a), int(b or a) + 1))
 
         def flush():
             nonlocal cur
@@ -501,7 +515,9 @@ class LexDocumentParser:
                     n = int(parts[0])
                     inserted = len(parts) > 1          # "2-1." / "2^1.": clause 2¹ inserted by a later amendment
                     is_new_context = last_clause_no == 0
-                    if is_new_context or n == last_clause_no + 1 or (inserted and n == last_clause_no) or (
+                    after_repealed = n > last_clause_no + 1 and n - last_clause_no <= 10 and all(
+                        k in repealed_points for k in range(last_clause_no + 1, n))
+                    if is_new_context or n == last_clause_no + 1 or after_repealed or (inserted and n == last_clause_no) or (
                             n == 1 and annex_no is not None and cur is not None and cur.annex_number != annex_no):
                         flush()
                         last_clause_no = n
