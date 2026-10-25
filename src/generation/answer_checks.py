@@ -18,7 +18,7 @@ _LAT = re.compile(r"[A-Za-z]")
 _MARKER = re.compile(r"\[\d+(?:\s*[,;-]\s*\d+)*\]")
 _NUMBER = re.compile(r"\d+(?:[   ]\d{3})*(?:[.,]\d+)?")
 _ID_LIKE = re.compile(r"\b[a-z][a-z0-9]*(?:_[a-z0-9]+){2,}\b")
-_BRACKET_ID = re.compile(r"\[[A-Za-z0-9_\-]*_[A-Za-z0-9_\-]+\]")
+_BRACKET_ID = re.compile(r"\[[A-Za-z0-9_\-]*_[A-Za-z0-9_\-]+(?:\s*[,;]\s*[A-Za-z0-9_\-]*_[A-Za-z0-9_\-]+)*\]")
 _SENTENCE = re.compile(r"(?<=[.!?\]])\s+|\n+")
 
 BANNED = (
@@ -93,37 +93,60 @@ _UZ_NUMBER_WORDS = {
 # a case or ordinal ending after the last word: "o'n oltiga", "uchinchi", "ўттиздан" ("uchun" is not one)
 _UZ_SUFFIX = re.compile(r"^(?:inchi|nchi|ta|tasi|ga|ka|qa|da|dan|ni|ning|gacha|lik|лик|инчи|нчи|та|таси|га|ка|қа|да|"
                         r"дан|ни|нинг|гача)?$")
-# Russian stems, longest first (inflected forms: "четырнадцати", "тридцатью", "двух")
-_RU_NUMBER_STEMS = [
-    ("одиннадцат", 11), ("двенадцат", 12), ("тринадцат", 13), ("четырнадцат", 14), ("пятнадцат", 15),
-    ("шестнадцат", 16), ("семнадцат", 17), ("восемнадцат", 18), ("девятнадцат", 19), ("двадцат", 20),
-    ("тридцат", 30), ("сорок", 40), ("пятьдесят", 50), ("пятидесят", 50), ("шестьдесят", 60), ("шестидесят", 60),
-    ("семьдесят", 70), ("семидесят", 70), ("восемьдесят", 80), ("восьмидесят", 80), ("девяносто", 90),
-    ("двест", 200), ("трист", 300), ("четырест", 400), ("сто", 100), ("тысяч", 1000), ("десят", 10),
-    ("один", 1), ("одн", 1), ("два", 2), ("две", 2), ("двух", 2), ("три", 3), ("трех", 3), ("трёх", 3),
-    ("четыр", 4), ("пят", 5), ("шест", 6), ("сем", 7), ("восем", 8), ("восьм", 8), ("девят", 9),
-]
+# "yuz" is also "face" ("zarar yuz bergan" = damage occurred): it is a number only next to another number word or before
+# a counted noun
+_UZ_HUNDRED = {"yuz", "юз"}
+_COUNTED_AFTER_HUNDRED = re.compile(r"^(?:foiz|ming|million|so'm|nafar|kun|soat|yil|marta|kishi|baravar|ta|фоиз|минг|"
+                                    r"сўм|нафар|кун|соат|йил|марта|киши|баравар|та)", re.IGNORECASE)
+# Russian number words as whole forms (a stem such as "сто" or "сем" also starts "стороны" or "семьи")
+_RU_NUMBER_FORMS: Dict[str, int] = {}
+for _value, _forms in (
+    (1, "один одна одно одного одной одному одним одном одну"), (2, "два две двух двум двумя"),
+    (3, "три трех трёх трем трём тремя"), (4, "четыре четырех четырёх четырем четырём четырьмя"),
+    (5, "пять пяти пятью"), (6, "шесть шести шестью"), (7, "семь семи семью"), (8, "восемь восьми восемью восьмью"),
+    (9, "девять девяти девятью"), (10, "десять десяти десятью"), (11, "одиннадцать одиннадцати"),
+    (12, "двенадцать двенадцати"), (13, "тринадцать тринадцати"), (14, "четырнадцать четырнадцати"),
+    (15, "пятнадцать пятнадцати"), (16, "шестнадцать шестнадцати"), (17, "семнадцать семнадцати"),
+    (18, "восемнадцать восемнадцати"), (19, "девятнадцать девятнадцати"), (20, "двадцать двадцати двадцатью"),
+    (30, "тридцать тридцати тридцатью"), (40, "сорок сорока"), (50, "пятьдесят пятидесяти пятьюдесятью"),
+    (60, "шестьдесят шестидесяти"), (70, "семьдесят семидесяти"), (80, "восемьдесят восьмидесяти"),
+    (90, "девяносто девяноста"), (100, "сто ста"), (200, "двести двухсот двумстам"), (300, "триста трехсот трёхсот"),
+    (400, "четыреста четырехсот четырёхсот"), (500, "пятьсот пятисот"), (600, "шестьсот шестисот"),
+    (700, "семьсот семисот"), (800, "восемьсот восьмисот"), (900, "девятьсот девятисот"),
+    (1000, "тысяча тысячи тысяч тысячу тысячей"),
+):
+    for _form in _forms.split():
+        _RU_NUMBER_FORMS[_form] = _value
 _WORD = re.compile(r"[^\W\d_][\w'ʻʼ‘’]*", re.UNICODE)
 
 
 def _word_value(token: str) -> Optional[int]:
     t = re.sub(r"[ʻʼ‘’`]", "'", token.lower())
+    if t in _RU_NUMBER_FORMS:
+        return _RU_NUMBER_FORMS[t]
     for word, value in _UZ_NUMBER_WORDS.items():
         if t.startswith(word) and _UZ_SUFFIX.match(t[len(word):]):
-            return value
-    for stem, value in _RU_NUMBER_STEMS:
-        if t.startswith(stem) and len(t) - len(stem) <= 4:
-            if stem in ("сем", "пят", "шест", "девят", "восем") and re.match(r"(?:ья|ей|ье)", t[len(stem):]):
-                return None                                      # семья, пятье: not numbers
             return value
     return None
 
 
 def number_words(text: str) -> List[str]:
-    """Numbers written in Uzbek (Latin or Cyrillic) or Russian words, as digit strings: "o'n to'rt" -> "14"."""
+    """Numbers written in Uzbek (Latin or Cyrillic) or Russian words, as digit strings: "o'n to'rt" -> "14".
+    A number is a run of number words separated by spaces only: "o'n besh, yigirma kun" is 15 and 20, not 35."""
+    text = text or ""
+    tokens = list(_WORD.finditer(text))
+    values = [_word_value(m.group(0)) for m in tokens]
+    for i, m in enumerate(tokens):                        # "yuz" counts only next to a number or before a counted noun
+        if values[i] == 100 and m.group(0).lower() in _UZ_HUNDRED:
+            prev_num = i > 0 and values[i - 1] is not None and not text[tokens[i - 1].end(): m.start()].strip()
+            nxt = text[m.end():].lstrip()
+            next_num = i + 1 < len(tokens) and values[i + 1] is not None and not text[m.end(): tokens[i + 1].start()].strip()
+            if not (prev_num or next_num or _COUNTED_AFTER_HUNDRED.match(nxt)):
+                values[i] = None
     out: List[str] = []
     total = current = 0
     started = False
+    prev_end = None
 
     def flush():
         nonlocal total, current, started
@@ -132,10 +155,11 @@ def number_words(text: str) -> List[str]:
         total = current = 0
         started = False
 
-    for token in _WORD.findall(text or ""):
-        value = _word_value(token)
+    for m, value in zip(tokens, values):
+        if value is None or (prev_end is not None and text[prev_end: m.start()].strip()):
+            flush()                                       # a comma, hyphen or other word ends the number
+        prev_end = m.end()
         if value is None:
-            flush()
             continue
         started = True
         if value == 100:

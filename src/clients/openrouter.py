@@ -36,6 +36,11 @@ def reasoning_fields(base_url: str, reasoning: Optional[Dict]) -> Dict:
     return {"reasoning": reasoning}
 
 
+def _no_endpoint(response) -> bool:
+    """OpenRouter found no provider matching the routing preferences (HTTP 404 "No endpoints found ...")."""
+    return response.status_code in (400, 404) and "endpoint" in (getattr(response, "text", "") or "").lower()
+
+
 def _error_body(response) -> str:
     """First part of an error response body for the log (never the request, which may hold a user's question)."""
     try:
@@ -327,6 +332,12 @@ class OpenRouterClient:
                     if is_limit_error(response.status_code, response.text):
                         ledger.trip("chat: " + _error_body(response)[:80])
                         raise RuntimeError("OpenRouter refused the key (limit or credit used up).")
+                    if prefs and "max_price" in prefs and _no_endpoint(response):
+                        # every provider under the price cap is down (or the model costs more than the cap): one try
+                        # without the cap, still fp8 or better, rather than no answer at all
+                        logger.warning("No provider under the price cap answers: retrying once without LLM_PROVIDER_MAX_PRICE_*")
+                        prefs = {k: v for k, v in prefs.items() if k != "max_price"}
+                        continue
                     if 400 <= response.status_code < 500 and response.status_code not in (408, 429):
                         break          # the same request would be rejected again
             except RuntimeError:

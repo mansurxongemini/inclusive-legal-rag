@@ -81,3 +81,21 @@ def test_hours_and_minutes_quoted_as_a_decimal_are_grounded():
     assert ungrounded_numbers("Up to 7.5 hours a day [1].", source) == []
     assert ungrounded_numbers("Up to 7.25 hours a day [1].", source) == ["725"]
     assert ungrounded_numbers("Не более 7,5 часа [1].", ["не более 7 часов 30 минут"]) == []
+
+
+# --- found by the review of 2026-10-25: ordinary words must not ground an invented number --------------------------
+@pytest.mark.parametrize("text,expected", [
+    ("zarar yuz berganda", []),                                   # "yuz bermoq" = to occur
+    ("Стороны договора", []), ("две стороны договора", ["2"]), ("семьи и дети", []), ("однако", []),
+    ("o'n besh, yigirma kun", ["15", "20"]), ("ikki-uch kun", ["2", "3"]),
+    ("от трехсот до трехсот шестидесяти часов", ["300", "360"]), ("четырехсот восьмидесяти часов", ["480"]),
+    ("штраф пятьсот тысяч сумов", ["500000"]), ("yuz foiz", ["100"]), ("ikki yuz ellik ming so'm", ["250000"]),
+])
+def test_number_words_are_exact(text, expected):
+    assert number_words(text) == expected
+
+
+def test_a_word_that_only_looks_like_a_number_grounds_nothing():
+    assert ungrounded_numbers("Bunday holda 100 foiz miqdorida tovon to'lanadi.", ["Agar zarar yuz bergan bo'lsa."]) == ["100"]
+    assert ungrounded_numbers("Обязательные работы от 42 до 80 часов.",
+                              ["обязательные работы от двухсот сорока до четырехсот восьмидесяти часов"]) == ["42", "80"]

@@ -152,9 +152,20 @@ class CitationValidator:
 
         return sanitized
 
+    # one bracket may cite several units: "[doc_..._p_44, doc_..._p_46]"
+    _BRACKET = re.compile(r"\[([^\[\]\n]{1,600})\]")
+
+    @classmethod
+    def _bracket_ids(cls, content: str) -> List[str]:
+        """The ids of one bracket, or [] when it is not a citation ("[1]", a markdown link text)."""
+        tokens = [t for t in re.split(r"[,;\s]+", content.strip()) if t]
+        if tokens and all(cls._ID_LIKE.match(t) for t in tokens):
+            return tokens
+        return []
+
     @classmethod
     def extract_canonical_ids(cls, text: str, valid_ids: Optional[Set[str]] = None) -> List[str]:
-        bracketed = re.findall(r"\[([a-zA-Z0-9_]+)(?:[,\s\]]|$)", text)
+        bracketed = [cid for content in cls._BRACKET.findall(text) for cid in cls._bracket_ids(content)]
         pattern_matches = re.findall(r"\b([a-z0-9_]+_art_[\w\-]+)\b", text)
         direct_matches = []
         if valid_ids:
@@ -258,15 +269,15 @@ class CitationValidator:
 
         # Replace [cid] with [1], [2] in clean_answer
         def _replace_cid(match):
-            cid = match.group(1)
-            if cid in cid_to_index:
-                return f"[{cid_to_index[cid]}]"
-            if cid in unresolved:
-                # Never show a citation to a norm that was not retrieved.
-                return ""
-            return match.group(0)
+            ids = self_ids(match.group(1))
+            if not ids:
+                return match.group(0)
+            # every id of the bracket is mapped on its own; one that was not retrieved is never shown, and it never
+            # borrows the number of a retrieved id written next to it
+            return "".join(f"[{cid_to_index[cid]}]" for cid in ids if cid in cid_to_index)
 
-        clean_answer = re.sub(r"\[([a-zA-Z0-9_\-]+)(?:,\s*[^\]]+)?\]", _replace_cid, sanitized_answer)
+        self_ids = cls._bracket_ids
+        clean_answer = cls._BRACKET.sub(_replace_cid, sanitized_answer)
         clean_answer = cls._sanitize_developer_and_jargon(clean_answer, retrieved_map, language)
 
         # Clean citation spacing: [1] [2] -> [1][2], and [1] . -> [1].

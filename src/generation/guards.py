@@ -15,7 +15,7 @@ from src.generation.answer_checks import banned_phrases, script_ok, script_share
 
 logger = logging.getLogger(__name__)
 
-_BRACKET_ID = re.compile(r"\[[A-Za-z0-9_\-]*_[A-Za-z0-9_\-]+\]")      # [canonical_id] (always has an underscore)
+_BRACKET_ID = re.compile(r"\[[A-Za-z0-9_\-]*_[A-Za-z0-9_\-]+(?:\s*[,;]\s*[A-Za-z0-9_\-]*_[A-Za-z0-9_\-]+)*\]")      # [canonical_id] (always has an underscore)
 
 REPAIR_INSTRUCTIONS = {
     "script": {
@@ -25,7 +25,7 @@ REPAIR_INSTRUCTIONS = {
     },
     "banned": "Javobda \"kontekst\" yoki \"taqdim etilgan hujjatlar\" kabi iboralarni ishlatmang: ular o'rniga to'g'ridan-to'g'ri javob bering.",
     "numbers": "Quyidagi raqamlar manbada yo'q: {numbers}. Ularni olib tashlang yoki manbadagi aniq qiymat bilan almashtiring; manbada yo'q raqam yozmang.",
-    "unknown_ids": "Quyidagi manbalar sizga berilmagan: {ids}. Faqat berilgan manbalarning identifikatorlariga havola qiling: bu gapni berilgan manba bilan asoslang yoki olib tashlang.",
+    "unknown_ids": "Quyidagi manbalar sizga berilmagan: {ids}. Shu manbalarga tayangan gaplarni javobdan olib tashlang; ularni boshqa manbaga ko'chirmang. Faqat berilgan manbalarda yozilgan narsani yozing.",
 }
 
 

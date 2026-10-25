@@ -190,3 +190,32 @@ def test_openrouter_provider_routing_is_sent_only_to_openrouter(monkeypatch):
                                         "max_price": {"prompt": 0.10, "completion": 0.30}}
     c.base_url = "https://other.example/v1"
     assert c.provider_preferences() is None
+
+
+@pytest.mark.asyncio
+async def test_no_provider_under_the_price_cap_retries_once_without_it(monkeypatch):
+    # review 2026-10-25: with every capped provider down (or a dearer model) the cap made every answer a quotation
+    monkeypatch.setattr(settings, "MOCK_EXTERNAL_APIS", False)
+    sent = []
+
+    class R:
+        def __init__(self, status, body):
+            self.status_code, self._body, self.text = status, body, str(body)
+
+        def json(self):
+            return self._body
+
+    class Http:
+        is_closed = False
+
+        async def post(self, url, json=None, **kw):
+            sent.append(json)
+            if "max_price" in json["provider"]:
+                return R(404, {"error": {"message": "No endpoints found matching your provider preferences"}})
+            return R(200, {"choices": [{"message": {"content": "Javob matni " * 5}}]})
+
+    c = OpenRouterClient()
+    c.base_url, c.api_key, c.is_mock, c._http_client = OPENROUTER, "test-key", False, Http()
+    assert (await c.chat_completion([{"role": "user", "content": "savol"}])).startswith("Javob matni")
+    assert "max_price" in sent[0]["provider"] and "max_price" not in sent[1]["provider"]
+    assert sent[1]["provider"]["quantizations"] == ["fp8", "fp16", "bf16", "fp32"]

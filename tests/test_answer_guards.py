@@ -218,3 +218,18 @@ async def test_a_hung_generation_is_cut_off_and_the_norms_are_shown(monkeypatch)
     async with local_client() as c:
         res = await c.post("/api/v1/query", json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?", "language": "uz"})
     assert res.status_code == 200 and res.json()["degraded"] is True and res.json()["citations"]
+
+
+def test_an_unknown_id_inside_a_list_bracket_is_caught_and_never_borrows_a_number():
+    # review 2026-10-25: "[p_44, p_46]" was folded into [1] (p_44) and passed validation
+    ans = GOOD + "\n- Qiyalik 1:20 dan oshmaydi [vmq_10_2024_p_5, vmq_10_2024_p_6]."
+    issues = guards.find_issues("Yordam qancha?", ans, [_ctx()], "uz")
+    assert issues["unknown_ids"] == ["vmq_10_2024_p_6"] and issues["numbers"] == ["20"]   # no digits of the ids leak
+    result = CitationValidator.validate_and_sanitize(ans, [_ctx()], "uz")
+    assert result.is_valid is False and result.unresolved_citations == ["vmq_10_2024_p_6"]
+    assert result.clean_answer.rstrip().endswith("oshmaydi [1].")
+
+
+def test_the_repair_asks_to_remove_not_to_move_an_unsupported_claim():
+    text = guards.repair_message({"script": False, "banned": [], "numbers": [], "unknown_ids": ["x_p_6"]}, "uz", "q")
+    assert "olib tashlang" in text and "ko'chirmang" in text
