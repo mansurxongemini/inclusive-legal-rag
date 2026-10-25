@@ -1,16 +1,16 @@
 {
-  "generated": "2026-10-13",
+  "generated": "2026-10-25",
   "checked_documents": 1,
-  "changed_or_new_units": 0,
-  "indexed": 0,
-  "removed_units": 0,
+  "changed_or_new_units": 30,
+  "indexed": 30,
+  "removed_units": 34,
   "documents": [
     {
-      "lex_id": "-6248467",
-      "law_id": "pq_407_2022",
-      "units": 10,
-      "changed_or_new": 0,
-      "removed": 0,
+      "lex_id": "-1406847",
+      "law_id": "vmq_240_2008",
+      "units": 32,
+      "changed_or_new": 30,
+      "removed": 34,
       "repealed": false
     }
   ]
