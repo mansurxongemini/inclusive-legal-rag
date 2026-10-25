@@ -32,3 +32,6 @@ Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `
 | 2026-10-25 13:04 | eval cycle 12: ingestion review fixes (60 Russian points moved to their units, multi-point repeal notes, text-keyed audit cache), 3 cards reopened [tests: 674 passed, 1 warning; server: 30/30] | 10.00 | 0.6899 | 9.3101 | 0.6899 |
 | 2026-10-25 13:14 | eval injection set (final) | 10.00 | 0.7091 | 9.2909 | 0.7091 |
 | 2026-10-25 13:35 | eval cycle 13 (final state): injection check negation window, 9 misaligned Russian texts of VMQ-319 removed [tests: 678 passed, 1 warning; server: 30/30] | 10.00 | 0.7372 | 9.2628 | 0.7372 |
+| 2026-10-25 14:07 | eval qwen3-embedding-8b on a copy of the current store (before the switch) | 10.00 | 0.9567 | 9.0433 | 0.9567 |
+| 2026-10-25 19:43 | eval qwen3 + full Lex.uz refresh (5 acts added, VMQ-240 current edition) on the work copy | 10.00 | 1.1922 | 8.8078 | 1.1922 |
+| 2026-10-25 19:53 | eval cycle 14 (production): qwen3-embedding-8b, full Lex.uz refresh (29 418 units), repealed units never answer sources, cache tied to the corpus, dead code removed [tests: 643 passed, 1 warning; server: 30/30] | 10.00 | 1.2005 | 8.7995 | 1.2005 |

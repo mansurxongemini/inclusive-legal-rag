@@ -81,9 +81,10 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
 ## Size of the knowledge base
 
 Measured on 2026-10-25 (`data/store`, built by `scripts/build_disability_corpus.py`):
-- **SQLite store with FTS5 index: 305 MB** - 27 530 units of 518 Lex.uz acts (14 963 with the official Russian text) and 324 units of
-  113 Huquq+ posts.
-- **LanceDB vector table: 148 MB** - 37 464 bge-m3 vectors (1024 numbers each; long units are embedded paragraph by paragraph).
+- **SQLite store with FTS5 index: 320 MB** - 29 094 units of 534 Lex.uz acts (15 887 with the official Russian text) and 324 units of
+  113 Huquq+ posts. Every act was re-read from Lex.uz on 2026-10-25: all in force, current editions.
+- **LanceDB vector table: 160 MB** - 38 858 qwen3-embedding-8b vectors (1024 numbers each; long units are embedded paragraph by
+  paragraph).
 
 The built store is not in git (`data/store` is ignored). Build it from Lex.uz with the commands below (the HTML is fetched once and
 cached), or ask the maintainer for a copy: Telegram [@mansurxonrustamov](https://t.me/mansurxonrustamov).
@@ -108,8 +109,8 @@ deep link to the exact paragraph on lex.uz.
 | ingest | `... ingest --replace-all` | embeddings + FTS index in `data/store` |
 | report | `... report` | `data/sources/REGISTRY.md` - exactly what is in the base |
 
-Current build: **518 Lex.uz acts, 27 530 articles/clauses** (Uzbek; 14 963 with the official Russian text) plus **113 Huquq+ posts (324 units)**
-= 27 854 units, 37 464 embedded chunks. Units longer than 6 000 characters are also indexed chunk by chunk, so a paragraph deep inside a
+Current build: **534 Lex.uz acts, 29 094 articles/clauses** (Uzbek; 15 887 with the official Russian text) plus **113 Huquq+ posts (324 units)**
+= 29 418 units, 38 858 embedded chunks. Units longer than 6 000 characters are also indexed chunk by chunk, so a paragraph deep inside a
 code article (the Tax Code day-care exemption, art. 483) is found. Amendment history is kept per unit (`metadata.amendment_history`).
 Re-run the stages to refresh the base when Lex.uz publishes new acts. HTML pages are cached in `data/raw_lex/`
 and requests are throttled (1 request/second).
@@ -279,20 +280,20 @@ This project is a dedicated submission candidate for the **OpenAI Codex for Open
 
 ## Evaluation & Benchmarking
 
-**Gold set, production model** (`deepseek/deepseek-v4-flash-0731`, bge-m3), 2026-10-25, `python eval/run_eval.py`; every run is a row of
+**Gold set, production models** (`deepseek/deepseek-v4-flash-0731`, `qwen/qwen3-embedding-8b`), 2026-10-25 (cycle 14), `python eval/run_eval.py`; every run is a row of
 `EVAL_HISTORY.md`, the server-side checks are `python eval/check_server.py`:
 
 | Measure | Result |
 | :--- | :--- |
 | Questions | 76 (26 uz, 25 ru, 25 en): short, complex, multi-article, repealed-act traps, out-of-corpus, misspelled / mixed language |
-| Expected units in the top 5 contexts (recall@5) / MRR | **0.92 / 0.86** |
+| Expected units in the top 5 contexts (recall@5) / MRR | **0.97 / 0.96** |
 | Answers whose every citation was retrieved, exists, is in force and passed the validator | **100%** |
 | Invented article numbers / numbers absent from the sources | **0 / 0** |
 | Out-of-corpus questions refused / answerable questions refused | **100% / 0%** |
 | Answer in the language of the question; required facts present | **100% / 100%** |
 | Repealed acts presented as valid | **0** |
-| Latency (full answer, uncached) median / p95 | **~16 s / ~32 s** |
-| Model cost per uncached question | **~$0.0015** |
+| Latency (full answer, uncached) median / p95 | **~20 s / ~38 s** |
+| Model cost per uncached question | **~$0.0009** |
 | Idle memory of the server; growth over 300 questions | **~180 MB; +1-5 MB** |
 
 The figures below are older measurements on other sets and another (test) generator, kept for history.
