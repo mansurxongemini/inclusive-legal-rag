@@ -183,6 +183,11 @@ def test_cache_key_separates_scripts_and_answer_versions(monkeypatch):
     before = cache_keys(latin, "plain")
     monkeypatch.setattr(settings, "GENERATION_MODEL_PRIMARY", "other-model")
     assert cache_keys(latin, "plain") != before
+    # a data or pipeline fix bumps ANSWER_VERSION, so answers cached before it (e.g. quoting a shifted Russian text) expire
+    import src.gateway.service as service
+    current = cache_keys(latin, "plain")
+    monkeypatch.setattr(service, "ANSWER_VERSION", "1999-01-01.1")
+    assert cache_keys(latin, "plain") != current
 
 
 def test_refusal_wording_the_prompt_prescribes_is_recognised_for_short_answers_only():
