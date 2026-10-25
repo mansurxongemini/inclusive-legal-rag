@@ -154,9 +154,9 @@ class HybridRetriever:
             try:
                 if precomputed_query_vector is not None:
                     if len(embed_texts) > 1:
-                        query_vectors += await self.client.get_embeddings(embed_texts[1:])
+                        query_vectors += await self.client.get_query_embeddings(embed_texts[1:])
                 elif embed_texts:
-                    query_vectors = await self.client.get_embeddings(embed_texts)
+                    query_vectors = await self.client.get_query_embeddings(embed_texts)
             except Exception as e:
                 logger.warning(f"Dense retrieval unavailable, falling back to BM25-only: {e}")
 

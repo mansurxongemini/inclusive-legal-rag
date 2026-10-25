@@ -178,7 +178,7 @@ async def _lookup_cache(q: _Question, cache, client) -> Tuple[Optional[dict], Op
     if hit or client.is_mock:
         return hit, None, True
     try:
-        vectors = await asyncio.wait_for(client.get_embeddings([q.analysis.normalized_query]),
+        vectors = await asyncio.wait_for(client.get_query_embeddings([q.analysis.normalized_query]),
                                          timeout=settings.QUERY_EMBED_TIMEOUT_S)
     except Exception as e:      # an error or asyncio.TimeoutError: full-text search only
         logger.warning(f"Error computing query vector for the semantic cache and retrieval: {e}")

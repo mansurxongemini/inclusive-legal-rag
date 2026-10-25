@@ -171,6 +171,7 @@ async def test_reembed_articles(tmp_path, monkeypatch):
     class FailingClient:
         async def get_embeddings(self, texts):
             raise RuntimeError("Embedding network connection error")
+        get_query_embeddings = get_embeddings          # questions and units are embedded alike here
 
     before_fail_rows = store.vector_store.table.to_arrow().to_pylist()
     with pytest.raises(RuntimeError):

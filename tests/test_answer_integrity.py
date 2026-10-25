@@ -160,6 +160,7 @@ def _stream_fixture(monkeypatch, tmp_path):
         async def get_embeddings(self, texts):
             embeddings.append(texts)
             return [[0.1] * 8]
+        get_query_embeddings = get_embeddings          # questions and units are embedded alike here
 
     monkeypatch.setattr("src.api.app.get_cache", lambda: cache)
     monkeypatch.setattr("src.api.app.get_store", lambda: None)

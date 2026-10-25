@@ -356,6 +356,7 @@ async def test_retrieval_degrades_to_bm25_when_embeddings_fail():
     class BrokenEmbeddings(OpenRouterClient):
         async def get_embeddings(self, texts, model=None):
             raise RuntimeError("embedding service down")
+        get_query_embeddings = get_embeddings          # questions and units are embedded alike here
 
     retriever = HybridRetriever(get_store(), client=BrokenEmbeddings())
     results = await retriever.retrieve("tibbiy yordam nogironligi bo'lgan shaxslar", top_k=5)
@@ -402,6 +403,7 @@ async def test_failed_embedding_leaves_the_stored_article_untouched(tmp_path):
     class BrokenEmbeddings(OpenRouterClient):
         async def get_embeddings(self, texts, model=None):
             raise RuntimeError("embedding service down")
+        get_query_embeddings = get_embeddings          # questions and units are embedded alike here
 
     with pytest.raises(RuntimeError):
         await store.index_article(edited, client=BrokenEmbeddings())
@@ -640,6 +642,7 @@ async def test_failed_indexing_does_not_mark_document_as_imported(tmp_path, monk
     class BrokenEmbeddings(OpenRouterClient):
         async def get_embeddings(self, texts, model=None):
             raise RuntimeError("embedding service down")
+        get_query_embeddings = get_embeddings          # questions and units are embedded alike here
 
     monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
     qonunlar = tmp_path / "qonunlar"

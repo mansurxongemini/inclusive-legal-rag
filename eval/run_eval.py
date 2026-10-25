@@ -503,7 +503,10 @@ async def main() -> int:
     if not args.offline:
         append_budget_row(f"eval {args.label or stamp}", after, args.start_usage)
     if args.history:
-        line = (f"| {summary['when'][:16]} | {args.label} | {summary['n']} | {summary['recall@5']} | {summary['mrr']} | "
+        label = args.label
+        if len(summary["degraded"]) >= 3:     # the model was unreachable (network, provider): the row measures the outage
+            label += f" [INVALID: model unreachable for {len(summary['degraded'])} answers]"
+        line = (f"| {summary['when'][:16]} | {label} | {summary['n']} | {summary['recall@5']} | {summary['mrr']} | "
                 f"{summary['citation_valid_pct']} | {summary['invented_articles']}/{summary['ungrounded_numbers']} | "
                 f"{summary['no_answer_refused_pct']} | {summary['false_refusal_pct']} | {summary['language_ok_pct']} | "
                 f"{summary['key_facts_pct']} | {summary['repealed_references']} | {summary['latency_ms_p50']} | "

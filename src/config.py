@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     # Models
     EMBEDDING_MODEL: str = Field(default="baai/bge-m3")
     EMBEDDING_DIMENSION: int = Field(default=1024)
+    # For models with adjustable output size (qwen3-embedding: 4096 natively): sent as "dimensions" when > 0. bge-m3 ignores it.
+    EMBEDDING_REQUEST_DIMENSIONS: int = Field(default=0)
+    # Instruction put before QUESTIONS only (documents are embedded as they are): instruction-tuned embedders such as
+    # qwen3-embedding expect "Instruct: ...\nQuery: <question>"; bge-m3 needs none, so it is empty by default.
+    EMBEDDING_QUERY_INSTRUCTION: str = Field(default="")
     # THE chat model: generation, query rewriting, translation, ranking, claim check, review and judging all use it
     # (one model keeps the cost predictable; OpenRouter itself falls back between the providers of that model).
     # DeepSeek V4 Flash 0731: 1M context, about $0.04-0.06 per million input and $0.13-0.18 per million output tokens

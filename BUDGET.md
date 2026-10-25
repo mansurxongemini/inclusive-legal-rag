@@ -22,3 +22,5 @@ Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `
 | 2026-10-25 08:00 | eval provider: deepinfra | 10.00 | 0.3500 | 9.6500 | 0.3500 |
 | 2026-10-25 08:02 | eval en06 check | 10.00 | 0.3538 | 9.6462 | 0.3538 |
 | 2026-10-25 08:04 | eval en06 live baidu | 10.00 | 0.3575 | 9.6425 | 0.3575 |
+| 2026-10-25 08:33 | eval cycle 7: re-imported 85 acts (+820 units), repeal notices, provider routing (baidu, fp8, price cap), scope rescue [tests: 633 passed, 1 warning; server: 30/30] | 10.00 | 0.4045 | 9.5955 | 0.4045 |
+| 2026-10-25 08:38 | eval cycle 7 (rerun after the DNS outage): re-imported acts, repeal notices, provider routing, scope rescue [tests: 633 passed, 1 warning; server: 30/30] | 10.00 | 0.4245 | 9.5755 | 0.4245 |

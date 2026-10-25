@@ -173,13 +173,10 @@ class OpenRouterClient:
 
         for attempt in range(max_retries):
             try:
-                response = await client.post(
-                    f"{self.base_url}/embeddings",
-                    json={
-                        "model": target_model,
-                        "input": texts,
-                    }
-                )
+                payload: Dict = {"model": target_model, "input": texts}
+                if settings.EMBEDDING_REQUEST_DIMENSIONS > 0:
+                    payload["dimensions"] = settings.EMBEDDING_REQUEST_DIMENSIONS
+                response = await client.post(f"{self.base_url}/embeddings", json=payload)
                 if response.status_code == 200:
                     data = response.json()
                     ledger.add("embedding", cost_of(data.get("usage")))
@@ -211,6 +208,13 @@ class OpenRouterClient:
         # If live API fails, fall back to mock with warning or raise
         logger.error("OpenRouter embedding failed after retries. Degrading gracefully.")
         raise RuntimeError("OpenRouter embedding service is temporarily unavailable.")
+
+    async def get_query_embeddings(self, texts: List[str]) -> List[List[float]]:
+        """Embeddings of questions: EMBEDDING_QUERY_INSTRUCTION (empty for bge-m3) is put in front of each text."""
+        instruction = settings.EMBEDDING_QUERY_INSTRUCTION
+        if instruction:
+            texts = [f"Instruct: {instruction}\nQuery: {t}" for t in texts]
+        return await self.get_embeddings(texts)
 
     async def rerank_documents(
         self,
