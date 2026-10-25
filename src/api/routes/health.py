@@ -43,7 +43,7 @@ def _snapshot() -> dict:
     rss_mb = get_process_memory_mb()
     return {
         "status": "healthy" if store_healthy and budget_state != "exhausted" else "degraded",
-        # ok | soft (light calls on the free provider) | exhausted (embeddings and Jev paused: full-text search only)
+        # ok | soft (80% of the month's budget spent: time to top up) | exhausted (no model calls: new questions get 503)
         "openrouter_budget": budget_state,
         "service": "uzbekistan-legal-rag",
         "version": "1.0.0",

@@ -26,7 +26,7 @@ real users (section 3). Spent $1.34 of the $4 allowed.
 | Honest refusal 100% | 100% of out-of-corpus questions refused; false refusal 0% | same run |
 | recall@5 >= 0.90 | 0.971 (gold v2); 0.943 with the baseline's v1 slots | same run |
 | Repealed-norm references 0 | 0; repealed-act traps 100%; repealed units are dropped from every answer's sources | same run; `tests/test_retrieval.py::test_a_repealed_unit_is_never_an_answer_source` |
-| Server never crashes on error scenarios | 30/30: invalid JSON, wrong type, unknown language, empty / blank / over-long question, oversized body, injection, unknown route, admin without / with a wrong key, provider 429 / 500 / hang (clear degraded answer, 46 s), SSE client drop, 300 questions without a 5xx, no key in the logs | `eval/check_server.py` -> `eval/reports/server_check.json` |
+| Server never crashes on error scenarios | 30/30: invalid JSON, wrong type, unknown language, empty / blank / over-long question, oversized body, injection, unknown route, admin without / with a wrong key, provider 429 / 500 / hang (honest HTTP 503 "temporarily unavailable" in 8 / 13 / 46 s), SSE client drop, 300 questions without a 5xx, no key in the logs | `eval/check_server.py` -> `eval/reports/server_check.json` |
 | Idle RAM < 350 MB, /health ok | 178 MB idle; +3.6 MB over 300 questions; /health "healthy" (details: embedding model matches the store) | same check; `/health/details` |
 | /admin-v2 sections error-free | all 7 sections (5 required) on the final code and production store: every API call 200, 0 console errors, no emoji | browser check, 2026-10-25 20:20 |
 | No emoji in answers and UI | none in answers, admin UI, Telegram formatting, admin API, logs; README headings cleaned too | `tests/test_no_emoji.py`, gold run |
@@ -100,6 +100,7 @@ INVALID and was re-run).
 | 37 | `src/gateway/review.py` | The review reply could come back empty: the model's default reasoning used the whole 4096-token budget | `tests/test_review_endpoint.py::test_the_review_call_states_its_reasoning_and_leaves_room_for_the_verdict` |
 | 38 | `scripts/stress_eval.py`, `eval/run_eval.py` | The judge returned empty for 16 of 92 items (same cause); the injection check misread "not supported" after a value | `tests/test_eval_runner.py` |
 | 39 | `src/api/routes/admin.py` + 6 modules | Legacy upload / any-website ingestion endpoints (unused by the panel) could put non-Lex.uz text into the legal corpus; removed with their code | the corpus is fed only through `/api/v1/admin/corpus/*` and the build script |
+| 40 | `src/gateway/service.py`, `src/generation/generator.py`, `src/clients/openrouter.py` | With the model down, hung or the budget used up, the service "answered" with quoted norms picked by search alone (no model); at 80% of the budget it skipped query rewriting and follow-up context. Now: HTTP 503 "temporarily unavailable" in the question's language, stored answers still served, quality independent of the budget; `src/generation/degraded.py` removed | `tests/test_security_and_regressions.py::test_a_used_up_budget_answers_unavailable_at_once_and_still_serves_stored_answers`, `tests/test_answer_guards.py::test_no_answer_is_written_when_every_model_fails`; server check 30/30; gold replay all criteria |
 
 ## 5. Main decisions (DECISIONS.md has all, each with how to undo it)
 

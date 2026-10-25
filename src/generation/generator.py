@@ -14,7 +14,6 @@ from src.generation.prompts import (
     refusal_for,
     ResponseMode,
 )
-from src.generation.degraded import sources_only_text
 from src.generation.guards import guard_answer
 
 
@@ -33,7 +32,9 @@ from src.generation.support_check import run_support_check
 
 logger = logging.getLogger(__name__)
 
-STREAM_ERROR_MESSAGES = {
+# The reply when no model answers (provider down, timeout, budget used up). There is no answer without the model: a
+# quotation of norms picked by search alone is not an answer to the question, so the user is told to come back instead.
+UNAVAILABLE_MESSAGES = {
     "uz": "Javob yaratish xizmati vaqtincha mavjud emas. Iltimos, birozdan so'ng qayta urinib ko'ring.",
     "ru": "Сервис генерации ответов временно недоступен. Пожалуйста, повторите попытку позже.",
     "en": "The answer generation service is temporarily unavailable. Please try again shortly.",
@@ -60,7 +61,6 @@ class GeneratedAnswer(BaseModel):
     language: str
     mode: str
     warnings: List[str] = []
-    degraded: bool = False          # no generation model was reachable: the text is a quotation of the matching norms
 
 
 # An answer is 120-230 words; this bound only stops a model that loops (one run repeated a sentence 108 times).
@@ -125,7 +125,7 @@ class AnswerGenerator:
             logger.warning(f"answer guards failed: {type(e).__name__}: {e}")
         return text, warnings
 
-    def _finish(self, raw: str, contexts, language: str, mode, warnings: List[str], query: str = "", degraded: bool = False):
+    def _finish(self, raw: str, contexts, language: str, mode, warnings: List[str], query: str = ""):
         """Validation, disclaimer and the response record for a finished answer text."""
         val_result: ValidationResult = CitationValidator.validate_and_sanitize(
             answer_text=raw, retrieved_contexts=contexts, language=language,
@@ -144,13 +144,7 @@ class AnswerGenerator:
             language=language,
             mode=mode,
             warnings=list(val_result.warnings) + warnings,
-            degraded=degraded,
         )
-
-    def degraded_answer(self, contexts, language: str, mode, query: str = "") -> GeneratedAnswer:
-        _, result = self._finish(sources_only_text(contexts, language, query=query), contexts, language, mode,
-                                 ["llm_unavailable: sources only, no generated text"], query, degraded=True)
-        return result
 
     async def generate_answer(
         self,
@@ -175,17 +169,14 @@ class AnswerGenerator:
         messages = self._messages(query, contexts, language, mode, asker_group)
         reasoning = _reasoning_options()
 
-        try:
-            raw_llm_response = await self.client.chat_completion(
-                messages=messages,
-                temperature=0.0,
-                max_tokens=_max_answer_tokens(),
-                reasoning=reasoning,
-            )
-            raw_llm_response = (raw_llm_response or "").strip()
-        except RuntimeError as e:
-            logger.error(f"AnswerGenerator: no generation model available, serving the matching norms only: {e}")
-            return self.degraded_answer(contexts, language, mode, query)
+        # RuntimeError (no model answered) goes to the caller, which tells the user the service is unavailable
+        raw_llm_response = await self.client.chat_completion(
+            messages=messages,
+            temperature=0.0,
+            max_tokens=_max_answer_tokens(),
+            reasoning=reasoning,
+        )
+        raw_llm_response = (raw_llm_response or "").strip()
 
         raw_llm_response, post_warnings = await self._post_process(
             messages, raw_llm_response, query, contexts, language, reasoning)
@@ -228,16 +219,8 @@ class AnswerGenerator:
                 yield f"data: {json.dumps({'type': 'token', 'text': chunk})}\n\n"
         except RuntimeError as e:
             logger.error(f"AnswerGenerator stream failed: {e}")
-            if accumulated_chunks:      # tokens already reached the client: no second answer can follow
-                error_payload = {
-                    "type": "error",
-                    "message": STREAM_ERROR_MESSAGES.get(language, STREAM_ERROR_MESSAGES["uz"]),
-                }
-                yield f"data: {json.dumps(error_payload)}\n\n"
-                return
-            degraded = self.degraded_answer(contexts, language, mode, query)
-            yield f"data: {json.dumps({'type': 'token', 'text': degraded.clean_answer})}\n\n"
-            yield f"data: {json.dumps(self._done_payload(degraded, status_warnings))}\n\n"
+            error_payload = {"type": "error", "message": UNAVAILABLE_MESSAGES.get(language, UNAVAILABLE_MESSAGES["uz"])}
+            yield f"data: {json.dumps(error_payload)}\n\n"
             return
 
         full_raw_text = "".join(accumulated_chunks)
@@ -261,7 +244,6 @@ class AnswerGenerator:
             "clean_answer": result.clean_answer or result.answer,
             "telegram_formatted": result.telegram_formatted,
             "warnings": result.warnings,
-            "degraded": result.degraded,
             "status_warnings": status_warnings or [],
             "language": result.language,
             "mode": result.mode,

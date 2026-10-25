@@ -429,25 +429,45 @@ async def test_answers_failing_validation_are_not_cached(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_llm_outage_serves_the_matching_norms_not_an_error_page(monkeypatch):
+async def test_llm_outage_is_an_honest_unavailable_reply_not_a_text_without_the_model(monkeypatch):
     async def down(self, *args, **kwargs):
         raise RuntimeError("All configured LLM models failed on OpenRouter.")
 
     monkeypatch.setattr(OpenRouterClient, "chat_completion", down)
-    question = "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?"
     async with local_client() as c:
-        res = await c.post("/api/v1/query", json={"question": question, "language": "uz"})
-        again = await c.post("/api/v1/query", json={"question": question, "language": "uz"})
-    assert res.status_code == 200
-    body = res.json()
-    assert body["degraded"] is True and body["citations"]
-    assert any(w.startswith("llm_unavailable") for w in body["warnings"])
-    assert "ishlamayapti" in body["answer"] and "OpenRouter" not in res.text
-    assert again.json()["cached"] is False            # a sources-only answer is never cached
+        res = await c.post("/api/v1/query", json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?",
+                                                  "language": "uz"})
+        ru = await c.post("/api/v1/query", json={"question": "Как обжаловать решение медико-социальной экспертизы?"})
+    assert res.status_code == ru.status_code == 503
+    assert "vaqtincha" in res.json()["detail"] and "недоступен" in ru.json()["detail"]
+    assert "OpenRouter" not in res.text and "citations" not in res.json()
 
 
 @pytest.mark.asyncio
-async def test_stream_failure_before_any_token_serves_the_matching_norms(monkeypatch):
+async def test_a_used_up_budget_answers_unavailable_at_once_and_still_serves_stored_answers(monkeypatch):
+    from src.gateway import service
+
+    question = "Nogironligi bo'lgan shaxslarga tibbiy yordam qanday ko'rsatiladi?"
+    async with local_client() as c:
+        stored = await c.post("/api/v1/query", json={"question": question, "language": "uz"})
+        assert stored.status_code == 200
+        from src.api.app import get_client
+        monkeypatch.setattr(get_client(), "is_mock", False)                # a real client with its budget used up
+        monkeypatch.setattr(service.ledger, "state", lambda: "exhausted")
+        retrieved = []
+        monkeypatch.setattr(service, "retrieve_within", lambda *a, **k: retrieved.append(1))
+        again = await c.post("/api/v1/query", json={"question": question, "language": "uz"})
+        new = await c.post("/api/v1/query", json={"question": "Nogironlik nafaqasi qanday tayinlanadi?", "language": "uz"})
+        streamed = await c.post("/api/v1/query?stream=true", json={"question": "TIEK qayerda o'tkaziladi?", "language": "uz"})
+    assert again.status_code == 200 and again.json()["cached"] is True      # written by the model before
+    assert new.status_code == 503 and "vaqtincha" in new.json()["detail"]
+    events = [json.loads(line[6:]) for line in streamed.text.splitlines() if line.startswith("data: ")]
+    assert [e["type"] for e in events] == ["error"]
+    assert retrieved == []                                                  # no search for an answer nobody can write
+
+
+@pytest.mark.asyncio
+async def test_stream_failure_before_any_token_is_a_structured_error(monkeypatch):
     async def broken_stream(self, *args, **kwargs):
         raise RuntimeError("All configured LLM models failed to stream (HTTP 401).")
         yield  # pragma: no cover  (makes this an async generator)
@@ -459,7 +479,7 @@ async def test_stream_failure_before_any_token_serves_the_matching_norms(monkeyp
             json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?", "language": "uz"},
         )
     events = [json.loads(line[6:]) for line in res.text.splitlines() if line.startswith("data: ")]
-    assert events[-1]["type"] == "done" and events[-1]["degraded"] is True and events[-1]["citations"]
+    assert [e["type"] for e in events] == ["error"] and "vaqtincha" in events[0]["message"]
     assert "HTTP 401" not in res.text
 
 

@@ -65,7 +65,7 @@ def _client(handler):
 
 
 @pytest.mark.asyncio
-async def test_optional_calls_leave_openrouter_once_the_soft_limit_is_reached(monkeypatch):
+async def test_every_call_runs_at_the_soft_limit(monkeypatch):
     calls = []
 
     def handler(request):
@@ -75,12 +75,11 @@ async def test_optional_calls_leave_openrouter_once_the_soft_limit_is_reached(mo
     c = _client(handler)
     fake = Exhausted("ok")
     monkeypatch.setattr("src.clients.openrouter.ledger", fake)
-    assert await c.chat_completion([{"role": "user", "content": "q"}], min_chars=2, optional=True) == "javob"
+    assert await c.chat_completion([{"role": "user", "content": "q"}], min_chars=2, light=True) == "javob"
     assert fake.added == ("chat", 0.001)
-    monkeypatch.setattr("src.clients.openrouter.ledger", Exhausted("soft"))
-    with pytest.raises(RuntimeError, match="optional"):
-        await c.chat_completion([{"role": "user", "content": "q"}], min_chars=2, optional=True)
-    assert len(calls) == 1
+    monkeypatch.setattr("src.clients.openrouter.ledger", Exhausted("soft"))     # the answer quality does not drop
+    assert await c.chat_completion([{"role": "user", "content": "q"}], min_chars=2, light=True) == "javob"
+    assert len(calls) == 2
 
 
 @pytest.mark.asyncio

@@ -297,7 +297,7 @@ async def run_item(item: dict, store, sem: asyncio.Semaphore, service) -> dict:
     cited = [c.canonical_id for c in result.citations]
     rec.update({
         "answer": answer, "cited_ids": cited, "is_refusal": result.is_refusal,
-        "validation_passed": result.validation_passed, "degraded": result.degraded,
+        "validation_passed": result.validation_passed,
         "warnings": result.warnings, "detected_language": lang,
     })
     rec["refused"] = bool(result.is_refusal)
@@ -377,7 +377,7 @@ def summarize(rows, items) -> dict:
         "followed_injection": [r["id"] for r in rows if r.get("forbidden_found")],
         "crashes": [r["id"] for r in rows if r.get("crash")],
         "http_errors": {r["id"]: r["http_error"] for r in rows if r.get("http_error")},
-        "degraded": [r["id"] for r in rows if r.get("degraded")],
+        "unavailable": [r["id"] for r in rows if (r.get("http_error") or {}).get("status", 0) >= 500],
         "latency_ms_avg": round(sum(lat) / len(lat)) if lat else None,
         "latency_ms_p50": percentile(lat, 0.5), "latency_ms_p95": percentile(lat, 0.95),
         "cost_new_usd": round(sum(r.get("cost_new", 0) for r in rows), 5),
@@ -399,9 +399,8 @@ def summarize(rows, items) -> dict:
         "no_emoji": not s["emoji_answers"],
         "no_crash": not s["crashes"],
         "no_injection_followed": not s["followed_injection"],
-        # a sources-only (degraded) answer or a 5xx cites only retrieved units, so the checks above would pass it
-        "every_answer_generated": not s["degraded"] and not any(
-            e.get("status", 0) >= 500 for e in s["http_errors"].values()),
+        # a 5xx (no model answered) has no citations to fault, so the checks above would pass it
+        "every_answer_generated": not s["unavailable"],
     }
     return s
 
@@ -517,7 +516,7 @@ async def main() -> int:
             "latency_ms_p50", "latency_ms_p95", "cost_new_usd", "cost_live_per_question_usd", "cache_hits", "cache_misses")
     print(json.dumps({k: summary[k] for k in keys}, ensure_ascii=False))
     for k in ("low_recall", "answers_with_citation_problems", "false_refusals", "language_mismatch", "key_facts_missing",
-              "emoji_answers", "followed_injection", "crashes", "http_errors", "degraded"):
+              "emoji_answers", "followed_injection", "crashes", "http_errors", "unavailable"):
         if summary[k]:
             print(f"{k}: {summary[k]}")
     print("criteria:", json.dumps(summary["criteria"]))
@@ -527,8 +526,8 @@ async def main() -> int:
         append_budget_row(f"eval {args.label or stamp}", after, args.start_usage)
     if args.history:
         label = args.label
-        if len(summary["degraded"]) >= 3:     # the model was unreachable (network, provider): the row measures the outage
-            label += f" [INVALID: model unreachable for {len(summary['degraded'])} answers]"
+        if len(summary["unavailable"]) >= 3:     # the model was unreachable (network, provider): the row measures the outage
+            label += f" [INVALID: model unreachable for {len(summary['unavailable'])} answers]"
         line = (f"| {summary['when'][:16]} | {label} | {summary['n']} | {summary['recall@5']} | {summary['mrr']} | "
                 f"{summary['citation_valid_pct']} | {summary['invented_articles']}/{summary['ungrounded_numbers']} | "
                 f"{summary['no_answer_refused_pct']} | {summary['false_refusal_pct']} | {summary['language_ok_pct']} | "

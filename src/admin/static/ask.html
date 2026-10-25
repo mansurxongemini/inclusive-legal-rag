@@ -267,9 +267,6 @@
     if (data.is_refusal) {
       note.hidden = false;
       note.textContent = "Bu savolga aniq javob beradigan norma topilmadi. Savolni boshqacha yozib ko'ring yoki vakolatli organga murojaat qiling.";
-    } else if (data.degraded) {
-      note.hidden = false;
-      note.textContent = "Javob yaratish xizmati vaqtincha ishlamayapti: quyida savolingizga eng yaqin normalar matni keltirilgan. Bu tayyor javob emas; birozdan so'ng qayta urinib ko'ring.";
     } else if (data.validation_passed === false) {
       note.hidden = false;
       note.textContent = "Diqqat: javob avtomatik manba tekshiruvidan to'liq o'tmadi. Muhim qaror qabul qilishdan oldin quyidagi rasmiy manbalarni tekshiring.";

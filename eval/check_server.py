@@ -198,10 +198,10 @@ def provider_failure_checks() -> None:
                 res = httpx.post(srv.url + "/api/v1/query", timeout=120,
                                  json={"question": f"Nogironlik nafaqasi qanday tayinlanadi? ({mode})"})
                 body = res.json()
-                clear = (res.status_code == 200 and (body.get("degraded") or body.get("is_refusal") or body.get("answer"))) \
-                    or (res.status_code in (429, 503) and "detail" in body)
-                check(f"provider {mode}: clear answer", bool(clear),
-                      f"HTTP {res.status_code} in {time.time() - t0:.1f}s, degraded={body.get('degraded')}, "
+                # no model answers: an honest "temporarily unavailable", never a text written without the model
+                clear = res.status_code in (429, 503) and bool(body.get("detail"))
+                check(f"provider {mode}: clear answer", clear,
+                      f"HTTP {res.status_code} in {time.time() - t0:.1f}s, "
                       f"{str(body.get('answer') or body.get('detail'))[:80]!r}")
             except Exception as e:
                 check(f"provider {mode}: clear answer", False, repr(e)[:150])

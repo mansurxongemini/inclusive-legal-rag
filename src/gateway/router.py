@@ -289,7 +289,7 @@ def _handle_streaming_ask(
                     final_event = ev
                 elif ev_type == "error":
                     get_client_store().record_outcome(ctx.client.client_id, error=True)
-                    message = "Javob yaratish xizmati vaqtincha mavjud emas. Birozdan so'ng qayta urining."
+                    message = ev.get("message") or "Javob yaratish xizmati vaqtincha mavjud emas. Birozdan so'ng qayta urining."
                     yield f"event: error\ndata: {json.dumps({'code': 'generation_error', 'message': message})}\n\n"
                     return
         except Exception:

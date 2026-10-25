@@ -4,11 +4,11 @@ OpenRouter spend ledger and monthly budget guard.
 Every OpenRouter response (chat, embeddings, Jev decisions) carries `usage.cost` in USD. The ledger adds it up per day
 and kind (chat, embedding, jev, rerank) in a small SQLite file and tells the client in which state the month is:
 
-* ok         - below OPENROUTER_BUDGET_SOFT_RATIO of the monthly budget: everything runs;
-* soft       - above it: the optional calls (query rewriting, claim check, history condensing) are skipped;
+* ok         - below OPENROUTER_BUDGET_SOFT_RATIO of the monthly budget;
+* soft       - above it: a warning in /health for the owner; every call still runs, answers are the same;
 * exhausted  - the monthly budget is used up, the key's own limit is reached or OPENROUTER_PAUSED is on: no call is made
-               at all. Retrieval degrades to full-text search with the RRF order and an answer to a quotation of the
-               matching norms (no model writes a word of it), until the month changes or the key is topped up.
+               at all. A new question gets "temporarily unavailable" (HTTP 503; stored answers are still served) until
+               the month changes or the key is topped up. Nothing answers in place of the model.
 
 Evaluation scripts count into their own ledger (SPEND_SCOPE=eval) and are never limited by the service budget.
 """

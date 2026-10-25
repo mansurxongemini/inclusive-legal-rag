@@ -239,7 +239,6 @@ async def check_support(
                 max_tokens=2048,
                 reasoning={"enabled": False},
                 light=True,
-                optional=True,
             ),
             timeout=timeout,
         )

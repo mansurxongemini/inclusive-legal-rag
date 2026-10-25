@@ -7,7 +7,7 @@
  {
   "check": "idle RSS < 350 MB",
   "ok": true,
-  "detail": "178.1 MB"
+  "detail": "170.3 MB"
  },
  {
   "check": "/health 200 and healthy",
@@ -77,7 +77,7 @@
  {
   "check": "RSS after the bad-input checks",
   "ok": true,
-  "detail": "179.1 MB"
+  "detail": "171.0 MB"
  },
  {
   "check": "no secret in the production log",
@@ -92,7 +92,7 @@
  {
   "check": "provider 429: clear answer",
   "ok": true,
-  "detail": "HTTP 200 in 8.4s, degraded=True, 'Javob yaratish xizmati hozir ishlamayapti, shuning uchun savolingizga eng yaqin '"
+  "detail": "HTTP 503 in 8.3s, \"Javob yaratish xizmati vaqtincha mavjud emas. Iltimos, birozdan so'ng qayta urin\""
  },
  {
   "check": "server alive after provider 429",
@@ -102,7 +102,7 @@
  {
   "check": "provider 500: clear answer",
   "ok": true,
-  "detail": "HTTP 200 in 13.1s, degraded=True, 'Javob yaratish xizmati hozir ishlamayapti, shuning uchun savolingizga eng yaqin '"
+  "detail": "HTTP 503 in 13.1s, \"Javob yaratish xizmati vaqtincha mavjud emas. Iltimos, birozdan so'ng qayta urin\""
  },
  {
   "check": "server alive after provider 500",
@@ -112,7 +112,7 @@
  {
   "check": "provider hang: clear answer",
   "ok": true,
-  "detail": "HTTP 200 in 46.2s, degraded=True, 'Javob yaratish xizmati hozir ishlamayapti, shuning uchun savolingizga eng yaqin '"
+  "detail": "HTTP 503 in 46.1s, \"Javob yaratish xizmati vaqtincha mavjud emas. Iltimos, birozdan so'ng qayta urin\""
  },
  {
   "check": "server alive after provider hang",
@@ -147,6 +147,6 @@
  {
   "check": "memory growth under traffic < 40 MB",
   "ok": true,
-  "detail": "after warm-up 248.9 MB, after 300 more 252.5 MB (+3.6)"
+  "detail": "after warm-up 237.1 MB, after 300 more 243.7 MB (+6.6)"
  }
 ]

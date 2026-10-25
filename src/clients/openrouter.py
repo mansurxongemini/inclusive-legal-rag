@@ -95,18 +95,15 @@ class OpenRouterClient:
             await self._http_client.aclose()
 
     @staticmethod
-    def _check_budget(optional: bool = False) -> None:
+    def _check_budget() -> None:
         """
         The budget guard in front of every paid call: once the month's budget (or the key's own limit) is used up, or the
-        switch OPENROUTER_PAUSED is on, no call is made at all; an `optional` call (a query rewrite, the claim check, a
-        history condensation) is skipped already at the soft limit. Callers treat the RuntimeError as "service unavailable":
-        retrieval falls back to full-text search, an answer to a quotation of the matching norms.
+        switch OPENROUTER_PAUSED is on, no call is made at all. Below that every call is made: the quality of an answer
+        never depends on how much of the budget is left (the soft limit only shows in /health). A question then gets
+        "temporarily unavailable" (HTTP 503), never an answer written without the model.
         """
-        state = ledger.state()
-        if state == "exhausted":
+        if ledger.state() == "exhausted":
             raise RuntimeError("OpenRouter budget used up or paused: no model call is made until it is restored.")
-        if optional and state != "ok":
-            raise RuntimeError("OpenRouter budget is near its limit: an optional model call is skipped.")
 
     def provider_preferences(self) -> Optional[Dict]:
         """Builds OpenRouter provider routing and quantization preferences from settings."""
@@ -285,20 +282,18 @@ class OpenRouterClient:
         reasoning: Optional[Dict] = None,
         response_format: Optional[Dict] = None,
         light: bool = False,
-        optional: bool = False,
     ) -> str:
         """
         Non-streaming completion on the one chat model (GENERATION_MODEL_PRIMARY; OpenRouter itself falls back between
         providers). Replies not longer than min_chars count as stubs and are asked for once more.
 
         light=True marks a cheap helper call (query rewriting, translation, history condensing): reasoning is switched off.
-        optional=True marks one that may be skipped when the budget runs low (see _check_budget).
         Raises RuntimeError when the call cannot be made or the model does not answer.
         """
         if self.is_mock:
             return self._mock_grounded_response(messages)
 
-        self._check_budget(optional)
+        self._check_budget()
         if light:
             reasoning = reasoning or NO_REASONING
         target = model or self.primary_model

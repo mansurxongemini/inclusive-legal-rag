@@ -48,8 +48,6 @@ def test_criteria_fail_when_an_answer_was_not_generated(run_eval):
             "refused": False, "citations_valid": True, "latency_live_ms": 1000}
     ok = run_eval.summarize([{**base, "id": "a"}, {**base, "id": "b"}], items)
     assert ok["criteria"]["every_answer_generated"]
-    degraded = run_eval.summarize([{**base, "id": "a", "degraded": True}, {**base, "id": "b"}], items)
-    assert not degraded["criteria"]["every_answer_generated"]
     failed = run_eval.summarize([{**base, "id": "a"}, {"id": "b", "language": "uz", "type": "short", "answer": "",
                                                        "http_error": {"status": 503, "detail": "x"}}], items)
     assert not failed["criteria"]["every_answer_generated"]

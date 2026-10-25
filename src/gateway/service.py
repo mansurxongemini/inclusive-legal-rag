@@ -10,12 +10,13 @@ from src.nlp.query_analyzer import QueryAnalysis, QueryAnalyzer
 from src.retrieval.pipeline import retrieve_within
 from src.config import settings
 from src.api.middleware.hardening import generation_budget
-from src.generation.generator import AnswerGenerator
+from src.generation.generator import UNAVAILABLE_MESSAGES, AnswerGenerator
 from src.generation.prompts import ANSWER_VERSION
 from src.generation.validator import CitationItem
 from src.api.middleware.security import sanitize_user_input
 
 from src.clients.openrouter import OpenRouterClient
+from src.clients.spend import ledger
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,6 @@ async def condense_question(history, question: str, client: Optional[OpenRouterC
             min_chars=2,
             reasoning={"enabled": False},
             light=True,
-            optional=True,
         )
         if not raw:
             return question
@@ -103,7 +103,6 @@ class AnswerResult(BaseModel):
     semantic_similarity: Optional[float] = None
     retrieval_confidence: Optional[float] = None
     warnings: List[str] = Field(default_factory=list)
-    degraded: bool = False
 
 DAILY_LIMIT_MESSAGE = "Bugungi javoblar chegarasi tugadi. Iltimos, ertaga qayta urinib ko'ring yoki vakolatli organga murojaat qiling."
 
@@ -201,6 +200,14 @@ async def _lookup_cache(q: _Question, cache, client, store=None) -> Tuple[Option
     return hit, vector, True
 
 
+def _unavailable_message(q: _Question, client) -> Optional[str]:
+    """The reply when no model can write the answer (budget used up, paused, key refused), else None. Asked after the
+    exact cache: a stored answer was written by the model and is still served."""
+    if client.is_mock or ledger.state() != "exhausted":
+        return None
+    return UNAVAILABLE_MESSAGES.get(q.language, UNAVAILABLE_MESSAGES["uz"])
+
+
 def _result_from_cache(hit: dict, q: _Question) -> AnswerResult:
     text = hit.get("clean_answer") or hit.get("answer", "")
     return AnswerResult(
@@ -235,7 +242,6 @@ def _is_cacheable(result: AnswerResult) -> bool:
     return (
         result.validation_passed
         and not result.is_refusal
-        and not result.degraded
         and RETRIEVAL_TIMEOUT_WARNING not in result.warnings
         and len((result.clean_answer or result.answer).strip()) > MIN_CACHEABLE_CHARS
     )
@@ -278,6 +284,9 @@ async def answer_question(
     if hit:
         return _result_from_cache(hit, q)
 
+    unavailable = _unavailable_message(q, client)
+    if unavailable:
+        raise HTTPException(status_code=503, detail=unavailable)
     if not generation_budget.consume():
         raise HTTPException(status_code=429, detail=DAILY_LIMIT_MESSAGE)
 
@@ -297,26 +306,19 @@ async def answer_question(
     generator = AnswerGenerator(client=client)
     cleaned_query = q.analysis.raw_query
     try:
-        try:
-            gen_result = await asyncio.wait_for(
-                generator.generate_answer(
-                    query=cleaned_query,
-                    contexts=retrieval.contexts,
-                    language=q.language,
-                    mode=mode,
-                    **q.asker,
-                ),
-                timeout=settings.ANSWER_TIMEOUT_S,
-            )
-        except asyncio.TimeoutError:      # a hung provider must not hold the request: the matching norms are shown
-            logger.error(f"Answer generation exceeded {settings.ANSWER_TIMEOUT_S}s; serving the matching norms only")
-            gen_result = generator.degraded_answer(retrieval.contexts, q.language, mode, cleaned_query)
-    except RuntimeError as e:
-        logger.error(f"Answer generation unavailable: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="Javob yaratish xizmati vaqtincha mavjud emas. Iltimos, birozdan so'ng qayta urinib ko'ring.",
+        gen_result = await asyncio.wait_for(
+            generator.generate_answer(
+                query=cleaned_query,
+                contexts=retrieval.contexts,
+                language=q.language,
+                mode=mode,
+                **q.asker,
+            ),
+            timeout=settings.ANSWER_TIMEOUT_S,
         )
+    except (RuntimeError, asyncio.TimeoutError) as e:      # no model answered, or a hung provider held the request
+        logger.error(f"Answer generation unavailable: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=503, detail=UNAVAILABLE_MESSAGES.get(q.language, UNAVAILABLE_MESSAGES["uz"]))
 
     res_answer = gen_result.clean_answer or gen_result.answer
     result = AnswerResult(
@@ -333,7 +335,6 @@ async def answer_question(
         cached=False,
         retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
         warnings=gen_result.warnings + _retrieval_warnings(retrieval),
-        degraded=gen_result.degraded,
     )
     await _cache_answer(q, cache, query_vector, result)
     return result
@@ -408,6 +409,10 @@ async def answer_question_stream(
         })
         return
 
+    unavailable = _unavailable_message(q, client)
+    if unavailable:
+        yield _sse({"type": "error", "message": unavailable})
+        return
     if not generation_budget.consume():
         yield _sse({"type": "error", "message": DAILY_LIMIT_MESSAGE})
         return
@@ -462,7 +467,6 @@ async def answer_question_stream(
                 cached=False,
                 retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
                 warnings=final_event.get("warnings", []) + _retrieval_warnings(retrieval),
-                degraded=bool(final_event.get("degraded", False)),
             )
             await _cache_answer(q, cache, query_vector, result)
         except Exception:

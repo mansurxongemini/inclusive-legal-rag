@@ -36,10 +36,13 @@ raise `OPENROUTER_MONTHLY_BUDGET_USD`, or shrink the ranker window (20 x 700 hal
 **Budget guard** (`src/clients/spend.py`). Every OpenRouter response carries `usage.cost` (a stream carries it in its last chunk); the ledger
 (`data/store/spend.db`) sums it per month. `OPENROUTER_MONTHLY_BUDGET_USD` (default 15) has two thresholds:
 
-- 80% (`OPENROUTER_BUDGET_SOFT_RATIO`): the optional calls stop (query rewrites, claim check, history condensing); the answer itself, the
-  translation of a Russian or English question and the ranking still run.
-- 100%: no call at all. Retrieval is full-text search with the RRF order, and an answer is the quoted text of the best matching norms with
-  citations (`degraded: true`, no model writes a word of it) until the month changes or the key is topped up.
+- 80% (`OPENROUTER_BUDGET_SOFT_RATIO`): `/health/details` reports `soft`, time to top up or raise the budget. Every call still runs: the
+  quality of an answer never depends on how much of the budget is left.
+- 100%: no call at all. Stored answers are still served; a new question gets HTTP 503 "temporarily unavailable" (a stream: one `error`
+  event) until the month changes or the key is topped up. Nothing answers in place of the model: norms picked by search alone are not an
+  answer to the question.
+
+Size the budget to the traffic: about $0.0009 per new question, so $15 is about 16 600 new questions a month (550 a day).
 
 `/health/details` (administrators only; the public `/health` shows just the status) reports `openrouter_budget: ok | soft | exhausted` and the spend.
 Evaluation scripts count into their own ledger (`spend_eval.db`) and are not limited.
@@ -53,7 +56,7 @@ Evaluation scripts count into their own ledger (`spend_eval.db`) and are not lim
 |---|---|---|---|
 | Jev + vectors | `JEV_ENABLED=true` | 81% / 96% | 100% |
 | **Vectors + chat-model ranker (default)** | `JEV_ENABLED=false` | 62% / 91% | 100% |
-| No model (budget used up or paused): RRF order | `OPENROUTER_PAUSED=true` | 32% / 68% | 50% |
+| Ranker unavailable: RRF order (retrieval only; with no model the question gets 503) | `OPENROUTER_PAUSED=true` | 32% / 68% | 50% |
 
 These figures were measured with `muse-spark-1.3` as the ranker: **measure again after choosing the production chat model**
 (`scripts/stress_eval.py`, see "Checking a change"). A smaller ranker window (20 x 700) gave 51% first / 77% top 6.
@@ -62,13 +65,14 @@ in-scope ones refused wrongly, on the held-out set 95% / 7.3% (Jev: 100% / 1.2% 
 
 ## Degradation, in order
 
-1. The chat model does not answer (after one more try) or the budget is used up -> **sources-only answer**: the text of the best matching norms
-   with citations (`degraded: true`, not cached). 2. Jev unavailable or switched off -> the chat-model ranker (RRF order and the older relevance gate
-   only if that fails too). 3. Embeddings unavailable or paused -> full-text only.
+1. The chat model does not answer (after one more try) or the budget is used up -> HTTP 503 "temporarily unavailable" in the question's
+   language (stream: `error` event); the bot shows it and the user asks again later. No answer is ever written without the model.
+   2. Jev unavailable or switched off -> the chat-model ranker (RRF order and the older relevance gate only if that fails too).
+   3. Embeddings unavailable or paused -> full-text only.
 4. `PUBLIC_DAILY_GENERATIONS` reached -> HTTP 429 / stream error event with an explanation.
 5. The provider hangs (neither an answer nor an error): the question embedding gives up after `QUERY_EMBED_TIMEOUT_S` (10 s) and the whole
    retrieval after `RETRIEVAL_TIMEOUT_S` (30 s); the question is then searched by full-text search with no model call, and generation still has
-   `ANSWER_TIMEOUT_S`. Measured with a fake provider that never answers: the visitor gets the matching norms in 46 s (eval/check_server.py).
+   `ANSWER_TIMEOUT_S`, after which the visitor gets the 503 reply (eval/check_server.py measures it with a fake provider that never answers).
 
 ## Memory
 

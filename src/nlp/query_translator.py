@@ -120,7 +120,6 @@ class QueryTranslator:
                 min_chars=2,
                 reasoning={"enabled": False},
                 light=True,
-                optional=True,
             )
             rewritten = (raw or "").strip().strip('"\'`«»').strip()
             if not rewritten or len(rewritten) > 2 * len(query) + 100 or any("Ѐ" <= ch <= "ӿ" for ch in rewritten):
@@ -178,7 +177,6 @@ class QueryTranslator:
                 min_chars=2,
                 reasoning={"enabled": False},
                 light=True,
-                optional=True,
             )
             questions = _parse_subquestions(raw or "")
             if not questions:

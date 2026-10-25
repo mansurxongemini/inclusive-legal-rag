@@ -51,11 +51,11 @@ class Settings(BaseSettings):
     LLM_RANK_UNITS: int = Field(default=30)                         # candidates shown to the fallback ranker (20 x 700: hit@1 51%, 30 x 1200: 70%)
     LLM_RANK_CHARS: int = Field(default=1200)                       # characters of each unit shown to it
     JEV_TIMEOUT_S: float = Field(default=20.0)
-    # Monthly OpenRouter budget (every paid call: chat, embeddings, Jev). Above SOFT_RATIO the optional calls (query rewrites,
-    # claim check, history condensing) and Jev are skipped; at 100% nothing is called: retrieval degrades to full-text + RRF
-    # and an answer to a quotation of the matching norms. 0 = no guard.
+    # Monthly OpenRouter budget (every paid call: chat, embeddings, Jev). Above SOFT_RATIO /health warns (answers unchanged);
+    # at 100% nothing is called and a new question gets "temporarily unavailable" (HTTP 503) until the month changes.
+    # $0.0009 per new question: $15 covers about 16 600 a month. 0 = no guard.
     OPENROUTER_MONTHLY_BUDGET_USD: float = Field(default=15.0)
-    # OpenRouter is paused (no call at all: full-text search, norms quoted without a model) when this switch is on, or when the
+    # OpenRouter is paused (no call at all: new questions get "temporarily unavailable") when this switch is on, or when the
     # balance read from the provider every 15 minutes is at or below the reserve.
     OPENROUTER_PAUSED: bool = Field(default=False)
     OPENROUTER_RESERVE_USD: float = Field(default=0.05)

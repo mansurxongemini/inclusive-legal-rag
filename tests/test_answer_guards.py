@@ -1,6 +1,6 @@
 """
-Answer guards, sources-only mode and the verified stream: the finished answer is checked for script, wording and
-numbers, repaired once, and the `done` event carries the verified text.
+Answer guards, the model outage and the verified stream: the finished answer is checked for script, wording and
+numbers, repaired once, and the `done` event carries the verified text. Without the model there is no answer.
 """
 import json
 from types import SimpleNamespace
@@ -11,7 +11,6 @@ from src.config import settings
 from src.gateway.service import cache_keys
 from src.generation import guards
 from src.generation.answer_checks import uncited_ratio
-from src.generation.degraded import sources_only_text
 from src.generation.generator import AnswerGenerator
 from src.generation.prompts import disclaimer_for, disclaimer_text, refusal_for
 from src.generation.validator import CitationValidator
@@ -138,25 +137,23 @@ def test_disclaimer_and_refusal_follow_the_script_of_the_question():
     assert disclaimer_text("uz", "cyrillic").startswith("Ушбу") and disclaimer_text("uz").startswith("Ushbu")
 
 
-# --- sources-only mode ---------------------------------------------------------------------------------------------
-
-def test_sources_only_text_quotes_the_norms_with_their_ids():
-    text = sources_only_text([_ctx()], "uz", query="Yordam qancha?")
-    assert "ishlamayapti" in text and "Yordam tartibi (VMQ-10), 5-band" in text and "[vmq_10_2024_p_5]" in text
-    assert "1 500 000" in text
-    assert "ишламаяпти" in sources_only_text([_ctx()], "uz", query="Ёрдам қанча?")
-
+# --- model outage --------------------------------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_generator_serves_the_matching_norms_when_every_model_fails():
+async def test_no_answer_is_written_when_every_model_fails():
     class Down(Client):
         async def chat_completion(self, messages, **kwargs):
             raise RuntimeError("All configured LLM models failed")
 
-    result = await AnswerGenerator(client=Down()).generate_answer("Yordam qancha?", [_ctx()], "uz")
-    assert result.degraded and result.citations and result.validation_passed
-    assert any(w.startswith("llm_unavailable") for w in result.warnings)
-    assert "1 500 000" in result.clean_answer
+        async def chat_completion_stream(self, messages, **kwargs):
+            raise RuntimeError("All configured LLM models failed")
+            yield  # pragma: no cover  (makes this an async generator)
+
+    with pytest.raises(RuntimeError):         # the caller replies "temporarily unavailable"
+        await AnswerGenerator(client=Down()).generate_answer("Yordam qancha?", [_ctx()], "uz")
+    events = [json.loads(sse[6:]) async for sse in AnswerGenerator(client=Down()).generate_answer_stream(
+        "Сколько составляет помощь?", [_ctx()], "ru")]
+    assert [e["type"] for e in events] == ["error"] and "недоступен" in events[0]["message"]
 
 
 # --- verified stream -----------------------------------------------------------------------------------------------
@@ -171,7 +168,7 @@ async def test_stream_done_event_carries_the_repaired_answer():
     assert kinds[-1] == "done" and "status" in kinds
     done = events[-1]
     assert "1 500 000" in done["clean_answer"] and "2 000 000" not in done["clean_answer"]
-    assert done["warnings"][0] == "answer_repaired" and done["citations"] and done["degraded"] is False
+    assert done["warnings"][0] == "answer_repaired" and done["citations"]
 
 
 # --- smaller pieces ------------------------------------------------------------------------------------------------
@@ -206,7 +203,7 @@ def test_markers_after_the_full_stop_belong_to_their_sentence():
 
 
 @pytest.mark.asyncio
-async def test_a_hung_generation_is_cut_off_and_the_norms_are_shown(monkeypatch):
+async def test_a_hung_generation_is_cut_off_with_an_honest_unavailable_reply(monkeypatch):
     import asyncio
 
     async def hang(self, *a, **k):
@@ -217,7 +214,7 @@ async def test_a_hung_generation_is_cut_off_and_the_norms_are_shown(monkeypatch)
     from tests.test_security_and_regressions import local_client      # in-process app with the mock store
     async with local_client() as c:
         res = await c.post("/api/v1/query", json={"question": "Nogironlik guruhini qayta ko'rikdan o'tkazish tartibi qanday?", "language": "uz"})
-    assert res.status_code == 200 and res.json()["degraded"] is True and res.json()["citations"]
+    assert res.status_code == 503 and "vaqtincha" in res.json()["detail"] and "citations" not in res.json()
 
 
 def test_an_unknown_id_inside_a_list_bracket_is_caught_and_never_borrows_a_number():

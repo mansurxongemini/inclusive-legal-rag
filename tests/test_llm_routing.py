@@ -1,6 +1,6 @@
 """
 One OpenRouter key and endpoint serve every call, on one chat model: the cost of each reply is recorded, a budget that is
-used up (or a key that is refused) stops the calls, and an optional helper call is skipped as soon as the budget runs low.
+used up (or a key that is refused) stops the calls; below that every call runs, so answers do not change with the budget.
 """
 import json
 
@@ -115,14 +115,13 @@ async def test_a_refused_key_stops_every_later_call(ledger):
 
 
 @pytest.mark.asyncio
-async def test_optional_calls_stop_at_the_soft_limit_and_everything_stops_at_the_hard_one(ledger):
+async def test_calls_run_at_the_soft_limit_and_everything_stops_at_the_hard_one(ledger):
     c, seen = _client(ok())
     ledger.add("chat", 8.5)                                     # 85% of 10 USD
     assert ledger.state() == "soft"
-    with pytest.raises(RuntimeError, match="optional"):
-        await c.chat_completion(MESSAGES, light=True, optional=True)
-    assert (await c.chat_completion(MESSAGES)).startswith("Javob")     # the answer itself still runs
-    assert len(seen) == 1
+    assert (await c.chat_completion(MESSAGES, light=True)).startswith("Javob")    # helper calls too: same answers
+    assert (await c.chat_completion(MESSAGES)).startswith("Javob")
+    assert len(seen) == 2
     ledger.add("chat", 2.0)
     assert ledger.state() == "exhausted"
     with pytest.raises(RuntimeError, match="budget"):
@@ -130,7 +129,7 @@ async def test_optional_calls_stop_at_the_soft_limit_and_everything_stops_at_the
     with pytest.raises(RuntimeError, match="budget"):
         async for _ in c.chat_completion_stream(MESSAGES):
             pass
-    assert len(seen) == 1
+    assert len(seen) == 2
 
 
 @pytest.mark.asyncio
