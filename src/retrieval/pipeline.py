@@ -15,6 +15,7 @@ from typing import Dict, List, Optional
 from src.clients.openrouter import OpenRouterClient
 from src.config import settings
 from src.nlp.query_analyzer import QueryAnalysis, QueryAnalyzer
+from src.nlp.legal_synonyms import LegalSynonymExpander
 from src.nlp.query_translator import QueryTranslator
 from src.retrieval.expansion import expand_cross_references
 from src.retrieval.hybrid_retriever import HybridRetriever, ScoredArticle
@@ -190,7 +191,9 @@ async def retrieve_contexts(
     # A long story is also split into short legal sub-questions, each searched on its own (see fuse_aspect_candidates)
     subquestions_task: Optional[asyncio.Task] = None
     if use_llm and _wants_subquestions(analysis):
-        subquestions_task = asyncio.create_task(QueryTranslator.legal_subquestions(analysis.raw_query, client))
+        subquestions_task = asyncio.create_task(QueryTranslator.legal_subquestions(
+            analysis.raw_query, client, terms=LegalSynonymExpander.expand_terms(analysis.normalized_query, max_terms=8),
+        ))
     tasks = [t for t in (scope_task, translation, subquestions_task) if t]
     try:
         candidates = await retriever.retrieve(

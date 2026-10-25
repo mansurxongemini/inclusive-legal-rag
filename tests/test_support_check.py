@@ -86,10 +86,30 @@ def test_split_claims_sentence_with_two_citations_is_one_claim():
 
 
 def test_split_claims_ignores_lines_without_citations():
-    raw = "Bu shunchaki kirish.\nNima qilish kerak:\n" + BULLET_OK
+    raw = BULLET_OK + "\nBu shunchaki izoh.\nNima qilish kerak:"
     claims = split_claims(raw)
     assert len(claims) == 1
     assert claims[0].kind == "bullet"
+
+
+def test_split_claims_uncited_lead_is_checked_against_every_cited_unit():
+    # the direct answer is the sentence a reader trusts most: it must not escape the check for lack of a marker
+    raw = f"Bu shunchaki kirish.\nNima qilish kerak:\n{BULLET_OK}\n- Boshqa band [{A16}]."
+    claims = split_claims(raw)
+    assert [c.kind for c in claims] == ["lead", "bullet", "bullet"]
+    assert claims[0].text == "Bu shunchaki kirish."
+    assert claims[0].cited_ids == [A15, A16]
+
+
+def test_split_claims_bold_sentence_lead_is_not_taken_for_a_heading():
+    lead = "**Ha, siz yordamchingiz bilan bepul foydalanish huquqiga egasiz, lekin bu huquq cheklangan.**"
+    claims = split_claims(f"{lead}\n\n**Nima qilish kerak:**\n{BULLET_OK}")
+    assert [c.kind for c in claims] == ["lead", "bullet"]
+    assert claims[0].text == lead
+
+
+def test_split_claims_answer_without_any_citation_has_no_claims():
+    assert split_claims("**Ha, siz huquqqa egasiz, bu savolga aniq javob beriladi.**\nIzoh.") == []
 
 
 # --- apply_verdicts ---
@@ -127,7 +147,7 @@ def test_apply_verdicts_sentence_removes_only_bad_marker():
     raw = f"Kirish ma'lumot.\nSizga to'lov beriladi [{A15}]."
     claims = split_claims(raw)
     assert claims[-1].kind == "sentence"
-    text, dropped = apply_verdicts(raw, claims, _verdicts((0, "unsupported"),))
+    text, dropped = apply_verdicts(raw, claims, _verdicts((claims[-1].index, "unsupported"),))
     assert dropped == 0   # a sentence stays; only its citation mark is removed
     assert f"[{A15}]" not in text
     assert "Sizga to'lov beriladi" in text

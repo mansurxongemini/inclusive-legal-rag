@@ -49,6 +49,21 @@ def test_parse_subquestions_keeps_short_latin_questions_only():
     assert _parse_subquestions('{"q": "Ijtimoiy reyestr nima?"}') == []
 
 
+def test_legal_subquestions_tells_the_model_the_terms_of_the_legislation():
+    QueryTranslator._cache.clear()
+    client = MagicMock(is_mock=False)
+    client.chat_completion = AsyncMock(return_value='["Hamrohlik qiluvchi shaxsning bepul yurish huquqi qanday?"]')
+    asyncio.run(QueryTranslator.legal_subquestions(
+        "Yonimdagi yordamchim bepul yuradimi", client, terms=["hamrohlik qiluvchi shaxs", "shaxsiy yordamchi"]))
+    user = client.chat_completion.await_args.kwargs["messages"][1]["content"]
+    assert user.startswith("Yonimdagi yordamchim bepul yuradimi")
+    assert "hamrohlik qiluvchi shaxs; shaxsiy yordamchi" in user
+
+    QueryTranslator._cache.clear()
+    asyncio.run(QueryTranslator.legal_subquestions("Yonimdagi yordamchim bepul yuradimi", client))
+    assert client.chat_completion.await_args.kwargs["messages"][1]["content"] == "Yonimdagi yordamchim bepul yuradimi"
+
+
 def test_legal_subquestions_calls_the_llm_once_per_question():
     QueryTranslator._cache.clear()
     client = MagicMock(is_mock=False)
@@ -169,7 +184,7 @@ async def test_long_question_is_searched_through_its_sub_questions(monkeypatch, 
             "Nogironligi bo'lgan xodimning ish vaqti qancha?"]
     asked: List[str] = []
 
-    async def fake_subquestions(query, client):
+    async def fake_subquestions(query, client, terms=None):
         asked.append(query)
         return list(subs)
 

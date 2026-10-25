@@ -1,0 +1,1002 @@
+[
+ {
+  "id": "L001",
+  "topic": "tiek",
+  "question": "Nogironlik guruhini olish uchun qayerga borishim kerak, qanday hujjatlar kerak?"
+ },
+ {
+  "id": "L002",
+  "topic": "tiek",
+  "question": "Bolam tug'ma kasal, nogironlik guvohnomasi olish uchun nima qilamiz?"
+ },
+ {
+  "id": "L003",
+  "topic": "tiek",
+  "question": "TIEK komissiyasi menga nogironlik bermadi, nima qilsam bo'ladi?"
+ },
+ {
+  "id": "L004",
+  "topic": "tiek",
+  "question": "Nogironligim har yili qayta ko'rikdan o'tishim shartmi yoki umrbod qilib berishadimi?"
+ },
+ {
+  "id": "L005",
+  "topic": "tiek",
+  "question": "Yotib qolgan otamni komissiyaga olib borolmayman, vrach uyga kelib ko'rishi mumkinmi?"
+ },
+ {
+  "id": "L006",
+  "topic": "tiek",
+  "question": "Nogironlik guruhim 3-guruhdan 2-guruhga o'tishi uchun nima kerak?"
+ },
+ {
+  "id": "L007",
+  "topic": "tiek",
+  "question": "Ish joyida baxtsiz hodisadan oyog'imdan ayrildim, nogironlik qanday rasmiylashtiriladi?"
+ },
+ {
+  "id": "L008",
+  "topic": "tiek",
+  "question": "18 yoshga to'lgan bolamning nogironligi avtomatik qoladimi yoki qaytadan ko'rikdan o'tadimi?"
+ },
+ {
+  "id": "L009",
+  "topic": "tiek",
+  "question": "Нагиронлик гурухини ариза топширганимдан кейин неча кун ичида тайинлашади?"
+ },
+ {
+  "id": "L010",
+  "topic": "tiek",
+  "question": "Komissiya qarori ustidan shikoyat qilish mumkinmi va qayerga?"
+ },
+ {
+  "id": "L011",
+  "topic": "tiek",
+  "question": "Men chet elda davolanganman, u yerdagi tibbiy xulosa bilan nogironlik olsam bo'ladimi?"
+ },
+ {
+  "id": "L012",
+  "topic": "tiek",
+  "question": "Nogironlik guvohnomam yo'qolib qoldi, qayta olish uchun nima qilaman?"
+ },
+ {
+  "id": "L013",
+  "topic": "tiek",
+  "question": "Ruhiy kasallik sababli nogironlik berishadimi, qanday tartibda?"
+ },
+ {
+  "id": "L014",
+  "topic": "tiek",
+  "question": "Qaysi kasalliklarda 1-guruh nogironligi beriladi?"
+ },
+ {
+  "id": "L015",
+  "topic": "tiek",
+  "question": "Nogironlik belgilash uchun ko'rikdan o'tish pullikmi?"
+ },
+ {
+  "id": "L016",
+  "topic": "pensiya",
+  "question": "2-guruh nogiron bo'lsam pensiyam qancha bo'ladi?"
+ },
+ {
+  "id": "L017",
+  "topic": "pensiya",
+  "question": "Bolalikdan nogironlarga har oy qancha nafaqa beriladi?"
+ },
+ {
+  "id": "L018",
+  "topic": "pensiya",
+  "question": "Nogironlik pensiyasi uchun ish staji shartmi, umuman ishlamagan bo'lsam?"
+ },
+ {
+  "id": "L019",
+  "topic": "pensiya",
+  "question": "Ishlab turib nogironlik pensiyasi olsam bo'ladimi?"
+ },
+ {
+  "id": "L020",
+  "topic": "pensiya",
+  "question": "Pensiyamni kartaga o'tkazib berishadimi yoki uyga olib kelishadimi?"
+ },
+ {
+  "id": "L021",
+  "topic": "pensiya",
+  "question": "1-guruh nogironni parvarish qilsam, qarovchiga ham nafaqa beriladimi?"
+ },
+ {
+  "id": "L022",
+  "topic": "pensiya",
+  "question": "Yolg'iz yashovchi keksa buvimga qanday moddiy yordam bor?"
+ },
+ {
+  "id": "L023",
+  "topic": "pensiya",
+  "question": "Ijtimoiy reyestrga qanday kiriladi va u nima beradi?"
+ },
+ {
+  "id": "L024",
+  "topic": "pensiya",
+  "question": "Nogiron bolam uchun nafaqa necha yoshgacha to'lanadi?"
+ },
+ {
+  "id": "L025",
+  "topic": "pensiya",
+  "question": "Pensiya miqdorini hisoblashda nogironlik bo'yicha qo'shimcha to'lov bormi?"
+ },
+ {
+  "id": "L026",
+  "topic": "pensiya",
+  "question": "Nogironligi bor ayolga bola tug'ilganda qo'shimcha yordam bormi?"
+ },
+ {
+  "id": "L027",
+  "topic": "pensiya",
+  "question": "Boquvchisini yo'qotgan nogiron bolaga nafaqa tayinlanadimi?"
+ },
+ {
+  "id": "L028",
+  "topic": "pensiya",
+  "question": "Pensiya olayotgan nogiron chet elga ketib qolsa pensiyasi to'xtaydimi?"
+ },
+ {
+  "id": "L029",
+  "topic": "pensiya",
+  "question": "Nafaqa olish uchun mahalladan ma'lumotnoma shartmi?"
+ },
+ {
+  "id": "L030",
+  "topic": "pensiya",
+  "question": "Moddiy yordam arizam rad etildi, sabab nima bo'lishi mumkin va qayerga shikoyat qilaman?"
+ },
+ {
+  "id": "L031",
+  "topic": "pensiya",
+  "question": "Меҳнат пенсиясига қўшимча равишда ногиронлик пенсияси олиш мумкинми?"
+ },
+ {
+  "id": "L032",
+  "topic": "transport",
+  "question": "1-guruh nogironiman, yonimdagi hamrohim ham avtobusda bepul yuradimi?"
+ },
+ {
+  "id": "L033",
+  "topic": "transport",
+  "question": "Imtiyozli transport kartasini qayerdan olaman, qancha turadi?"
+ },
+ {
+  "id": "L034",
+  "topic": "transport",
+  "question": "2-guruh nogironlarga metro bepulmi yoki chegirma bormi?"
+ },
+ {
+  "id": "L035",
+  "topic": "transport",
+  "question": "Poyezdda nogironlarga chegirma bormi, hamrohga ham?"
+ },
+ {
+  "id": "L036",
+  "topic": "transport",
+  "question": "Samolyotda nogiron kishiga yordam beriladimi, chipta arzonmi?"
+ },
+ {
+  "id": "L037",
+  "topic": "transport",
+  "question": "Shaharlararo avtobusda yolg'iz keksa buvimga bepul chipta qanday olinadi?"
+ },
+ {
+  "id": "L038",
+  "topic": "transport",
+  "question": "Taksida nogironlar uchun bepul yoki arzon xizmat bormi?"
+ },
+ {
+  "id": "L039",
+  "topic": "transport",
+  "question": "Nogironligi bor bola va onasi jamoat transportida bepul yuradimi?"
+ },
+ {
+  "id": "L040",
+  "topic": "transport",
+  "question": "Imtiyozli kartam bilan boshqa viloyatda ham bepul yura olamanmi?"
+ },
+ {
+  "id": "L041",
+  "topic": "transport",
+  "question": "Nogiron aravachasi bilan avtobusga chiqish uchun pandus bo'lishi shartmi?"
+ },
+ {
+  "id": "L042",
+  "topic": "transport",
+  "question": "Haydovchilik guvohnomasini nogiron odam qanday oladi?"
+ },
+ {
+  "id": "L043",
+  "topic": "transport",
+  "question": "Mashinamni qo'lda boshqarishga moslashtirish xarajatini davlat qoplaydimi?"
+ },
+ {
+  "id": "L044",
+  "topic": "transport",
+  "question": "Nogironlar mashinasi uchun avtoturargohda maxsus joy shartmi?"
+ },
+ {
+  "id": "L045",
+  "topic": "transport",
+  "question": "Imtiyozli yo'l kartam ishlamay qoldi, nima qilaman?"
+ },
+ {
+  "id": "L046",
+  "topic": "tibbiyot",
+  "question": "Nogironlarga dori-darmon bepulmi?"
+ },
+ {
+  "id": "L047",
+  "topic": "tibbiyot",
+  "question": "Operatsiya qildirmoqchiman, nogironligim bo'yicha bepul order olsam bo'ladimi?"
+ },
+ {
+  "id": "L048",
+  "topic": "tibbiyot",
+  "question": "Poliklinikada nogironlar navbatsiz qabul qilinadimi?"
+ },
+ {
+  "id": "L049",
+  "topic": "tibbiyot",
+  "question": "Sanatoriyga bepul yo'llanma olish uchun qayerga murojaat qilaman?"
+ },
+ {
+  "id": "L050",
+  "topic": "tibbiyot",
+  "question": "Bolam nogiron, kasalxonada yotganda men yonida qolsam bo'ladimi?"
+ },
+ {
+  "id": "L051",
+  "topic": "tibbiyot",
+  "question": "Dializ qilayotgan odamga davlat qanday yordam beradi?"
+ },
+ {
+  "id": "L052",
+  "topic": "tibbiyot",
+  "question": "Qandli diabet bor odamga insulin bepul beriladimi?"
+ },
+ {
+  "id": "L053",
+  "topic": "tibbiyot",
+  "question": "Nogironligi bor odam tish davolatsa va protez qildirsa bepulmi?"
+ },
+ {
+  "id": "L054",
+  "topic": "tibbiyot",
+  "question": "Ko'zi ojiz odamning ko'zini operatsiya qilish bepulmi?"
+ },
+ {
+  "id": "L055",
+  "topic": "tibbiyot",
+  "question": "Saraton bilan kasallangan odamga nogironlik va bepul davolanish haqida nima deyiladi?"
+ },
+ {
+  "id": "L056",
+  "topic": "tibbiyot",
+  "question": "Reabilitatsiya markaziga yo'llanma qanday olinadi, qancha kutish kerak?"
+ },
+ {
+  "id": "L057",
+  "topic": "tibbiyot",
+  "question": "Yotib qolgan bemorga uyga vrach chaqirish mumkinmi?"
+ },
+ {
+  "id": "L058",
+  "topic": "tibbiyot",
+  "question": "Ruhiy kasal qarindoshimni majburan davolatish mumkinmi?"
+ },
+ {
+  "id": "L059",
+  "topic": "tibbiyot",
+  "question": "Nogironlarga bepul tibbiy sug'urta bormi?"
+ },
+ {
+  "id": "L060",
+  "topic": "tibbiyot",
+  "question": "Imtiyozli dorini qaysi dorixonadan olaman, retseptni kim yozadi?"
+ },
+ {
+  "id": "L061",
+  "topic": "reabilitatsiya",
+  "question": "Aravacha olish uchun qayerga murojaat qilaman, bepul beriladimi?"
+ },
+ {
+  "id": "L062",
+  "topic": "reabilitatsiya",
+  "question": "Protez oyoq qancha muddatda tayyorlanadi, kim to'laydi?"
+ },
+ {
+  "id": "L063",
+  "topic": "reabilitatsiya",
+  "question": "Eshitish apparati bepul beriladimi, necha yilda yangilanadi?"
+ },
+ {
+  "id": "L064",
+  "topic": "reabilitatsiya",
+  "question": "Aravachamni almashtirish mumkinmi, eskirib qoldi?"
+ },
+ {
+  "id": "L065",
+  "topic": "reabilitatsiya",
+  "question": "Ko'zi ojizlarga oq tayoq va maxsus soat beriladimi?"
+ },
+ {
+  "id": "L066",
+  "topic": "reabilitatsiya",
+  "question": "Bolam uchun maxsus tayanch-harakat apparati kerak, davlat beradimi?"
+ },
+ {
+  "id": "L067",
+  "topic": "reabilitatsiya",
+  "question": "Reabilitatsiya vositasi sifatsiz chiqdi, almashtirib berishadimi?"
+ },
+ {
+  "id": "L068",
+  "topic": "reabilitatsiya",
+  "question": "Individual reabilitatsiya dasturi nima, uni kim tuzadi?"
+ },
+ {
+  "id": "L069",
+  "topic": "reabilitatsiya",
+  "question": "Protez-ortopediya markazi viloyatda yo'q bo'lsa nima qilaman?"
+ },
+ {
+  "id": "L070",
+  "topic": "reabilitatsiya",
+  "question": "Elektr aravacha olish uchun nima kerak?"
+ },
+ {
+  "id": "L071",
+  "topic": "reabilitatsiya",
+  "question": "Pampers va gigiyena vositalari nogironlarga bepul beriladimi?"
+ },
+ {
+  "id": "L072",
+  "topic": "reabilitatsiya",
+  "question": "Logoped va psixolog xizmati nogiron bola uchun bepulmi?"
+ },
+ {
+  "id": "L073",
+  "topic": "reabilitatsiya",
+  "question": "Тиббий-ижтимоий реабилитация учун йўлланмани қаердан оламан?"
+ },
+ {
+  "id": "L074",
+  "topic": "talim",
+  "question": "Nogironligi bor bolani oddiy maktabga olishmasa nima qilaman?"
+ },
+ {
+  "id": "L075",
+  "topic": "talim",
+  "question": "Nogiron abituriyentlar uchun universitetga kvota bormi?"
+ },
+ {
+  "id": "L076",
+  "topic": "talim",
+  "question": "Nogironligi bor talabaga stipendiya yoki grant beriladimi?"
+ },
+ {
+  "id": "L077",
+  "topic": "talim",
+  "question": "Uyda o'qitish (uy ta'limi) qanday rasmiylashtiriladi?"
+ },
+ {
+  "id": "L078",
+  "topic": "talim",
+  "question": "Inklyuziv ta'limda bolaga yordamchi o'qituvchi bo'ladimi?"
+ },
+ {
+  "id": "L079",
+  "topic": "talim",
+  "question": "Maktabda nogiron bola uchun bepul ovqat va darslik bormi?"
+ },
+ {
+  "id": "L080",
+  "topic": "talim",
+  "question": "Kar bolalar maxsus maktabga qanday qabul qilinadi?"
+ },
+ {
+  "id": "L081",
+  "topic": "talim",
+  "question": "Nogiron bolani bog'chaga qabul qilishda navbat tezroqmi?"
+ },
+ {
+  "id": "L082",
+  "topic": "talim",
+  "question": "Kollejga nogironligi bor o'quvchi imtihonsiz kiradimi?"
+ },
+ {
+  "id": "L083",
+  "topic": "talim",
+  "question": "Nogironligi bor talaba kontrakt to'lovidan ozod qilinadimi?"
+ },
+ {
+  "id": "L084",
+  "topic": "talim",
+  "question": "Ko'zi ojiz talabaga kitob Brayl yozuvida beriladimi?"
+ },
+ {
+  "id": "L085",
+  "topic": "talim",
+  "question": "Masofaviy o'qish nogironlar uchun bormi?"
+ },
+ {
+  "id": "L086",
+  "topic": "talim",
+  "question": "Maktab direktori nogiron bolamni qabul qilmadi, qayerga arz qilaman?"
+ },
+ {
+  "id": "L087",
+  "topic": "mehnat",
+  "question": "Nogironligi bor odamni ishga olmaslik mumkinmi?"
+ },
+ {
+  "id": "L088",
+  "topic": "mehnat",
+  "question": "Korxonada nogironlar uchun majburiy ish o'rni kvotasi necha foiz?"
+ },
+ {
+  "id": "L089",
+  "topic": "mehnat",
+  "question": "Nogiron xodimga qo'shimcha ta'til beriladimi?"
+ },
+ {
+  "id": "L090",
+  "topic": "mehnat",
+  "question": "Nogiron ishchini ishdan bo'shatish mumkinmi?"
+ },
+ {
+  "id": "L091",
+  "topic": "mehnat",
+  "question": "Ishlayotgan nogiron odamning ish vaqti qisqartirilganmi?"
+ },
+ {
+  "id": "L092",
+  "topic": "mehnat",
+  "question": "Nogironligi bor xodim tungi smenada ishlashi mumkinmi?"
+ },
+ {
+  "id": "L093",
+  "topic": "mehnat",
+  "question": "Uyda turib ishlash nogiron uchun huquqmi?"
+ },
+ {
+  "id": "L094",
+  "topic": "mehnat",
+  "question": "Ish beruvchi nogiron xodim uchun ish joyini moslashtirsa davlat pul qaytaradimi?"
+ },
+ {
+  "id": "L095",
+  "topic": "mehnat",
+  "question": "Bandlik markazida nogironga ish topib berishadimi?"
+ },
+ {
+  "id": "L096",
+  "topic": "mehnat",
+  "question": "Ishsiz nogironga nafaqa to'lanadimi?"
+ },
+ {
+  "id": "L097",
+  "topic": "mehnat",
+  "question": "Nogironni ishga olgan tadbirkorga soliq imtiyozi bormi?"
+ },
+ {
+  "id": "L098",
+  "topic": "mehnat",
+  "question": "Ish joyidan nogironligim tufayli chetlashtirdilar, sudga berish mumkinmi?"
+ },
+ {
+  "id": "L099",
+  "topic": "mehnat",
+  "question": "Mehnat shartnomasi tuzilmagan, nogironlik pensiyamga ta'sir qiladimi?"
+ },
+ {
+  "id": "L100",
+  "topic": "mehnat",
+  "question": "Nogironlar jamiyatiga qarashli korxonaga soliq imtiyozi bormi?"
+ },
+ {
+  "id": "L101",
+  "topic": "mehnat",
+  "question": "Nogiron o'zi ish boshlasa, yakka tartibdagi tadbirkor sifatida qanday yordam oladi?"
+ },
+ {
+  "id": "L102",
+  "topic": "mehnat",
+  "question": "Nogironligim bor, yillik ta'tilimni qachon va necha kun olaman?"
+ },
+ {
+  "id": "L103",
+  "topic": "uyjoy",
+  "question": "Nogironlarga kommunal to'lovlarda chegirma bormi?"
+ },
+ {
+  "id": "L104",
+  "topic": "uyjoy",
+  "question": "Nogiron uchun uy-joy olishda ipoteka imtiyozi bormi?"
+ },
+ {
+  "id": "L105",
+  "topic": "uyjoy",
+  "question": "Aravachada yashayman, birinchi qavatdan uy olish huquqim bormi?"
+ },
+ {
+  "id": "L106",
+  "topic": "uyjoy",
+  "question": "Uyimda pandus yoki lift qurdirish uchun davlat yordam beradimi?"
+ },
+ {
+  "id": "L107",
+  "topic": "uyjoy",
+  "question": "Nogironlar mol-mulk solig'ini to'laydimi?"
+ },
+ {
+  "id": "L108",
+  "topic": "uyjoy",
+  "question": "Yer solig'i imtiyozi nogironlarga bormi?"
+ },
+ {
+  "id": "L109",
+  "topic": "uyjoy",
+  "question": "Nogironlikka oid sudga murojaat qilsam davlat boji to'lanadimi?"
+ },
+ {
+  "id": "L110",
+  "topic": "uyjoy",
+  "question": "Yolg'iz nogironni uyidan chiqarib yuborishlari mumkinmi?"
+ },
+ {
+  "id": "L111",
+  "topic": "uyjoy",
+  "question": "Navbatda turgan nogironlarga uy berish tartibi qanday?"
+ },
+ {
+  "id": "L112",
+  "topic": "uyjoy",
+  "question": "Mahalla nogiron oilaga turar joyni ta'mirlash uchun yordam beradimi?"
+ },
+ {
+  "id": "L113",
+  "topic": "uyjoy",
+  "question": "Elektr energiyasi uchun nogironlarga imtiyoz bormi?"
+ },
+ {
+  "id": "L114",
+  "topic": "uyjoy",
+  "question": "Gaz va suv uchun nogironlarga chegirma bormi?"
+ },
+ {
+  "id": "L115",
+  "topic": "uyjoy",
+  "question": "Kvartiramni nogironlik uchun moslashtirishga (hammom, eshik) pul ajratiladimi?"
+ },
+ {
+  "id": "L116",
+  "topic": "uyjoy",
+  "question": "Nogiron bolasi bor oila uchun uy olishga subsidiya bormi?"
+ },
+ {
+  "id": "L117",
+  "topic": "ijtimoiy",
+  "question": "\"Inson\" markazi nima qiladi va unga qanday murojaat qilaman?"
+ },
+ {
+  "id": "L118",
+  "topic": "ijtimoiy",
+  "question": "Yolg'iz yotib qolgan buvimga uyda hamshira xizmati bepul beriladimi?"
+ },
+ {
+  "id": "L119",
+  "topic": "ijtimoiy",
+  "question": "Ijtimoiy xodim haftada necha marta kelishi kerak?"
+ },
+ {
+  "id": "L120",
+  "topic": "ijtimoiy",
+  "question": "Qarovsiz qolgan nogironni internatga joylashtirish tartibi qanday?"
+ },
+ {
+  "id": "L121",
+  "topic": "ijtimoiy",
+  "question": "Nogironlar uchun kunduzgi parvarish markazi bormi?"
+ },
+ {
+  "id": "L122",
+  "topic": "ijtimoiy",
+  "question": "Shaxsiy yordamchi xizmati nima, kim oladi?"
+ },
+ {
+  "id": "L123",
+  "topic": "ijtimoiy",
+  "question": "Ko'zi ojiz odamga yo'lboshlovchi xizmati bepulmi?"
+ },
+ {
+  "id": "L124",
+  "topic": "ijtimoiy",
+  "question": "Karlarga surdotarjimon xizmatini qanday olaman?"
+ },
+ {
+  "id": "L125",
+  "topic": "ijtimoiy",
+  "question": "Parvarish qilayotgan qarindoshimga oylik beriladimi?"
+ },
+ {
+  "id": "L126",
+  "topic": "ijtimoiy",
+  "question": "Biometrik tasdiqlash o'tmasa, ijtimoiy xizmat ko'rsatilgani dalolatnomasi qanday yoziladi?"
+ },
+ {
+  "id": "L127",
+  "topic": "ijtimoiy",
+  "question": "Ijtimoiy xizmatdan norozi bo'lsam kimga shikoyat qilaman?"
+ },
+ {
+  "id": "L128",
+  "topic": "ijtimoiy",
+  "question": "Muruvvat yoki Saxovat uyiga qanday joylashtiriladi?"
+ },
+ {
+  "id": "L129",
+  "topic": "ijtimoiy",
+  "question": "Nogiron bolaga dam olish lageriga bepul yo'llanma bormi?"
+ },
+ {
+  "id": "L130",
+  "topic": "huquq",
+  "question": "Nogiron bo'lganim uchun xizmat ko'rsatishdan voz kechishdi, bu kamsitish emasmi?"
+ },
+ {
+  "id": "L131",
+  "topic": "huquq",
+  "question": "Nogironligi og'ir akam uchun vasiylik rasmiylashtirish uchun nima qilish kerak?"
+ },
+ {
+  "id": "L132",
+  "topic": "huquq",
+  "question": "Muomalaga layoqatsiz deb topish tartibi qanday?"
+ },
+ {
+  "id": "L133",
+  "topic": "huquq",
+  "question": "Nogiron odamga bepul advokat berishadimi?"
+ },
+ {
+  "id": "L134",
+  "topic": "huquq",
+  "question": "Davlat idorasida binoga kirish uchun pandus yo'q, qayerga shikoyat qilaman?"
+ },
+ {
+  "id": "L135",
+  "topic": "huquq",
+  "question": "Nogironlar huquqini kim himoya qiladi, ombudsman bormi?"
+ },
+ {
+  "id": "L136",
+  "topic": "huquq",
+  "question": "Meni aldab uyimni boshqa nomga o'tkazib olishdi, men 1-guruh nogironman, sud nima qiladi?"
+ },
+ {
+  "id": "L137",
+  "topic": "huquq",
+  "question": "Nogiron bolamni maktabda kamsitishdi, qayerga murojaat qilaman?"
+ },
+ {
+  "id": "L138",
+  "topic": "huquq",
+  "question": "Nogiron odam notarial ish qilsa notarius uyga keladimi?"
+ },
+ {
+  "id": "L139",
+  "topic": "huquq",
+  "question": "Qo'li imzo qo'ya olmaydigan nogironlar hujjatni qanday imzolaydi?"
+ },
+ {
+  "id": "L140",
+  "topic": "huquq",
+  "question": "Saylovda ovoz berish uchun uchastkaga borolmasam nima qilaman?"
+ },
+ {
+  "id": "L141",
+  "topic": "huquq",
+  "question": "Ko'zi ojiz odam bank kartasi olishi va shartnoma imzolashi mumkinmi?"
+ },
+ {
+  "id": "L142",
+  "topic": "huquq",
+  "question": "Nogiron bolaning ota-onasi ajrashsa, aliment qancha oladi?"
+ },
+ {
+  "id": "L143",
+  "topic": "bolalar",
+  "question": "Nogiron bola tug'ilganda davlat qanday yordam beradi?"
+ },
+ {
+  "id": "L144",
+  "topic": "bolalar",
+  "question": "Nogironligi bor bolani parvarishlayotgan ona uchun pensiyaga chiqish yoshi erta bo'ladimi?"
+ },
+ {
+  "id": "L145",
+  "topic": "bolalar",
+  "question": "Bolamga autizm tashxisi qo'yildi, qanday imtiyozlar bor?"
+ },
+ {
+  "id": "L146",
+  "topic": "bolalar",
+  "question": "Nogiron bolalar uchun bepul bog'cha va to'garaklar bormi?"
+ },
+ {
+  "id": "L147",
+  "topic": "bolalar",
+  "question": "Nogiron bola uchun maxsus transport vositasi olishga yordam bormi?"
+ },
+ {
+  "id": "L148",
+  "topic": "bolalar",
+  "question": "Bolam serebral falaj, har yili reabilitatsiyaga yo'llanma beriladimi?"
+ },
+ {
+  "id": "L149",
+  "topic": "bolalar",
+  "question": "Nogiron bolaning ota-onasiga ish haqi saqlanmaydigan ta'til beriladimi?"
+ },
+ {
+  "id": "L150",
+  "topic": "bolalar",
+  "question": "Bolamni nogironligi tufayli oilada saqlash uchun nafaqa to'lanadimi?"
+ },
+ {
+  "id": "L151",
+  "topic": "bolalar",
+  "question": "Yetim nogiron bolaga nima beriladi?"
+ },
+ {
+  "id": "L152",
+  "topic": "bolalar",
+  "question": "Nogiron bolani farzandlikka olish mumkinmi?"
+ },
+ {
+  "id": "L153",
+  "topic": "bolalar",
+  "question": "Bola Daun sindromi bilan tug'ildi, qanday ijtimoiy xizmat kerak?"
+ },
+ {
+  "id": "L154",
+  "topic": "bolalar",
+  "question": "Nogiron bolani chet elga davolanishga olib ketish uchun nima kerak?"
+ },
+ {
+  "id": "L155",
+  "topic": "bolalar",
+  "question": "Ota-onasi bo'lmagan nogiron o'smirni 18 yoshdan keyin kim saqlaydi?"
+ },
+ {
+  "id": "L156",
+  "topic": "bolalar",
+  "question": "Maktab yoshigacha bo'lgan nogiron bolalar uchun erta aralashuv xizmati bormi?"
+ },
+ {
+  "id": "L157",
+  "topic": "boshqa",
+  "question": "Nogironlar uchun muzey va teatrga kirish bepulmi?"
+ },
+ {
+  "id": "L158",
+  "topic": "boshqa",
+  "question": "Nogiron sportchilarga davlat qanday yordam beradi?"
+ },
+ {
+  "id": "L159",
+  "topic": "boshqa",
+  "question": "Ichki turizmda nogironlarga chegirma bormi?"
+ },
+ {
+  "id": "L160",
+  "topic": "boshqa",
+  "question": "Mehmonxonada aravacha uchun moslashtirilgan xona bo'lishi shartmi?"
+ },
+ {
+  "id": "L161",
+  "topic": "boshqa",
+  "question": "Nogiron bo'lib chet elga chiqishda yordam beriladimi?"
+ },
+ {
+  "id": "L162",
+  "topic": "boshqa",
+  "question": "Paralimpiya sportchisi pensiya yoki mukofot oladimi?"
+ },
+ {
+  "id": "L163",
+  "topic": "boshqa",
+  "question": "Nogironlar uchun bepul internet yoki telefon aloqasi imtiyozi bormi?"
+ },
+ {
+  "id": "L164",
+  "topic": "boshqa",
+  "question": "Nogiron odam bankdan kredit olishda imtiyozga egami?"
+ },
+ {
+  "id": "L165",
+  "topic": "boshqa",
+  "question": "Nogironlarga o'zini band qilish uchun bepul kurslar bormi?"
+ },
+ {
+  "id": "L166",
+  "topic": "boshqa",
+  "question": "Davlat xizmatlari markazida nogironlar navbatsiz xizmat oladimi?"
+ },
+ {
+  "id": "L167",
+  "topic": "boshqa",
+  "question": "my.gov.uz orqali nogironlik hujjatlarini onlayn olish mumkinmi?"
+ },
+ {
+  "id": "L168",
+  "topic": "boshqa",
+  "question": "Hokimning qabuliga nogiron bo'lsam navbatsiz kirsam bo'ladimi?"
+ },
+ {
+  "id": "L169",
+  "topic": "faxriy",
+  "question": "Urush faxriysi bobom sanatoriyga bora olmasa, vaucher o'rniga pul olsa bo'ladimi?"
+ },
+ {
+  "id": "L170",
+  "topic": "faxriy",
+  "question": "Afg'on urushi qatnashchisi nogiron bo'lsa qo'shimcha imtiyoz bormi?"
+ },
+ {
+  "id": "L171",
+  "topic": "faxriy",
+  "question": "Chernobil ofati ishtirokchisiga qanday imtiyozlar bor?"
+ },
+ {
+  "id": "L172",
+  "topic": "faxriy",
+  "question": "Harbiy xizmatda nogiron bo'lib qolgan yigitga nima beriladi?"
+ },
+ {
+  "id": "L173",
+  "topic": "faxriy",
+  "question": "Mehnat faoliyatida nogiron bo'lgan ishchiga korxona nima to'laydi?"
+ },
+ {
+  "id": "L174",
+  "topic": "faxriy",
+  "question": "Ishlab chiqarishda baxtsiz hodisa sababli nogironlik bo'lsa, ish beruvchining majburiyati qanday?"
+ },
+ {
+  "id": "L175",
+  "topic": "faxriy",
+  "question": "Faxriy donorga qanday imtiyozlar beriladi?"
+ },
+ {
+  "id": "L176",
+  "topic": "faxriy",
+  "question": "Yolg'iz keksalar va nogironlar uchun kommunal to'lovlarda chegirma bormi?"
+ },
+ {
+  "id": "L177",
+  "topic": "shovqin",
+  "question": "1 guruh nogiranman yonimdagi yordamchim bepil foydalanishga haqlimi"
+ },
+ {
+  "id": "L178",
+  "topic": "shovqin",
+  "question": "salom nogironligim bor ish joyida meni ishdan haydashmoqchi nima qilay"
+ },
+ {
+  "id": "L179",
+  "topic": "shovqin",
+  "question": "aravacha olish uchun nima kerak pulini kim tolaydi"
+ },
+ {
+  "id": "L180",
+  "topic": "shovqin",
+  "question": "mahalla raisi nogironlik uchun malumotnoma bermayapti nima qilsam boladi"
+ },
+ {
+  "id": "L181",
+  "topic": "shovqin",
+  "question": "ayolim 2 guruh nogiron pensiyasi qachon beriladi qancha"
+ },
+ {
+  "id": "L182",
+  "topic": "shovqin",
+  "question": "bolam kar eshitish apparati bepulmi qayerdan olaman"
+ },
+ {
+  "id": "L183",
+  "topic": "shovqin",
+  "question": "yotib qolgan dadamga hamshira kerak davlat beradimi"
+ },
+ {
+  "id": "L184",
+  "topic": "shovqin",
+  "question": "nogiron bolam maktabga bormaydi uyda oqitsa boladimi"
+ },
+ {
+  "id": "L185",
+  "topic": "shovqin",
+  "question": "1-guruh nogironligi boʻlgan shaxs transportda bepul yuradimi yoqmi"
+ },
+ {
+  "id": "L186",
+  "topic": "shovqin",
+  "question": "ish beruvchi nogironni ishga olsa nima oladi"
+ },
+ {
+  "id": "L187",
+  "topic": "rus_eng",
+  "question": "Какие льготы есть у инвалида 2 группы по оплате коммунальных услуг?"
+ },
+ {
+  "id": "L188",
+  "topic": "rus_eng",
+  "question": "Как оформить инвалидность ребёнку с задержкой развития?"
+ },
+ {
+  "id": "L189",
+  "topic": "rus_eng",
+  "question": "Имеет ли право сопровождающий инвалида 1 группы бесплатно ездить в метро?"
+ },
+ {
+  "id": "L190",
+  "topic": "rus_eng",
+  "question": "Положено ли инвалиду бесплатное протезирование и кто за него платит?"
+ },
+ {
+  "id": "L191",
+  "topic": "rus_eng",
+  "question": "Куда обращаться, если работодатель отказывается принимать на работу инвалида?"
+ },
+ {
+  "id": "L192",
+  "topic": "rus_eng",
+  "question": "Can a person with disability get free medicine in Uzbekistan?"
+ },
+ {
+  "id": "L193",
+  "topic": "rus_eng",
+  "question": "What documents are needed to register a disability group?"
+ },
+ {
+  "id": "L194",
+  "topic": "rus_eng",
+  "question": "Is a caregiver of a person with disability entitled to a monthly allowance?"
+ },
+ {
+  "id": "L195",
+  "topic": "rus_eng",
+  "question": "Do wheelchair users have a right to accessible public buildings?"
+ },
+ {
+  "id": "L196",
+  "topic": "rus_eng",
+  "question": "Как получить инвалидную коляску бесплатно и сколько ждать?"
+ },
+ {
+  "id": "L197",
+  "topic": "oos",
+  "question": "Yakka tartibdagi tadbirkor bo'lib ro'yxatdan o'tish uchun nima qilish kerak?"
+ },
+ {
+  "id": "L198",
+  "topic": "oos",
+  "question": "Avtomobil sotib olganda qanday soliq to'layman?"
+ },
+ {
+  "id": "L199",
+  "topic": "oos",
+  "question": "Advokatlik litsenziyasini olish uchun qanday shartlar bor?"
+ },
+ {
+  "id": "L200",
+  "topic": "oos",
+  "question": "Chet elga ishlash uchun ketmoqchiman, viza qanday olinadi?"
+ }
+]

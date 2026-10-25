@@ -24,6 +24,15 @@ def test_legal_synonym_expander():
     assert not any("eshitish" in t for t in LegalSynonymExpander.expand_terms("bank kartasi olish"))
 
 
+def test_everyday_words_for_a_companion_map_to_the_statutes_term():
+    # a citizen says "yordamchi" / "hamrohim", the statutes say "hamrohlik qiluvchi shaxs" (shahar transporti, davlat idoralari)
+    for question in ("Yonimdagi yordamchim bepul yuradimi?", "Hamrohim ham bepul foydalanadimi?",
+                     "Meni kuzatuvchi odam ham navbatsiz kiradimi?"):
+        assert "hamrohlik qiluvchi shaxs" in LegalSynonymExpander.expand_terms(question), question
+    # the statutes' own words are not repeated into the query
+    assert "hamrohlik qiluvchi shaxs" not in LegalSynonymExpander.expand_terms("Hamrohlik qiluvchi shaxs bepul yuradimi?")
+
+
 def test_query_decomposer_compound_question():
     complex_q = (
         "Ish beruvchi korxona shtatini qisqartirayotganda kimlarni birinchi navbatda ishda qoldirishi shart? "

@@ -15,6 +15,7 @@ from src.retrieval.passages import focused_text
 logger = logging.getLogger(__name__)
 
 SUPPORT_TEXT_CHARS = 6000      # characters of each cited unit shown to the checker (generation sees up to 7000)
+LEAD_MAX_SOURCES = 8           # an uncited lead is checked against at most this many of the units the answer cites
 
 BULLET_PATTERN = re.compile(r"^\s*([-*•])\s+(.*)$")
 STEP_PATTERN = re.compile(r"^\s*(\d{1,2})\.\s+(.*)$")   # 1-2 digits: a year ("2024. yilda") is not a step
@@ -61,6 +62,8 @@ class Verdict(BaseModel):
 def split_claims(raw_answer: str) -> List[Claim]:
     """
     Xom javobni qatorlar va gaplarga ajratib, ichida [canonical_id] bo'lgan har bir da'voni ajratadi.
+    Iqtibossiz birinchi mazmunli qator (savolga to'g'ridan-to'g'ri javob, odatda qalin gap) ham da'vo hisoblanadi:
+    uni o'quvchi eng ko'p ishonadi, shuning uchun u javobda keltirilgan normalarning hammasiga qarshi tekshiriladi.
     Kind turlari:
       - lead: javobning birinchi mazmunli paragrafi/kirish qismidagi da'vo
       - bullet: "-", "*", "•" bilan boshlangan band
@@ -73,6 +76,7 @@ def split_claims(raw_answer: str) -> List[Claim]:
 
     lines = raw_answer.split("\n")
     first_substantive_seen = False
+    cited_anywhere = CitationValidator.extract_canonical_ids(raw_answer)[:LEAD_MAX_SOURCES]
 
     for line_idx, line in enumerate(lines):
         stripped = line.strip()
@@ -113,10 +117,11 @@ def split_claims(raw_answer: str) -> List[Claim]:
                 )
             continue
 
-        # 3. Sarlavhalar (#, **...:**, ...)
-        if stripped.startswith("#") or (
+        # 3. Sarlavhalar (#, **...:**, ...); qalin yozilgan to'liq gap (".**" bilan tugaydi) sarlavha emas, javobning o'zi
+        bold_sentence = len(stripped) > 40 and stripped.startswith("**") and re.search(r"[.!?]\*\*$", stripped)
+        if not bold_sentence and (stripped.startswith("#") or (
             stripped.startswith("**") and (stripped.endswith("**:") or stripped.endswith("**"))
-        ) or (stripped.endswith(":") and len(stripped) < 80):
+        ) or (stripped.endswith(":") and len(stripped) < 80)):
             cids = CitationValidator.extract_canonical_ids(line)
             if not cids:
                 continue
@@ -124,6 +129,9 @@ def split_claims(raw_answer: str) -> List[Claim]:
         # 4. Oddiy matn (lead yoki sentence)
         cids = CitationValidator.extract_canonical_ids(line)
         if not cids:
+            if not first_substantive_seen and cited_anywhere:
+                claims.append(Claim(index=len(claims), text=stripped, cited_ids=list(cited_anywhere),
+                                    line_no=line_idx, kind="lead"))
             first_substantive_seen = True
             continue
 

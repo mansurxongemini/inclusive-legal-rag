@@ -134,13 +134,18 @@ class QueryTranslator:
             return None
 
     @classmethod
-    async def legal_subquestions(cls, query: str, client: OpenRouterClient) -> Optional[List[str]]:
+    async def legal_subquestions(
+        cls, query: str, client: OpenRouterClient, terms: Optional[List[str]] = None,
+    ) -> Optional[List[str]]:
         """
         Turns a long chat message that tells a story ("I applied to the social registry, got an SMS that it was
         refused, the Inson centre gave no answer, what should I do?") into up to MAX_SUBQUESTIONS short legal
         questions in standard Uzbek Latin ("Ijtimoiy reyestrga kiritish rad etilsa qayerga shikoyat qilinadi?").
         The story's words match the norms poorly and its several issues crowd each other out, while each short
-        question finds its own norms. Returns None in mock mode, on error, or when no usable question comes back.
+        question finds its own norms. `terms` are the words the legislation itself uses for expressions of the
+        message (see LegalSynonymExpander): a model does not know that an everyday "yordamchi" is the statutes'
+        "hamrohlik qiluvchi shaxs", and a question written with the everyday word finds nothing.
+        Returns None in mock mode, on error, or when no usable question comes back.
         """
         if getattr(client, "is_mock", False) or not query or not query.strip():
             return None
@@ -169,9 +174,15 @@ class QueryTranslator:
             "\"Nogironlik bekor qilinganda nogironlik pensiyasini to'lash to'xtatiladimi?\"]. "
             "Output ONLY a JSON array of strings."
         )
+        user_message = query
+        if terms:
+            user_message += (
+                "\n\n[Terms the legislation itself uses for words of this message; use them in the questions when "
+                "they fit, and do not copy the everyday word instead: " + "; ".join(terms) + "]"
+            )
         try:
             raw = await client.chat_completion(
-                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": query}],
+                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_message}],
                 temperature=0.0,
                 max_tokens=1500,
                 min_chars=2,

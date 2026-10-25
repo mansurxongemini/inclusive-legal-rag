@@ -27,6 +27,9 @@ LEGAL_SYNONYM_DICTIONARY: Dict[str, List[str]] = {
     "kar": ["eshitish bo'yicha nogironligi bo'lgan shaxs", "eshitish qobiliyati buzilgan", "surdotarjima"],
     "soqov": ["nutq buzilgan", "eshitish va nutq bo'yicha nogironlik"],
     "aqli zaif": ["aqliy rivojlanish buzilgan shaxs", "ruhiy holati buzilgan shaxs"],
+    "yordamchi": ["hamrohlik qiluvchi shaxs", "shaxsiy yordamchi"],
+    "hamroh": ["hamrohlik qiluvchi shaxs", "kuzatib boruvchi"],
+    "kuzatuvchi": ["hamrohlik qiluvchi shaxs", "kuzatib boruvchi"],
 
     # --- recognition of disability (TIEK) --------------------------------------------------------------
     "tmek": ["tibbiy-ijtimoiy ekspert komissiyasi", "TIEK", "nogironlikni belgilash"],

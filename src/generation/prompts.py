@@ -161,7 +161,9 @@ MAX_CONTEXT_CHARS_PER_ARTICLE = 7000
 # of the answer-cache key so that a cached answer of an older pipeline is not served.
 # 2026-10-25.1: Russian texts of 284 units corrected (a cached Russian answer may quote a wrong point), retrieval weights,
 # unknown-citation repair, emoji-free formatting.
-ANSWER_VERSION = "2026-10-25.1"
+# 2026-10-26.1: the first sentence of an answer is checked against the cited norms even without a marker (an answer
+# that opened with "free of charge" over a norm about queue priority is no longer served), companion terms in the lexicon.
+ANSWER_VERSION = "2026-10-26.1"
 
 
 def build_user_content(query: str, formatted_context: str, language: str, asker_group: str = "") -> str:
