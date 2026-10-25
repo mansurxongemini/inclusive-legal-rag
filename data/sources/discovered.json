@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-11",
+  "generated": "2026-10-25",
   "okoz_nodes": {
     "6533": "06.10.00.00",
     "6492": "06.06.03.00",
@@ -641,6 +641,15 @@
       ]
     },
     {
+      "doc_id": "-6236954",
+      "title": "Oʻzbekiston adaptiv sport turlari assotsiatsiyasi huzuridagi Adaptiv jismoniy tarbiya va sport mutaxassislarini qayta tayyorlash va malakasini oshirish instituti faoliyatini tashkil etish chora-tadbirlari toʻgʻrisida",
+      "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 14.10.2022 yildagi 599-son",
+      "in_force": true,
+      "nodes": [
+        6533
+      ]
+    },
+    {
       "doc_id": "-6233345",
       "title": "Nogironligi boʻlgan shaxslar jamiyatlariga tegishli tashkilotlarni davlat tomonidan qoʻllab-quvvatlash hamda nogironligi boʻlgan shaxslarning bandligiga koʻmaklashishga oid qoʻshimcha chora-tadbirlar toʻgʻrisida",
       "kind_line": "Oʻzbekiston Respublikasi Prezidentining qarori, 12.10.2022 yildagi PQ-390-son",
@@ -988,6 +997,18 @@
       ]
     },
     {
+      "doc_id": "-5936114",
+      "title": "Oʻzbekiston Respublikasi Prezidenti huzuridagi Ijtimoiy himoya milliy agentligi tizimidagi tibbiy-ijtimoiy muassasalarda pullik xizmat koʻrsatish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
+      "kind_line": "Oʻzbekiston Respublikasi Tibbiy-ijtimoiy xizmatlarni rivojlantirish agentligi direktorining buyrugʻi, 01.04.2022 yilda ro‘yxatdan o‘tgan, ro‘yxat raqami 3360",
+      "in_force": true,
+      "nodes": [
+        6533,
+        6524,
+        6526,
+        7385
+      ]
+    },
+    {
       "doc_id": "-5920415",
       "title": "Xalqaro shartnomaga qoʻshilish toʻgʻrisida",
       "kind_line": "Oʻzbekiston Respublikasi Prezidentining qarori, 24.03.2022 yildagi PQ-177-son",
@@ -1099,6 +1120,16 @@
       ]
     },
     {
+      "doc_id": "-5679836",
+      "title": "Alohida taʼlim ehtiyojlari boʻlgan bolalarga taʼlim berishga oid normativ-huquqiy hujjatlarni tasdiqlash toʻgʻrisida",
+      "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 12.10.2021 yildagi 638-son",
+      "in_force": true,
+      "nodes": [
+        6533,
+        7396
+      ]
+    },
+    {
       "doc_id": "-5678987",
       "title": "“Nogironligi boʻlgan shaxslarning huquqlari toʻgʻrisida”gi Qoraqalpogʻiston Respublikasi Qonunini amalga kiritish toʻgʻrisida",
       "kind_line": "Qoraqalpogʻiston Respublikasi Joʻgʻori Kengesining qarori, 06.10.2021 yildagi 167/XXII-son",
@@ -1111,6 +1142,15 @@
       "doc_id": "-5679405",
       "title": "Nogironligi boʻlgan shaxslarning huquqlari toʻgʻrisida",
       "kind_line": "Qoraqolpogʻiston Respublikasining Qonuni, 06.10.2021 yildagi 168/XXII-son",
+      "in_force": true,
+      "nodes": [
+        6533
+      ]
+    },
+    {
+      "doc_id": "-5669981",
+      "title": "Yoʻlovchi avtovokzallari va yoʻlovchi avtostansiyalari toʻgʻrisidagi nizomni tasdiqlash haqida",
+      "kind_line": "Oʻzbekiston Respublikasi transport vazirining buyrugʻi, 06.10.2021 yilda ro‘yxatdan o‘tgan, ro‘yxat raqami 3323",
       "in_force": true,
       "nodes": [
         6533
@@ -1274,6 +1314,25 @@
       ]
     },
     {
+      "doc_id": "-4930291",
+      "title": "Oʻzbekiston Respublikasida turizm sohasini tiklash va rivojlantirish uchun qulay shart-sharoitlarni yaratish chora-tadbirlari toʻgʻrisida",
+      "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 10.07.2020 yildagi 433-son",
+      "in_force": true,
+      "nodes": [
+        6533
+      ]
+    },
+    {
+      "doc_id": "-4866624",
+      "title": "Oliy taʼlim muassasalariga qoʻshimcha davlat granti asosidagi qabul koʻrsatkichlari doirasida ehtiyojmand oilalardagi xotin-qizlarga tanlovda ishtirok etish uchun tavsiyanoma berish va ularni oʻqishga qabul qilishni tashkil etish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
+      "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 23.06.2020 yildagi 402-son",
+      "in_force": true,
+      "nodes": [
+        6533,
+        23502
+      ]
+    },
+    {
       "doc_id": "-4861620",
       "title": "Oʻzbekiston Respublikasining aeroportlari va havo hududida havo kemalariga xizmat koʻrsatish uchun yigʻim, tariflarni shakllantirish va undirish qoidalarini tasdiqlash toʻgʻrisida",
       "kind_line": "Oʻzbekiston Respublikasi transport vazirining buyrugʻi, 13.06.2020 yilda ro‘yxatdan o‘tgan, ro‘yxat raqami 3244",
@@ -1433,6 +1492,16 @@
       "in_force": true,
       "nodes": [
         6533
+      ]
+    },
+    {
+      "doc_id": "-4029746",
+      "title": "Sudyalarning hayoti va sogʻligʻini davlat tomonidan majburiy sugʻurta qilish toʻgʻrisidagi nizomni tasdiqlash haqida",
+      "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 27.10.2018 yildagi 879-son",
+      "in_force": true,
+      "nodes": [
+        6533,
+        7396
       ]
     },
     {
@@ -2757,6 +2826,15 @@
       ]
     },
     {
+      "doc_id": "-6236060",
+      "title": "Davlat pensiyalarini tayinlash va toʻlash tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
+      "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 13.10.2022 yildagi 592-son",
+      "in_force": true,
+      "nodes": [
+        6492
+      ]
+    },
+    {
       "doc_id": "-4159913",
       "title": "Jabrlanuvchilarni, guvohlarni va jinoyat protsessining boshqa ishtirokchilarini himoya qilish toʻgʻrisida",
       "kind_line": "Oʻzbekiston Respublikasining Qonuni, 14.01.2019 yildagi O‘RQ-515-son",
@@ -3579,7 +3657,8 @@
       "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 29.09.2026 yildagi 526-son",
       "in_force": true,
       "nodes": [
-        6457
+        6457,
+        23502
       ]
     },
     {
@@ -3724,6 +3803,35 @@
       "in_force": false,
       "nodes": [
         6457
+      ]
+    },
+    {
+      "doc_id": "-8537009",
+      "title": "Yaylov yerlaridan samarali foydalanish va chorvachilik xoʻjaliklarini davlat tomonidan qoʻllab-quvvatlashga doir qoʻshimcha chora-tadbirlar toʻgʻrisida",
+      "kind_line": "Oʻzbekiston Respublikasi Prezidentining qarori, 14.10.2026 yildagi PQ-374-son",
+      "in_force": true,
+      "nodes": [
+        6524
+      ]
+    },
+    {
+      "doc_id": "-8540128",
+      "title": "Hududiy ijtimoiy xizmatlar markazlarida aholining ehtiyojmand qatlamlariga kompleks ijtimoiy va reabilitatsiya xizmatlari koʻrsatishni tashkil etish chora-tadbirlari toʻgʻrisida",
+      "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 09.10.2026 yildagi 555-son",
+      "in_force": true,
+      "nodes": [
+        6524,
+        6526
+      ]
+    },
+    {
+      "doc_id": "-8523611",
+      "title": "Odam savdosidan jabrlangan shaxslarga ijtimoiy xizmatlar koʻrsatish tizimini samarali yoʻlga qoʻyish  chora-tadbirlari toʻgʻrisida",
+      "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 06.10.2026 yildagi 539-son",
+      "in_force": true,
+      "nodes": [
+        6524,
+        6526
       ]
     },
     {
@@ -4294,6 +4402,16 @@
       ]
     },
     {
+      "doc_id": "-2534269",
+      "title": "Tibbiyot muassasalarida koxlear implantatsiya operatsiyalarini oʻtkazish uchun bemorlarni tanlab olish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
+      "kind_line": "Oʻzbekiston Respublikasi sogʻliqni saqlash vazirining buyrugʻi, 08.01.2015 yilda ro‘yxatdan o‘tgan, ro‘yxat raqami 2648",
+      "in_force": true,
+      "nodes": [
+        6526,
+        7385
+      ]
+    },
+    {
       "doc_id": "-2528452",
       "title": "Vazirlar Mahkamasining “Odam savdosi jabrdiydalariga yordam berish va ularni himoya qilish boʻyicha Respublika reabilitatsiya markazini tashkil etish toʻgʻrisida” 2008-yil 5-noyabrdagi 240-son qaroriga oʻzgartirishlar kiritish haqida",
       "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 24.12.2014 yildagi 360-son",
@@ -4345,15 +4463,6 @@
       "title": "Nogironni reabilitatsiya qilishning yakka tartibdagi dasturi toʻgʻrisidagi nizomni tasdiqlash haqida",
       "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 18.03.2009 yildagi 75-son",
       "in_force": false,
-      "nodes": [
-        6526
-      ]
-    },
-    {
-      "doc_id": "-1406847",
-      "title": "Odam savdosi jabrdiydalariga yordam berish boʻyicha respublika reabilitatsiya markazini tashkil etish toʻgʻrisida",
-      "kind_line": "Oʻzbekiston Respublikasi Vazirlar Mahkamasining qarori, 05.11.2008 yildagi 240-son",
-      "in_force": true,
       "nodes": [
         6526
       ]
@@ -4590,15 +4699,6 @@
       "doc_id": "-6017442",
       "title": "Ayrim dolzarb virusli infeksiyalar tarqalishiga qarshi kurashish chora-tadbirlarini takomillashtirish toʻgʻrisida",
       "kind_line": "Oʻzbekiston Respublikasi Prezidentining qarori, 16.05.2022 yildagi PQ-243-son",
-      "in_force": true,
-      "nodes": [
-        7385
-      ]
-    },
-    {
-      "doc_id": "-5936114",
-      "title": "Oʻzbekiston Respublikasi Prezidenti huzuridagi Ijtimoiy himoya milliy agentligi tizimidagi tibbiy-ijtimoiy muassasalarda pullik xizmat koʻrsatish tartibi toʻgʻrisidagi nizomni tasdiqlash haqida",
-      "kind_line": "Oʻzbekiston Respublikasi Tibbiy-ijtimoiy xizmatlarni rivojlantirish agentligi direktorining buyrugʻi, 01.04.2022 yilda ro‘yxatdan o‘tgan, ro‘yxat raqami 3360",
       "in_force": true,
       "nodes": [
         7385
@@ -5257,7 +5357,7 @@
         "search_title": "Mehnat kodeksi",
         "title_equals": "O'zbekiston Respublikasining Mehnat kodeksi",
         "tier": 2,
-        "include": "disability_articles",
+        "include": "all",
         "number": "O'RQ-798"
       },
       "match": {
@@ -5293,7 +5393,7 @@
         "lex_id": "-5013007",
         "expect_number": "O'RQ-637",
         "tier": 2,
-        "include": "disability_articles"
+        "include": "all"
       },
       "match": {
         "doc_id": "-5013007",
@@ -5309,7 +5409,7 @@
         "search_title": "Uy-joy kodeksi",
         "title_equals": "O'zbekiston Respublikasining Uy-joy kodeksi",
         "tier": 2,
-        "include": "disability_articles"
+        "include": "all"
       },
       "match": {
         "doc_id": "-106136",
@@ -5326,7 +5426,13 @@
         "search_title": "Fuqarolik kodeksi",
         "title_equals": "O'zbekiston Respublikasining Fuqarolik kodeksi",
         "tier": 3,
-        "include": "disability_articles"
+        "include": "disability_articles",
+        "chapters": [
+          "66-bob.",
+          "67-bob.",
+          "68-bob.",
+          "69-bob."
+        ]
       },
       "match": {
         "doc_id": "-180552",
@@ -5343,7 +5449,7 @@
         "search_title": "Oila kodeksi",
         "title_equals": "O'zbekiston Respublikasining Oila kodeksi",
         "tier": 3,
-        "include": "disability_articles"
+        "include": "all"
       },
       "match": {
         "doc_id": "-104720",
@@ -5404,7 +5510,7 @@
         "search_title": "Shaharsozlik kodeksi",
         "title_equals": "O'zbekiston Respublikasining Shaharsozlik kodeksi",
         "tier": 2,
-        "include": "disability_articles"
+        "include": "all"
       },
       "match": {
         "doc_id": "-5307951",
@@ -5421,7 +5527,7 @@
         "search_title": "Fuqarolarning davlat pensiya ta'minoti to'g'risida",
         "title_equals": "Fuqarolarning davlat pensiya ta'minoti to'g'risida",
         "tier": 2,
-        "include": "disability_articles"
+        "include": "all"
       },
       "match": {
         "doc_id": "-112314",
@@ -5438,7 +5544,7 @@
         "search_title": "Fuqarolar sog'lig'ini saqlash to'g'risida",
         "title_equals": "Fuqarolar sog'lig'ini saqlash to'g'risida",
         "tier": 3,
-        "include": "disability_articles"
+        "include": "all"
       },
       "match": {
         "doc_id": "-26013",
@@ -5455,7 +5561,7 @@
         "search_title": "Maktabgacha ta'lim va tarbiya to'g'risida",
         "title_equals": "Maktabgacha ta'lim va tarbiya to'g'risida",
         "tier": 3,
-        "include": "disability_articles"
+        "include": "all"
       },
       "match": {
         "doc_id": "-4646908",
@@ -5472,7 +5578,7 @@
         "search_title": "Bola huquqlarining kafolatlari to'g'risida",
         "title_equals": "Bola huquqlarining kafolatlari to'g'risida",
         "tier": 3,
-        "include": "disability_articles"
+        "include": "all"
       },
       "match": {
         "doc_id": "-1297315",
@@ -5532,6 +5638,23 @@
         "kind_line": "Oʻzbekiston Respublikasining Qonuni, 07.06.2021 yildagi O‘RQ-695-son",
         "in_force": true,
         "okoz_id": null
+      },
+      "alternatives": []
+    },
+    {
+      "seed": {
+        "law_id": "pq_407_2022",
+        "lex_id": "-6248467",
+        "expect_number": "PQ-407",
+        "tier": 1,
+        "include": "all",
+        "note": "sign language and Braille: the whole act is about persons with hearing or sight impairments"
+      },
+      "match": {
+        "doc_id": "-6248467",
+        "title": "",
+        "kind_line": "",
+        "in_force": true
       },
       "alternatives": []
     }

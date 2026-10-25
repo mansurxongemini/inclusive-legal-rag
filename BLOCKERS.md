@@ -2,27 +2,21 @@
 
 Nothing blocks the service. These items need the owner (editorial judgement or a decision), or are known limits.
 
-## 1. 14 open editorial notifications (owner)
-The re-import of 85 acts (2026-10-25) brought new text from Lex.uz for VMQ-119 (64 new sentences: allowance rules),
-VMQ-313 (point 10-1 inserted), VMQ-62 (a point on Chernobyl participants) and VMQ-482; text was removed from VMQ-183,
-VMQ-223 and PF-79. 38 re-parse-only notifications were resolved through the "keep" path (scripts/classify_refresh_changes.py);
-these 14 stay open in the admin panel
-(Bildirishnomalar). Until they are resolved, the Huquq+ posts linked to those acts are held back from answers
-("Dropping hp context ... (open notifications exist)" in the log).
+## 1. 15 open editorial notifications (owner)
+Two Lex.uz refreshes on 2026-10-25 (85 re-imported acts in the morning, every registry act in the evening) brought new
+text. 39 of the cards they opened were closed automatically, each with a note: re-parse only (no sentence changed), or
+`--keep-untouched` (the post names no changed unit and repeats no words around a change; scripts/classify_refresh_changes.py).
+These 15 stay open because the post may be affected: VMQ-62 (Chernobyl participants, 6 posts), VMQ-313 (point 10-1, 2),
+VMQ-119 (new allowance rules, 2), VMQ-183, VMQ-223, PF-79 (text removed), Law 641 art. 28 ("konstitutsiyaviy" courts added;
+post uz:2063 relies on it) and VMQ-405 point 29 (the subsidy deadline moved from the 16th to the 26th; post uz:8594 still
+says the 16th). Until resolved in the admin panel (Bildirishnomalar), those posts are kept out of answers.
 
-## 2. VMQ-240 (2008) skipped by the refresh (owner / next run)
-`refresh` refused to replace it: 34 of 39 stored units would disappear (mass-removal guard). The stored units are kept.
-Look at the act on Lex.uz and run `scripts/build_disability_corpus.py refresh --law-ids=vmq_240_2008 --allow-mass-removal`
-only if the new parse is right. With the multi-point repeal notes now read ("5 va 6-bandlar"), that refresh also splits 3
-swallowed points of this act; no other stored act is affected.
-
-## 3. 55 units still contain later points (known limit)
-`scripts/audit_corpus.py` reports 55 units (171 before the parser fix) whose text holds later point numbers without units
+## 2. 54 units still contain later points (known limit)
+`scripts/audit_corpus.py` reports 54 units (171 before the parser fix) whose text holds later point numbers without units
 of their own. They are other layouts (quoted amendment lists, tables); the text is present and retrievable, citations are
 coarser.
 
-## 4. Embedding model (owner's decision)
-qwen/qwen3-embedding-8b was compared with bge-m3 on a copy of the store (docs/EMBEDDING_COMPARISON.md): dense recall@5
-0.707 -> 0.836, whole-path recall@5 0.964 -> 0.971 and MRR 0.921 -> 0.957, same price, same size at 1024 dimensions.
-Production stays on bge-m3 until the owner decides (the owner's rule); the switch is one re-embedding (~9 min, ~$0.08), steps in
-that document.
+## Resolved on 2026-10-25
+- VMQ-240 (2008): Lex.uz has a new edition (one annex instead of two, 32 sentences reworded); the stored text was outdated.
+  Re-imported with `--allow-mass-removal` after checking that no gold item, editorial link or post referenced its units.
+- Embedding model: the owner approved qwen3-embedding-8b; switched (DECISIONS.md, docs/EMBEDDING_COMPARISON.md).

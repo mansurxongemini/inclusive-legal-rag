@@ -26,3 +26,25 @@ def test_a_removed_sentence_is_a_change_too():
     after = {"act": mod.sentences("2. Ariza 10 kun ichida ko'riladi.")}
     result = mod.classify(before, after, [(1, "document_amended", "law:act")])
     assert result["structural"] == [] and result["content"][0][0] == 1
+
+
+def test_a_post_that_cannot_be_affected_by_the_amendment_is_recognised():
+    before = {"law_x_art_28": ("Sud ishlarini yuritishda jinoyat, fuqarolik ishlari bo'yicha surdotarjimon beriladi.", "28-modda"),
+              "law_x_art_29": ("Faksimile imzo ishlatiladi.", "29-modda")}
+    after = {**before, "law_x_art_28": ("Sud ishlarini yuritishda konstitutsiyaviy, jinoyat, fuqarolik ishlari bo'yicha "
+                                        "surdotarjimon beriladi.", "28-modda")}
+    changes = mod.changed_units(before, after)
+    assert list(changes) == ["law_x_art_28"]
+    assert not mod.mentions("Nogironligi bo'lgan shaxs faksimile imzodan foydalanishi mumkin (29-modda).", changes)
+    assert mod.mentions("Qonunning 28-moddasiga ko'ra sudda surdotarjimon beriladi.", changes)       # names the unit
+    assert mod.mentions("Sud ishlarini yuritishda jinoyat, fuqarolik ishlari bo'yicha surdotarjimon beriladi.", changes)
+    assert not mod.mentions("Qonunning 128-moddasi boshqa narsa haqida.", changes)                    # 128 is not 28
+
+
+def test_a_post_that_restates_the_old_rule_in_its_own_words_stays_open():
+    # VMQ-405 point 29: the deadline moved from the 16th to the 26th; a post said "16-sanasiga qadar" in its own sentence
+    before = {"vmq_405_a1_p_29": ("29. Xizmat ko'rsatilgan oydan keyingi oyning 16-sanasiga qadar subsidiya uchun murojaat qiladi.", "29-band")}
+    after = {"vmq_405_a1_p_29": ("29. Xizmat ko'rsatilgan oydan keyingi oyning 26-sanasiga qadar subsidiya uchun murojaat qiladi.", "29-band")}
+    changes = mod.changed_units(before, after)
+    assert mod.mentions("Ish beruvchi subsidiyani olish uchun oyning 16-sanasiga qadar ariza beradi.", changes)
+    assert not mod.mentions("Ish beruvchi subsidiya olish uchun ariza beradi.", changes)
