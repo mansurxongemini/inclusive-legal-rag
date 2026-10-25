@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Embeds the articles that are in the text index (SQLite FTS5) but have no vectors in LanceDB.
+Embeds the articles that are in the text index (SQLite FTS5) but have no vectors.
 
 Vector-only: the text index is not touched. Safe to re-run: the missing set is recomputed on every start, so an
 interrupted run resumes where it stopped.
@@ -8,10 +8,6 @@ interrupted run resumes where it stopped.
     python scripts/embed_missing.py                 # dry run: counts, chunks, token and cost estimate
     python scripts/embed_missing.py --run           # backup, endpoint check, embed everything missing
     python scripts/embed_missing.py --run --limit 50  # small trial first
-    python scripts/embed_missing.py --fill-chunk-index [--run]
-                                                    # re-embed multi-chunk articles whose vectors have no chunk_index
-    python scripts/embed_missing.py --extend-chunks [--run]
-                                                    # re-embed units that have more chunks than the 14 the index held
 
 Embeddings go through OPENROUTER_BASE_URL (https://openrouter.ai/api/v1) with OPENROUTER_API_KEY, like every other call.
 """
@@ -19,7 +15,7 @@ import argparse
 import asyncio
 import logging
 import math
-import shutil
+import sqlite3
 import sys
 import time
 from collections import Counter
@@ -29,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.clients.openrouter import OpenRouterClient  # noqa: E402
 from src.config import settings  # noqa: E402
-from src.storage.chunking import LEGACY_CHUNK_CAP, build_chunks, chunk_layout  # noqa: E402
+from src.storage.chunking import build_chunks  # noqa: E402
 from src.storage.hybrid_store import HybridStore, vector_languages  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -37,43 +33,6 @@ logger = logging.getLogger("embed_missing")
 
 CHARS_PER_TOKEN = 3.0          # conservative for Uzbek/Russian text
 USD_PER_MTOK = 0.01            # qwen3-embedding-8b (and bge-m3) on OpenRouter; check the current price, this is only an estimate
-
-
-def lancedb_ids(store: HybridStore) -> set:
-    table = store.vector_store.table
-    if len(table) == 0:
-        return set()
-    arrow = table.search().select(["canonical_id"]).limit(len(table) + 10).to_arrow()
-    return set(arrow.column("canonical_id").to_pylist())
-
-
-def ids_without_chunk_index(store: HybridStore) -> set:
-    """Articles with at least one vector row that predates chunk_index (all of them when the column is missing)."""
-    table = store.vector_store.table
-    if len(table) == 0:
-        return set()
-    if not store.vector_store.has_chunk_index:
-        return lancedb_ids(store)
-    arrow = table.search().where("chunk_index < 0").select(["canonical_id"]).limit(len(table) + 10).to_arrow()
-    return set(arrow.column("canonical_id").to_pylist())
-
-
-def multi_chunk_ids(store: HybridStore, ids: list) -> list:
-    """Articles with more than one embedded chunk in a vector language: the only ones where chunk_index matters."""
-    return [art.canonical_id for art in load(store, ids)
-            if any(len(build_chunks(art, lang)) > 1 for lang in vector_languages(art))]
-
-
-def long_unit_ids(store: HybridStore, ids: list) -> list:
-    """Units whose uncapped layout has more chunks than the index used to hold, in a vector language."""
-    out = []
-    for art in load(store, ids):
-        for lang in vector_languages(art):
-            layout = chunk_layout(art, lang)
-            if layout is not None and len(layout.texts) > LEGACY_CHUNK_CAP:
-                out.append(art.canonical_id)
-                break
-    return out
 
 
 def fts_ids(store: HybridStore) -> list:
@@ -127,7 +86,6 @@ async def check_endpoint(store: HybridStore, client: OpenRouterClient, known_ids
 
     # several articles that already have vectors: re-embed their first chunk and compare with the stored vectors.
     # Same model => own similarity is high (old chunk headers/text may differ a little) and clearly above other articles.
-    table = store.vector_store.table
     probes = []
     for cid in sorted(known_ids)[:600:40]:
         art = store.get_article(cid)
@@ -140,8 +98,7 @@ async def check_endpoint(store: HybridStore, client: OpenRouterClient, known_ids
     new = await client.get_embeddings([t for _, t in probes])
     if any(len(v) != settings.EMBEDDING_DIMENSION or not any(v) for v in new):
         sys.exit(f"Bad embedding dimension (expected {settings.EMBEDDING_DIMENSION}). Nothing written.")
-    stored = {cid: [list(r["vector"]) for r in table.search().where(f"canonical_id = '{cid}' AND language = 'uz'").limit(30).to_list()]
-              for cid, _ in probes}
+    stored = {cid: [list(v) for v in store.vector_store.vectors_of(cid, "uz")] for cid, _ in probes}
     own, gaps = [], []
     for (cid, _), vec in zip(probes, new):
         o = max((cosine(vec, s) for s in stored[cid]), default=0.0)
@@ -164,27 +121,14 @@ async def main() -> None:
     ap.add_argument("--batch-size", type=int, default=15)
     ap.add_argument("--concurrency", type=int, default=3)
     ap.add_argument("--no-backup", action="store_true")
-    ap.add_argument("--extend-chunks", action="store_true",
-                    help="re-embed the units longer than the old 14-chunk cap, so that their later chunks are searchable")
-    ap.add_argument("--fill-chunk-index", action="store_true",
-                    help="re-embed multi-chunk articles whose vectors have no chunk_index (instead of missing ones)")
     args = ap.parse_args()
 
     store = HybridStore()
-    known = lancedb_ids(store)
+    known = store.vector_store.canonical_ids()
     all_ids = fts_ids(store)
-    if args.extend_chunks:
-        missing = long_unit_ids(store, all_ids)
-        logger.info(f"Units with more than {LEGACY_CHUNK_CAP} chunks in uz or ru (to re-embed whole): {len(missing)}")
-    elif args.fill_chunk_index:
-        no_index = ids_without_chunk_index(store)
-        missing = multi_chunk_ids(store, [c for c in all_ids if c in no_index])
-        logger.info(f"Vector table has chunk_index: {store.vector_store.has_chunk_index} | articles with rows "
-                    f"without it: {len(no_index)} | multi-chunk among them (to re-embed): {len(missing)}")
-    else:
-        missing = [c for c in all_ids if c not in known]
-        stale = len(known - set(all_ids))
-        logger.info(f"FTS articles: {len(all_ids)} | with vectors: {len(known)} | missing: {len(missing)} | vectors without text: {stale}")
+    missing = [c for c in all_ids if c not in known]
+    stale = len(known - set(all_ids))
+    logger.info(f"FTS articles: {len(all_ids)} | with vectors: {len(known)} | missing: {len(missing)} | vectors without text: {stale}")
     if not missing:
         logger.info("Nothing to do.")
         return
@@ -204,13 +148,13 @@ async def main() -> None:
     await check_endpoint(store, client, known)
 
     if not args.no_backup:
-        dest = Path("data/backups") / f"store_before_embed_missing_{time.strftime('%Y%m%d_%H%M%S')}"
-        dest.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(Path(settings.STORAGE_DIR) / "lancedb", dest / "lancedb")
-        logger.info(f"LanceDB backup: {dest}")
-
-    if args.fill_chunk_index and store.vector_store.ensure_chunk_index_column():
-        logger.info("Added chunk_index column (-1 for existing rows)")
+        dest = Path("data/backups") / f"vectors_before_embed_missing_{time.strftime('%Y%m%d_%H%M%S')}.db"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        source, target = sqlite3.connect(store.vector_store.db_path), sqlite3.connect(dest)
+        source.backup(target)          # the online backup API: the file is in WAL mode
+        source.close()
+        target.close()
+        logger.info(f"Backup of the vectors: {dest}")
 
     done = failed = 0
     started = time.time()
@@ -226,17 +170,10 @@ async def main() -> None:
         rate = (done + failed) / max(time.time() - started, 1)
         logger.info(f"Progress {done + failed}/{len(todo)} (ok {done}, failed {failed}) | {rate:.1f} articles/s")
 
-    try:
-        store.vector_store.optimize()
-    except Exception as e:  # compaction is an optimisation only
-        logger.warning(f"optimize failed: {e}")
     await client.close()
 
-    after = lancedb_ids(store)
-    if args.fill_chunk_index:
-        still = multi_chunk_ids(store, [c for c in todo if c in ids_without_chunk_index(store)])
-    else:
-        still = [c for c in all_ids if c not in after]
+    after = store.vector_store.canonical_ids()
+    still = [c for c in all_ids if c not in after]
     logger.info(f"Done. Articles with vectors: {len(after)} | still to do: {len(still)}")
     if still:
         logger.info(f"Run again to retry the rest, e.g. {still[:3]}")

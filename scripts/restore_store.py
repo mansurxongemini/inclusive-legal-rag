@@ -57,6 +57,10 @@ def main() -> int:
             print(f"{db.name} in the backup is damaged: {ok}", file=sys.stderr)
             return 1
 
+    if (src / "lancedb").is_dir() and not (src / "vectors.db").exists():
+        print(f"{src} keeps its vectors in LanceDB (an older release). Restore it, then convert them once:\n"
+              f"  .venv/bin/pip install lancedb && .venv/bin/python scripts/migrate_lancedb_to_sqlite.py "
+              f"--store-dir {args.store}", file=sys.stderr)
     store = Path(args.store)
     safety = ROOT / "data" / "backups" / f"pre_restore_{time.strftime('%Y%m%d_%H%M%S')}"
     safety.parent.mkdir(parents=True, exist_ok=True)

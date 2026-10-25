@@ -689,9 +689,6 @@ async def test_openrouter_decide_http_error():
     decide_res = await client.decide(state="test state", questions={"q": {"type": "choice"}})
     assert decide_res is None
 
-    get_dec_res = await client.get_decision(state="test state", questions={"q": {"type": "choice"}})
-    assert get_dec_res == {}
-
 
 
 

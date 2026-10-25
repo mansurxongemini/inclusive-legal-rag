@@ -124,7 +124,7 @@ class HybridRetriever:
         bm25_best_scores: Dict[str, float] = {}
         leaders: set = set()          # units at the very top of any single list (see LIST_LEADERS)
 
-        # SQLite and LanceDB calls block: run them in worker threads so that one slow search does not stall every other
+        # SQLite and numpy calls block: run them in worker threads so that one slow search does not stall every other
         # request served by the event loop, and let the sub-queries search in parallel.
         bm25_matches = await asyncio.gather(*(
             self._call(self.store.fts_store.bm25_search, query=sq.enriched_query, language=language, top_k=top_k)

@@ -1,4 +1,5 @@
 import re
+from functools import lru_cache
 from typing import Literal
 
 # Apostrophe variants
@@ -47,6 +48,7 @@ def detect_script(text: str) -> Literal["cyrillic", "latin", "unknown"]:
     return "latin"
 
 
+@lru_cache(maxsize=2048)         # pure, and called ~25 times per question with the same few texts
 def cyrillic_to_latin(text: str) -> str:
     """
     High-accuracy rule-based Cyrillic to Latin transliterator for Uzbek.

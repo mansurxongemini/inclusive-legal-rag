@@ -8,10 +8,10 @@ User=www-data
 Group=www-data
 WorkingDirectory=/opt/legal-rag
 EnvironmentFile=/opt/legal-rag/.env
-# glibc: large vector-search buffers go to mmap and are returned (880 MB -> 200 MB resident, src/runtime_tuning.py)
-Environment=MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=65536
+# glibc: large buffers go to mmap and are returned, the arenas are capped (src/runtime_tuning.py)
+Environment=MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=65536 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
 # behind nginx on this host: uvicorn takes the caller address from X-Forwarded-For (--proxy-headers below), so the rate limiter sees visitors, not nginx
-ExecStart=/opt/legal-rag/.venv/bin/python -m uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips=127.0.0.1
+ExecStart=/opt/legal-rag/.venv/bin/python -m uvicorn src.api.app:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips=127.0.0.1
 Restart=always
 RestartSec=5s
 
@@ -20,7 +20,7 @@ PrivateTmp=true
 ProtectSystem=full
 NoNewPrivileges=true
 
-# Memory: idle ~175 MB, serving plateau ~300-550 MB (LanceDB/FTS caches); MEMORY_BUDGET_MB=700 in /health
+# Memory: idle ~80 MB, serving plateau ~300 MB (vector matrix 160 MB, FTS caches); MEMORY_BUDGET_MB=700 in /health
 MemoryMax=800M
 MemoryHigh=700M
 

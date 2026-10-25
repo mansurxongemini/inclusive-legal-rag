@@ -29,10 +29,6 @@ def test_canonical_schema_validation():
     assert "медицинская помощь" in art15.get_text("ru").lower()
     assert "medical care" in art15.get_text("en").lower()
 
-    # Check point access
-    pt1_text = art15.get_point_text("1", "uz")
-    assert pt1_text is not None and "bepul tibbiy yordam" in pt1_text
-
     # Check FTS document generation
     fts_doc = art15.to_fts_document("uz")
     assert "15-modda" in fts_doc

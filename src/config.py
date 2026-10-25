@@ -86,7 +86,7 @@ class Settings(BaseSettings):
     REVIEW_MAX_QUESTION_CHARS: int = Field(default=6000)
     REVIEW_MAX_ANSWER_CHARS: int = Field(default=16000)
     # /health budget for a SERVING process: idle is ~175 MB (tests/test_memory_budget.py keeps it < 350),
-    # retrieval warms LanceDB/FTS caches to a ~300-550 MB plateau (measured 2026-10-18), not a leak.
+    # retrieval loads the vector matrix (160 MB) and warms the FTS caches to a ~300-550 MB plateau (measured 2026-10-18), not a leak.
     MEMORY_BUDGET_MB: float = Field(default=700.0)
 
     # Storage paths
@@ -116,7 +116,6 @@ class Settings(BaseSettings):
     VECTOR_LANGUAGES: str = Field(default="uz")
     # Languages whose texts are not searched by full text (comma list): their rows are skipped
     FTS_EXCLUDE_LANGUAGES: str = Field(default="ru")
-    VECTOR_KEEP_VERSIONS_HOURS: int = Field(default=6)  # old versions of the vector table are pruned daily, keeping this many hours
     FTS_CHUNK_MIN_CHARS: int = Field(default=6000)    # a unit longer than this also gets one full-text row per chunk (0 = off)
     LIST_LEADERS: int = Field(default=2)               # units in the top N of any single list are lifted to LEADER_ANCHOR_POSITION in the pool (0 = off)
     LEADER_ANCHOR_POSITION: int = Field(default=12)

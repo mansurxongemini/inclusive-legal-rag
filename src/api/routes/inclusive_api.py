@@ -199,7 +199,7 @@ def get_system_stats(request: Request):
         "status": "healthy",
         "total_statutory_norms": total_norms,
         "total_documents": total_docs,
-        "database_storage": "Clean Inclusive SQLite + FTS5 + LanceDB",
+        "database_storage": "SQLite + FTS5 + vector matrix",
         "category_distribution": cat_distribution,
         "timestamp": time.time(),
     }

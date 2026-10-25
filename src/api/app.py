@@ -105,26 +105,6 @@ async def _run_assistant_maintenance_scheduler():
             await asyncio.sleep(3600)
 
 
-async def _run_vector_maintenance():
-    """
-    LanceDB keeps every version of the table (each upsert, re-embedding or sync write makes one): without cleanup the folder grew to
-    1.8 GB for 150 MB of vectors. Compacts and prunes versions older than VECTOR_KEEP_VERSIONS_HOURS once a day.
-    """
-    from datetime import timedelta
-    await asyncio.sleep(300)
-    while True:
-        try:
-            result = await asyncio.to_thread(
-                get_store().vector_store.optimize, timedelta(hours=settings.VECTOR_KEEP_VERSIONS_HOURS))
-            logger.info(f"Vector table maintenance: {result}")
-            await asyncio.sleep(86400)
-        except asyncio.CancelledError:
-            break
-        except Exception as e:
-            logger.warning(f"Vector table maintenance failed: {e}")
-            await asyncio.sleep(3600)
-
-
 async def _run_provider_limit_poll():
     """Reads the remaining USD of the OpenRouter key every 15 minutes (a free call) so that the budget guard knows the
     key's own limit and not only what this service has spent."""
@@ -184,12 +164,11 @@ async def lifespan(app: FastAPI):
     # Daily assistant maintenance (answers/turns/feedback purge)
     purge_task = asyncio.create_task(_run_assistant_maintenance_scheduler())
     limit_task = asyncio.create_task(_run_provider_limit_poll())
-    maintenance_task = asyncio.create_task(_run_vector_maintenance())
 
     yield
 
     # Shutdown: cancel every background task and wait until each has really stopped
-    background = [t for t in (sync_task, purge_task, limit_task, maintenance_task) if t]
+    background = [t for t in (sync_task, purge_task, limit_task) if t]
     for task in background:
         task.cancel()
     await asyncio.gather(*background, return_exceptions=True)

@@ -39,13 +39,7 @@ class QueryCache:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.ttl = settings.CACHE_TTL_SECONDS
         self._ram_cache: "OrderedDict[str, Tuple[float, dict]]" = OrderedDict()     # least recently used first
-        self._lock = threading.Lock()                                               # guards _ram_cache and _stats
-        self._stats = {
-            "canonical_hits": 0,
-            "semantic_hits": 0,
-            "misses": 0,
-            "saved_tokens_est": 0
-        }
+        self._lock = threading.Lock()                                               # guards _ram_cache
         self._init_db()
 
     def _get_conn(self) -> sqlite3.Connection:
@@ -140,11 +134,6 @@ class QueryCache:
             while len(self._ram_cache) > self.RAM_MAX_ITEMS:
                 self._ram_cache.popitem(last=False)
 
-    def _count(self, hit_kind: str, data: dict) -> None:
-        with self._lock:
-            self._stats[hit_kind] += 1
-            self._stats["saved_tokens_est"] += len(data.get("answer", "").split()) * 2
-
     def get(self, query: str, language: str, mode: str) -> Optional[dict]:
         """Layer 1: Canonical Normalized Cache Lookup (sub-millisecond)."""
         key = self._make_key(query, language, mode)
@@ -157,7 +146,6 @@ class QueryCache:
                 created_at, resp = hot
                 if now - created_at < self.ttl:
                     self._ram_cache.move_to_end(key)
-                    self._stats["canonical_hits"] += 1
                     resp = copy.deepcopy(resp)
                     resp["cache_type"] = "exact_ram"
                     return resp
@@ -171,7 +159,6 @@ class QueryCache:
                 if now - created_at < self.ttl:
                     data = json.loads(resp_json)
                     data["cache_type"] = "exact_disk"
-                    self._count("canonical_hits", data)
                     self._ram_put(key, created_at, data)
                     return data
                 conn.execute("DELETE FROM query_cache WHERE cache_key = ?", (key,))
@@ -237,22 +224,8 @@ class QueryCache:
                     continue
                 data["cache_type"] = "semantic"
                 data["semantic_similarity"] = round(sim, 3)
-                self._count("semantic_hits", data)
                 return data
         return None
-
-    def get_stats(self) -> dict:
-        """Returns live cache efficiency and token savings metrics."""
-        with self._get_conn() as conn:
-            count = conn.execute("SELECT count(*) FROM query_cache;").fetchone()[0]
-        with self._lock:
-            return {
-                "total_cached_queries": count,
-                "ram_cache_hot_items": len(self._ram_cache),
-                "canonical_exact_hits": self._stats["canonical_hits"],
-                "semantic_similarity_hits": self._stats["semantic_hits"],
-                "estimated_saved_tokens": self._stats["saved_tokens_est"],
-            }
 
     def set(
         self,

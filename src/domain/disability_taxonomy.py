@@ -54,7 +54,6 @@ CATEGORIES: List[Category] = [
              "BMT Nogironlar huquqlari konvensiyasi va boshqa xalqaro hujjatlar"),
 ]
 CATEGORY_IDS = [c.id for c in CATEGORIES]
-CATEGORY_BY_ID: Dict[str, Category] = {c.id: c for c in CATEGORIES}
 
 
 @dataclass(frozen=True)

@@ -20,7 +20,7 @@ from src.retrieval.hybrid_retriever import HybridRetriever
 from src.retrieval.reranker import RetrievedArticleContext
 from src.schema.canonical import CanonicalArticle
 from src.storage.hybrid_store import HybridStore
-from src.storage.vector_store import LanceVectorStore
+from src.storage.vector_store import VectorStore
 
 PILOT = Path("data/pilot_laws/law_disability_2020.json")
 REMOTE = ("203.0.113.7", 51000)
@@ -58,9 +58,6 @@ ADMIN_CALLS = [
     ("post", "/api/v1/admin/corpus/add", {"lex_id": "-1", "include": "all"}),
     ("post", "/api/v1/admin/corpus/refresh", {"lex_id": "-1"}),
     ("get", "/api/v1/admin/corpus/jobs/job_abc", None),
-    ("delete", "/api/v1/admin/article/law_disability_2020_art_15", None),
-    ("put", "/api/v1/admin/article/law_disability_2020_art_15",
-     {"title_uz": "t", "text_uz": "tampered", "revectorize": False}),
     ("get", "/api/v1/admin/stats", None),
     ("get", "/api/v1/feedback", None),
 ]
@@ -330,8 +327,8 @@ async def test_retrieval_degrades_to_bm25_when_embeddings_fail():
 
 
 def test_vector_store_sees_writes_made_through_another_handle(tmp_path):
-    a = LanceVectorStore(str(tmp_path))
-    b = LanceVectorStore(str(tmp_path))
+    a = VectorStore(str(tmp_path))
+    b = VectorStore(str(tmp_path))
     vec = [0.1] * settings.EMBEDDING_DIMENSION
 
     def rec(cid):
@@ -344,7 +341,7 @@ def test_vector_store_sees_writes_made_through_another_handle(tmp_path):
 
 
 def test_vector_store_handles_quotes_in_canonical_ids(tmp_path):
-    store = LanceVectorStore(str(tmp_path))
+    store = VectorStore(str(tmp_path))
     vec = [0.2] * settings.EMBEDDING_DIMENSION
     rec = lambda cid: {"canonical_id": cid, "vector": vec, "language": "uz", "status": "active",
                        "category": "c", "disability_types": "[]", "embedding_model_version": "v"}
@@ -375,21 +372,6 @@ async def test_failed_embedding_leaves_the_stored_article_untouched(tmp_path):
 
     assert store.get_article("test_code_art_7").get_text("uz") == original_text
     assert not store.fts_store.bm25_search("YANGI MATN saqlanmagan", language="uz", top_k=3)
-
-
-@pytest.mark.asyncio
-async def test_failed_edit_does_not_leak_into_the_shared_cached_article(monkeypatch):
-    store = get_store()
-    before = store.get_article("law_disability_2020_art_15").get_text("uz")
-
-    async def boom(self, article, client=None):
-        raise RuntimeError("embedding service down")
-
-    monkeypatch.setattr(HybridStore, "index_article", boom)
-    async with local_client() as c:
-        res = await c.put("/api/v1/admin/article/law_disability_2020_art_15", json={"title_uz": "Modda", "text_uz": "DRAFT TEXT"})
-    assert res.status_code == 502
-    assert store.get_article("law_disability_2020_art_15").get_text("uz") == before
 
 
 # ----------------------------------------------------------------------------------------------------------
@@ -517,31 +499,6 @@ async def test_stream_done_event_carries_the_sanitized_answer():
 # ----------------------------------------------------------------------------------------------------------
 # Admin route correctness
 # ----------------------------------------------------------------------------------------------------------
-
-@pytest.mark.asyncio
-async def test_unknown_article_status_is_rejected_not_half_applied():
-    async with local_client() as c:
-        res = await c.put(
-            "/api/v1/admin/article/law_disability_2020_art_15",
-            json={"title_uz": "t", "text_uz": "matn", "status": "archived-ish", "revectorize": False},
-        )
-    assert res.status_code == 422
-    assert get_store().get_article("law_disability_2020_art_15").get_text("uz") != "matn"
-
-
-@pytest.mark.asyncio
-async def test_corpus_changes_invalidate_cached_answers():
-    cache = get_cache()
-    cache.set("invalidate me", "uz", "plain", {"answer": "Matn. " * 80})
-    assert cache.get("invalidate me", "uz", "plain") is not None
-    async with local_client() as c:
-        art = get_store().get_article("law_disability_2020_art_15")
-        res = await c.put(
-            "/api/v1/admin/article/law_disability_2020_art_15",
-            json={"title_uz": "15-modda", "text_uz": art.get_text("uz")},  # same text, still a write
-        )
-    assert res.status_code == 200
-    assert cache.get("invalidate me", "uz", "plain") is None
 
 
 # ----------------------------------------------------------------------------------------------------------

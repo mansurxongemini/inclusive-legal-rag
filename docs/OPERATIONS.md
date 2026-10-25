@@ -76,15 +76,30 @@ in-scope ones refused wrongly, on the held-out set 95% / 7.3% (Jev: 100% / 1.2% 
 
 ## Memory
 
-Idle about 180 MB, about 230 MB after a day of questions. Two things used to push the process to 900-1300 MB:
+Idle about 80 MB; about 290-330 MB once the first search has loaded the vector matrix (160 MB, read from `vectors.db` and read again
+after any write to it), flat under traffic (+4 MB over 300 questions). Two things used to push the process to 900-1300 MB:
 
-1. A vector search reads the whole table in large Arrow buffers; glibc's default allocator kept them. `src/runtime_tuning.py` (called when the
+1. Large temporary buffers of a search; glibc's default allocator kept them. `src/runtime_tuning.py` (called when the
    app starts) and the environment in `legal-rag.service` / the Dockerfile (`MALLOC_ARENA_MAX=2`, `MALLOC_MMAP_THRESHOLD_=65536`) return them.
 2. **The hourly Huquq+ sync** built its link index by parsing all 28 000 units with their full texts (`list_articles(limit=100000)`) and left the
    process 600 MB heavier for good (152 -> 777 MB measured). It now reads only the metadata fields it needs with SQLite `json_extract`
    (`SqliteFtsStore.iter_link_metadata`; 152 -> 223 MB, the index is identical).
 
 Do not call `list_articles()` with a large limit in a serving process.
+
+## CPU and the vector search
+
+The vector search is one product of a (38 858 x 1024) matrix and the question's vector, exact, about 8 ms (`src/storage/vector_store.py`;
+a comparison on 150 queries gave the same top 20 in the same order as the LanceDB table it replaced, at 11 ms against 225 ms per query).
+`src/__init__.py` pins numpy's BLAS to **one thread** (`OPENBLAS_NUM_THREADS=1`, also in the Dockerfile and the unit): OpenBLAS's
+worker threads spin-wait after every call, so those 8 ms cost 59 ms of CPU and a question 1.4 s instead of 0.5 s of CPU, which
+froze a CPU-limited container under a few parallel questions. A question now needs about 0.5 s of CPU (the full-text search, about 120 ms
+per call, is the largest part) and 20 s of waiting for the model; the units of one act are read through the index `idx_articles_law_id`
+(177 ms -> 6 ms per call).
+
+The wheels of numpy, pydantic and uvloop run on CPUs without AVX2; the vector database used before did not (`Illegal instruction` on
+`import`), which is why it was replaced. Check a new dependency on such a CPU with `qemu-x86_64 -cpu SandyBridge` (user-mode
+emulation) before it goes to the server: `python -c "import <package>"`.
 
 ## Language policy
 
@@ -141,6 +156,10 @@ cp .env.example .env          # the settings you must fill in; compose keeps no 
 podman compose up -d --build  # or docker compose
 ```
 
+The port is published on 127.0.0.1 only; the memory limit is 800 MB and the CPU weight a quarter of the default (a hard CPU cap
+stalled the container). On a server that already runs a bot in Docker use `docker-compose.bot.yml` as well: the bot then calls
+`http://legal-rag-api:8000`. Requirements, copying the store, connecting the bot, backups: `docs/SERVERGA_JOYLASH.md`.
+
 The image installs the exact versions of `requirements.lock`. The CI workflow (`.github/workflows/ci.yml`) runs `pyflakes`, the
 tests and a Docker build on every push.
 
@@ -150,7 +169,7 @@ The Russian texts of 14 963 units are kept in the store (a unit without Uzbek te
 (`VECTOR_LANGUAGES=uz` - the only language that gets vectors, in code: `vector_languages()`; `FTS_EXCLUDE_LANGUAGES=ru`): a Russian question is translated to Uzbek and searched there. Measured on 22 Russian
 questions, two runs per arm, hit@6: 77% with the Russian texts searched, 82% without their vectors, 86% without vectors and full-text rows; on the
 59-question dev split (Uzbek and Russian) 91% -> 92-94%. The Russian vector rows (20 402) and full-text rows (17 018) were deleted on 2026-10-23, which
-shrank the vector table to 37 464 rows (148 MB on disk after cleaning old versions; it had grown to 1.8 GB of versions). The vector store also refuses
+shrank the vector table to 37 464 rows. The vector store also refuses
 to write, and never searches, a row of another language, so a store restored from an older backup cannot bring Russian vectors back into search.
 **Alignment.** On 2026-10-25, 284 Russian texts turned out to be the translation of another unit (annexes that number several lists 1, 2, 3 ...
 paired every repeat with the first Russian point); they were removed and the importer now pairs repeats in order. `scripts/audit_translations.py`
@@ -170,7 +189,7 @@ re-embedding (about 10 M tokens, about $0.10).
 ## Backup and restore
 
 ```bash
-scripts/backup.sh --keep 14            # data/backups/legal_rag_backup_<time>/ : SQLite online backup + verified LanceDB copy
+scripts/backup.sh --keep 14            # data/backups/legal_rag_backup_<time>/ : SQLite online backup of every database (text, vectors, editorial) + checks
 scripts/restore.sh <backup folder>     # server must be stopped; the current store is moved to data/backups/pre_restore_<time>/
 ```
 

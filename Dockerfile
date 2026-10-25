@@ -1,16 +1,14 @@
 # Multi-stage lightweight build for Uzbekistan Legal RAG Platform
-# Target: Linux VPS, 2 vCPU, 4GB RAM, Idle RAM < 350MB
+# Target: Linux VPS, 2 vCPU, 4GB RAM; idle ~80 MB, serving ~300 MB
 
 FROM python:3.13-slim AS builder
 
 WORKDIR /build
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
+# Wheels only (every locked package has one): no compiler in the build, and no source build that could be tuned for the
+# CPU of the build machine. The wheels run on any x86-64 CPU, also one without AVX2 (Xeon E5-2670).
 COPY requirements.txt requirements.lock ./
-RUN pip install --no-cache-dir --user -r requirements.txt -c requirements.lock
+RUN pip install --no-cache-dir --user --only-binary=:all: -r requirements.txt -c requirements.lock
 
 # Final runtime image
 FROM python:3.13-slim AS runner
@@ -27,6 +25,7 @@ COPY --chown=appuser:appgroup . .
 # PYTHONUSERBASE: a system user made by `adduser --system` has HOME=/nonexistent, so without it Python looked for the
 # packages in /nonexistent/.local and the container died at start with "No module named 'uvicorn'".
 ENV MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=65536 \
+    OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
     PYTHONUSERBASE=/home/appuser/.local \
     PATH=/home/appuser/.local/bin:$PATH \
     PYTHONUNBUFFERED=1 \

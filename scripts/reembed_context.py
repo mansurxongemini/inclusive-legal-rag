@@ -13,7 +13,6 @@ Usage:
 """
 import argparse
 import asyncio
-from datetime import timedelta
 import json
 import logging
 from pathlib import Path
@@ -100,7 +99,7 @@ def parse_args(args_list: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--store-dir",
         default=settings.STORAGE_DIR,
-        help="Storage directory containing legal_rag.db and lancedb",
+        help="Storage directory containing legal_rag.db and vectors.db",
     )
     parser.add_argument(
         "--dry-run",
@@ -117,7 +116,7 @@ def parse_args(args_list: Optional[List[str]] = None) -> argparse.Namespace:
         "--batch-size",
         type=int,
         default=15,
-        help="Batch size for embedding and LanceDB writes",
+        help="Batch size for embedding and vector writes",
     )
     parser.add_argument(
         "--concurrency",
@@ -128,13 +127,7 @@ def parse_args(args_list: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--no-optimize",
         action="store_true",
-        help="Skip LanceDB table optimization at the end",
-    )
-    parser.add_argument(
-        "--cleanup-days",
-        type=int,
-        default=7,
-        help="Days of old versions to retain during optimization (0 = prune all)",
+        help="Skip compacting the vector file at the end",
     )
     parser.add_argument(
         "--allow-mock",
@@ -187,12 +180,7 @@ async def main(args_list: Optional[List[str]] = None) -> int:
         if progress_file.exists():
             progress_file.unlink()
         if not args.no_optimize:
-            cleanup = (
-                timedelta(days=args.cleanup_days)
-                if args.cleanup_days > 0
-                else timedelta(seconds=0)
-            )
-            store.vector_store.optimize(cleanup_older_than=cleanup)
+            store.vector_store.compact()
         return 0
 
     client = OpenRouterClient()
@@ -221,32 +209,22 @@ async def main(args_list: Optional[List[str]] = None) -> int:
             print(f"Re-embedded {len(set(progress_list))} of {store.count()} units: the model marker is left as it was.")
             return 1
         # every vector row now comes from the configured model: label the rows and the store
-        store.vector_store.table.update(values={"embedding_model_version": settings.EMBEDDING_MODEL})
+        store.vector_store.set_model_version(settings.EMBEDDING_MODEL)
         store.write_embedding_marker()
         print(f"Store model recorded: {store.stored_embedding()}")
 
     if progress_file.exists():
         progress_file.unlink()
 
-    frag_before = None
-    frag_after = None
-    if not args.no_optimize:
-        cleanup = (
-            timedelta(days=args.cleanup_days)
-            if args.cleanup_days > 0
-            else timedelta(seconds=0)
-        )
-        opt_stats = store.vector_store.optimize(cleanup_older_than=cleanup)
-        frag_before = opt_stats.get("fragments_before")
-        frag_after = opt_stats.get("fragments_after")
+    compacted = {} if args.no_optimize else store.vector_store.compact()
 
     elapsed = time.perf_counter() - t0
 
     print("\nRe-embed summary:")
     print(f"  Units re-embedded: {reembedded}")
     print(f"  Chunks:            {total_chunks}")
-    if frag_before is not None and frag_after is not None:
-        print(f"  Fragments:         {frag_before} -> {frag_after}")
+    if compacted:
+        print(f"  Vector file:       {compacted['bytes_before'] // 2**20} MB -> {compacted['bytes_after'] // 2**20} MB")
     print(f"  Elapsed:           {elapsed:.2f}s")
 
     return 0

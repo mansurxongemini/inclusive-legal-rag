@@ -92,9 +92,6 @@ class StateOrganHierarchy:
         r"(?:^|\s)\d+-[ivxlc]+(?=\s|$)",
         r"\bqonun\b", r"\bзакон\b", r"\bqonuni\b", r"\bзакона\b"
     ]
-    PARLIAMENT_PATTERNS = [
-        r"\boliy majlis\b", r"\bсенат\b", r"\bqonunchilik palatasi\b", r"\bзаконодательн\w* палат\w*\b"
-    ]
     PRESIDENTIAL_PATTERNS = [
         r"\bpf\s*[-–—]?\s*\d+", r"\bуп\s*[-–—]?\s*\d+",
         r"\bpq\s*[-–—]?\s*\d+", r"\bпп\s*[-–—]?\s*\d+",

@@ -4,8 +4,6 @@ the matched part instead of only its first characters.
 """
 from types import SimpleNamespace
 
-import lancedb
-import pyarrow as pa
 import pytest
 
 from src.config import settings
@@ -16,7 +14,7 @@ from src.retrieval.pipeline import merge_candidates
 from src.retrieval.reranker import Reranker, RetrievedArticleContext
 from src.schema.canonical import CanonicalArticle
 from src.storage.chunking import MAX_CHUNKS_PER_ARTICLE, build_chunks, chunk_layout
-from src.storage.vector_store import LanceVectorStore
+from src.storage.vector_store import VectorStore
 
 TOPICS = ["pensiya", "nafaqa", "transport", "maktab", "soliq", "protez", "sanatoriy", "dori", "imtiyoz", "kvota",
           "notarius", "bank", "ijara", "mehnat", "kafolat", "shikoyat", "reabilitatsiya", "tibbiy", "ekspertiza",
@@ -85,31 +83,10 @@ def _vec(hot: int):
 
 
 def test_vector_store_returns_the_best_chunk_of_an_article(tmp_path):
-    store = LanceVectorStore(str(tmp_path))
+    store = VectorStore(str(tmp_path))
     store.upsert_vectors([_rec("a_art_1", _vec(0), 0), _rec("a_art_1", _vec(1), 1), _rec("b_art_1", _vec(2), 0)])
     hits = store.search_vector(_vec(1), top_k=5)
     assert hits[0]["canonical_id"] == "a_art_1" and hits[0]["chunk_index"] == 1
-
-
-def test_table_without_chunk_index_keeps_working_and_can_be_migrated(tmp_path):
-    old_schema = pa.schema([
-        pa.field("canonical_id", pa.string()),
-        pa.field("vector", pa.list_(pa.float32(), settings.EMBEDDING_DIMENSION)),
-        pa.field("language", pa.string()), pa.field("status", pa.string()), pa.field("category", pa.string()),
-        pa.field("disability_types", pa.string()), pa.field("embedding_model_version", pa.string()),
-    ])
-    lancedb.connect(str(tmp_path / "lancedb")).create_table(LanceVectorStore.TABLE_NAME, schema=old_schema)
-
-    store = LanceVectorStore(str(tmp_path))
-    assert not store.has_chunk_index
-    store.upsert_vectors([_rec("a_art_1", _vec(0), 0)])          # the extra field is dropped, not an error
-    assert store.search_vector(_vec(0), top_k=1)[0]["chunk_index"] is None
-
-    assert store.ensure_chunk_index_column() is True
-    assert store.ensure_chunk_index_column() is False
-    assert store.search_vector(_vec(0), top_k=1)[0]["chunk_index"] is None   # old rows are -1 = unknown
-    store.upsert_vectors([_rec("a_art_1", _vec(0), 0), _rec("a_art_1", _vec(3), 1)])
-    assert store.search_vector(_vec(3), top_k=1)[0]["chunk_index"] == 1
 
 
 def test_merge_keeps_the_chunk_of_the_strongest_vector_hit():

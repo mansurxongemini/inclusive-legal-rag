@@ -620,21 +620,6 @@ class OpenRouterClient:
             logger.warning(f"OpenRouter decisions call failed: {e}")
             return None
 
-    async def get_decision(
-        self,
-        state: str,
-        questions: Dict[str, dict],
-        model: Optional[str] = None,
-    ) -> Dict:
-        """
-        Calls OpenRouter's /api/alpha/decisions endpoint using TypeSafe Jev.
-        Returns answers dict containing probabilities, choice, and score, or {} when decide returns None.
-        """
-        res = await self.decide(state=state, questions=questions, model=model)
-        if res is not None:
-            return res.get("answers", {})
-        return {}
-
     def _mock_decision(self, state: str, questions: Dict[str, dict]) -> Dict:
         """Deterministic fallback decision for test suites or offline environments."""
         answers = {}

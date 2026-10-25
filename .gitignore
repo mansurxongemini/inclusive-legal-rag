@@ -31,3 +31,6 @@ src/admin/static/scratch/
 eval/cache/
 eval/reports/report_*.json
 eval/reports/*.log
+
+# crash dumps (an emulated or crashed process leaves hundreds of MB here)
+*.core

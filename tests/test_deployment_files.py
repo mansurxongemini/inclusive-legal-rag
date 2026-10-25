@@ -44,9 +44,8 @@ def test_the_example_env_does_not_open_the_administration():
 def test_every_setting_of_the_example_env_exists():
     from src.config import Settings
 
-    read_by_scripts = {"GATEWAY_API_KEY"}      # scripts/eval_3way_sample.py reads it straight from the environment
     keys = re.findall(r"^([A-Z][A-Z0-9_]*)=", ENV_EXAMPLE, re.M)
-    unknown = [k for k in keys if k not in Settings.model_fields and k not in read_by_scripts]
+    unknown = [k for k in keys if k not in Settings.model_fields]
     assert keys and not unknown, unknown
 
 
@@ -73,3 +72,64 @@ def test_the_example_env_stays_short():
     must set (key, model, admin password, proxies, budget, webhook secret) is listed."""
     keys = re.findall(r"^([A-Z][A-Z0-9_]*)=", ENV_EXAMPLE, re.M)
     assert len(keys) <= 10, keys
+
+
+def _compose(name="docker-compose.yml") -> dict:
+    import yaml
+
+    return yaml.safe_load((ROOT / name).read_text(encoding="utf-8"))
+
+
+def test_the_service_is_reachable_from_this_host_only_and_cannot_starve_its_neighbours():
+    service = _compose()["services"]["legal-rag-api"]
+    assert service["ports"] and all(p.startswith("127.0.0.1:") for p in service["ports"])     # never the internet
+    limits = service["deploy"]["resources"]["limits"]
+    assert limits["memory"] == "800M" and "cpus" not in limits      # a hard CPU cap stalls the container in 100 ms steps
+    assert service["cpu_shares"] < 1024                                # but the host's other services come first
+    assert service["oom_score_adj"] > 0                     # the kernel stops this service before a neighbour's database
+    assert service["cap_drop"] == ["ALL"] and "no-new-privileges:true" in service["security_opt"]
+    assert service["logging"]["options"]["max-size"] and service["logging"]["options"]["max-file"]
+
+
+def test_the_bot_override_joins_the_network_of_the_bot_and_opens_no_port():
+    override = _compose("docker-compose.bot.yml")
+    assert set(override["services"]["legal-rag-api"]["networks"]) == {"default", "bot"}
+    assert override["networks"]["bot"]["external"] is True
+    assert "BOT_NETWORK" in override["networks"]["bot"]["name"]
+    assert "ports" not in override["services"]["legal-rag-api"]
+
+
+def test_every_volume_of_the_service_exists_in_the_repository_layout():
+    mounted = [v.split(":")[0] for v in _compose()["services"]["legal-rag-api"]["volumes"]]
+    assert {"./data/store", "./data/cache", "./data/sources", "./data/backups"} == set(mounted)
+
+
+def test_the_image_installs_wheels_only_and_the_unit_binds_to_loopback():
+    assert "--only-binary=:all:" in DOCKERFILE and "build-essential" not in DOCKERFILE
+    unit = (ROOT / "legal-rag.service").read_text(encoding="utf-8")
+    assert "--host 127.0.0.1" in unit and "0.0.0.0" not in unit
+    ignored = (ROOT / ".dockerignore").read_text(encoding="utf-8").split()
+    assert "eval/" in ignored            # the evaluation caches are 150 MB the service never reads
+
+
+def test_the_runtime_needs_no_vector_database():
+    """The vector database this replaced crashed with "Illegal instruction" on CPUs without AVX2 (the target server's
+    Xeon E5-2670): the runtime is numpy and SQLite only."""
+    runtime = (ROOT / "requirements.txt").read_text(encoding="utf-8").lower()
+    assert "lancedb" not in runtime and "pyarrow" not in runtime
+    assert "lancedb" not in (ROOT / "requirements.lock").read_text(encoding="utf-8").lower()
+    for path in (ROOT / "src").rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        assert not re.search(r"^\s*(import|from)\s+(lancedb|pyarrow)\b", text, re.M), path
+
+
+def test_the_vector_search_uses_one_blas_thread_everywhere():
+    """OpenBLAS's worker threads spin-wait: 59 ms of CPU for an 8 ms product, 16x the CPU per question."""
+    import subprocess
+    import sys
+
+    unit = (ROOT / "legal-rag.service").read_text(encoding="utf-8")
+    assert "OPENBLAS_NUM_THREADS=1" in DOCKERFILE and "OPENBLAS_NUM_THREADS=1" in unit
+    code = "import os; os.environ.pop('OPENBLAS_NUM_THREADS', None); import src; print(os.environ['OPENBLAS_NUM_THREADS'])"
+    out = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True, check=True)
+    assert out.stdout.strip() == "1"

@@ -1,0 +1,17 @@
+# For the server where the Telegram bot already runs in Docker: the service joins the bot's network, so the bot calls
+# http://legal-rag-api:8000 and no port of the service has to be opened to anything but this host's loopback.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.bot.yml up -d --build
+#
+# BOT_NETWORK (in .env or the shell) is the network the bot's compose project made: `docker network ls`, normally
+# <project folder>_default (huquqplusbot_default).
+services:
+  legal-rag-api:
+    networks:
+      - default
+      - bot
+
+networks:
+  bot:
+    external: true
+    name: ${BOT_NETWORK:-huquqplusbot_default}

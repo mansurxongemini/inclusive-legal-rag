@@ -8,9 +8,9 @@ never shown as current), cycles 14-15. Every number below comes from a command t
 ## 1. Summary
 
 **RAG ning barcha vazifalari xatosiz ishlayapti** - every readiness criterion is met on the final commit and each is proven
-by a re-runnable command: 646 tests pass with none skipped; on the 76-question gold set recall@5 is 0.971 and MRR 0.964,
+by a re-runnable command: 642 tests pass with none skipped; on the 76-question gold set recall@5 is 0.971 and MRR 0.957,
 every citation is valid, nothing is invented, every out-of-corpus question is refused and none in-corpus is; the server
-survives every error scenario at 178 MB idle; the admin panel works; a clean install from the README works. The corpus
+survives every error scenario at 80 MB idle (it runs on a CPU without AVX2, like the target server's); the admin panel works; a clean install from the README works. The corpus
 was re-read from Lex.uz (534 acts, all in force, current editions) and a repealed unit can no longer reach an answer.
 On an independent held-out set (95 questions written by another process from randomly sampled units) 77% of the answered
 in-scope questions are correct and every out-of-scope question is refused - the honest measure of what to expect from
@@ -20,14 +20,14 @@ real users (section 3). Spent $1.34 of the $4 allowed.
 
 | Criterion | Result | Proof |
 |---|---|---|
-| All tests pass, none skipped | 646 passed, 0 skipped (baseline skipped 2). 50 tests went with removed code (section 4), none of remaining code | `pytest -q -rs`; also in the fresh clone of `eval/clean_install.sh` |
+| All tests pass, none skipped | 642 passed, 0 skipped (baseline skipped 2). 56 tests went with removed code (section 4), none of remaining code | `pytest -q -rs`; also in the fresh clone of `eval/clean_install.sh` |
 | Citation correctness 100% (validator) | 100% of 76 answers | cycle 15, `EVAL_HISTORY.md`, `eval/reports/latest.json` |
 | Invented articles / numbers 0 | 0 / 0 | same run |
 | Honest refusal 100% | 100% of out-of-corpus questions refused; false refusal 0% | same run |
 | recall@5 >= 0.90 | 0.971 (gold v2); 0.943 with the baseline's v1 slots | same run |
 | Repealed-norm references 0 | 0; repealed-act traps 100%; repealed units are dropped from every answer's sources | same run; `tests/test_retrieval.py::test_a_repealed_unit_is_never_an_answer_source` |
 | Server never crashes on error scenarios | 30/30: invalid JSON, wrong type, unknown language, empty / blank / over-long question, oversized body, injection, unknown route, admin without / with a wrong key, provider 429 / 500 / hang (honest HTTP 503 "temporarily unavailable" in 8 / 13 / 46 s), SSE client drop, 300 questions without a 5xx, no key in the logs | `eval/check_server.py` -> `eval/reports/server_check.json` |
-| Idle RAM < 350 MB, /health ok | 178 MB idle; +3.6 MB over 300 questions; /health "healthy" (details: embedding model matches the store) | same check; `/health/details` |
+| Idle RAM < 350 MB, /health ok | 80 MB idle (178 MB with the replaced vector database); +4 MB over 300 questions, 290-330 MB once the vector matrix is loaded; /health "healthy" (details: embedding model matches the store) | same check; `/health/details` |
 | /admin-v2 sections error-free | all 7 sections (5 required) on the final code and production store: every API call 200, 0 console errors, no emoji | browser check, 2026-10-25 20:20 |
 | No emoji in answers and UI | none in answers, admin UI, Telegram formatting, admin API, logs; README headings cleaned too | `tests/test_no_emoji.py`, gold run |
 | Clean install per README | CLEAN INSTALL OK at `1f71243` (643 tests in the clone, one act fetched and embedded with qwen3, /health, one cited answer, key not in the log) | `eval/clean_install.sh <empty folder>` |
@@ -39,16 +39,20 @@ real users (section 3). Spent $1.34 of the $4 allowed.
 Gold set `eval/gold_set.jsonl` (76 questions: 26 uz, 25 ru, 25 en). Production path, chat model
 `deepseek/deepseek-v4-flash-0731`.
 
-| Metric | Baseline (`1b53fea`, bge-m3) | Cycle 13 (bge-m3) | **Final, cycle 15 (qwen3, refreshed corpus)** |
+| Metric | Baseline (`1b53fea`, bge-m3) | Cycle 13 (bge-m3) | **Final, cycle 16 (qwen3, refreshed corpus; v1 figures of cycle 15)** |
 |---|---|---|---|
 | recall@5 (v2 slots / baseline's v1 slots) | - / 0.891 | 0.964 / 0.936 | **0.971 / 0.943** |
-| MRR (v2 / v1) | - / 0.813 | 0.921 / 0.878 | **0.964 / 0.921** |
+| MRR (v2 / v1) | - / 0.813 | 0.921 / 0.878 | **0.957 / 0.921** |
 | Valid citations | 95.5% | 100% | **100%** |
 | Invented articles / ungrounded numbers | 0 / 1 | 0 / 0 | **0 / 0** |
 | Honest refusal / false refusal | 100% / 2.9% | 100% / 0% | **100% / 0%** |
 | Language, key facts, repealed-act traps | 100% | 100% | **100%** |
-| Latency p50 / p95 (live estimate) | 13.5 s / - | 15.2 s / 39 s | 21 s / 40 s |
+| Latency p50 / p95 (live estimate) | 13.5 s / - | 15.2 s / 39 s | 17 s / 34 s |
 | Cost per question (live) | $0.00135 | $0.00082 | **$0.0009** |
+
+MRR 0.964 (cycle 15) -> 0.957 (cycle 16) is one question (en16: its expected unit moved from rank 1 to 2) and a change of data, not of code: the
+hourly Huquq+ sync linked one more article to PQ-74 point 11 after cycle 15, which adds a context to that question. The vector store replacement was
+checked separately and is exact: 150 queries, the same top 20 in the same order.
 
 Held-out set `data/golden_dataset/heldout_v1.json` (55 in-scope, 40 out-of-scope; questions written from sampled units
 that no other set uses; never tuned on). `scripts/stress_eval.py --profile prod`, judged by the chat model:
@@ -101,6 +105,11 @@ INVALID and was re-run).
 | 38 | `scripts/stress_eval.py`, `eval/run_eval.py` | The judge returned empty for 16 of 92 items (same cause); the injection check misread "not supported" after a value | `tests/test_eval_runner.py` |
 | 39 | `src/api/routes/admin.py` + 6 modules | Legacy upload / any-website ingestion endpoints (unused by the panel) could put non-Lex.uz text into the legal corpus; removed with their code | the corpus is fed only through `/api/v1/admin/corpus/*` and the build script |
 | 40 | `src/gateway/service.py`, `src/generation/generator.py`, `src/clients/openrouter.py` | With the model down, hung or the budget used up, the service "answered" with quoted norms picked by search alone (no model); at 80% of the budget it skipped query rewriting and follow-up context. Now: HTTP 503 "temporarily unavailable" in the question's language, stored answers still served, quality independent of the budget; `src/generation/degraded.py` removed | `tests/test_security_and_regressions.py::test_a_used_up_budget_answers_unavailable_at_once_and_still_serves_stored_answers`, `tests/test_answer_guards.py::test_no_answer_is_written_when_every_model_fails`; server check 30/30; gold replay all criteria |
+| 41 | `src/storage/vector_store.py`, `requirements.txt` | `import lancedb` crashes with "Illegal instruction" on a CPU without AVX2 - the target server (Xeon E5-2670, AVX only) could not have started the service. Replaced by `vectors.db` (SQLite) with exact numpy search: same top 20 in the same order on 150 queries, 11 ms instead of 225 ms; idle RSS 178 -> 80 MB; no version bloat; lancedb and pyarrow gone from the runtime | `tests/test_storage.py`, `tests/test_deployment_files.py::test_the_runtime_needs_no_vector_database`; whole server run under qemu `-cpu SandyBridge`; gold replay identical |
+| 42 | `src/__init__.py`, Dockerfile, unit | numpy's BLAS threads spin-wait: 59 ms of CPU for an 8 ms vector search, 1.4 s of CPU per question, a CPU-limited container froze under a few parallel questions | `tests/test_deployment_files.py::test_the_vector_search_uses_one_blas_thread_everywhere`; container load test |
+| 43 | `src/storage/fts_store.py` | The units of one act were found by a full scan that parsed the JSON of 29 000 units (177 ms of CPU per call, up to 20 calls per question); an expression index makes it 6 ms | `tests/test_storage.py::test_the_units_of_one_act_are_read_through_an_index` |
+| 44 | `docker-compose.yml`, `docker-compose.bot.yml`, `Dockerfile`, `legal-rag.service` | Port open on all interfaces, no log rotation, no OOM priority, hard CPU cap that stalled the container, 856 MB of crash dumps and 150 MB of evaluation caches inside the image (1.14 GB); now loopback only, 800 MB limit, CPU weight, `oom_score_adj`, rotation, wheels-only build, 241 MB image, override that joins the bot's network | `tests/test_deployment_files.py` (6 tests); image built and run with the server's limits, documented backup run inside it |
+| 45 | admin API, helpers, scripts, data | Endpoints nothing called (edit / delete a unit by hand, hierarchy, an act's articles), dead helpers, one-off scripts and their data, the first project prompt, 6 GB of intermediate backups and caches | pyflakes clean; 640+ tests; `data/backups` 7.9 -> 1.6 GB, the project folder 9.5 -> 3.1 GB |
 
 ## 5. Main decisions (DECISIONS.md has all, each with how to undo it)
 
@@ -118,8 +127,8 @@ INVALID and was re-run).
 | | USD |
 |---|---|
 | Balance at the start (OpenRouter API) | 10.00 |
-| Balance at the end (OpenRouter API) | 8.66 |
-| Spent in this run | 1.34 |
+| Balance at the end (OpenRouter API) | 8.65 |
+| Spent in this run | 1.35 |
 | Of which: two full re-embeddings with qwen3 (one lost to a machine restart) | ~0.35 |
 | Limit / stop line / floor | 4.00 / 3.50 / balance 6.00 - never reached |
 

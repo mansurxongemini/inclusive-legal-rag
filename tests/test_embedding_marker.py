@@ -28,8 +28,7 @@ async def test_the_first_vectors_record_the_model_and_each_row_names_it(tmp_path
     store = HybridStore(str(tmp_path / "s"))
     await store.index_articles_batch([_article()], client=OpenRouterClient())
     assert json.loads((tmp_path / "s" / EMBEDDING_MARKER).read_text()) == {"model": "qwen/qwen3-embedding-8b", "dimensions": 1024}
-    rows = store.vector_store.table.to_arrow().column("embedding_model_version").to_pylist()
-    assert rows and set(rows) == {"qwen/qwen3-embedding-8b"}          # not the label of the article's metadata
+    assert set(store.vector_store.models()) == {"qwen/qwen3-embedding-8b"}          # not the label of the article's metadata
     assert store.embedding_mismatch() == ""
 
 
@@ -87,4 +86,4 @@ async def test_a_full_re_embedding_records_the_new_model(tmp_path, monkeypatch):
     assert await script.main(["--store-dir", str(tmp_path / "s"), "--all", "--allow-mock", "--no-optimize"]) == 0
     done = HybridStore(str(tmp_path / "s"))
     assert done.embedding_mismatch() == "" and done.stored_embedding()["model"] == "qwen/qwen3-embedding-8b"
-    assert set(done.vector_store.table.to_arrow().column("embedding_model_version").to_pylist()) == {"qwen/qwen3-embedding-8b"}
+    assert set(done.vector_store.models()) == {"qwen/qwen3-embedding-8b"}

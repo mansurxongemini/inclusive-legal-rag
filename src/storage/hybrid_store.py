@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from src.schema.canonical import CanonicalArticle
-from src.storage.vector_store import LanceVectorStore
+from src.storage.vector_store import VectorStore
 from src.storage.fts_store import SqliteFtsStore
 from src.storage.chunking import build_chunks
 
@@ -34,11 +34,11 @@ def vector_languages(article: CanonicalArticle) -> List[str]:
 
 
 class HybridStore:
-    """Unified storage interface combining embedded LanceDB vectors and SQLite FTS5 BM25."""
+    """Unified storage interface combining the vector store (exact cosine search) and SQLite FTS5 BM25."""
 
     def __init__(self, storage_dir: Optional[str] = None):
         self.storage_dir = Path(storage_dir or settings.STORAGE_DIR)
-        self.vector_store = LanceVectorStore(str(self.storage_dir))
+        self.vector_store = VectorStore(str(self.storage_dir))
         self.fts_store = SqliteFtsStore(str(self.storage_dir / "legal_rag.db"))
         self._default_client: Optional[OpenRouterClient] = None
         self._stored_embedding: Optional[Dict[str, Any]] = self._read_embedding_marker()
@@ -83,7 +83,7 @@ class HybridStore:
         return self._default_client
 
     async def index_article(self, article: CanonicalArticle, client: Optional[OpenRouterClient] = None):
-        """Indexes an article across FTS and LanceDB vector stores.
+        """Indexes an article across the FTS and vector stores.
 
         Embeddings are computed before anything is written, so a failing embedding service cannot leave the
         full-text index updated while the vectors still describe the previous text.
@@ -193,12 +193,6 @@ class HybridStore:
             await asyncio.to_thread(self._write_articles, chunk, vector_records)
             total_indexed += len(chunk)
 
-        if total_indexed > 0:
-            try:
-                await asyncio.to_thread(self.vector_store.optimize)
-            except Exception as e:
-                logger.warning(f"Error optimizing vector store after batch indexing: {e}")
-
         return total_indexed
 
     async def reembed_articles(
@@ -213,7 +207,7 @@ class HybridStore:
         """Vector-only re-indexing of already stored articles (languages: see vector_languages).
 
         Does NOT touch the FTS index. Embedding requests run concurrently bounded by
-        concurrency; writes to LanceDB are serialized with an asyncio.Lock.
+        concurrency; writes to the vector store are serialized with an asyncio.Lock.
         Per batch: embeds first, then upsert_vectors, so a failing embedding call leaves
         that batch's old vectors intact.
         Awaits on_batch(done_cids) after each written batch.

@@ -3,10 +3,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: legal-rag-api
     container_name: legal-rag-api
     restart: unless-stopped
+    init: true
+    # Loopback only: the administration is reached through an SSH tunnel, never from the internet. A container on the
+    # same host (the Telegram bot) reaches the service by its name: see docker-compose.bot.yml.
     ports:
-      - "8000:8000"
+      - "127.0.0.1:${RAG_PORT:-8000}:8000"
     # Every setting (keys, models, budget, Jev, Huquq+ ...) comes from .env (cp .env.example .env): a list kept here
     # drifts from src/config.py, and a setting missing from it silently runs with the code default in the container.
     env_file:
@@ -19,8 +23,25 @@ services:
     volumes:
       - ./data/store:/app/data/store
       - ./data/cache:/app/data/cache
+      - ./data/sources:/app/data/sources      # the registry of acts the administration adds to
+      - ./data/backups:/app/data/backups      # docker exec legal-rag-api python scripts/backup_store.py --keep 7
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # On a host shared with a database the kernel stops this service first, never its neighbour.
+    oom_score_adj: 500
+    # The default driver keeps every line forever: a busy week would fill the disk.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # A quarter of the default weight: the service uses an idle CPU in full and gives way to the bot and the database when
+    # the host is busy. A hard cap (cpus) would stop the whole container for the rest of every 100 ms it overspends, which
+    # made /health stall for seconds under a few parallel questions.
+    cpu_shares: 256
     deploy:
       resources:
         limits:
-          memory: 800M  # serving plateau ~300-550 MB (2026-10-18)
-          cpus: '1.5'
+          memory: 800M  # idle ~80 MB, serving plateau ~330 MB (vector matrix 160 MB + caches)

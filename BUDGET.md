@@ -38,3 +38,4 @@ Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `
 | 2026-10-25 20:30 | eval cycle 15 (final commit): review/judge reasoning budget, held-out evaluation [tests: 644 passed, 1 warning; server: 30/30] | 10.00 | 1.3374 | 8.6626 | 1.3374 |
 | 2026-10-25 20:31 | eval injection set (final) | 10.00 | 1.3388 | 8.6612 | 1.3388 |
 | 2026-10-25 22:00 | eval en16 after the no-fallback change | 10.00 | 1.3435 | 8.6565 | 1.3435 |
+| 2026-10-25 23:27 | eval cycle 16: SQLite vector store (no LanceDB), no answer without the model, one BLAS thread, law-id index [tests: 642 passed, 1 warning; server: 30/30] | 10.00 | 1.3455 | 8.6545 | 1.3455 |

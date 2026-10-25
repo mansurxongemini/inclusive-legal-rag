@@ -17,11 +17,11 @@ data/laws_catalog/
 data/raw/
 data/raw_lex/
 data/golden_dataset/
-data/sources/harvested_benchmark/
-data/sources/harvested_tuzuk/
 data/legal_rag.db*
 *.log
 gemini_argon_*.txt
-uzbekistan_nogironlik_huquqi_200_savol_benchmark.json
 data/sources/built_articles.json
-data/sources/website_faq_knowledge_base.json
+eval/
+integrations/
+requirements-dev.txt
+*.md

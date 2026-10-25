@@ -1,6 +1,8 @@
 """Retrieval helper: published curated answers lead the context; Huquq+ articles follow the statutory norms."""
 
 import logging
+import re
+from functools import lru_cache
 from typing import List, Optional, Tuple
 
 from src.config import settings
@@ -182,13 +184,13 @@ _STOP_STEMS = {"bo'la", "bo'ld", "qanda", "qanday", "nechi", "necha", "uchun", "
                "olsam", "olish", "bormi", "qilib", "hamda", "shaxs", "tarti"}
 
 
-def _stems(text: str) -> set:
+@lru_cache(maxsize=1024)         # the units of an act are scored again for every question; frozen: the result is shared
+def _stems(text: str) -> frozenset:
     """5-letter prefixes of the words: crude Uzbek stemming ("kartamga" ~ "kartasi", "vaucherga" ~ "vaucher")."""
-    import re
     norm = (text or "").lower()
     for ch in "ʻʼ‘’`´":
         norm = norm.replace(ch, "'")
-    return {w[:5] for w in re.findall(r"[a-z'][a-z'-]{3,}", norm)} - _STOP_STEMS
+    return frozenset(w[:5] for w in re.findall(r"[a-z'][a-z'-]{3,}", norm)) - _STOP_STEMS
 
 
 def add_linked_act_units(contexts: List[RetrievedArticleContext], store: HybridStore, editorial: EditorialStore,

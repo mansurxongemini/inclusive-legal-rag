@@ -1,11 +1,11 @@
 """
 Process-level memory tuning for the glibc allocator (Linux).
 
-A vector search reads the whole 56k x 1024 float table in large Arrow buffers. With glibc's defaults those buffers live in
-per-thread arenas that are never returned to the system, so the resident memory of the server grew from 180 MB to
-900+ MB after a few searches (measured: 884 MB after 12 searches, 185 MB with the settings below). Large blocks go to
-mmap (returned on free) and the number of arenas is capped. Environment variables MALLOC_MMAP_THRESHOLD_ and
-MALLOC_ARENA_MAX do the same when set before the process starts (legal-rag.service and the Dockerfile set them).
+With glibc's defaults the large temporary buffers of a search live in per-thread arenas that are never returned to the
+system, so the resident memory of a server grows with every worker thread that touched them (measured with the vector
+database used before: 180 MB -> 884 MB after 12 searches, 185 MB with the settings below). Large blocks go to mmap
+(returned on free) and the number of arenas is capped. Environment variables MALLOC_MMAP_THRESHOLD_ and MALLOC_ARENA_MAX
+do the same when set before the process starts (legal-rag.service and the Dockerfile set them).
 """
 import ctypes
 import logging

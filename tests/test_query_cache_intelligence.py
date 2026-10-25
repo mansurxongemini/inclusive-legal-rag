@@ -126,6 +126,7 @@ def test_expired_entries_are_purged_from_disk_and_ram(tmp_path, monkeypatch):
     cache._ram_cache[cache._make_key("eskirgan savol", "uz:latn", "plain")] = (cache._ram_cache[cache._make_key("eskirgan savol", "uz:latn", "plain")][0] - 7200, {"answer": "ESKI"})
 
     assert cache.purge_expired() == 1
-    assert cache.get_stats()["total_cached_queries"] == 1
+    with cache._get_conn() as conn:
+        assert conn.execute("SELECT count(*) FROM query_cache").fetchone()[0] == 1
     assert cache.get("eskirgan savol", "uz:latn", "plain") is None
     assert cache.get("yangi savol", "uz:latn", "plain")["answer"].startswith("YANGI")

@@ -115,6 +115,12 @@ class SqliteFtsStore:
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             """)
+            # "the units of one act" (editorial links, document watch) read the JSON of every row without it: 177 ms of
+            # CPU per call on 29 000 units, 6 ms with it. The queries must use this exact expression.
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_articles_law_id
+                ON articles_metadata (json_extract(json_data, '$.metadata.law_id'))
+            """)
 
             # FTS5 Virtual Table for BM25 Full-Text Search
             cursor.execute("""

@@ -11,6 +11,7 @@ about. Instead the unit is shown as its beginning plus the matched chunk and its
   them, so words present everywhere count little).
 """
 import re
+from functools import lru_cache
 from typing import Dict, Iterable, Optional, Tuple
 
 from src.nlp.transliteration import cyrillic_to_latin
@@ -21,9 +22,10 @@ _APOSTROPHES = re.compile(r"[ʻʼ‘’`´']")
 _WORD = re.compile(r"[^\W\d_]{4,}")
 
 
-def _stems(text: str) -> set:
+@lru_cache(maxsize=1024)         # the same candidate units are scored for question after question; frozen: the result is shared
+def _stems(text: str) -> frozenset:
     """5-letter prefixes of the words (Latin and Cyrillic), apostrophes dropped: bo'lgan ~ bo‘lganlar."""
-    return {w[:5] for w in _WORD.findall(_APOSTROPHES.sub("", (text or "").lower()))}
+    return frozenset(w[:5] for w in _WORD.findall(_APOSTROPHES.sub("", (text or "").lower())))
 
 
 def text_language(article: CanonicalArticle, language: str) -> str:
@@ -56,7 +58,7 @@ def focus_chunks(
 ) -> Dict[str, int]:
     """{text language: chunk index} for the languages a reader will see; empty for single-chunk units."""
     focus: Dict[str, int] = {}
-    query_stems = _stems(query)
+    query_stems = set(_stems(query))
     if re.search(r"[а-яёўғқҳ]", query, re.IGNORECASE):
         query_stems |= _stems(cyrillic_to_latin(query))      # a Cyrillic Uzbek question against Latin text
     for lang in {text_language(article, l) for l in languages}:

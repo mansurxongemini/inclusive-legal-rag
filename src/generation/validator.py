@@ -62,13 +62,6 @@ class CitationValidator:
     # "[Eslatma]" or numeric markers "[1]" are not citations and must not count as unresolved references.
     _ID_LIKE = re.compile(r"^[a-z0-9]+(?:_[a-z0-9\-]+)+$")
 
-    CLAIM_MARKERS = [
-        "huquqiga ega", "majbur", "taqiqlanadi", "belgilanadi", "kafolatlanadi",
-        "imtiyoz beriladi", "to'lanadi", "ajratiladi", "man etiladi",
-        "имеет право", "запрещается", "гарантируется", "предусматривается", "выплачивается",
-        "has the right", "is prohibited", "is guaranteed", "is entitled", "shall be"
-    ]
-
     @classmethod
     def _extract_quote_snippet(cls, article: CanonicalArticle, language: str = "uz") -> str:
         """Extracts the most pertinent 1-2 sentence verbatim excerpt from the official legal text."""

@@ -130,13 +130,6 @@ class CanonicalArticle(BaseModel):
             return self.metadata.law_title[language]
         return self.metadata.law_title.get("uz", "")
 
-    def get_point_text(self, point_id: str, language: str = "uz") -> Optional[str]:
-        """Returns specific point text by point_id."""
-        for pt in self.points:
-            if pt.point_id == str(point_id):
-                return pt.text.get(language, pt.text.get("uz", ""))
-        return None
-
     def to_fts_document(self, language: str = "uz") -> str:
         """Formats comprehensive search text for full-text indexing."""
         title = self.get_title(language)

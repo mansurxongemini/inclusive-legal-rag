@@ -2,7 +2,7 @@
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.112.0-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
-[![LanceDB](https://img.shields.io/badge/LanceDB-Vector_Store-8A2BE2.svg)](https://lancedb.github.io/lancedb/)
+[![SQLite](https://img.shields.io/badge/SQLite-FTS5_%2B_vectors-003B57.svg?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![SQLite FTS5](https://img.shields.io/badge/SQLite-FTS5_BM25-003B57.svg?logo=sqlite&logoColor=white)](https://www.sqlite.org/fts5.html)
 [![Docker](https://img.shields.io/badge/Docker-Production_Ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -23,7 +23,7 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
 - **The AI Hallucination Danger in Law**: Generic commercial LLMs frequently fabricate article numbers, invent non-existent benefits, or cite repealed statutes — creating severe legal risks for vulnerable citizens.
 - **Accessibility Barriers**: Legal jargon is rarely available in accessible, plain-language explanations or voice-reader-compatible formats.
 
-**Inclusive Legal AI solves this** by pairing high-precision **hybrid statutory retrieval (BM25 + LanceDB dense vectors + Reciprocal Rank Fusion)** with a strict **Zero-Hallucination Grounding Validator** that guarantees every legal assertion is verified against exact canonical article numbers and official `lex.uz` sources.
+**Inclusive Legal AI solves this** by pairing high-precision **hybrid statutory retrieval (BM25 + dense vectors + Reciprocal Rank Fusion)** with a strict **Zero-Hallucination Grounding Validator** that guarantees every legal assertion is verified against exact canonical article numbers and official `lex.uz` sources.
 
 ---
 
@@ -35,7 +35,7 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
   - Automated citation verification audits generated answers prior to delivery.
 - **Hybrid Retrieval Architecture (BM25 + Vector + RRF)**:
   - **BM25 Lexical Search**: Powered by SQLite FTS5 with custom field weights (`article_number=10.0`, `law_number=5.0`, `title=5.0`, `body=1.0`, see `bm25_search`).
-  - **Dense Vector Search**: Powered by LanceDB with 1024-dimensional multilingual embeddings (`qwen/qwen3-embedding-8b`; the store records its model and the service never mixes two), chunked at paragraph boundaries for long provisions.
+  - **Dense Vector Search**: Exact cosine search over 1024-dimensional multilingual embeddings (`qwen/qwen3-embedding-8b`; the store records its model and the service never mixes two), chunked at paragraph boundaries for long provisions.
   - **Reciprocal Rank Fusion (RRF)**: Merges sparse and dense ranking scores via `score = 1/(60 + rank_bm25) + 1/(60 + rank_vec)`.
 - **Script & Language Invariance**:
   - Seamlessly handles user queries in **Uzbek (Latin and Cyrillic), Russian and English** and answers in the language of the question.
@@ -63,7 +63,7 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
       │
       ├── [HybridRetriever]:
       │         ├── SQLite FTS5 (Lexical BM25 with Title/Article number weighting)
-      │         └── LanceDB (1024-dim qwen3-embedding dense vector similarity)
+      │         └── Vector store (SQLite file + numpy: exact cosine search of the 1024-dim qwen3-embedding vectors)
       │         └── [RRF - Reciprocal Rank Fusion]: rank fusion score calculation
       │
       ├── [Context Expansion]: 1-hop cross-reference expansion (implements / refers_to)
@@ -83,8 +83,9 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
 Measured on 2026-10-25 (`data/store`, built by `scripts/build_disability_corpus.py`):
 - **SQLite store with FTS5 index: 320 MB** - 29 094 units of 534 Lex.uz acts (15 887 with the official Russian text) and 324 units of
   113 Huquq+ posts. Every act was re-read from Lex.uz on 2026-10-25: all in force, current editions.
-- **LanceDB vector table: 160 MB** - 38 858 qwen3-embedding-8b vectors (1024 numbers each; long units are embedded paragraph by
-  paragraph).
+- **Vector file `vectors.db`: 172 MB** - 38 858 qwen3-embedding-8b vectors (1024 numbers each; long units are embedded paragraph by
+  paragraph). A search is one matrix product over all of them (8 ms); no vector database is needed, and the plain wheels run on every
+  x86-64 CPU (the vector database used before crashed on CPUs without AVX2).
 
 The built store is not in git (`data/store` is ignored). Build it from Lex.uz with the commands below (the HTML is fetched once and
 cached), or ask the maintainer for a copy: Telegram [@mansurxonrustamov](https://t.me/mansurxonrustamov).
@@ -139,14 +140,20 @@ cd inclusive-legal-rag
 
 # 2. Configure environment
 cp .env.example .env
-# Edit .env and supply your OPENROUTER_API_KEY (or OpenAI API key)
+# Edit .env: OPENROUTER_API_KEY and ADMIN_API_KEY (the one key serves chat, embeddings and ranking)
 
-# 3. Build & start container
-docker-compose up -d --build
+# 3. Put the built store into data/store (see "The built store" above); an empty folder starts with one sample law only.
+#    The container runs as user 1001:  sudo chown -R 1001:1001 data
 
-# 4. Verify service health
-curl http://localhost:8000/health
+# 4. Build & start the container (the port is bound to 127.0.0.1 only)
+docker compose up -d --build
+
+# 5. Verify service health
+curl http://127.0.0.1:8000/health
 ```
+
+On a server where another Docker project (a bot) must call the service, add `-f docker-compose.bot.yml`; the full
+procedure, requirements and backups are in [`docs/SERVERGA_JOYLASH.md`](docs/SERVERGA_JOYLASH.md).
 
 ### Option 2: Local Python Setup
 
@@ -294,7 +301,7 @@ This project is a dedicated submission candidate for the **OpenAI Codex for Open
 | Repealed acts presented as valid | **0** |
 | Latency (full answer, uncached) median / p95 | **~20 s / ~38 s** |
 | Model cost per uncached question | **~$0.0009** |
-| Idle memory of the server; growth over 300 questions | **~180 MB; +1-5 MB** |
+| Idle memory of the server; growth over 300 questions | **~80 MB; +4 MB** (about 290-330 MB once the vector matrix is loaded) |
 
 The figures below are older measurements on other sets and another (test) generator, kept for history.
 
@@ -324,7 +331,7 @@ unstated condition.
 
 We warmly welcome contributions from legal scholars, accessibility engineers, and open-source contributors!
 - Check out existing [Issues](https://github.com/mansurxongemini/inclusive-legal-rag/issues)
-- Read the architectural design in [`plan.md`](plan.md)
+- Read [`docs/OPERATIONS.md`](docs/OPERATIONS.md) for the architecture, settings and checks
 - Submit Pull Requests following our clean testing standards
 
 ### Organization & Contacts

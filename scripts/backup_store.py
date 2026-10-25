@@ -2,10 +2,8 @@
 """
 Consistent backup of the knowledge base (data/store).
 
-* every SQLite database is copied with the online backup API (the files are in WAL mode and are written by the running
-  server: copying them with tar can produce a database that does not open);
-* the LanceDB folder is copied, then opened and its row count compared with the live table (the copy is repeated once
-  if a write happened in between);
+* every SQLite database (text index, vectors, editorial, ...) is copied with the online backup API (the files are in WAL
+  mode and are written by the running server: copying them with tar can produce a database that does not open);
 * the result is checked (integrity_check of each database, vector count) before the folder is announced;
 * old backups beyond --keep are removed (only folders this script made: legal_rag_backup_*).
 
@@ -41,22 +39,12 @@ def backup_sqlite(src: Path, dst: Path) -> None:
         raise RuntimeError(f"{dst.name}: integrity_check says {result}")
 
 
-def lance_rows(path: Path) -> int:
-    import lancedb
-    db = lancedb.connect(str(path))
-    return len(db.open_table("articles_vectors"))
-
-
-def backup_lance(src: Path, dst: Path) -> int:
-    for attempt in range(2):
-        if dst.exists():
-            shutil.rmtree(dst)
-        before = lance_rows(src)
-        shutil.copytree(src, dst)
-        copied = lance_rows(dst)
-        if copied == before == lance_rows(src):
-            return copied
-    raise RuntimeError(f"LanceDB copy is not consistent (live {before}, copy {copied}); try again when the server is idle")
+def vector_rows(path: Path) -> int:
+    con = sqlite3.connect(path)
+    try:
+        return con.execute("SELECT count(*) FROM articles_vectors").fetchone()[0]
+    finally:
+        con.close()
 
 
 def main() -> int:
@@ -75,8 +63,8 @@ def main() -> int:
             if db.stat().st_size:
                 backup_sqlite(db, out / db.name)
                 print(f"  {db.name}: ok")
-        if (store / "lancedb").is_dir():
-            print(f"  lancedb: {backup_lance(store / 'lancedb', out / 'lancedb')} vectors")
+        if (out / "vectors.db").exists():
+            print(f"  vectors: {vector_rows(out / 'vectors.db')} rows")
         for extra in (".integration_hash_secret",):
             if (store / extra).exists():
                 shutil.copy2(store / extra, out / extra)

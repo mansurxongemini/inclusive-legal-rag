@@ -3,7 +3,7 @@ Polite, cached client for the official Lex.uz portal.
 
 * `fetch_document` - HTML of one document (disk-cached, throttled, retried).
 * `okoz_tree` - the official classifier (OKOZ) tree.
-* `search_okoz` / `search_title` - paged result lists (ASP.NET postback pagination).
+* `search_okoz` / `iter_search_title` - paged result lists (ASP.NET postback pagination).
 
 Everything here talks only to https://lex.uz and never executes anything from the pages.
 """
@@ -226,9 +226,6 @@ class LexClient:
 
     def search_okoz(self, okoz_id: int, max_pages: int = 60) -> List[SearchHit]:
         return list(self._paged_search({"okoz": str(okoz_id)}, okoz_id, max_pages))
-
-    def search_title(self, title: str, max_pages: int = 3) -> List[SearchHit]:
-        return list(self._paged_search({"searchtitle": to_lex_spelling(title)}, None, max_pages))
 
     def iter_search_title(self, title: str, max_pages: int = 15) -> Iterator[SearchHit]:
         """Lazy variant: callers can stop paging as soon as they found the document they need."""

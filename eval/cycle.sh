@@ -17,4 +17,4 @@ echo "server: $SERVER" | tee -a "$LOG"
 SHORT_TESTS=$(echo "$TESTS" | sed -E 's/ in [0-9.]+s//; s/=//g; s/^ +//')
 SHORT_SERVER=$(echo "$SERVER" | grep -oE '^[0-9]+/[0-9]+')
 $PY eval/run_eval.py --max-spend "${MAX_SPEND:-0.5}" --label "$LABEL [tests: $SHORT_TESTS; server: $SHORT_SERVER]" \
-    --history 2>&1 | grep -v "lance::\| INFO " | tee -a "$LOG" | tail -6
+    --history 2>&1 | grep -v " INFO " | tee -a "$LOG" | tail -6
