@@ -67,3 +67,63 @@ async def test_the_repeal_clause_becomes_the_first_context(monkeypatch):
     ids = [c.article.canonical_id for c in res.contexts]
     assert ids[0] == "law_disability_2020_art_49" and ids.count("law_disability_2020_art_49") == 1
     assert res.signals["repeal_notices"] == ["law_disability_2020_art_49"]
+
+
+# --- found by the review of 2026-10-25 -------------------------------------------------------------------------------
+AMENDING = [
+    ("vmq_741_2024_a1_p_2", "2. Vazirlar Mahkamasining 2022-yil 8-fevraldagi 62-son qarorida: a) 2-bandning ikkinchi "
+                            "xatboshisi quyidagi tahrirda bayon etilsin: Vrach-ekspertlar 6 — 8 nafar; g) 5-ilova o'z "
+                            "kuchini yo'qotgan deb hisoblansin."),
+    ("reg_1060_2001_p_4", "4. Mazkur buyruq kuchga kirishi bilan Sog'liqni saqlash vazirligining 1994-yil 28-iyuldagi "
+                          "350-sonli buyrug'i o'z kuchini yo'qotgan deb hisoblansin."),
+]
+INDEX2 = build_index(AMENDING)
+
+
+def test_an_amending_act_marks_only_the_item_that_lost_force():
+    acts = INDEX2["62"]
+    assert len(acts) == 1 and acts[0].points == frozenset({"ilova:5"})
+    # point 2 was amended, not repealed; point 30 is not mentioned at all
+    for q in ("Vazirlar Mahkamasining 2022-yil 8-fevraldagi 62-son qarori bilan tasdiqlangan Nizomning 2-bandi nima deydi?",
+              "Vazirlar Mahkamasining 2022-yil 8-fevraldagi 62-son qarorining 30-bandi amaldami?"):
+        assert matching_acts(q, INDEX2) == []
+    assert [a.canonical_id for a in matching_acts(
+        "Vazirlar Mahkamasining 2022-yil 62-son qaroriga 5-ilova amaldami?", INDEX2)] == ["vmq_741_2024_a1_p_2"]
+
+
+def test_the_type_the_question_names_must_be_the_type_of_the_repealed_act():
+    # a ministry order (type unknown in the index) is not the Cabinet resolution the question names
+    assert matching_acts("Vazirlar Mahkamasining 1994-yil 350-son qarori amaldami?", INDEX2) == []
+    # a question that names no type cannot be matched safely
+    assert matching_acts("2021-yil 29-apreldagi 257-son hujjat amaldami?", INDEX) == []
+
+
+@pytest.mark.parametrize("question", [
+    "Vazirlar Mahkamasining 2021-yil 29-apreldagi 257-sonli qarori amaldami?",
+    "Вазирлар Маҳкамасининг 2021 йил 29 апрелдаги 257-сон қарори амалдами?",
+])
+def test_common_spellings_of_the_act_number_and_type_are_understood(question):
+    assert [a.canonical_id for a in matching_acts(question, INDEX)] == ["vmq_769_2021_p_5"]
+
+
+def test_the_year_is_read_however_long_the_title_is():
+    long_title = "“" + "juda uzun nom " * 30 + "”"
+    idx = build_index([("x_p_1", f"1. Vazirlar Mahkamasining 2019-yil 3-maydagi {long_title} 391-son qarori o'z kuchini "
+                                 "yo'qotgan deb hisoblansin.")])
+    assert idx["391"][0].year == "2019"
+
+
+def test_the_index_is_rebuilt_after_a_write(tmp_path):
+    from src.retrieval.repeal_notices import _store_index
+    from src.schema.canonical import CanonicalArticle
+    from src.storage.hybrid_store import HybridStore
+
+    store = HybridStore(str(tmp_path / "store"))
+    assert _store_index(store) == {}
+    store.fts_store.upsert_article(CanonicalArticle(
+        canonical_id="vmq_769_2021_p_5",
+        metadata={"law_id": "vmq_769_2021", "law_title": {"uz": "Qaror"}, "law_number": "VMQ-769", "article_number": "5-band",
+                  "article_title": {"uz": "Band"}, "source_url": "https://lex.uz/docs/-1", "effective_date": "2021-01-01",
+                  "last_verified_date": "2026-10-01", "source_hash": "sha256:x", "category": "disability_rights"},
+        translations={"uz": ROWS[0][1]}))
+    assert "257" in _store_index(store)

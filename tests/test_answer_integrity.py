@@ -214,3 +214,18 @@ async def test_stream_cache_miss_still_embeds_the_question_once(monkeypatch, tmp
 
     assert len(embeddings) == 1 and seen["query_vector"] == [0.1] * 8      # the vector still reaches retrieval
     assert out[-1]["type"] == "done"
+
+
+def test_an_answer_from_the_timed_out_retrieval_is_not_cached():
+    # the fallback retrieval has no translation, scope judgement or ranking: such an answer is served once, not for a day
+    from types import SimpleNamespace
+
+    from src.gateway.service import RETRIEVAL_TIMEOUT_WARNING, AnswerResult, _is_cacheable, _retrieval_warnings
+
+    text = "Qisqartirilgan ish vaqti haftasiga 36 soatdan oshmaydi va ish haqi to'liq to'lanadi. " * 2
+    timed_out = SimpleNamespace(signals={"retrieval_timeout": True})
+    assert _retrieval_warnings(timed_out) == [RETRIEVAL_TIMEOUT_WARNING]
+    assert _retrieval_warnings(SimpleNamespace(signals={})) == []
+    ok = AnswerResult(answer=text, clean_answer=text, validation_passed=True)
+    assert _is_cacheable(ok)
+    assert not _is_cacheable(ok.model_copy(update={"warnings": [RETRIEVAL_TIMEOUT_WARNING]}))

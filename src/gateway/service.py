@@ -217,12 +217,22 @@ def _result_from_cache(hit: dict, q: _Question) -> AnswerResult:
     )
 
 
+# An answer written from the model-free fallback retrieval (the provider did not answer in time) is served once but not
+# cached: it lacks the translation, scope judgement and ranking, and would be repeated for a day after the provider recovers.
+RETRIEVAL_TIMEOUT_WARNING = "retrieval_timeout: full-text search only, the answer is not cached"
+
+
+def _retrieval_warnings(retrieval) -> List[str]:
+    return [RETRIEVAL_TIMEOUT_WARNING] if (getattr(retrieval, "signals", None) or {}).get("retrieval_timeout") else []
+
+
 def _is_cacheable(result: AnswerResult) -> bool:
-    """Caching rules: verified, substantive, non-refusal, really generated."""
+    """Caching rules: verified, substantive, non-refusal, really generated, from the full retrieval."""
     return (
         result.validation_passed
         and not result.is_refusal
         and not result.degraded
+        and RETRIEVAL_TIMEOUT_WARNING not in result.warnings
         and len((result.clean_answer or result.answer).strip()) > MIN_CACHEABLE_CHARS
     )
 
@@ -318,7 +328,7 @@ async def answer_question(
         status_warnings=retrieval.status_warnings,
         cached=False,
         retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
-        warnings=gen_result.warnings,
+        warnings=gen_result.warnings + _retrieval_warnings(retrieval),
         degraded=gen_result.degraded,
     )
     await _cache_answer(q, cache, query_vector, result)
@@ -447,7 +457,7 @@ async def answer_question_stream(
                 status_warnings=final_event.get("status_warnings", []),
                 cached=False,
                 retrieval_confidence=round(retrieval.decision.confidence, 3) if retrieval.decision else None,
-                warnings=final_event.get("warnings", []),
+                warnings=final_event.get("warnings", []) + _retrieval_warnings(retrieval),
                 degraded=bool(final_event.get("degraded", False)),
             )
             await _cache_answer(q, cache, query_vector, result)

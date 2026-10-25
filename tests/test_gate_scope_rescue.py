@@ -15,7 +15,7 @@ from src.retrieval import pipeline
 from src.retrieval.relevance_gate import GateDecision
 
 
-async def _run(monkeypatch, in_scope):
+async def _run(monkeypatch, in_scope, lexical_reason="low_relevance"):
     async def no_rewrite(*a, **k):
         return None
 
@@ -32,7 +32,7 @@ async def _run(monkeypatch, in_scope):
         monkeypatch.setattr(QueryTranslator, name, no_rewrite)
     monkeypatch.setattr(pipeline.JevRanker, "scope", scope)
     monkeypatch.setattr(pipeline.Reranker, "rerank", rerank_fails_over_to_rrf)
-    monkeypatch.setattr(pipeline.RelevanceGate, "assess", lambda self, **k: GateDecision(False, "low_relevance", 0.1))
+    monkeypatch.setattr(pipeline.RelevanceGate, "assess", lambda self, **k: GateDecision(False, lexical_reason, 0.1))
     monkeypatch.setattr(settings, "RERANK_PROVIDER", "jev")
     return await pipeline.retrieve_contexts(
         analysis=QueryAnalyzer.analyze("How can I appeal the decision of the medical and social expert commission?"),
@@ -51,3 +51,10 @@ async def test_out_of_scope_is_still_refused_and_an_unsure_scope_keeps_the_lexic
     assert not res.decision.answerable and res.decision.reason == "jev_out_of_scope" and res.contexts == []
     res = await _run(monkeypatch, 0.5)
     assert not res.decision.answerable and res.decision.reason == "low_relevance"
+
+
+@pytest.mark.asyncio
+async def test_a_cross_encoder_refusal_is_not_overridden(monkeypatch):
+    # the cross-encoder judged the units irrelevant: the scope judge (topic only) must not overrule that
+    res = await _run(monkeypatch, 1.0, lexical_reason="low_reranker_score")
+    assert not res.decision.answerable and res.decision.reason == "low_reranker_score"

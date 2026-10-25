@@ -291,7 +291,10 @@ async def retrieve_contexts(
                 if in_scope is not None and settings.GATE_JEV_SCOPE_ENABLED:
                     if in_scope < settings.GATE_JEV_MIN_IN_SCOPE:
                         decision = GateDecision(False, "jev_out_of_scope", in_scope)
-                    elif not decision.answerable and in_scope >= settings.GATE_SCOPE_RESCUE and contexts:
+                    elif (not decision.answerable and decision.reason == "low_relevance"
+                          and in_scope >= settings.GATE_SCOPE_RESCUE and contexts):
+                        # only the lexical gate is overridden: a cross-encoder that found the evidence irrelevant
+                        # (low_reranker_score) is a judgement about the units, which the scope judge does not make
                         logger.info(f"Lexical gate refused ({decision.reason}) but the scope judge says {in_scope:.2f}: answering")
                         decision = GateDecision(True, "scope_rescue", in_scope)
                 if not decision.answerable:

@@ -144,6 +144,7 @@ class SqliteFtsStore:
             conn.commit()
 
     def upsert_article(self, article: CanonicalArticle):
+        self._invalidate_derived()
         with self._get_connection() as conn:
             cursor = conn.cursor()
             json_str = article.model_dump_json()
@@ -259,12 +260,17 @@ class SqliteFtsStore:
                 })
             return results
 
+    def _invalidate_derived(self) -> None:
+        """Indexes derived from the stored texts (src/retrieval/repeal_notices.py) are rebuilt after any write."""
+        from src.retrieval.repeal_notices import invalidate
+        invalidate(self)
+
     def clear_article_cache(self) -> None:
         """Drops the in-memory article objects. Needed after another process (the corpus build script) wrote to the
         database: nothing else invalidates this cache, so a repealed or amended act would keep being served."""
         if hasattr(self, "_article_cache"):
             self._article_cache.clear()
-        self.__dict__.pop("_repeal_index", None)        # src/retrieval/repeal_notices.py rebuilds it on demand
+        self._invalidate_derived()
 
     def get_article(self, canonical_id: str) -> Optional[CanonicalArticle]:
         if not hasattr(self, "_article_cache"):
@@ -359,6 +365,7 @@ class SqliteFtsStore:
             return [CanonicalArticle.model_validate_json(r["json_data"]) for r in rows]
 
     def delete_article(self, canonical_id: str):
+        self._invalidate_derived()
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM articles_metadata WHERE canonical_id = ?", (canonical_id,))
@@ -395,11 +402,12 @@ class SqliteFtsStore:
             conn.commit()
         if hasattr(self, "_article_cache"):
             self._article_cache.clear()
-        self.__dict__.pop("_repeal_index", None)        # src/retrieval/repeal_notices.py rebuilds it on demand
+        self._invalidate_derived()
         return n
 
     def delete_laws(self, law_ids: List[str]) -> List[str]:
         """Deletes every article of the given laws; returns the removed canonical ids."""
+        self._invalidate_derived()
         if not law_ids:
             return []
         removed: List[str] = []
@@ -487,10 +495,14 @@ class SqliteFtsStore:
                 escaped = q_clean.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
                 # the unit's text and title only: the raw JSON also holds URLs and element ids ("#-5641...") that
                 # matched almost any number
+                # SQLite's LIKE folds the case of ASCII letters only: "факсимильная" must also find "Факсимильная"
+                conn.create_function("ulower", 1, lambda v: v.lower() if isinstance(v, str) else v, deterministic=True)
                 cursor.execute("""
                     SELECT DISTINCT json_extract(json_data, '$.metadata.law_id') FROM articles_metadata
-                    WHERE json_extract(json_data, '$.translations.uz') LIKE ?1 ESCAPE '\\'
-                       OR json_extract(json_data, '$.metadata.article_title.uz') LIKE ?1 ESCAPE '\\'
+                    WHERE ulower(json_extract(json_data, '$.translations.uz')) LIKE ?1 ESCAPE '\\'
+                       OR ulower(json_extract(json_data, '$.metadata.article_title.uz')) LIKE ?1 ESCAPE '\\'
+                       OR ulower(json_extract(json_data, '$.translations.ru')) LIKE ?1 ESCAPE '\\'
+                       OR ulower(json_extract(json_data, '$.metadata.article_title.ru')) LIKE ?1 ESCAPE '\\'
                 """, (f"%{escaped}%",))
                 matching_law_ids = {row[0] for row in cursor.fetchall()}
 

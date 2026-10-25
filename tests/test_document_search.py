@@ -8,14 +8,14 @@ from src.schema.canonical import CanonicalArticle
 from src.storage.fts_store import SqliteFtsStore
 
 
-def _unit(cid, law_id, number, title, text):
+def _unit(cid, law_id, number, title, text, ru=""):
     return CanonicalArticle(
         canonical_id=cid,
         metadata={"law_id": law_id, "law_title": {"uz": title}, "law_number": number, "article_number": "1-modda",
                   "article_title": {"uz": "Modda"}, "source_url": "https://lex.uz/docs/-5641999#-5642000",
                   "effective_date": "2020-01-01", "last_verified_date": "2026-10-01", "source_hash": "sha256:x",
                   "category": "disability_rights"},
-        translations={"uz": text},
+        translations={"uz": text, **({"ru": ru} if ru else {})},
     )
 
 
@@ -24,7 +24,7 @@ def _store(tmp_path):
     for i in range(30):                                   # many acts: a per-act scan shows up as many statements
         store.upsert_article(_unit(f"act{i}_art_1", f"act{i}", f"VMQ-{i}", f"Qaror {i}", "Oddiy matn."))
     store.upsert_article(_unit("law641_art_29", "law641", "O'RQ-641", "Nogironligi bo'lgan shaxslarning huquqlari",
-                               "Nogironligi bo'lgan shaxsning faksimil imzosi."))
+                               "Nogironligi bo'lgan shaxsning faksimil imzosi.", ru="Факсимильная подпись лица с инвалидностью."))
     store.upsert_article(_unit("vmq62_p_1", "vmq62", "VMQ-62", "Ekspertiza nizomi", "O'RQ-641 ga muvofiq ko'rik."))
     return store
 
@@ -51,3 +51,8 @@ def test_the_search_is_one_pass_not_one_scan_per_act(tmp_path, monkeypatch):
     store.list_documents(search_query="faksimil")
     selects = [s for s in statements if s.lstrip().upper().startswith("SELECT")]
     assert len(selects) <= 2, selects
+
+
+def test_russian_words_find_the_act_as_before(tmp_path):
+    # the old per-act query searched the whole JSON, Russian text included; the one-pass query must too
+    assert [d["law_number"] for d in _store(tmp_path).list_documents(search_query="факсимильная")] == ["O'RQ-641"]
