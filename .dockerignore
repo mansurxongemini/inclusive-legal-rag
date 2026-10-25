@@ -21,8 +21,6 @@ data/sources/harvested_benchmark/
 data/sources/harvested_tuzuk/
 data/legal_rag.db*
 *.log
-real_hujjatlar.*
-legal_intelligence_dataset.json
 gemini_argon_*.txt
 uzbekistan_nogironlik_huquqi_200_savol_benchmark.json
 data/sources/built_articles.json

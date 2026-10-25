@@ -10,7 +10,7 @@ def localized(uz: str, raw: str = "") -> Dict[str, str]:
     {"uz": <Uzbek Latin>} plus {"ru": raw} when `raw` is genuine Russian.
 
     Importers read Uzbek documents (Latin or Cyrillic); copying that text under "ru" or "en" indexed it as a
-    translation it is not (scripts/migrate_fix_fake_russian.py exists to clean up after exactly that).
+    translation it is not.
     """
     out = {"uz": uz}
     if raw and raw.strip() and is_genuine_russian(raw):

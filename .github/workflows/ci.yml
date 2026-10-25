@@ -19,7 +19,7 @@ jobs:
       - name: Install the locked dependencies
         run: pip install -r requirements-dev.txt -c requirements.lock
       - name: Lint (unused imports and names, undefined names)
-        run: python -m pyflakes src scripts tests havola_new.py
+        run: python -m pyflakes src scripts tests eval
       - name: Tests (offline, against a temporary store)
         run: python -m pytest -q
 

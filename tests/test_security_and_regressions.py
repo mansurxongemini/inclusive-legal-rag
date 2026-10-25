@@ -5,7 +5,6 @@ access control, SSRF, citation validation, retrieval correctness, cache and stor
 import json
 from pathlib import Path
 
-import httpx
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -14,7 +13,6 @@ from src.clients.openrouter import OpenRouterClient
 from src.config import settings
 from src.generation.generator import AnswerGenerator, GeneratedAnswer
 from src.generation.validator import CitationValidator
-from src.ingestion.url_safety import assert_public_http_url, is_lex_uz_url
 from src.nlp.query_analyzer import QueryAnalyzer
 from src.nlp.query_decomposer import LegalQueryDecomposer
 from src.nlp.transliteration import cyrillic_to_latin
@@ -200,39 +198,6 @@ async def test_norm_search_limit_cannot_be_negative():
 # ----------------------------------------------------------------------------------------------------------
 # SSRF
 # ----------------------------------------------------------------------------------------------------------
-
-def test_lex_uz_host_check_is_strict():
-    assert is_lex_uz_url("https://lex.uz/uz/docs/-5501227")
-    assert is_lex_uz_url("https://www.lex.uz/docs/1")
-    assert not is_lex_uz_url("https://lex.uz.evil.example/docs/1")
-    assert not is_lex_uz_url("https://evil.example/?u=lex.uz")
-    assert not is_lex_uz_url("https://evil.example/lex.uz/docs/1")
-    assert not is_lex_uz_url("ftp://lex.uz/docs/1")
-    assert not is_lex_uz_url("file:///etc/passwd")
-
-
-@pytest.mark.parametrize("url", [
-    "http://127.0.0.1:8000/admin",
-    "http://localhost/",
-    "http://169.254.169.254/latest/meta-data/",
-    "http://10.0.0.5/",
-    "http://[::1]/",
-    "file:///etc/passwd",
-    "gopher://example.com/",
-])
-def test_internal_and_non_http_urls_are_blocked(url):
-    with pytest.raises(ValueError):
-        assert_public_http_url(url)
-
-
-
-
-@pytest.mark.asyncio
-async def test_preview_url_blocks_internal_targets():
-    async with local_client() as c:
-        res = await c.post("/api/v1/admin/preview-url", json={"url": "http://169.254.169.254/latest/meta-data/"})
-    assert res.status_code == 400
-
 
 # ----------------------------------------------------------------------------------------------------------
 # Citation validation
@@ -545,38 +510,6 @@ async def test_unknown_article_status_is_rejected_not_half_applied():
 
 
 @pytest.mark.asyncio
-async def test_non_utf8_upload_is_a_client_error():
-    async with local_client() as c:
-        res = await c.post(
-            "/api/v1/admin/upload",
-            files={"file": ("law.txt", "Qonun matni".encode("cp1251") + b"\xff\xfe\xfa", "text/plain")},
-        )
-    assert res.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_ingest_url_classifies_regulations_from_the_supplied_url(monkeypatch):
-    from src.ingestion import universal_engine
-
-    captured = {}
-
-    async def fake_ingest(self, spec, http_client, force_reindex=False):
-        captured["spec"] = spec
-        return 0
-
-    monkeypatch.setattr(universal_engine.UniversalAutonomousEngine, "ingest_spec", fake_ingest)
-    async with local_client() as c:
-        res = await c.post(
-            "/api/v1/admin/ingest-url", json={"url": "https://www2.lex.uz/uz/docs/-6445145?title=vazirlar-mahkamasi-qarori"}
-        )
-    assert res.status_code == 422  # zero articles extracted by the fake engine
-    spec = captured["spec"]
-    assert spec.slug == "doc_6445145"          # not "doc_2" (digit of "www2")
-    assert spec.category == "regulations"
-    assert spec.parser_type == "regulation_clause"
-
-
-@pytest.mark.asyncio
 async def test_corpus_changes_invalidate_cached_answers():
     cache = get_cache()
     cache.set("invalidate me", "uz", "plain", {"answer": "Matn. " * 80})
@@ -610,50 +543,3 @@ class _Resp:
         self.content = content
         self.text = content.decode("utf-8")
 
-
-@pytest.mark.asyncio
-async def test_importer_does_not_clobber_another_laws_file(tmp_path, monkeypatch):
-    from src.ingestion.url_importer import LexUrlImporter, UrlImportRequest
-
-    qonunlar = tmp_path / "qonunlar"
-    qonunlar.mkdir()
-    other = qonunlar / "PF-115.doc"
-    other.write_bytes(b"another law, must survive")
-
-    async def fake_get(self, url, headers=None):
-        return _Resp(LAW_HTML)
-
-    monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
-    store = HybridStore(str(tmp_path / "store"))
-    importer = LexUrlImporter(store=store, qonunlar_dir=str(qonunlar))
-    res = await importer.import_from_url(UrlImportRequest(url="https://lex.uz/uz/docs/-1"))
-
-    assert res.status == "new"
-    assert other.exists() and other.read_bytes() == b"another law, must survive"
-
-
-@pytest.mark.asyncio
-async def test_failed_indexing_does_not_mark_document_as_imported(tmp_path, monkeypatch):
-    from src.ingestion.url_importer import LexUrlImporter, UrlImportRequest
-
-    async def fake_get(self, url, headers=None):
-        return _Resp(LAW_HTML)
-
-    class BrokenEmbeddings(OpenRouterClient):
-        async def get_embeddings(self, texts, model=None):
-            raise RuntimeError("embedding service down")
-        get_query_embeddings = get_embeddings          # questions and units are embedded alike here
-
-    monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
-    qonunlar = tmp_path / "qonunlar"
-    store = HybridStore(str(tmp_path / "store"))
-    store._default_client = BrokenEmbeddings()
-    importer = LexUrlImporter(store=store, qonunlar_dir=str(qonunlar))
-
-    with pytest.raises(RuntimeError):
-        await importer.import_from_url(UrlImportRequest(url="https://lex.uz/uz/docs/-1"))
-    assert list(qonunlar.glob("*.doc")) == []  # otherwise the retry would be reported as "unchanged"
-
-    store._default_client = OpenRouterClient()
-    retry = await importer.import_from_url(UrlImportRequest(url="https://lex.uz/uz/docs/-1"))
-    assert retry.status == "new" and retry.articles_imported >= 1

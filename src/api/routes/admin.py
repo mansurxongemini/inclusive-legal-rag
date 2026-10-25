@@ -5,14 +5,12 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 from src.api.auth.admin import require_admin
-from src.ingestion.lex_parser import parse_law_text_file
-from src.ingestion.url_safety import is_lex_uz_url
-from src.schema.canonical import CanonicalArticle, ArticleStatus
+from src.schema.canonical import ArticleStatus
 from src.storage.sqlite_utils import connect as sqlite_connect
 
 logger = logging.getLogger(__name__)
@@ -22,7 +20,6 @@ router = APIRouter(tags=["Admin"])
 # Static HTML pages stay public; every /api/v1/admin/* route requires administrator access.
 _ADMIN = [Depends(require_admin)]
 
-MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 
 def _invalidate_answer_cache() -> None:
@@ -558,204 +555,6 @@ async def update_admin_article(canonical_id: str, payload: ArticleUpdatePayload)
         "revectorized": payload.revectorize,
         "message": "Modda muvaffaqiyatli saqlandi va qayta vektorlandi!" if payload.revectorize else "Modda saqlandi."
     }
-
-
-
-@router.post("/api/v1/admin/upload", dependencies=_ADMIN)
-async def upload_law_file(file: UploadFile = File(...)):
-    """Uploads and indexes law files (.json, .txt, or .md)."""
-    from src.api.app import get_store, get_client
-    store = get_store()
-    client = get_client()
-
-    content = await file.read(MAX_UPLOAD_BYTES + 1)
-    if len(content) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="Fayl hajmi 10 MB dan oshmasligi kerak.")
-    try:
-        text_content = content.decode("utf-8-sig")  # tolerates a UTF-8 BOM
-    except UnicodeDecodeError:
-        raise HTTPException(status_code=400, detail="Fayl UTF-8 kodlashida bo'lishi kerak.")
-    filename = file.filename or "unknown.txt"
-
-    indexed_count = 0
-    if filename.endswith(".json"):
-        try:
-            data = json.loads(text_content)
-            items = data if isinstance(data, list) else [data]
-            for it in items:
-                art = CanonicalArticle.model_validate(it)
-                await store.index_article(art, client=client)
-                indexed_count += 1
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Invalid JSON law format: {str(e)}")
-    elif filename.endswith((".txt", ".md")):
-        try:
-            parsed_articles = parse_law_text_file(text_content, filename)
-            for art in parsed_articles:
-                await store.index_article(art, client=client)
-                indexed_count += 1
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Parsing error: {str(e)}")
-    else:
-        raise HTTPException(status_code=400, detail="Only .json, .txt, and .md files supported.")
-
-    _invalidate_answer_cache()
-
-    return {
-        "status": "success",
-        "filename": filename,
-        "indexed_articles": indexed_count,
-        "message": f"{indexed_count} ta modda muvaffaqiyatli indekslandi."
-    }
-
-
-class IngestUrlRequest(BaseModel):
-    url: str
-    custom_title: Optional[str] = None
-    category: Optional[str] = "commentary"
-
-
-class PreviewUrlRequest(BaseModel):
-    url: str
-
-
-@router.post("/api/v1/admin/preview-url", dependencies=_ADMIN)
-async def preview_web_url(req: PreviewUrlRequest):
-    """Previews content, metadata, smart chunks, and cited laws from ANY legal website or Lex.uz."""
-    from src.ingestion.web_article_ingester import WebArticleIngester
-    from bs4 import BeautifulSoup
-
-    if not req.url:
-        raise HTTPException(status_code=400, detail="Havola kiritilmadi.")
-
-    clean_url = req.url.strip()
-    try:
-        raw_html, final_url = await WebArticleIngester.fetch_page(clean_url)
-        soup = BeautifulSoup(raw_html, "html.parser")
-        meta = WebArticleIngester.parse_article_metadata(soup, final_url)
-        chunks = WebArticleIngester.extract_and_chunk_article(soup, meta)
-
-        all_refs = set()
-        for ch in chunks:
-            for r in ch.get("refs", []):
-                all_refs.add(r)
-
-        return {
-            "status": "success",
-            "title": meta["title"],
-            "domain": meta["domain"],
-            "published_date": meta["published_date"],
-            "author": meta.get("author", ""),
-            "url": final_url,
-            "total_chunks": len(chunks),
-            "detected_references": sorted(list(all_refs)),
-            "preview_chunks": [
-                {
-                    "heading": ch["heading"],
-                    "snippet": ch["text"][:280] + ("..." if len(ch["text"]) > 280 else ""),
-                    "refs": ch["refs"],
-                }
-                for ch in chunks[:4]
-            ]
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"URL preview error: {e}", exc_info=True)
-        raise HTTPException(status_code=502, detail="Havolani tahlil qilib bo'lmadi.")
-
-
-@router.post("/api/v1/admin/ingest-url", dependencies=_ADMIN)
-async def ingest_any_url(req: IngestUrlRequest):
-    """Universal endpoint to ingest from ANY legal website (Norma.uz, Advice.uz, Minjust, etc.) or Lex.uz."""
-    from src.api.app import get_store, get_client
-    import httpx
-
-    if not req.url:
-        raise HTTPException(status_code=400, detail="Havola kiritilmadi.")
-
-    clean_url = req.url.strip()
-    store = get_store()
-    client = get_client()
-
-    # Case A: Lex.uz document URL (host checked strictly) or a bare Doc ID
-    if is_lex_uz_url(clean_url) or clean_url.lstrip("-").isdigit():
-        from src.ingestion.universal_engine import UniversalAutonomousEngine, DocumentSpec
-
-        # The document ID is the number after /docs/ - not the first digits anywhere in the string
-        # (that picked up e.g. the "2" of "www2.lex.uz").
-        id_match = re.search(r"/docs/-?(\d+)", clean_url) or re.fullmatch(r"-?(\d+)", clean_url)
-        if not id_match:
-            raise HTTPException(status_code=400, detail="Lex.uz havolasidan hujjat raqami (ID) aniqlanmadi.")
-        doc_id = id_match.group(1)
-
-        # Decide the document type from what the user supplied; the canonical URL built below never contains it.
-        looks_like_regulation = any(k in clean_url.lower() for k in ("qaror", "nizom"))
-        clean_url = f"https://lex.uz/docs/{doc_id}"
-
-        engine = UniversalAutonomousEngine(store=store, client=client)
-        spec = DocumentSpec(
-            slug=f"doc_{doc_id}",
-            category="regulations" if looks_like_regulation else "laws",
-            doc_number=f"Hujjat #{doc_id}",
-            title_uz=req.custom_title or f"Lex.uz Hujjat #{doc_id}",
-            effective_date="2022-01-01",
-            url_uz=clean_url,
-            parser_type="regulation_clause" if looks_like_regulation else "statutory_article",
-            max_point_number=500,
-        )
-        try:
-            async with httpx.AsyncClient(timeout=45.0, follow_redirects=True) as hc:
-                count = await engine.ingest_spec(spec, hc, force_reindex=True)
-
-            if count == 0:
-                raise HTTPException(
-                    status_code=422,
-                    detail=f"Hujjat (#{doc_id}) dan birorta ham modda yoki band ajratib olinmadi. Havola yoki hujjat raqamini tekshiring."
-                )
-
-            doc_title = spec.title_uz if spec.title_uz and not spec.title_uz.startswith("Lex.uz Hujjat #") else f"Hujjat #{doc_id}"
-            _invalidate_answer_cache()
-            return {
-                "status": "success",
-                "source": "lex.uz",
-                "indexed_articles": count,
-                "url": clean_url,
-                "doc_id": doc_id,
-                "title": doc_title,
-                "message": f"«{doc_title}» hujjatidan {count} ta modda/band Lex.uz dan muvaffaqiyatli yuklandi va indekslandi."
-            }
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Lex.uz ingest error for doc {doc_id}: {e}", exc_info=True)
-            raise HTTPException(status_code=502, detail="Lex.uz dan hujjatni yuklab bo'lmadi.")
-
-    # Case B: Any external legal portal or news website (Norma.uz, Advice.uz, Minjust.uz, etc.)
-    from src.ingestion.web_article_ingester import WebArticleIngester
-    try:
-        result = await WebArticleIngester.process_and_index_url(
-            url=clean_url,
-            store=store,
-            client=client,
-            custom_title=req.custom_title,
-            custom_category=req.category or "commentary",
-        )
-        _invalidate_answer_cache()
-        return {
-            "status": "success",
-            "source": result["domain"],
-            "title": result["title"],
-            "indexed_articles": result["indexed_count"],
-            "url": result["url"],
-            "detected_references": result["detected_references"],
-            "message": f"'{result['title']}' maqolasi ({result['domain']}) aqlli bo'laklarga ajratilib, {result['indexed_count']} ta tahliliy qism sifatida bazaga kiritildi!"
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"External URL ingest error: {e}", exc_info=True)
-        raise HTTPException(status_code=502, detail="Maqolani yuklab bo'lmadi.")
 
 
 @router.delete("/api/v1/admin/article/{canonical_id}", dependencies=_ADMIN)

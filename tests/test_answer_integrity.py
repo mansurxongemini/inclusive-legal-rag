@@ -3,7 +3,6 @@ Answer integrity: no citation is invented for the model, the disclaimer follows 
 reports validation_passed, importers store only languages that exist, and streamed answers are cached.
 """
 import json
-import re
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -81,12 +80,6 @@ def test_genuine_russian_is_kept_as_russian():
     russian = "В соответствии с настоящим законом лицам с инвалидностью предоставляется помощь."
     fields = localized("Ushbu qonunga muvofiq nogironligi bo'lgan shaxslarga yordam ko'rsatiladi.", russian)
     assert fields["ru"] == russian and set(provenance_for(fields)) == {"uz", "ru"}
-
-
-def test_importers_do_not_copy_uzbek_text_into_ru_or_en():
-    for name in ("url_importer", "document_inspector"):
-        source = Path(f"src/ingestion/{name}.py").read_text(encoding="utf-8")
-        assert not re.search(r'"uz":[^\n]*"ru":[^\n]*"en":', source), name
 
 
 # --- generation limits and prompt ---------------------------------------------------------------------------------
