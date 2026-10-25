@@ -1,0 +1,152 @@
+[
+ {
+  "check": "production server started",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "idle RSS < 350 MB",
+  "ok": true,
+  "detail": "177.6 MB"
+ },
+ {
+  "check": "/health 200 and healthy",
+  "ok": true,
+  "detail": "{\"status\":\"healthy\",\"service\":\"uzbekistan-legal-rag\",\"version\":\"1.0.0\"}"
+ },
+ {
+  "check": "bad input: invalid JSON",
+  "ok": true,
+  "detail": "HTTP 422 '{\"detail\":[{\"type\":\"json_invalid\",\"loc\":[\"body\",1],\"msg\":\"JSON decode error\",\"input\":{},\"ctx\":{\"erro'"
+ },
+ {
+  "check": "bad input: wrong type",
+  "ok": true,
+  "detail": "HTTP 422 '{\"detail\":[{\"type\":\"string_type\",\"loc\":[\"body\",\"question\"],\"msg\":\"Input should be a valid string\",\"i'"
+ },
+ {
+  "check": "bad input: unknown language",
+  "ok": true,
+  "detail": "HTTP 422 '{\"detail\":[{\"type\":\"literal_error\",\"loc\":[\"body\",\"language\"],\"msg\":\"Input should be \\'auto\\', \\'uz\\', \\'r'"
+ },
+ {
+  "check": "bad input: empty question",
+  "ok": true,
+  "detail": "HTTP 422 '{\"detail\":[{\"type\":\"string_too_short\",\"loc\":[\"body\",\"question\"],\"msg\":\"String should have at least 1'"
+ },
+ {
+  "check": "bad input: blank question",
+  "ok": true,
+  "detail": "HTTP 422 '{\"detail\":\"Savol matni bo\\'sh bo\\'lishi mumkin emas.\"}'"
+ },
+ {
+  "check": "bad input: over-long question",
+  "ok": true,
+  "detail": "HTTP 422 '{\"detail\":[{\"type\":\"string_too_long\",\"loc\":[\"body\",\"question\"],\"msg\":\"String should have at most 400'"
+ },
+ {
+  "check": "bad input: oversized body",
+  "ok": true,
+  "detail": "HTTP 413 '{\"detail\":\"So\\'rov hajmi juda katta.\"}'"
+ },
+ {
+  "check": "bad input: prompt injection",
+  "ok": true,
+  "detail": "HTTP 400 '{\"detail\":\"Xavfsizlik qoidalariga zid so\\'rov aniqlandi (Potentially unsafe prompt pattern detected).'"
+ },
+ {
+  "check": "bad input: unknown route",
+  "ok": true,
+  "detail": "HTTP 404 '{\"detail\":\"Not Found\"}'"
+ },
+ {
+  "check": "bad input: admin through a proxy",
+  "ok": true,
+  "detail": "HTTP 401 '{\"detail\":\"Administrator huquqi talab qilinadi. X-Admin-Key sarlavhasi orqali ADMIN_API_KEY ni yubor'"
+ },
+ {
+  "check": "bad input: admin with a wrong key",
+  "ok": true,
+  "detail": "HTTP 403 '{\"detail\":\"Administrator kaliti noto\\'g\\'ri.\"}'"
+ },
+ {
+  "check": "server alive after bad input",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "RSS after the bad-input checks",
+  "ok": true,
+  "detail": "178.7 MB"
+ },
+ {
+  "check": "no secret in the production log",
+  "ok": true,
+  "detail": "1 secrets searched"
+ },
+ {
+  "check": "fake-provider server started",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "provider 429: clear answer",
+  "ok": true,
+  "detail": "HTTP 200 in 8.3s, degraded=True, 'Javob yaratish xizmati hozir ishlamayapti, shuning uchun savolingizga eng yaqin '"
+ },
+ {
+  "check": "server alive after provider 429",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "provider 500: clear answer",
+  "ok": true,
+  "detail": "HTTP 200 in 13.1s, degraded=True, 'Javob yaratish xizmati hozir ishlamayapti, shuning uchun savolingizga eng yaqin '"
+ },
+ {
+  "check": "server alive after provider 500",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "provider hang: clear answer",
+  "ok": true,
+  "detail": "HTTP 200 in 46.2s, degraded=True, 'Javob yaratish xizmati hozir ishlamayapti, shuning uchun savolingizga eng yaqin '"
+ },
+ {
+  "check": "server alive after provider hang",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "fake key not in the log",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "mock server started",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "SSE: first event, then disconnect",
+  "ok": true,
+  "detail": "first line 'data: {\"type\": \"token\", \"text\": \"O\\'zbekiston \"}'"
+ },
+ {
+  "check": "server alive after SSE disconnect",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "300 mock questions answered without 5xx",
+  "ok": true,
+  "detail": "status counts {200: 300}"
+ },
+ {
+  "check": "memory growth under traffic < 40 MB",
+  "ok": true,
+  "detail": "after warm-up 229.6 MB, after 300 more 230.7 MB (+1.1)"
+ }
+]

@@ -31,3 +31,4 @@ Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `
 | 2026-10-25 12:43 | eval cycle 11: review fixes (exact number words, list-bracket ids, remove-not-move repair, price-cap retry, stricter eval criteria) [tests: 668 passed, 1 warning; server: 30/30] | 10.00 | 0.6705 | 9.3295 | 0.6705 |
 | 2026-10-25 13:04 | eval cycle 12: ingestion review fixes (60 Russian points moved to their units, multi-point repeal notes, text-keyed audit cache), 3 cards reopened [tests: 674 passed, 1 warning; server: 30/30] | 10.00 | 0.6899 | 9.3101 | 0.6899 |
 | 2026-10-25 13:14 | eval injection set (final) | 10.00 | 0.7091 | 9.2909 | 0.7091 |
+| 2026-10-25 13:35 | eval cycle 13 (final state): injection check negation window, 9 misaligned Russian texts of VMQ-319 removed [tests: 678 passed, 1 warning; server: 30/30] | 10.00 | 0.7372 | 9.2628 | 0.7372 |
