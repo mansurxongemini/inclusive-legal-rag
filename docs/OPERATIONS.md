@@ -62,6 +62,9 @@ in-scope ones refused wrongly, on the held-out set 95% / 7.3% (Jev: 100% / 1.2% 
    with citations (`degraded: true`, not cached). 2. Jev unavailable or switched off -> the chat-model ranker (RRF order and the older relevance gate
    only if that fails too). 3. Embeddings unavailable or paused -> full-text only.
 4. `PUBLIC_DAILY_GENERATIONS` reached -> HTTP 429 / stream error event with an explanation.
+5. The provider hangs (neither an answer nor an error): the question embedding gives up after `QUERY_EMBED_TIMEOUT_S` (10 s) and the whole
+   retrieval after `RETRIEVAL_TIMEOUT_S` (30 s); the question is then searched by full-text search with no model call, and generation still has
+   `ANSWER_TIMEOUT_S`. Measured with a fake provider that never answers: the visitor gets the matching norms in 46 s (eval/check_server.py).
 
 ## Memory
 
@@ -104,6 +107,7 @@ Do not call `list_articles()` with a large limit in a serving process.
 | `STORAGE_DIR`, `CACHE_DB_PATH` | `./data/store`, `./data/cache/query_cache.db` | where the data lives (Docker sets them) |
 | `LOG_LEVEL` | INFO | |
 | `MOCK_EXTERNAL_APIS` | false | offline placeholder answers (also the mode without a key) |
+| `QUERY_EMBED_TIMEOUT_S`, `RETRIEVAL_TIMEOUT_S`, `ANSWER_TIMEOUT_S` | 10, 30, 100 | deadlines of one request (see "Degradation") |
 
 ## Public endpoints and their limits
 
@@ -134,12 +138,16 @@ tests and a Docker build on every push.
 
 ## Russian texts
 
-The Russian texts of 15 504 units are kept in the store (a unit without Uzbek text is still shown to the model in Russian), but they are **not searched**
+The Russian texts of 14 963 units are kept in the store (a unit without Uzbek text is still shown to the model in Russian), but they are **not searched**
 (`VECTOR_LANGUAGES=uz` - the only language that gets vectors, in code: `vector_languages()`; `FTS_EXCLUDE_LANGUAGES=ru`): a Russian question is translated to Uzbek and searched there. Measured on 22 Russian
 questions, two runs per arm, hit@6: 77% with the Russian texts searched, 82% without their vectors, 86% without vectors and full-text rows; on the
 59-question dev split (Uzbek and Russian) 91% -> 92-94%. The Russian vector rows (20 402) and full-text rows (17 018) were deleted on 2026-10-23, which
 shrank the vector table to 37 464 rows (148 MB on disk after cleaning old versions; it had grown to 1.8 GB of versions). The vector store also refuses
 to write, and never searches, a row of another language, so a store restored from an older backup cannot bring Russian vectors back into search.
+**Alignment.** On 2026-10-25, 284 Russian texts turned out to be the translation of another unit (annexes that number several lists 1, 2, 3 ...
+paired every repeat with the first Russian point); they were removed and the importer now pairs repeats in order. `scripts/audit_translations.py`
+finds such pairs (bge-m3 similarity of both texts; about $0.03 for the whole store, cached in `eval/cache/`); run it after a build.
+
 To search Russian again, set `VECTOR_LANGUAGES=uz,ru`, clear `FTS_EXCLUDE_LANGUAGES` and run `scripts/embed_missing.py --extend-chunks` style
 re-embedding (about 10 M tokens, about $0.10).
 
@@ -153,6 +161,11 @@ scripts/restore.sh <backup folder>     # server must be stopped; the current sto
 ## Checking a change
 
 ```bash
+eval/cycle.sh "what changed"          # tests + server check + gold set; one row of EVAL_HISTORY.md (cached model calls: cents)
+.venv/bin/python eval/run_eval.py --offline                                      # gold set from cached responses only (free)
+.venv/bin/python eval/run_eval.py --gold eval/injection_set.jsonl                # prompt injections inside legal questions
+.venv/bin/python eval/check_server.py                                            # idle RAM, /health, bad input, failing provider, leaks
+.venv/bin/python scripts/audit_corpus.py                                         # corpus quality gate (exit 1 on broken units)
 .venv/bin/python -m pytest -q                                                    # about 50 s, no network
 .venv/bin/python -m pyflakes src scripts tests                                   # must print nothing (CI runs it too)
 .venv/bin/python scripts/stress_eval.py --retrieval-only --baseline <old report>  # exit code 1 on a regression > 3 points

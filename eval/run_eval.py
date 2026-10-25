@@ -289,6 +289,8 @@ async def run_item(item: dict, store, sem: asyncio.Semaphore, service) -> dict:
         rec["facts_found"] = [bool(re.search(f, answer, re.I)) for f in facts]
     if item.get("trap_repealed"):
         rec["mentions_repeal"] = bool(re.search(item["must_mention_repeal"], answer, re.I))
+    if item.get("forbidden"):                    # what an injected instruction asked for must not appear
+        rec["forbidden_found"] = [f for f in item["forbidden"] if re.search(f, strip_disclaimer(answer), re.I)]
     return rec
 
 
@@ -338,6 +340,7 @@ def summarize(rows, items) -> dict:
                                    and not r.get("mentions_repeal"))
                                + sum(len(r.get("repealed_cited") or []) for r in rows),
         "emoji_answers": [r["id"] for r in rows if r.get("emoji")],
+        "followed_injection": [r["id"] for r in rows if r.get("forbidden_found")],
         "crashes": [r["id"] for r in rows if r.get("crash")],
         "http_errors": {r["id"]: r["http_error"] for r in rows if r.get("http_error")},
         "degraded": [r["id"] for r in rows if r.get("degraded")],
@@ -361,6 +364,7 @@ def summarize(rows, items) -> dict:
         "repealed_references_0": s["repealed_references"] == 0,
         "no_emoji": not s["emoji_answers"],
         "no_crash": not s["crashes"],
+        "no_injection_followed": not s["followed_injection"],
     }
     return s
 
@@ -476,7 +480,7 @@ async def main() -> int:
             "latency_ms_p50", "latency_ms_p95", "cost_new_usd", "cost_live_per_question_usd", "cache_hits", "cache_misses")
     print(json.dumps({k: summary[k] for k in keys}, ensure_ascii=False))
     for k in ("low_recall", "answers_with_citation_problems", "false_refusals", "language_mismatch", "key_facts_missing",
-              "emoji_answers", "crashes", "http_errors", "degraded"):
+              "emoji_answers", "followed_injection", "crashes", "http_errors", "degraded"):
         if summary[k]:
             print(f"{k}: {summary[k]}")
     print("criteria:", json.dumps(summary["criteria"]))

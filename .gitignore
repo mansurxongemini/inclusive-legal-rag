@@ -30,3 +30,4 @@ src/admin/static/scratch/
 # gold-set evaluation: response cache and per-run reports
 eval/cache/
 eval/reports/report_*.json
+eval/reports/*.log
