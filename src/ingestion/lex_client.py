@@ -65,8 +65,12 @@ class LexClient:
         min_delay: float = 1.0,
         timeout: float = 45.0,
         max_retries: int = 3,
+        fresh_within_s: float = 0.0,
     ):
         self.cache_dir = Path(cache_dir)
+        # a forced fetch still takes a page cached less than this many seconds ago (an interrupted refresh resumes
+        # without fetching again what it already has); 0 = always fetch when forced
+        self.fresh_within_s = fresh_within_s
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.min_delay = min_delay
         self.max_retries = max_retries
@@ -76,6 +80,14 @@ class LexClient:
             follow_redirects=True,
             timeout=timeout,
         )
+
+    def _cached(self, path: Path, force: bool) -> Optional[str]:
+        """The cached page, unless a forced fetch wants it newer than fresh_within_s."""
+        if not path.exists():
+            return None
+        if force and (self.fresh_within_s <= 0 or time.time() - path.stat().st_mtime > self.fresh_within_s):
+            return None
+        return path.read_text(encoding="utf-8", errors="replace")
 
     # -- plumbing ---------------------------------------------------------------------------------------
     def close(self) -> None:
@@ -118,8 +130,9 @@ class LexClient:
         variants = [raw] if raw.startswith("-") else [f"-{raw}", raw]
         for variant in variants:
             path = self.cache_dir / f"{doc_cache_name(variant)}.html"
-            if path.exists() and not force:
-                return path.read_text(encoding="utf-8", errors="replace")
+            cached = self._cached(path, force)
+            if cached is not None:
+                return cached
             resp = self._request("GET", f"{LEX_BASE}/uz/docs/{variant}")
             if resp.status_code == 200 and "lx_elem" in resp.text:
                 path.write_text(resp.text, encoding="utf-8")
@@ -135,8 +148,9 @@ class LexClient:
             return None
         doc_id = m.group(1)
         path = self.cache_dir / f"{doc_cache_name(doc_id)}.html"
-        if path.exists() and not force:
-            return path.read_text(encoding="utf-8", errors="replace")
+        cached = self._cached(path, force)
+        if cached is not None:
+            return cached
         resp = self._request("GET", f"{LEX_BASE}/uz/docs/{doc_id}")
         if resp.status_code == 200 and "lx_elem" in resp.text:
             path.write_text(resp.text, encoding="utf-8")

@@ -663,7 +663,8 @@ def cmd_refresh(args) -> None:
     if client.is_mock and not args.allow_mock:
         sys.exit("OPENROUTER_API_KEY is not configured (mock mode). Pass --allow-mock to refresh with fake vectors.")
 
-    builder = CorpusBuilder(LexClient(cache_dir=str(RAW), min_delay=args.delay))
+    builder = CorpusBuilder(LexClient(cache_dir=str(RAW), min_delay=args.delay,
+                                      fresh_within_s=getattr(args, "reuse_hours", 0) * 3600))
     per_doc = []
     to_index = []
     removed_total = 0
@@ -941,6 +942,8 @@ def main() -> None:
     ref.add_argument("--law-ids", default=None, help="comma-separated law_id/lex_id filter")
     ref.add_argument("--allow-mass-removal", action="store_true",
                      help="apply a refresh even when more than half of a document's units disappeared")
+    ref.add_argument("--reuse-hours", type=float, default=0,
+                     help="use pages fetched less than this many hours ago (resume an interrupted refresh); 0 = fetch all")
     args = ap.parse_args()
     args.func(args)
 
