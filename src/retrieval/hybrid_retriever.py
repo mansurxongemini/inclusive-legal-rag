@@ -142,9 +142,14 @@ class HybridRetriever:
                     bm25_best_ranks[cid] = rank
                     bm25_best_scores[cid] = m["score"]
 
-        # 3. Vector search (BGE-M3 dense) across primary query and key sub-aspects.
+        # 3. Vector search (dense, EMBEDDING_MODEL) across primary query and key sub-aspects.
         # If the embedding service is unavailable the request degrades to BM25-only instead of failing.
         query_vectors: List[List[float]] = []
+        mismatch = getattr(self.store, "embedding_mismatch", lambda: "")()
+        if use_vector and mismatch:
+            # vectors of another model would return nonsense with full confidence: full-text search only
+            logger.error(f"Dense retrieval off: {mismatch}")
+            use_vector = False
         if use_vector:
             # a short question's domain sub-query carries the very same text, so the dense side counts 1.8 times against the
             # full-text side: that is part of the measured ranking (embedding each distinct text once measured hit@1 -3.5)

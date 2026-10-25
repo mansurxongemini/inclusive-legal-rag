@@ -28,9 +28,14 @@ def _snapshot() -> dict:
     """The service's state: store reachable, budget state, memory. Plain `def` (it reads SQLite): runs in the thread pool."""
     store_healthy = True
     article_count = 0
+    embedding = {}
     try:
         from src.api.app import get_store
-        article_count = get_store().count()
+        store = get_store()
+        article_count = store.count()
+        # vectors made by another model than the configured one: retrieval runs on full-text search only
+        embedding = {"store": store.stored_embedding(), "mismatch": store.embedding_mismatch() or None}
+        store_healthy = not embedding["mismatch"]
     except Exception:
         store_healthy = False
 
@@ -47,6 +52,7 @@ def _snapshot() -> dict:
         "memory_budget_mb": settings.MEMORY_BUDGET_MB,
         "memory_budget_exceeded": (rss_mb > settings.MEMORY_BUDGET_MB),
         "articles_indexed": article_count,
+        "embedding": embedding,
         "spend": ledger.summary(),
     }
 

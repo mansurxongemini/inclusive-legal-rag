@@ -179,7 +179,8 @@ class OpenRouterClient:
         for attempt in range(max_retries):
             try:
                 payload: Dict = {"model": target_model, "input": texts}
-                if settings.EMBEDDING_REQUEST_DIMENSIONS > 0:
+                # the output size belongs to the configured model; another model (an audit's own) gets its native size
+                if settings.EMBEDDING_REQUEST_DIMENSIONS > 0 and target_model == self.embedding_model:
                     payload["dimensions"] = settings.EMBEDDING_REQUEST_DIMENSIONS
                 response = await client.post(f"{self.base_url}/embeddings", json=payload)
                 if response.status_code == 200:
@@ -215,7 +216,7 @@ class OpenRouterClient:
         raise RuntimeError("OpenRouter embedding service is temporarily unavailable.")
 
     async def get_query_embeddings(self, texts: List[str]) -> List[List[float]]:
-        """Embeddings of questions: EMBEDDING_QUERY_INSTRUCTION (empty for bge-m3) is put in front of each text."""
+        """Embeddings of questions: EMBEDDING_QUERY_INSTRUCTION (empty by default, see config) is put in front of each text."""
         instruction = settings.EMBEDDING_QUERY_INSTRUCTION
         if instruction:
             texts = [f"Instruct: {instruction}\nQuery: {t}" for t in texts]

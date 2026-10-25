@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """
-Re-embed legal units whose vector chunks carry chapter or annex context.
+Re-embed legal units whose vector chunks carry chapter or annex context, or (--all) every unit of the store: the way to
+change the embedding model (EMBEDDING_MODEL / EMBEDDING_REQUEST_DIMENSIONS). With --all the store's model marker
+(embedding_model.json, see src/storage/hybrid_store.py) is rewritten only after every unit has new vectors; until then
+the service keeps full-text search only. The run is resumable (progress file) - stop the server first.
 
 Usage:
   python scripts/reembed_context.py --dry-run
   python scripts/reembed_context.py --store-dir data/store --batch-size 15 --concurrency 3
+  EMBEDDING_MODEL=qwen/qwen3-embedding-8b EMBEDDING_REQUEST_DIMENSIONS=1024 \
+      python scripts/reembed_context.py --all --batch-size 40 --concurrency 6
 """
 import argparse
 import asyncio
@@ -56,8 +61,9 @@ def collect_units_to_reembed(
     done_ids: Set[str],
     limit: Optional[int] = None,
     chunk_size: int = 500,
+    every_unit: bool = False,
 ) -> List[CanonicalArticle]:
-    """Iterates the FTS store to select units matching has_context_header."""
+    """Iterates the FTS store to select units matching has_context_header (every unit with every_unit)."""
     offset = 0
     selected: List[CanonicalArticle] = []
     while True:
@@ -65,7 +71,7 @@ def collect_units_to_reembed(
         if not articles:
             break
         for art in articles:
-            if has_context_header(art) and art.canonical_id not in done_ids:
+            if (every_unit or has_context_header(art)) and art.canonical_id not in done_ids:
                 selected.append(art)
                 if limit is not None and len(selected) >= limit:
                     return selected
@@ -136,6 +142,11 @@ def parse_args(args_list: Optional[List[str]] = None) -> argparse.Namespace:
         help="Allow running with mock embeddings (offline mode)",
     )
     parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Re-embed every unit with the configured model and record it as the store's model (a model change)",
+    )
+    parser.add_argument(
         "--reset-progress",
         action="store_true",
         help="Reset progress file and re-embed all matching units",
@@ -158,7 +169,7 @@ async def main(args_list: Optional[List[str]] = None) -> int:
         logger.info(f"Loaded {len(done_ids)} previously re-embedded units from {progress_file}")
 
     units_to_reembed = collect_units_to_reembed(
-        store, done_ids=done_ids, limit=args.limit
+        store, done_ids=done_ids, limit=args.limit, every_unit=args.all
     )
 
     units_count, total_chunks, total_chars, est_tokens = count_chunk_stats(units_to_reembed)
@@ -200,9 +211,19 @@ async def main(args_list: Optional[List[str]] = None) -> int:
             batch_size=args.batch_size,
             concurrency=args.concurrency,
             on_batch=on_batch,
+            new_model=args.all,
         )
     finally:
         await client.close()
+
+    if args.all:
+        if args.limit is not None or len(set(progress_list)) < store.count():
+            print(f"Re-embedded {len(set(progress_list))} of {store.count()} units: the model marker is left as it was.")
+            return 1
+        # every vector row now comes from the configured model: label the rows and the store
+        store.vector_store.table.update(values={"embedding_model_version": settings.EMBEDDING_MODEL})
+        store.write_embedding_marker()
+        print(f"Store model recorded: {store.stored_embedding()}")
 
     if progress_file.exists():
         progress_file.unlink()

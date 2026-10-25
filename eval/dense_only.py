@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 Dense-only retrieval on the gold set: the question is embedded with the configured model and searched in the vector
-table alone (no full-text search, no ranking model), so two embedding models can be compared on their own. The
+table alone (no full-text search, no ranking model), so two embedding models can be compared on their own. It also
+reports the best dense score of in-corpus and out-of-corpus questions against GATE_MIN_VECTOR_SCORE (the relevance gate's
+"dense_match" threshold, used when the ranking model is unavailable). The
 configuration comes from the environment, as for the service (STORAGE_DIR, EMBEDDING_MODEL, EMBEDDING_REQUEST_DIMENSIONS,
 EMBEDDING_QUERY_INSTRUCTION). Costs a few hundredths of a cent: only the 76 questions are embedded.
 
@@ -28,13 +30,17 @@ from src.storage.hybrid_store import HybridStore  # noqa: E402
 async def main() -> int:
     items = [json.loads(line) for line in (ROOT / "eval" / "gold_set.jsonl").read_text(encoding="utf-8").splitlines()
              if line.strip()]
+    refused = [i for i in items if i.get("expect_refusal")]
     items = [i for i in items if i.get("expected")]
     store, client = HybridStore(settings.STORAGE_DIR), OpenRouterClient()
-    vectors = await client.get_query_embeddings([i["question"] for i in items])
+    vectors = await client.get_query_embeddings([i["question"] for i in items + refused])
     await client.close()
-    rows = []
+    best_out = [max((h["score"] for h in store.vector_store.search_vector(v, top_k=5, language="uz")), default=0.0)
+                for v in vectors[len(items):]]
+    rows, best_in = [], []
     for item, vec in zip(items, vectors):
         hits = store.vector_store.search_vector(vec, top_k=20, language="uz")
+        best_in.append(max((h["score"] for h in hits), default=0.0))
         ids = []
         for h in hits:
             if h["canonical_id"] not in ids:
@@ -50,7 +56,12 @@ async def main() -> int:
                 "mrr@20": round(sum(1 / r["rank"] for r in sub if r["rank"]) / len(sub), 3)}
     out = {"model": settings.EMBEDDING_MODEL, "dimensions": settings.EMBEDDING_REQUEST_DIMENSIONS or "native",
            "instruction": bool(settings.EMBEDDING_QUERY_INSTRUCTION), "all": agg(rows),
-           "by_language": {lang: agg([r for r in rows if r["language"] == lang]) for lang in ("uz", "ru", "en")}}
+           "by_language": {lang: agg([r for r in rows if r["language"] == lang]) for lang in ("uz", "ru", "en")},
+           "gate": {"threshold": settings.GATE_MIN_VECTOR_SCORE,
+                    "in_corpus": {"n": len(best_in), "min": round(min(best_in), 3), "median": round(sorted(best_in)[len(best_in) // 2], 3),
+                                  "passing": sum(b >= settings.GATE_MIN_VECTOR_SCORE for b in best_in)},
+                    "out_of_corpus": {"n": len(best_out), "max": round(max(best_out, default=0.0), 3),
+                                      "passing": sum(b >= settings.GATE_MIN_VECTOR_SCORE for b in best_out)}}}
     print(json.dumps(out, ensure_ascii=False))
     return 0
 

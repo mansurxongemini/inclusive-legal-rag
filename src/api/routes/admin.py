@@ -403,6 +403,7 @@ async def get_document_articles(law_id: str):
     """Returns all articles belonging to a specific law_id."""
     from src.api.app import get_store
     store = get_store()
+    vector_model = (store.stored_embedding() or {}).get("model", "")     # the model that made the store's vectors
 
     with sqlite_connect(store.fts_store.db_path) as conn:
         c = conn.cursor()
@@ -429,7 +430,7 @@ async def get_document_articles(law_id: str):
                 "text_ru": trans.get("ru", ""),
                 "status": st,
                 "category": cat,
-                "vector_model": meta.get("embedding_model_version", "bge-m3-2025-11-18"),
+                "vector_model": vector_model or meta.get("embedding_model_version", ""),
                 "has_vector": True,
                 "last_verified_date": lvd,
             })

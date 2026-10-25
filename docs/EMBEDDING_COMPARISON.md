@@ -1,7 +1,8 @@
 # Embedding model comparison: bge-m3 vs qwen3-embedding-8b (2026-10-25)
 
 Asked by the owner ("why not multilingual-e5-large or a legal embedding model?"). Measured on a copy of the store; the
-production model was **not** changed (owner's rule: switch only after asking).
+owner then approved the switch ("if it really is better"), it was measured again on the current data, and production
+uses **qwen/qwen3-embedding-8b** at 1024 dimensions since 2026-10-25.
 
 ## Candidates on OpenRouter (prices of 2026-10-25)
 
@@ -50,32 +51,40 @@ English questions gain most from the better vectors.
 
 ## Cost of a switch
 
-- Re-embedding the store: about 9 minutes, about $0.08 (same price per token as bge-m3).
+- Re-embedding the store: about 11 minutes, about $0.17 measured on the balance (same price per token as bge-m3).
 - Per question: unchanged ($0.01 / M tokens for the question embedding).
 - Storage and RAM: unchanged at 1024 dimensions.
 
-## How to switch (after the owner's decision)
+## Second measurement before the switch (current data, 2026-10-25)
+
+Same corpus as cycle 13 (28 667 units), every unit re-embedded with qwen3 in a copy:
+
+| | bge-m3 (cycle 13) | qwen3-embedding-8b |
+|---|---|---|
+| dense only: recall@5 / MRR@20 | 0.707 / 0.539 | **0.807 / 0.698** |
+| whole path: recall@5 / MRR | 0.964 / 0.921 | **0.971 / 0.971** |
+| citations, refusals, language, key facts, traps | 100% each | 100% each |
+
+Thresholds that depend on the model's scores were checked for qwen3 before the switch:
+
+- **Semantic answer cache** (`SEMANTIC_CACHE_THRESHOLD` 0.95, `eval/calibrate_semantic_cache.py`): the most similar pair of
+  *different* questions scores 0.895 with qwen3 (0.912 with bge-m3), so no wrong cached answer; 3 of 10 rephrasings are
+  reused, as before. The threshold stays.
+- **Relevance gate, dense branch** (`GATE_MIN_VECTOR_SCORE` 0.82, `eval/dense_only.py`, used only when the ranking model
+  is unavailable): 62 of 70 in-corpus questions pass (bge-m3: 63) and 1 of 6 out-of-corpus ones (bge-m3: 2). Stays.
+- **Translation audit** (`scripts/audit_translations.py`): its thresholds are bge-m3 scores, so the audit keeps bge-m3
+  (fixed in the script) instead of following the service's model.
+
+## How the switch is made (and how to switch again)
 
 ```bash
-scripts/backup.sh --keep 14                                              # verified backup first
-# .env
-EMBEDDING_MODEL=qwen/qwen3-embedding-8b
-EMBEDDING_REQUEST_DIMENSIONS=1024
-# re-embed every unit (the server must be stopped; vectors of the old model must not be mixed with the new ones)
-python - <<'EOF'
-import asyncio
-from src.clients.openrouter import OpenRouterClient
-from src.storage.hybrid_store import HybridStore
-async def main():
-    store, client = HybridStore(), OpenRouterClient()
-    with store.fts_store._get_connection() as conn:
-        ids = [r[0] for r in conn.execute("SELECT canonical_id FROM articles_metadata")]
-    arts = list(store.get_articles_batch(ids).values())
-    print(await store.reembed_articles(arts, client=client, batch_size=40, concurrency=6))
-    await client.close()
-asyncio.run(main())
-EOF
-python eval/run_eval.py --label "qwen3 in production"                     # expect recall@5 >= 0.96, MRR >= 0.95
+scripts/backup.sh --keep 14                       # verified backup first; stop the server
+# EMBEDDING_MODEL / EMBEDDING_REQUEST_DIMENSIONS in .env or src/config.py
+python scripts/reembed_context.py --all --batch-size 40 --concurrency 6     # ~11 min, ~$0.17, resumable
+python eval/run_eval.py --label "<model> in production"
 ```
 
-Also bump `ANSWER_VERSION` in `src/generation/prompts.py`: the semantic answer cache holds bge-m3 question vectors.
+The store records the model of its vectors (`data/store/embedding_model.json`). The re-embedding writes it only when every
+unit has new vectors; a server whose configured model differs from it searches full text only (and `/health` reports
+`degraded`), and indexing refuses to add vectors of another model, so the two models are never mixed. The answer cache is
+keyed by the embedding model too, so no answer or question vector of the old model is reused.

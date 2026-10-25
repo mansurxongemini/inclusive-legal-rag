@@ -21,7 +21,7 @@ def _sql_quote(value: str) -> str:
 
 
 class LanceVectorStore:
-    """Embedded LanceDB vector store for BGE-M3 1024-dim article embeddings."""
+    """Embedded LanceDB vector store of the article embeddings (EMBEDDING_MODEL, 1024 numbers each)."""
 
     TABLE_NAME = "articles_vectors"
 

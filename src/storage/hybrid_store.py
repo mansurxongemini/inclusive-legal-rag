@@ -13,6 +13,18 @@ from src.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Which model made the store's vectors. Vectors of two models are not comparable: a question embedded with one model finds
+# nonsense among vectors of another, silently. The first vectors written define it; afterwards only a full re-embedding
+# (scripts/reembed_context.py --all) may change it, and retrieval skips the vectors while it differs from the configuration.
+EMBEDDING_MARKER = "embedding_model.json"
+
+
+def embedding_signature() -> Dict[str, Any]:
+    """The configured embedding model and the size of its vectors."""
+    return {"model": settings.EMBEDDING_MODEL,
+            "dimensions": settings.EMBEDDING_REQUEST_DIMENSIONS or settings.EMBEDDING_DIMENSION}
+
+
 def vector_languages(article: CanonicalArticle) -> List[str]:
     """Languages of the article that get vector rows: its translations with text that are in VECTOR_LANGUAGES (Uzbek by
     default); the other texts are kept, only their vector rows are not made. Every indexing path (single, batch,
@@ -29,6 +41,38 @@ class HybridStore:
         self.vector_store = LanceVectorStore(str(self.storage_dir))
         self.fts_store = SqliteFtsStore(str(self.storage_dir / "legal_rag.db"))
         self._default_client: Optional[OpenRouterClient] = None
+        self._stored_embedding: Optional[Dict[str, Any]] = self._read_embedding_marker()
+
+    # -- embedding model of the vectors ---------------------------------------------------------------------------
+    def _read_embedding_marker(self) -> Optional[Dict[str, Any]]:
+        try:
+            return json.loads((self.storage_dir / EMBEDDING_MARKER).read_text(encoding="utf-8"))
+        except (FileNotFoundError, ValueError):
+            return None                     # a store made before the marker existed: nothing to compare
+
+    def stored_embedding(self) -> Optional[Dict[str, Any]]:
+        return self._stored_embedding
+
+    def embedding_mismatch(self) -> str:
+        """Why the stored vectors cannot be searched with the configured model; '' when they can."""
+        stored = self._stored_embedding
+        if stored and stored != embedding_signature():
+            return f"store vectors were made by {stored}, the service embeds with {embedding_signature()}"
+        return ""
+
+    def write_embedding_marker(self) -> None:
+        """Records the configured model as the model of every vector in the store (after a full re-embedding)."""
+        self.storage_dir.mkdir(parents=True, exist_ok=True)
+        (self.storage_dir / EMBEDDING_MARKER).write_text(json.dumps(embedding_signature()), encoding="utf-8")
+        self._stored_embedding = embedding_signature()
+
+    def _claim_embedding(self) -> None:
+        """Before vectors are written: the first ones define the store's model, vectors of another model are refused."""
+        if self._stored_embedding is None:
+            self.write_embedding_marker()
+        elif self.embedding_mismatch():
+            raise RuntimeError(f"Refusing to mix embedding models: {self.embedding_mismatch()}. "
+                               "Re-embed the whole store with scripts/reembed_context.py --all.")
 
     def _resolve_client(self, client: Optional[OpenRouterClient]) -> OpenRouterClient:
         """Returns the given client or one shared per-store fallback (not a new HTTP pool per call)."""
@@ -46,6 +90,7 @@ class HybridStore:
         """
         # 1. Compute vectors for every chunk of every language
         client = self._resolve_client(client)
+        self._claim_embedding()
 
         vector_records = []
         texts_to_embed: List[str] = []
@@ -65,7 +110,7 @@ class HybridStore:
                     "status": article.metadata.status.value,
                     "category": article.metadata.category,
                     "disability_types": json.dumps(article.metadata.disability_types),
-                    "embedding_model_version": article.metadata.embedding_model_version,
+                    "embedding_model_version": settings.EMBEDDING_MODEL,
                     "chunk_index": idx,
                 })
 
@@ -95,7 +140,7 @@ class HybridStore:
                         art.metadata.status.value,
                         art.metadata.category,
                         json.dumps(art.metadata.disability_types),
-                        art.metadata.embedding_model_version,
+                        settings.EMBEDDING_MODEL,
                         idx,
                     ))
         return texts_to_embed, mapping
@@ -133,6 +178,7 @@ class HybridStore:
             return 0
 
         client = self._resolve_client(client)
+        self._claim_embedding()
 
         total_indexed = 0
         for i in range(0, len(articles), batch_size):
@@ -162,6 +208,7 @@ class HybridStore:
         batch_size: int = 15,
         concurrency: int = 3,
         on_batch: Optional[Any] = None,
+        new_model: bool = False,
     ) -> int:
         """Vector-only re-indexing of already stored articles (languages: see vector_languages).
 
@@ -170,11 +217,15 @@ class HybridStore:
         Per batch: embeds first, then upsert_vectors, so a failing embedding call leaves
         that batch's old vectors intact.
         Awaits on_batch(done_cids) after each written batch.
+        new_model: the whole store is being re-embedded with a newly configured model (scripts/reembed_context.py --all, which
+        records the model when every unit is done); otherwise the vectors must be of the store's model.
         """
         if not articles:
             return 0
 
         client = self._resolve_client(client)
+        if not new_model:
+            self._claim_embedding()
         batches = [articles[i : i + batch_size] for i in range(0, len(articles), batch_size)]
 
         sem = asyncio.Semaphore(concurrency)

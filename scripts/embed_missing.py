@@ -35,8 +35,8 @@ from src.storage.hybrid_store import HybridStore, vector_languages  # noqa: E402
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("embed_missing")
 
-CHARS_PER_TOKEN = 3.0          # conservative for Uzbek/Russian text (bge-m3 tokenizer)
-USD_PER_MTOK = 0.01            # baai/bge-m3 on OpenRouter; check the current price, this is only an estimate
+CHARS_PER_TOKEN = 3.0          # conservative for Uzbek/Russian text
+USD_PER_MTOK = 0.01            # qwen3-embedding-8b (and bge-m3) on OpenRouter; check the current price, this is only an estimate
 
 
 def lancedb_ids(store: HybridStore) -> set:

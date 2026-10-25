@@ -1,4 +1,4 @@
-# 🏛️ Inclusive Legal AI — Statutory RAG & Legal Assistant for Disability Rights in Uzbekistan
+# Inclusive Legal AI — Statutory RAG & Legal Assistant for Disability Rights in Uzbekistan
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.112.0-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
@@ -14,7 +14,7 @@ Developed in partnership with **HuquqPlus NGO (NNT)** — an established civic-t
 
 ---
 
-## 🌍 The Social Mission: Empowering Disability Rights
+## The Social Mission: Empowering Disability Rights
 
 In the Republic of Uzbekistan, statutory legal protections for persons with disabilities are established across comprehensive legislative acts — including the **Law of the Republic of Uzbekistan "On the Rights of Persons with Disabilities" (LRU-641)**, the **Labor Code**, and the **UN Convention on the Rights of Persons with Disabilities (CRPD)** ratified by Uzbekistan.
 
@@ -27,30 +27,30 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
 
 ---
 
-## ⚡ Technical Highlights
+## Technical Highlights
 
-- **🎯 Zero-Hallucination Legal Integrity**: 
+- **Zero-Hallucination Legal Integrity**: 
   - Every assertion must map directly to an active statutory article in the retrieved context.
   - Out-of-scope or unanswerable queries trigger a structured, polite refusal rather than speculative generation.
   - Automated citation verification audits generated answers prior to delivery.
-- **🔍 Hybrid Retrieval Architecture (BM25 + Vector + RRF)**:
+- **Hybrid Retrieval Architecture (BM25 + Vector + RRF)**:
   - **BM25 Lexical Search**: Powered by SQLite FTS5 with custom field weights (`article_number=10.0`, `law_number=5.0`, `title=5.0`, `body=1.0`, see `bm25_search`).
-  - **Dense Vector Search**: Powered by LanceDB with 1024-dimensional multilingual embeddings (`baai/bge-m3`), chunked at paragraph boundaries for long provisions.
+  - **Dense Vector Search**: Powered by LanceDB with 1024-dimensional multilingual embeddings (`qwen/qwen3-embedding-8b`; the store records its model and the service never mixes two), chunked at paragraph boundaries for long provisions.
   - **Reciprocal Rank Fusion (RRF)**: Merges sparse and dense ranking scores via `score = 1/(60 + rank_bm25) + 1/(60 + rank_vec)`.
-- **🔤 Script & Language Invariance**:
+- **Script & Language Invariance**:
   - Seamlessly handles user queries in **Uzbek (Latin and Cyrillic), Russian and English** and answers in the language of the question.
     The units and every vector are Uzbek: a Russian or English question is searched through an Uzbek translation.
   - Built-in rule-based phonetic and statutory transliteration engine (`src/nlp/transliteration.py`).
-- **🪶 Ultra-Lightweight Resource Footprint**:
+- **Ultra-Lightweight Resource Footprint**:
   - Engineered for resource-constrained non-profit infrastructure: runs on a basic **2 vCPU, 4GB RAM VPS**.
   - **Resident memory: ~180-200 MB** while serving (glibc allocator tuned in `src/runtime_tuning.py`; without it a vector search inflated the process to 900+ MB).
   - Zero heavy local machine learning dependencies (`torch`, `transformers`, `onnxruntime` are excluded from the runtime image in favor of clean asynchronous API client layers).
-- **🌐 Production-Ready REST API**:
+- **Production-Ready REST API**:
   - Built with FastAPI with Server-Sent Events (SSE) streaming, SQLite query caching, token-bucket rate limiting, and prompt-injection defenses.
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ```
 [Citizen / Screen Reader / Telegram Client]
@@ -63,7 +63,7 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
       │
       ├── [HybridRetriever]:
       │         ├── SQLite FTS5 (Lexical BM25 with Title/Article number weighting)
-      │         └── LanceDB (1024-dim BGE-M3 Dense Vector Similarity)
+      │         └── LanceDB (1024-dim qwen3-embedding dense vector similarity)
       │         └── [RRF - Reciprocal Rank Fusion]: rank fusion score calculation
       │
       ├── [Context Expansion]: 1-hop cross-reference expansion (implements / refers_to)
@@ -78,7 +78,7 @@ However, vulnerable citizens, families with disabled children, and pro-bono advo
 
 ---
 
-## 📦 Size of the knowledge base
+## Size of the knowledge base
 
 Measured on 2026-10-25 (`data/store`, built by `scripts/build_disability_corpus.py`):
 - **SQLite store with FTS5 index: 305 MB** - 27 530 units of 518 Lex.uz acts (14 963 with the official Russian text) and 324 units of
@@ -92,7 +92,7 @@ the UN CRPD): the server seeds O'RQ-641 into an empty store on its first start, 
 
 ---
 
-## 📚 The Disability-Rights Corpus (verified from Lex.uz)
+## The Disability-Rights Corpus (verified from Lex.uz)
 
 The knowledge base is **built from official texts, never typed by hand**. `scripts/build_disability_corpus.py`
 reads the official Lex.uz classifier (OKOZ nodes *06.10 Nogironligi bo'lgan shaxslar...*, *06.06.03 Nogironlik
@@ -118,7 +118,7 @@ and requests are throttled (1 request/second).
 expected unit was read in the store) through the production path and measures retrieval, citations, refusals, answer language,
 numbers, repealed-act traps, latency and cost; results are in "Evaluation & Benchmarking" below.
 
-## ♿ Public page
+## Public page
 
 `/` (and `/ask`) is a citizen-facing page built for accessibility: semantic HTML, screen-reader live regions,
 keyboard-only use, adjustable text size, high-contrast mode, voice input / read-aloud (browser support
@@ -127,7 +127,7 @@ quoted provision. The administrator dashboard is at `/admin`.
 
 ---
 
-## 🚀 Quickstart Guide
+## Quickstart Guide
 
 ### Option 1: Docker Compose (Recommended)
 
@@ -165,7 +165,7 @@ cp .env.example .env
 # 4. Run automated test suite (runs offline against a temporary store, never touches data/store)
 pytest -v
 
-# 5. Build the knowledge base in data/store (needs the key: the units are embedded with bge-m3)
+# 5. Build the knowledge base in data/store (needs the key: the units are embedded with qwen3-embedding-8b)
 #    one act, about a minute - the Law on the rights of persons with disabilities:
 python scripts/build_disability_corpus.py refresh --law-ids law_disability_2020 --store-dir data/store
 #    or the whole registry (518 acts; Lex.uz is read at 1 request/second, so the first build takes hours):
@@ -183,7 +183,7 @@ answers with a cited article.
 
 ---
 
-## 🔐 Administration Access
+## Administration Access
 
 Every route that changes the corpus, manages the partners' API keys or exports user feedback (`/api/v1/admin/*`,
 `GET /api/v1/articles`, `GET /api/v1/feedback`) is administrator-only:
@@ -197,7 +197,7 @@ Every route that changes the corpus, manages the partners' API keys or exports u
 - The dashboard asks for the key once per browser session when the server answers 401.
 - Third-party bots and partner sites use the assistant API (`POST /api/v1/assistant/ask`, `Authorization: Bearer hpk_...`); keys are issued on the dashboard's Integratsiyalar page and carry their own limits (see `integrations/api/README.md`).
 
-## 🔌 REST API Endpoints
+## REST API Endpoints
 
 ### 1. Statutory Legal Query (`POST /api/v1/query`)
 Processes a citizen legal inquiry and generates a grounded response with canonical citations.
@@ -268,16 +268,16 @@ Returns live server metrics, memory RSS, vector store status, and connection hea
 
 ---
 
-## 🎯 OpenAI Codex for Open Source Software (OSS) Alignment
+## OpenAI Codex for Open Source Software (OSS) Alignment
 
 This project is a dedicated submission candidate for the **OpenAI Codex for Open Source Software Grant**:
 - **Why it matters**: Bridges statutory jurisprudence and accessible AI for an underserved population of 1M+ individuals in Central Asia.
-- **Providers**: one OpenRouter key and endpoint serve every call: the chat model (`GENERATION_MODEL_PRIMARY`: answers, translation, ranking, review), embeddings (`baai/bge-m3`) and, optionally, the Jev reranker/scope gate. See `docs/OPERATIONS.md` for cost, the budget guard, degradation order, backup and the evaluation commands.
+- **Providers**: one OpenRouter key and endpoint serve every call: the chat model (`GENERATION_MODEL_PRIMARY`: answers, translation, ranking, review), embeddings (`qwen/qwen3-embedding-8b`) and, optionally, the Jev reranker/scope gate. See `docs/OPERATIONS.md` for cost, the budget guard, degradation order, backup and the evaluation commands.
 - **Institutional Commitment**: Backed by HuquqPlus NGO and university legal researchers from Tashkent State University of Law (TSUL).
 
 ---
 
-## 📊 Evaluation & Benchmarking
+## Evaluation & Benchmarking
 
 **Gold set, production model** (`deepseek/deepseek-v4-flash-0731`, bge-m3), 2026-10-25, `python eval/run_eval.py`; every run is a row of
 `EVAL_HISTORY.md`, the server-side checks are `python eval/check_server.py`:
@@ -319,7 +319,7 @@ unstated condition.
 
 ---
 
-## 🤝 Contributing & Community
+## Contributing & Community
 
 We warmly welcome contributions from legal scholars, accessibility engineers, and open-source contributors!
 - Check out existing [Issues](https://github.com/mansurxongemini/inclusive-legal-rag/issues)

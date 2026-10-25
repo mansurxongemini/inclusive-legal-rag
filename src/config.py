@@ -20,12 +20,14 @@ class Settings(BaseSettings):
     OPENROUTER_BASE_URL: str = Field(default="https://openrouter.ai/api/v1")
 
     # Models
-    EMBEDDING_MODEL: str = Field(default="baai/bge-m3")
+    EMBEDDING_MODEL: str = Field(default="qwen/qwen3-embedding-8b")
     EMBEDDING_DIMENSION: int = Field(default=1024)
     # For models with adjustable output size (qwen3-embedding: 4096 natively): sent as "dimensions" when > 0. bge-m3 ignores it.
-    EMBEDDING_REQUEST_DIMENSIONS: int = Field(default=0)
-    # Instruction put before QUESTIONS only (documents are embedded as they are): instruction-tuned embedders such as
-    # qwen3-embedding expect "Instruct: ...\nQuery: <question>"; bge-m3 needs none, so it is empty by default.
+    EMBEDDING_REQUEST_DIMENSIONS: int = Field(default=1024)
+    # qwen3-embedding-8b at 1024 dimensions since 2026-10-25 (docs/EMBEDDING_COMPARISON.md: whole-path MRR 0.921 -> 0.971
+    # over bge-m3, same price). Changing it means re-embedding the whole store: scripts/reembed_context.py --all.
+    # Instruction put before QUESTIONS only (documents are embedded as they are): qwen3-embedding recommends
+    # "Instruct: ...\nQuery: <question>", but on the gold set it lowered dense recall@5 (0.836 -> 0.764), so it is empty.
     EMBEDDING_QUERY_INSTRUCTION: str = Field(default="")
     # THE chat model: generation, query rewriting, translation, ranking, claim check, review and judging all use it
     # (one model keeps the cost predictable; OpenRouter itself falls back between the providers of that model).

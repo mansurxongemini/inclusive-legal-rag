@@ -7,10 +7,12 @@ Where the two editions number an annex differently, point 6 of one annex receive
 the Regulation on medical and social expertise, VMQ-62). A Russian question is answered from the Russian text, so a
 wrong pairing becomes a wrong answer.
 
-The check is cross-lingual: the beginning of both texts is embedded with the production embedding model (bge-m3 is
-multilingual) and the two vectors are compared. Translations of each other score high; unrelated texts score low. (The
-stored Uzbek vectors are not used: they embed the act's title with the text, which lowers the score of short points.)
-Embeddings are kept in eval/cache/{uz,ru}_vectors.npz, so a second run is free.
+The check is cross-lingual: the beginning of both texts is embedded with bge-m3 (multilingual) and the two vectors are
+compared. Translations of each other score high; unrelated texts score low. The model is fixed (AUDIT_MODEL), not the
+service's embedding model: the thresholds below were calibrated on bge-m3 scores, and qwen3-embedding scores the same
+pairs lower, so with it a correct translation could be removed. (The stored vectors are not used: they embed the act's
+title with the text, which lowers the score of short points.) Embeddings are kept in eval/cache/{uz,ru}_vectors_v2.npz
+(bge-m3 vectors, keyed by unit and text), so a second run embeds only changed texts.
 
   python scripts/audit_translations.py                    # report: eval/reports/translation_alignment.json
   python scripts/audit_translations.py --apply            # removes the misaligned Russian texts (Uzbek stays)
@@ -57,6 +59,9 @@ def load_units(db_path: Path):
     return units
 
 
+AUDIT_MODEL = "baai/bge-m3"     # the thresholds are bge-m3 scores; see the module docstring
+
+
 def _cache_key(cid: str, text: str) -> str:
     """The id and a hash of the embedded text: after a re-parse changes a unit's text its old vector is not reused."""
     return f"{cid}#{hashlib.sha1(text[:HEAD].encode('utf-8')).hexdigest()[:12]}"
@@ -79,7 +84,7 @@ async def embed_cached(units: dict, lang: str) -> dict:
         t0 = time.time()
         for i in range(0, len(todo), 192):
             part = todo[i:i + 192]
-            vecs = await client.get_embeddings([units[c][col][:HEAD] for c in part])
+            vecs = await client.get_embeddings([units[c][col][:HEAD] for c in part], model=AUDIT_MODEL)
             cached.update({keys[c]: np.asarray(v, dtype=np.float32) for c, v in zip(part, vecs)})
             if (i // 192) % 10 == 0:
                 print(f"  {lang}: embedded {min(i + 192, len(todo))}/{len(todo)} ({time.time() - t0:.0f}s)", flush=True)

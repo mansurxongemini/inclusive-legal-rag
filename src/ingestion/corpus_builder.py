@@ -16,6 +16,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import date
 from typing import Dict, List, Optional, Tuple
 
+from src.config import settings
 from src.domain.disability_taxonomy import (
     classify_category,
     detect_disability_groups,
@@ -322,7 +323,7 @@ class CorpusBuilder:
                     disability_types=groups,
                     beneficiary_type=["person_with_disability"],
                     amendment_history=amendments,
-                    embedding_model_version="baai/bge-m3",
+                    embedding_model_version=settings.EMBEDDING_MODEL,
                     promulgation_date=doc.adopted_date,
                     document_type=doc.doc_type,
                     issuing_body=normalize_apostrophes(doc.body) or None,

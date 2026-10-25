@@ -10,7 +10,7 @@ is gone from the code (no second key, no side endpoints, no backup or fallback m
 | Role | Model | Setting |
 |---|---|---|
 | Answer generation, query rewriting, translation, history condensing, ranking and scope check, claim check, review | **one chat model**, `deepseek/deepseek-v4-flash-0731` | `GENERATION_MODEL_PRIMARY` (OpenRouter falls back between the providers of that model) |
-| Embeddings | `baai/bge-m3` | `EMBEDDING_MODEL` |
+| Embeddings | `qwen/qwen3-embedding-8b`, 1024 numbers (bge-m3 until 2026-10-25, docs/EMBEDDING_COMPARISON.md) | `EMBEDDING_MODEL`, `EMBEDDING_REQUEST_DIMENSIONS`; a change needs `scripts/reembed_context.py --all` |
 | Reranking + scope gate, optional | `typesafe/jev-1.13` | `JEV_ENABLED=true` (off by default) |
 
 A `.env` that still holds the old Meta settings (`PLUS_META_AI_API_KEY`, `EMBEDDING_*`, `JEV_BASE_URL`/`JEV_API_KEY`, `UTILITY_*`,
@@ -150,7 +150,7 @@ shrank the vector table to 37 464 rows (148 MB on disk after cleaning old versio
 to write, and never searches, a row of another language, so a store restored from an older backup cannot bring Russian vectors back into search.
 **Alignment.** On 2026-10-25, 284 Russian texts turned out to be the translation of another unit (annexes that number several lists 1, 2, 3 ...
 paired every repeat with the first Russian point); they were removed and the importer now pairs repeats in order. `scripts/audit_translations.py`
-finds such pairs (bge-m3 similarity of both texts; about $0.03 for the whole store, cached in `eval/cache/` by text, so a re-run
+finds such pairs (bge-m3 similarity of both texts, fixed in the script whatever the service embeds with; about $0.03 for the whole store, cached in `eval/cache/` by text, so a re-run
 embeds only changed texts). Pairing by number cannot see an annex that the Russian edition numbers differently: the re-import
 of 2026-10-25 paired VMQ-319 (2024) annex 3 (repealed decisions in Uzbek, a list of power plants in Russian) again, and the audit
 removed those 9 texts. Run it after every build or refresh, with `--apply` to remove what it finds:
