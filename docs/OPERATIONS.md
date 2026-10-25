@@ -150,7 +150,15 @@ shrank the vector table to 37 464 rows (148 MB on disk after cleaning old versio
 to write, and never searches, a row of another language, so a store restored from an older backup cannot bring Russian vectors back into search.
 **Alignment.** On 2026-10-25, 284 Russian texts turned out to be the translation of another unit (annexes that number several lists 1, 2, 3 ...
 paired every repeat with the first Russian point); they were removed and the importer now pairs repeats in order. `scripts/audit_translations.py`
-finds such pairs (bge-m3 similarity of both texts; about $0.03 for the whole store, cached in `eval/cache/`); run it after a build.
+finds such pairs (bge-m3 similarity of both texts; about $0.03 for the whole store, cached in `eval/cache/` by text, so a re-run
+embeds only changed texts). Pairing by number cannot see an annex that the Russian edition numbers differently: the re-import
+of 2026-10-25 paired VMQ-319 (2024) annex 3 (repealed decisions in Uzbek, a list of power plants in Russian) again, and the audit
+removed those 9 texts. Run it after every build or refresh, with `--apply` to remove what it finds:
+
+```bash
+scripts/audit_translations.py            # report: eval/reports/translation_alignment.json
+scripts/audit_translations.py --apply    # remove the misaligned Russian texts (the Uzbek text is authoritative)
+```
 
 To search Russian again, set `VECTOR_LANGUAGES=uz,ru`, clear `FTS_EXCLUDE_LANGUAGES` and run `scripts/embed_missing.py --extend-chunks` style
 re-embedding (about 10 M tokens, about $0.10).
