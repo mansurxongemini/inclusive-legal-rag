@@ -1,6 +1,6 @@
 # BUDGET (agent/max-quality run)
 
-Limits: spend at most $4.00; stop paid calls at $3.50 spent; balance must never fall below $6.00.
+Limits: stop paid calls at $8.00 total usage (raised by the owner on 2026-10-26 from $3.50; production model unchanged).
 Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `baai/bge-m3`.
 
 | When | Event | total_credits | total_usage | balance | spent this run |
