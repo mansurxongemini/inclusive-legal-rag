@@ -1,16 +1,160 @@
 {
-  "generated": "2026-10-25",
-  "checked_documents": 1,
-  "changed_or_new_units": 30,
-  "indexed": 30,
-  "removed_units": 34,
+  "generated": "2026-10-26",
+  "checked_documents": 19,
+  "changed_or_new_units": 984,
+  "indexed": 984,
+  "removed_units": 0,
   "documents": [
     {
-      "lex_id": "-1406847",
-      "law_id": "vmq_240_2008",
+      "lex_id": "-1471197",
+      "law_id": "o_rq_210",
+      "units": 28,
+      "changed_or_new": 28,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-4333062",
+      "law_id": "vmq_391_2019",
+      "units": 270,
+      "changed_or_new": 270,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-5795033",
+      "law_id": "vmq_774_2021",
+      "units": 10,
+      "changed_or_new": 10,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-6098369",
+      "law_id": "vmq_363_2022",
+      "units": 105,
+      "changed_or_new": 105,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-1455965",
+      "law_id": "doc_14_2004",
+      "units": 27,
+      "changed_or_new": 27,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-8187969",
+      "law_id": "vmq_239_2026",
+      "units": 74,
+      "changed_or_new": 74,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-7661944",
+      "law_id": "vmq_484_2025",
+      "units": 25,
+      "changed_or_new": 25,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-5530091",
+      "law_id": "pq_5198_2021",
+      "units": 10,
+      "changed_or_new": 10,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-3822393",
+      "law_id": "pq_3846_2018",
+      "units": 15,
+      "changed_or_new": 15,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-5838968",
+      "law_id": "pq_102_2022",
+      "units": 18,
+      "changed_or_new": 18,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-8287513",
+      "law_id": "pq_238_2026",
+      "units": 43,
+      "changed_or_new": 43,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-6935235",
+      "law_id": "pq_183_2024",
+      "units": 20,
+      "changed_or_new": 20,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-7138157",
+      "law_id": "vmq_640_2024",
+      "units": 13,
+      "changed_or_new": 13,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-7856451",
+      "law_id": "vmq_740_2025",
+      "units": 86,
+      "changed_or_new": 86,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-6221502",
+      "law_id": "vmq_559_2022",
       "units": 32,
-      "changed_or_new": 30,
-      "removed": 34,
+      "changed_or_new": 32,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-2307248",
+      "law_id": "doc_21_2013",
+      "units": 36,
+      "changed_or_new": 36,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-3494959",
+      "law_id": "vmq_13_2018",
+      "units": 45,
+      "changed_or_new": 45,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-249040",
+      "law_id": "vmq_55_2002",
+      "units": 61,
+      "changed_or_new": 61,
+      "removed": 0,
+      "repealed": false
+    },
+    {
+      "lex_id": "-4719793",
+      "law_id": "vmq_49_2020",
+      "units": 66,
+      "changed_or_new": 66,
+      "removed": 0,
       "repealed": false
     }
   ]

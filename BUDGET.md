@@ -39,3 +39,4 @@ Production model unchanged: chat `deepseek/deepseek-v4-flash-0731`, embeddings `
 | 2026-10-25 20:31 | eval injection set (final) | 10.00 | 1.3388 | 8.6612 | 1.3388 |
 | 2026-10-25 22:00 | eval en16 after the no-fallback change | 10.00 | 1.3435 | 8.6565 | 1.3435 |
 | 2026-10-25 23:27 | eval cycle 16: SQLite vector store (no LanceDB), no answer without the model, one BLAS thread, law-id index [tests: 642 passed, 1 warning; server: 30/30] | 10.00 | 1.3455 | 8.6545 | 1.3455 |
+| 2026-10-26 14:00 | 19 acts added from the lay-wording comparison (984 units); held-out unchanged; 200-question runs and judge (provider 429 retries cost extra) | 10.00 | 3.4706 | 6.5294 | 3.4706 |

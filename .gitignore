@@ -34,3 +34,6 @@ eval/reports/*.log
 
 # crash dumps (an emulated or crashed process leaves hundreds of MB here)
 *.core
+
+# answers of our service and of a competitor for the lay-wording question set (not for the repository)
+data/lay_eval/
