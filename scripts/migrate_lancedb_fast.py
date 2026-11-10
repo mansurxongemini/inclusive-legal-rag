@@ -11,7 +11,6 @@ import logging
 from pathlib import Path
 import lancedb
 import pyarrow as pa
-import pyarrow.compute as pc
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)

@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from src.schema.canonical import CanonicalArticle
 from src.storage.vector_store import LanceVectorStore
 from src.storage.fts_store import SqliteFtsStore

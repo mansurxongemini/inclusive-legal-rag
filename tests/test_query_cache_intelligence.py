@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 from src.api.cache import QueryCache
 

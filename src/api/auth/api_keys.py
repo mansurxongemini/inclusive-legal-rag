@@ -8,7 +8,7 @@ import sqlite3
 import time
 from pathlib import Path
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from src.config import settings
 from src.storage.sqlite_utils import connect as _sqlite_connect

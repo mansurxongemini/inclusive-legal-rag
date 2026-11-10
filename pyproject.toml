@@ -1,0 +1,25 @@
+[project]
+name = "inclusive-legal-rag"
+version = "0.1.0"
+description = "Statutory RAG platform and REST API for disability rights in Uzbekistan"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = ["data", ".agents"]
+
+[tool.ruff.lint]
+# Correctness rules only: syntax errors and pyflakes. Style rules (import sorting, formatting,
+# bugbear) are not enforced yet - enabling them is a separate, repo-wide change.
+select = ["E9", "F"]
+# 8 unused local variables remain (some look like unfinished logic, e.g. src/nlp/query_analyzer.py
+# and src/storage/fts_store.py); they need a human decision rather than a mechanical delete.
+ignore = ["F841"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+asyncio_mode = "auto"

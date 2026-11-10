@@ -10,7 +10,6 @@ import hashlib
 import json
 import logging
 import re
-import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -25,8 +24,6 @@ from src.schema.canonical import (
     ArticleMetadata,
     ArticlePoint,
     ArticleStatus,
-    CrossReference,
-    RefType,
     TranslationProvenanceType,
 )
 from src.storage.hybrid_store import HybridStore

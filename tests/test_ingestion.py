@@ -1,9 +1,7 @@
-import pytest
-from src.ingestion.lex_parser import parse_law_text_file, extract_cross_references_from_text
+from src.ingestion.lex_parser import parse_law_text_file
 from src.ingestion.review_queue import ReviewQueue, ReviewQueueItem
 from src.ingestion.amendment_diff import check_and_apply_amendment
 from src.storage.hybrid_store import HybridStore
-from src.schema.canonical import CanonicalArticle
 
 
 def test_lex_parser_from_text():

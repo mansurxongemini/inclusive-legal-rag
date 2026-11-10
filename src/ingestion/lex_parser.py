@@ -1,7 +1,7 @@
 import hashlib
 import re
 from datetime import date
-from typing import Dict, List, Optional
+from typing import List, Optional
 from src.schema.canonical import (
     CanonicalArticle,
     ArticleMetadata,

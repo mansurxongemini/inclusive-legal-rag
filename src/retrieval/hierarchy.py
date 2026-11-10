@@ -5,7 +5,7 @@ O'RQ-682-son Qonuni (6, 7, 8, 9, 10, 11, 12, 18-moddalar) hamda ma'muriy islohot
 """
 
 import re
-from typing import Dict, Optional, Tuple
+from typing import Optional
 from pydantic import BaseModel
 
 

@@ -1,12 +1,9 @@
 import asyncio
 import json
 import pytest
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 
 from src.api.app import app
-from src.ingestion.lex_client import LexClient
 from src.ingestion.lex_structured import LexDocument, LexUnit
 
 
@@ -196,7 +193,6 @@ async def test_corpus_job_clears_server_article_cache(monkeypatch, returncode):
 
 @pytest.mark.asyncio
 async def test_corpus_job_conflict_409(monkeypatch):
-    from src.api.routes import corpus_admin
 
     # Mock a long running subprocess
     class SlowProcess:

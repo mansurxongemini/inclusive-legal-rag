@@ -2,13 +2,11 @@
 Inclusive Legal RAG - Public Integration API & Admin Control Routes.
 Exclusively serving legal rights, benefits, and statutory procedures for Persons with Disabilities.
 """
-import asyncio
-from datetime import datetime, timezone
 import json
 import logging
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
@@ -22,9 +20,8 @@ from src.api.middleware.security import sanitize_user_input
 from src.api.middleware.rate_limiter import rate_limiter
 from src.api.auth.admin import is_direct_loopback, require_admin
 from src.api.auth.api_keys import api_key_manager, ApiKeyRecord
-from src.ingestion.file_importer import LocalFileImporter, BatchFileImportReport
+from src.ingestion.file_importer import LocalFileImporter
 from src.ingestion.document_inspector import DocumentInspector, DocumentInspectionReport
-from src.clients.openrouter import OpenRouterClient
 
 logger = logging.getLogger(__name__)
 

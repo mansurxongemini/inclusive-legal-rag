@@ -10,7 +10,7 @@ import logging
 import re
 import sys
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 import httpx
 from bs4 import BeautifulSoup
 

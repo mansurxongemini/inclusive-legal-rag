@@ -7,7 +7,7 @@ import copy
 import json
 import sqlite3
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -21,16 +21,12 @@ from src.editorial.store import EditorialStore
 from src.editorial.watch import check_legal_links
 from src.ingestion.huquqplus_client import HuquqPlusClient, parse_lex_ref
 from src.integrations.huquqplus_sync import (
-    build_canonical_articles_for_post,
-    delete_post,
     full_sync,
     get_lex_index,
-    get_sync_status,
     list_synced_posts,
     process_queue,
     reset_lex_index_cache,
     resolve_lex_ref,
-    resync_post,
     suspend_post,
     unsuspend_post,
     upsert_post,
@@ -41,8 +37,6 @@ from src.schema.canonical import (
     ArticleMetadata,
     ArticleStatus,
     CanonicalArticle,
-    CrossReference,
-    RefType,
 )
 from src.storage.hybrid_store import HybridStore
 

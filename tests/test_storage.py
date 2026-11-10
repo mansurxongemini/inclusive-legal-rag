@@ -1,5 +1,4 @@
 import pytest
-import shutil
 from pathlib import Path
 from src.schema.canonical import CanonicalArticle
 from src.storage.hybrid_store import HybridStore

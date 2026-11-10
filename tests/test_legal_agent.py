@@ -3,11 +3,9 @@ Tests for LegalTools, LegalAgent, and SmartLegalRouter.
 """
 
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock
 
 from src.agents.legal_tools import LegalTools
-from src.agents.legal_agent import LegalAgent, AgentResponse, AgentHop
+from src.agents.legal_agent import LegalAgent, AgentResponse
 from src.agents.smart_router import SmartLegalRouter, RoutingDecision
 from src.clients.openrouter import OpenRouterClient
 

@@ -1,6 +1,7 @@
 # 🏛️ Inclusive Legal AI — Statutory RAG & Legal Assistant for Disability Rights in Uzbekistan
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.112.0-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![CI](https://github.com/mansurxongemini/inclusive-legal-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/mansurxongemini/inclusive-legal-rag/actions/workflows/ci.yml)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![LanceDB](https://img.shields.io/badge/LanceDB-Vector_Store-8A2BE2.svg)](https://lancedb.github.io/lancedb/)
 [![SQLite FTS5](https://img.shields.io/badge/SQLite-FTS5_BM25-003B57.svg?logo=sqlite&logoColor=white)](https://www.sqlite.org/fts5.html)
@@ -159,8 +160,8 @@ cd inclusive-legal-rag
 python3 -m venv .venv
 source .venv/bin/activate
 
-# 2. Install dependencies
-pip install -r requirements.txt
+# 2. Install dependencies (runtime + test/lint tools; use requirements.txt for runtime only)
+pip install -r requirements-dev.txt
 
 # 3. Set environment variables
 cp .env.example .env
@@ -291,7 +292,7 @@ python scripts/run_eval.py
 We warmly welcome contributions from legal scholars, accessibility engineers, and open-source contributors!
 - Check out existing [Issues](https://github.com/mansurxongemini/inclusive-legal-rag/issues)
 - Read the architectural design in [`plan.md`](plan.md)
-- Submit Pull Requests following our clean testing standards
+- Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) when submitting Pull Requests; report vulnerabilities per [`SECURITY.md`](SECURITY.md)
 
 ### Organization & Contacts
 - **Partner Organization**: HuquqPlus NNT (Uzbekistan)

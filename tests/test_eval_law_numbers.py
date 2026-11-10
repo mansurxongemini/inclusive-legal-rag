@@ -1,8 +1,7 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 import pytest
 
 from src.evaluation.retrieval_eval import (
-    EvalReport,
     ItemResult,
     RetrievalEvaluator,
     normalize_law_number,

@@ -4,12 +4,9 @@ Shows every step of the 4-stage ingestion, metadata tagging, BGE-M3 vectorizatio
 and hybrid search verification without manual intervention.
 """
 import asyncio
-import json
-import re
 import os
 import sys
 import time
-from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -105,7 +102,7 @@ async def run_live_demonstration():
     
     print(f"     ✅ Vektor o'lchami (Dimensions): {len(embedding_vector)} ta float ko'rsatkichi")
     print(f"     ✅ Vektor normasi (Unit length check): {sum(x*x for x in embedding_vector)**0.5:.4f}")
-    print(f"     📊 Vektor koordinatalaridan dastlabki 10 ta son namunasi:")
+    print("     📊 Vektor koordinatalaridan dastlabki 10 ta son namunasi:")
     print("        [ " + ", ".join(f"{x:+.5f}" for x in embedding_vector[:10]) + ", ... ]")
     print(f"     ⏱ 3-bosqich bajarilish vaqti (Bitta norma uchun): {(time.time() - t2)*1000:.1f} ms\n")
 
@@ -119,12 +116,12 @@ async def run_live_demonstration():
     t3 = time.time()
     print(f"4.1. Barcha {len(articles)} ta normalar bazaga yozilmoqda...")
     await store.index_articles_batch(articles)
-    print(f"     ✅ SQLite (Matnli qidiruv) va LanceDB (Vektorli ombor)ga to'liq saqlandi.")
+    print("     ✅ SQLite (Matnli qidiruv) va LanceDB (Vektorli ombor)ga to'liq saqlandi.")
     print(f"     ⏱ Saqlash va indekslash vaqti: {(time.time() - t3)*1000:.1f} ms\n")
 
     # 4.2. LIVE RETRIEVAL TEST: Check that the system finds it accurately
     test_question = "1941-1945 yillardagi urush nogironlari uchun jamoat transportida qanday imtiyozlar beriladi?"
-    print(f"4.2. Jonli semantik qidiruv orqali tekshirish:")
+    print("4.2. Jonli semantik qidiruv orqali tekshirish:")
     print(f"     ❓ Savol: \"{test_question}\"")
     
     retriever = HybridRetriever(store=store)

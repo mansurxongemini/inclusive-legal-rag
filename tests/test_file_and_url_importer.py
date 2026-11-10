@@ -1,10 +1,7 @@
 import pytest
-import os
 from pathlib import Path
-from httpx import AsyncClient, ASGITransport
 import docx
 
-from src.api.app import app
 from src.ingestion.file_importer import LocalFileImporter
 from src.ingestion.url_importer import LexUrlImporter, UrlImportRequest
 
@@ -88,7 +85,6 @@ def test_document_inspector_with_table():
 @pytest.mark.asyncio
 async def test_url_importer_differential_logic(tmp_path, monkeypatch):
     import httpx
-    from unittest.mock import AsyncMock
     from src.storage.hybrid_store import HybridStore
 
     # Use isolated test store in tmp_path

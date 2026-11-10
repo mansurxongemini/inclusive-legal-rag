@@ -5,12 +5,9 @@ to evaluate multi-annex partitioning, table chunking, multilingual pairing, and 
 """
 
 import asyncio
-import hashlib
 import json
 import logging
 import re
-import sys
-import time
 from pathlib import Path
 from typing import Dict, List
 
@@ -20,7 +17,6 @@ from bs4 import BeautifulSoup
 from scripts.orchestrate_stage1_ingest import CATEGORY_MAP, build_slug, check_document_active_status
 from scripts.ingest_all_laws import parse_act_list_doc
 from src.ingestion.universal_engine import DocumentSpec, UniversalParser
-from src.schema.canonical import CanonicalArticle
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("benchmark_100")

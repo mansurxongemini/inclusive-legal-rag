@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from typing import Iterable, List, Optional, Sequence, Set
 
 from src.config import settings
-from src.nlp.transliteration import cyrillic_to_latin, detect_script, normalize_apostrophes
+from src.nlp.transliteration import detect_script, normalize_apostrophes
 
 _STOP = {
     # Uzbek question/function words

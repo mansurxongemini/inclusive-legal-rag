@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from fastapi import APIRouter, HTTPException, Query
 from src.schema.canonical import CanonicalArticle
 

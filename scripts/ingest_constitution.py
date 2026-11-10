@@ -6,24 +6,19 @@ Supreme Law of the Republic of Uzbekistan with direct effect (To'g'ridan-to'g'ri
 """
 
 import asyncio
-import hashlib
 import json
 import logging
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List
 import httpx
-from bs4 import BeautifulSoup
 
 # Ensure project root is in sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.schema.canonical import (
     CanonicalArticle,
-    ArticleMetadata,
-    ArticlePoint,
-    ArticleStatus,
     TranslationProvenanceType,
 )
 from src.storage.hybrid_store import HybridStore
@@ -96,7 +91,7 @@ async def fetch_and_ingest_constitution():
     # Index into database
     store = HybridStore()
     client = OpenRouterClient()
-    logger.info(f"Indexing Constitution articles into LanceDB and SQLite FTS5...")
+    logger.info("Indexing Constitution articles into LanceDB and SQLite FTS5...")
     indexed = await store.index_articles_batch(articles, client=client, batch_size=25)
     logger.info(f"Successfully indexed {indexed} Constitution articles! Store count: {store.count()}")
 

@@ -5,7 +5,7 @@ ensuring comprehensive retrieval across all intersecting legal domains without t
 """
 
 import re
-from typing import Dict, List, Set, Tuple
+from typing import List, Tuple
 from pydantic import BaseModel
 from src.nlp.legal_synonyms import LegalSynonymExpander
 

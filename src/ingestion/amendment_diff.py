@@ -1,7 +1,7 @@
 import difflib
 import logging
 from typing import Optional, Tuple
-from src.schema.canonical import CanonicalArticle, ArticleStatus, AmendmentRecord
+from src.schema.canonical import CanonicalArticle
 from src.storage.hybrid_store import HybridStore
 from src.ingestion.review_queue import ReviewQueue, ReviewQueueItem
 
