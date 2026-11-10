@@ -7,7 +7,6 @@ and indexes into the Hybrid Legal Store under 'commentary'.
 """
 
 import hashlib
-import json
 import logging
 import re
 from datetime import datetime, timezone

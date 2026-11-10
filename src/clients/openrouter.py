@@ -2,7 +2,6 @@ import asyncio
 import hashlib
 import json
 import logging
-import math
 from typing import AsyncGenerator, Dict, List, Optional
 import httpx
 import numpy as np

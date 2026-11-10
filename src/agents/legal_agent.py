@@ -4,7 +4,6 @@ Performs iterative question decomposition, tool-assisted statutory retrieval,
 cross-reference inspection, and grounded citation synthesis.
 """
 
-import asyncio
 import json
 import logging
 import re

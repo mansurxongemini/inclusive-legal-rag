@@ -1,11 +1,10 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 import httpx
 from bs4 import BeautifulSoup
 
-from src.schema.canonical import CanonicalArticle
 from src.storage.hybrid_store import HybridStore
 from src.clients.openrouter import OpenRouterClient
 from src.ingestion.lex_parser import parse_law_text_file

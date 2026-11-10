@@ -9,7 +9,7 @@ import logging
 import re
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 import httpx
 from bs4 import BeautifulSoup
 
@@ -18,13 +18,11 @@ from src.schema.canonical import (
     ArticleMetadata,
     ArticlePoint,
     ArticleStatus,
-    CrossReference,
-    RefType,
     TranslationProvenanceType,
 )
 from src.ingestion.inclusive_catalog import INCLUSIVE_LAWS_CATALOG, InclusiveLawSpec
 from src.storage.hybrid_store import HybridStore
-from src.nlp.transliteration import cyrillic_to_latin, detect_script, normalize_apostrophes
+from src.nlp.transliteration import cyrillic_to_latin
 
 logger = logging.getLogger(__name__)
 

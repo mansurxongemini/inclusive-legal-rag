@@ -1,6 +1,4 @@
-import json
 import logging
-import re
 from typing import Dict, List, Optional
 from pydantic import BaseModel
 from src.schema.canonical import CanonicalArticle

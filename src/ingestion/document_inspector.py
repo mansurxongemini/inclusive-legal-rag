@@ -7,12 +7,11 @@ import hashlib
 import logging
 import re
 from datetime import date
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import urlparse
+from typing import List, Optional, Tuple
 
 import httpx
 from bs4 import BeautifulSoup
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from src.ingestion.url_safety import is_lex_uz_url
 from src.ingestion.localized import localized, provenance_for
@@ -359,9 +358,9 @@ class DocumentInspector:
         semantic_text = "\n".join(semantic_lines)
 
         # Simple HTML preview
-        html_preview = f"<div class='overflow-x-auto my-2'><table class='min-w-full divide-y divide-slate-200 border text-xs'>"
-        html_preview += f"<thead class='bg-slate-50'><tr>" + "".join(f"<th class='px-3 py-2 text-left font-semibold text-slate-700'>{h}</th>" for h in headers) + "</tr></thead>"
-        html_preview += f"<tbody class='divide-y divide-slate-100 bg-white'>"
+        html_preview = "<div class='overflow-x-auto my-2'><table class='min-w-full divide-y divide-slate-200 border text-xs'>"
+        html_preview += "<thead class='bg-slate-50'><tr>" + "".join(f"<th class='px-3 py-2 text-left font-semibold text-slate-700'>{h}</th>" for h in headers) + "</tr></thead>"
+        html_preview += "<tbody class='divide-y divide-slate-100 bg-white'>"
         for r in rows[1:6]:
             html_preview += "<tr>" + "".join(f"<td class='px-3 py-2 text-slate-600'>{c}</td>" for c in r[:len(headers)]) + "</tr>"
         if len(rows) > 6:
@@ -477,7 +476,6 @@ class DocumentInspector:
             ArticleMetadata,
             ArticlePoint,
             ArticleStatus,
-            TranslationProvenanceType,
         )
         law_slug = re.sub(r"[^a-z0-9_]", "_", report.law_number.lower()).strip("_")
         today = date.today().isoformat()

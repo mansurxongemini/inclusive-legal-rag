@@ -5,14 +5,13 @@ and text documents from data/qonunlar or custom directory.
 """
 import hashlib
 import logging
-import os
 import re
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from src.ingestion.localized import localized, provenance_for
 from src.nlp.transliteration import cyrillic_to_latin, detect_script, normalize_apostrophes
@@ -21,9 +20,6 @@ from src.schema.canonical import (
     ArticlePoint,
     ArticleStatus,
     CanonicalArticle,
-    CrossReference,
-    RefType,
-    TranslationProvenanceType,
 )
 from src.storage.hybrid_store import HybridStore
 

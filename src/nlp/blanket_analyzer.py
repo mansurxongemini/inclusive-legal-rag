@@ -10,7 +10,7 @@ In German and Continental legal dogmatics:
 """
 
 import re
-from typing import Dict, List, Optional, Set
+from typing import List, Optional, Set
 from pydantic import BaseModel
 
 

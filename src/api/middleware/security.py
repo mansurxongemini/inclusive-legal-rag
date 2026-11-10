@@ -1,7 +1,7 @@
 import re
 import logging
 import unicodedata
-from fastapi import Request, HTTPException
+from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ INJECTION_PATTERNS = [
     rf"{_UZ_LAT_PRIOR}\s+{_UZ_LAT_IGNORE}",
     rf"{_UZ_LAT_IGNORE}\s+{_UZ_LAT_PRIOR}",
     rf"(?:system\s*prompt|tizim\s+prompt|tizim\s+ko{_APOS}rsatma)\w*\s+(?:ni\s+)?(?:ko{_APOS}rsat|ayt|chop\s+et|chiqar|oshkor)\w*",
-    rf"(?:cheklovsiz|cheklovlarsiz|filtrsiz)\s+(?:rejim|rol)\w*",
+    r"(?:cheklovsiz|cheklovlarsiz|filtrsiz)\s+(?:rejim|rol)\w*",
     # Uzbek (Cyrillic)
     rf"{_UZ_CYR_PRIOR}\s+{_UZ_CYR_IGNORE}",
     rf"{_UZ_CYR_IGNORE}\s+{_UZ_CYR_PRIOR}",

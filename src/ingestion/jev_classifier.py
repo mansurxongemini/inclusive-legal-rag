@@ -5,7 +5,7 @@ actionability (score), and relevance (noul) decisions on statutory clauses.
 """
 import logging
 import time
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from pydantic import BaseModel, Field
 
 from src.clients.openrouter import OpenRouterClient

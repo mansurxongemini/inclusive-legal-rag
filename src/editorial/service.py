@@ -3,7 +3,6 @@
 import logging
 from typing import Optional
 
-from src.config import settings
 from src.editorial.doc_watch import doc_snapshot, is_doc_link, law_id_of, refresh_doc_link
 from src.editorial.store import EditorialStore
 from src.schema.canonical import (

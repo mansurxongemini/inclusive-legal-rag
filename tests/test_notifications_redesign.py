@@ -1,24 +1,20 @@
 """Tests for notifications redesign: stable unit IDs, unit text archive, doc_changes, watcher auto-resolve and API enrichment."""
 
-import copy
 import json
 import pytest
 from fastapi.testclient import TestClient
 
 from src.api.app import app
-from src.editorial import service as svc
 from src.editorial.doc_watch import (
     archive_law_texts,
     doc_changes,
-    doc_change_summary,
-    doc_snapshot,
     refresh_doc_link,
 )
 from src.editorial.store import EditorialStore
 from src.editorial.watch import check_legal_links
 from src.ingestion.corpus_builder import CorpusBuilder, SourceSpec
 from src.ingestion.lex_structured import LexDocument, LexUnit
-from src.schema.canonical import ArticleStatus, CanonicalArticle
+from src.schema.canonical import CanonicalArticle
 from src.storage.hybrid_store import HybridStore
 
 

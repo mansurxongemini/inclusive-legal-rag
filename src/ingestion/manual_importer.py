@@ -3,11 +3,10 @@ Manual Importer for the Inclusive Legal RAG System.
 Allows administrators to upload JSON files or raw legal text directly through the API or Admin Dashboard.
 """
 import hashlib
-import json
 import logging
 import re
 from datetime import date
-from typing import Dict, List, Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from src.schema.canonical import (
@@ -15,7 +14,6 @@ from src.schema.canonical import (
     ArticleMetadata,
     ArticlePoint,
     ArticleStatus,
-    TranslationProvenanceType,
 )
 from src.storage.hybrid_store import HybridStore
 from src.ingestion.localized import localized, provenance_for

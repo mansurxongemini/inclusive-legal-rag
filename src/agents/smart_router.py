@@ -7,7 +7,7 @@ Classifies incoming legal inquiries and routes them dynamically between:
 
 import re
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import List
 from pydantic import BaseModel
 
 from src.nlp.query_decomposer import LegalQueryDecomposer

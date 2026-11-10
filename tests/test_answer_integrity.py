@@ -8,9 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from httpx import ASGITransport, AsyncClient
 
-from src.api.app import app
 from src.api.cache import QueryCache
 from src.generation.generator import MAX_ANSWER_TOKENS, attach_disclaimer
 from src.generation.prompts import DISCLAIMERS, build_system_prompt

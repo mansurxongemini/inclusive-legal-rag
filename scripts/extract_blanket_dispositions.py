@@ -17,7 +17,7 @@ from typing import Dict, List
 # Ensure project root is in sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.nlp.blanket_analyzer import BlanketAnalyzer, BlanketMatch
+from src.nlp.blanket_analyzer import BlanketAnalyzer
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ def extract_all():
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
 
-    logger.info(f"Blanket analysis complete!")
+    logger.info("Blanket analysis complete!")
     logger.info(f"Articles with blanket/ref dispositions: {total_blanket_articles} / {len(rows)} ({report['percentage']}%)")
     logger.info("Top 5 Named Regulations referenced:")
     for name, cnt in named_counts.most_common(5):

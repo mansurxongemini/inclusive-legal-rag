@@ -1,4 +1,3 @@
-import pytest
 from src.nlp.transliteration import (
     cyrillic_to_latin,
     detect_script,

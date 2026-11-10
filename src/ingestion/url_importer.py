@@ -6,7 +6,7 @@ import hashlib
 import logging
 import re
 from datetime import date
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -23,7 +23,6 @@ from src.schema.canonical import (
     CanonicalArticle,
     CrossReference,
     RefType,
-    TranslationProvenanceType,
 )
 from src.ingestion.url_safety import is_lex_uz_url
 from src.storage.hybrid_store import HybridStore

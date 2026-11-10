@@ -1,8 +1,7 @@
-import json
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 from pydantic import BaseModel
 from src.config import settings
 from src.storage.sqlite_utils import connect as _sqlite_connect
